@@ -1,133 +1,257 @@
 /*******************************************************************************
-** Gersemi - Michael Behrens 2022
+** Gersemi - Michael Behrens 2023
 *******************************************************************************/
 
 /*******************************************************************************
 ** main.c
 *******************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <SDL2/SDL.h>
 
-#include "clock.h"
-#include "datatree.h"
-#include "downsamp.h"
-#include "export.h"
+#include <glad/glad.h>
+
+#include <stdio.h>
+
+#include "audio.h"
+#include "controls.h"
+#include "global.h"
+#include "graphics.h"
+#include "hola.h"
+#include "palette.h"
+#include "path.h"
+#include "progloop.h"
+#include "render.h"
+#include "screen.h"
+#include "texture.h"
+
 #include "frame.h"
-#include "linear.h"
-#include "parse.h"
-#include "sequence.h"
-#include "sweep.h"
 #include "synth.h"
-#include "tuning.h"
-#include "synth.h"
-#include "waveform.h"
 
 /*******************************************************************************
 ** main()
 *******************************************************************************/
 int main(int argc, char *argv[])
 {
-  int   i;
+  SDL_Event event;
+  Uint32    ticks_last_update;
+  Uint32    ticks_current;
 
-  char* name;
-  char  input_filename[256];
-  char  output_filename[256];
-
-  data_tree_node* root;
-
-  /* initialization */
-  i = 0;
-
-  name = NULL;
-  root = NULL;
-
-  /* read command line arguments */
-  i = 1;
-
-  while (i < argc)
+  /* initialize sdl */
+  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER) != 0)
   {
-    /* name */
-    if (!strcmp(argv[i], "-n"))
-    {
-      i++;
-      if (i >= argc)
-      {
-        printf("Insufficient number of arguments. ");
-        printf("Expected name. Exiting...\n");
-        return 0;
-      }
-
-      name = strdup(argv[i]);
-      i++;
-    }
-    else
-    {
-      printf("Unknown command line argument %s. Exiting...\n", argv[i]);
-      return 0;
-    }
-  }
-
-  /* make sure name is defined */
-  if (name == NULL)
-  {
-    printf("Name not defined. Exiting...\n");
+    fprintf(stdout, "Failed to initialize SDL: %s\n", SDL_GetError());
     return 0;
   }
 
-  /* determine input and output filenames */
-  strncpy(input_filename, name, 252);
-  strncat(input_filename, ".txt", 4);
-
-  strncpy(output_filename, name, 252);
-  strncat(output_filename, ".wav", 4);
-
-  /* setup */
-  export_setup();
-  frame_reset_buffer();
-  downsamp_reset_buffer();
-
-  /* initialize tables */
-  envelope_generate_tables();
-  lfo_generate_tables();
-  linear_generate_tables();
-  sweep_generate_tables();
-  waveform_generate_tables();
-  sequencer_generate_tables();
-
-  /* more setup */
-  synth_setup();
-  sequencer_setup();
-
-  tuning_setup();
-
-  /* read input file */
-  root = parse_file_to_data_tree(input_filename);
-
-  if (root == NULL)
+  /* load opengl library */
+  if (SDL_GL_LoadLibrary(NULL))
   {
-    printf("Data tree not created from input file. Exiting...\n");
-    goto cleanup;
+    fprintf(stdout, "Failed to load OpenGL Library: %s\n", SDL_GetError());
+    goto cleanup_sdl;
   }
 
-  parse_data_tree_to_globals(root);
-  data_tree_node_destroy_tree(root);
-  root = NULL;
+  /* initialize global variables */
+  globals_init_variables();
 
-  /* setup synth, reset sequencer */
+  /* initialize paths */
+  path_init_paths();
+
+  if (path_obtain_base_paths())
+  {
+    fprintf(stdout, "Failed to obtain Base paths. Exiting...\n");
+    goto cleanup_gl_library;
+  }
+
+  if (path_obtain_preferences_path())
+  {
+    fprintf(stdout, "Failed to obtain Preferences path. Exiting...\n");
+    goto cleanup_paths;
+  }
+
+  /* create window */
+  if (hola_window())
+  {
+    fprintf(stdout, "Failed to create window. Exiting...\n");
+    goto cleanup_paths;
+  }
+
+  /* initialize opengl */
+  if (hola_opengl())
+  {
+    fprintf(stdout, "Failed to initialize OpenGL. Exiting...\n");
+    goto cleanup_window;
+  }
+
+  /* initialize opengl objects */
+  if (graphics_create_opengl_objects())
+  {
+    fprintf(stdout, "Failed to initialize OpenGL objects. Exiting...\n");
+    goto cleanup_opengl;
+  }
+
+  /* initialize opengl textures */
+  if (texture_init())
+  {
+    fprintf(stdout, "Failed to initialize textures. Exiting...\n");
+    goto cleanup_opengl_objects;
+  }
+
+  if (palette_init())
+  {
+    fprintf(stdout, "Failed to initialize palette texture. Exiting...\n");
+    goto cleanup_opengl_objects;
+  }
+
+  /* generate texture coordinate tables */
+  texture_generate_coord_tables();
+  palette_generate_coord_tables();
+
+  /* generate palette texture */
+  palette_create_opengl_texture();
+
+  /* load all textures */
+  if (texture_load_all_from_file(G_path_gfx_data))
+  {
+    fprintf(stdout, "Error loading gfx data. Exiting...\n");
+    goto cleanup_textures;
+  }
+
+  /* initialize audio */
+  if (audio_init())
+  {
+    fprintf(stdout, "Error initializing audio device.\n");
+    goto cleanup_textures;
+  }
+
+  /* initialize sample frame */
+  frame_reset_buffer();
+
+  /* initialize tables */
+  synth_generate_tables();
+
+  /* reset synth */
+  synth_reset_banks();
+
+  /* testing */
   synth_load_patch(0, 0);
-  synth_load_patch(1, 0);
-  synth_load_patch(2, 0);
-  synth_load_patch(3, 0);
 
-  sequencer_reset();
+  /* initialize game screen */
+  program_loop_change_screen(PROGRAM_SCREEN_PATCHES);
 
-  /* sound generation */
-  export_write_to_file(output_filename);
+  /* initialize ticks */
+  ticks_current = SDL_GetTicks();
+  ticks_last_update = ticks_current;
 
-  /* cleanup */
-cleanup:
+  /* initialize minimization flag */
+  G_flag_window_minimized = 0;
+
+  /* main loop */
+  while (1)
+  {
+    /* process sdl events */
+    while (SDL_PollEvent(&event))
+    {
+      /* quit */
+      if (event.type == SDL_QUIT)
+      {
+        goto cleanup_all;
+      }
+
+      /* window */
+      if (event.type == SDL_WINDOWEVENT)
+      {
+        /* if window is closed, quit */
+        if (event.window.event == SDL_WINDOWEVENT_CLOSE)
+        {
+          goto cleanup_all;
+        }
+
+        /* if focus is lost, pause */
+        if ((event.window.event == SDL_WINDOWEVENT_MINIMIZED) ||
+            (event.window.event == SDL_WINDOWEVENT_FOCUS_LOST))
+        {
+          G_flag_window_minimized = 1;
+        }
+
+        /* if focus is gained, unpause */
+        if ((event.window.event == SDL_WINDOWEVENT_RESTORED) ||
+            (event.window.event == SDL_WINDOWEVENT_FOCUS_GAINED))
+        {
+          G_flag_window_minimized = 0;
+          ticks_last_update = SDL_GetTicks();
+        }
+      }
+
+      /* keyboard (key down) */
+      if (event.type == SDL_KEYDOWN)
+      {
+        if ((event.key.state == SDL_PRESSED) && (event.key.repeat == 0))
+          controls_keyboard_key_pressed(event.key.keysym.scancode);
+      }
+
+      /* mouse (mouse button down) */
+      if (event.type == SDL_MOUSEBUTTONDOWN)
+      {
+        if (event.button.state == SDL_PRESSED)
+          controls_mouse_button_pressed(event.button.button, event.button.x, event.button.y);
+      }
+    }
+
+    /* make sure the window is not minimized */
+    if (G_flag_window_minimized == 1)
+      continue;
+
+    /* update ticks */
+    ticks_current = SDL_GetTicks();
+
+    /* check for tick wraparound (~49 days) */
+    if (ticks_current < ticks_last_update)
+      ticks_last_update = 0;
+
+    /* check if a new frame has elapsed */
+    if ((ticks_current - ticks_last_update) >= (1000 / 60))
+    {
+      /* advance frame */
+      program_loop_advance_frame();
+
+      /* generate samples for this frame */
+      frame_generate_one_frame();
+
+      /* send samples to audio output */
+      audio_queue_frame();
+
+      /* quit */
+      if (G_flag_quit_program == 1)
+      {
+        goto cleanup_all;
+      }
+
+      /* update window */
+      SDL_GL_SwapWindow(G_sdl_window);
+
+      /* store this update time */
+      ticks_last_update = ticks_current;
+    }
+  }
+
+  /* cleanup window and quit */
+cleanup_all:
+  audio_deinit();
+cleanup_textures:
+  palette_deinit();
+  texture_deinit();
+cleanup_opengl_objects:
+  graphics_destroy_opengl_objects();
+cleanup_opengl:
+  SDL_GL_DeleteContext(SDL_GL_GetCurrentContext());
+cleanup_window:
+  SDL_DestroyWindow(G_sdl_window);
+cleanup_paths:
+  path_free_paths();
+cleanup_gl_library:
+  SDL_GL_UnloadLibrary();
+cleanup_sdl:
+  SDL_Quit();
 
   return 0;
 }

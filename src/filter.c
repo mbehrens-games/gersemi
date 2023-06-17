@@ -5,79 +5,23 @@
 #include <stdlib.h>
 #include <math.h>
 
+#include "bank.h"
 #include "filter.h"
 #include "tuning.h"
 
-/*******************************************************************************
-** filter_setup()
-*******************************************************************************/
-short int filter_setup(filter* fltr, int mode, int fc_index)
-{
-  int i;
-
-  if (fltr == NULL)
-    return 1;
-
-  /* set mode & cutoff frequency index */
-  if (mode == FILTER_MODE_LOWPASS)
-  {
-    fltr->mode = mode;
-
-    if ((fc_index >= 0) && (fc_index < FILTER_NUM_LOWPASS_CUTOFFS))
-      fltr->fc_index = fc_index;
-    else
-      fltr->fc_index = FILTER_LOWPASS_CUTOFF_C8;
-  }
-  else if (mode == FILTER_MODE_HIGHPASS)
-  {
-    fltr->mode = mode;
-
-    if ((fc_index >= 0) && (fc_index < FILTER_NUM_HIGHPASS_CUTOFFS))
-      fltr->fc_index = fc_index;
-    else
-      fltr->fc_index = FILTER_HIGHPASS_CUTOFF_A0;
-  }
-  else
-  {
-    fltr->mode = FILTER_MODE_LOWPASS;
-    fltr->fc_index = FILTER_LOWPASS_CUTOFF_C8;
-  }
-
-  /* reset the filter */
-  for (i = 0; i < FILTER_NUM_STAGES; i++)
-  {
-    fltr->s[i] = 0;
-    fltr->v[i] = 0;
-    fltr->y[i] = 0;
-  }
-
-  fltr->level = 0;
-
-  return 0;
-}
+/* filter bank */
+filter G_filter_bank[BANK_NUM_FILTERS];
 
 /*******************************************************************************
-** filter_set_index()
+** filter_setup_all()
 *******************************************************************************/
-short int filter_set_index(filter* fltr, int fc_index)
+short int filter_setup_all()
 {
-  if (fltr == NULL)
-    return 1;
+  int k;
 
-  if (fltr->mode == FILTER_MODE_LOWPASS)
-  {
-    if ((fc_index >= 0) && (fc_index < FILTER_NUM_LOWPASS_CUTOFFS))
-      fltr->fc_index = fc_index;
-    else
-      fltr->fc_index = FILTER_LOWPASS_CUTOFF_C8;
-  }
-  else if (fltr->mode == FILTER_MODE_HIGHPASS)
-  {
-    if ((fc_index >= 0) && (fc_index < FILTER_NUM_HIGHPASS_CUTOFFS))
-      fltr->fc_index = fc_index;
-    else
-      fltr->fc_index = FILTER_HIGHPASS_CUTOFF_A0;
-  }
+  /* setup all filters */
+  for (k = 0; k < BANK_NUM_VOICES; k++)
+    filter_reset(k);
 
   return 0;
 }
@@ -85,73 +29,148 @@ short int filter_set_index(filter* fltr, int fc_index)
 /*******************************************************************************
 ** filter_reset()
 *******************************************************************************/
-short int filter_reset(filter* fltr)
+short int filter_reset(int voice_index)
 {
-  int i;
+  int k;
 
-  if (fltr == NULL)
+  filter* lpf;
+  filter* hpf;
+
+  /* make sure that the voice index is valid */
+  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
     return 1;
 
-  for (i = 0; i < FILTER_NUM_STAGES; i++)
+  /* obtain filter pointers */
+  lpf = &G_filter_bank[2 * voice_index + 0];
+  hpf = &G_filter_bank[2 * voice_index + 1];
+
+  /* set cutoffs */
+  lpf->cutoff = FILTER_LOWPASS_CUTOFF_C8;
+  hpf->cutoff = FILTER_HIGHPASS_CUTOFF_A0;
+
+  /* reset state */
+  lpf->input = 0;
+  hpf->input = 0;
+
+  for (k = 0; k < FILTER_NUM_STAGES; k++)
   {
-    fltr->s[i] = 0;
-    fltr->v[i] = 0;
-    fltr->y[i] = 0;
+    lpf->s[k] = 0;
+    lpf->v[k] = 0;
+    lpf->y[k] = 0;
+
+    hpf->s[k] = 0;
+    hpf->v[k] = 0;
+    hpf->y[k] = 0;
   }
 
-  fltr->level = 0;
+  lpf->level = 0;
+  hpf->level = 0;
 
   return 0;
 }
 
 /*******************************************************************************
-** filter_update()
+** filter_set_lowpass_cutoff()
 *******************************************************************************/
-short int filter_update(filter* fltr, int input)
+short int filter_set_lowpass_cutoff(int voice_index, int cutoff)
 {
-  int stage_multiplier;
+  filter* lpf;
 
-  if (fltr == NULL)
+  /* make sure that the voice index is valid */
+  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
     return 1;
 
-  /* see Vadim Zavalishin's "The Art of VA Filter Design" (p. 77) */
-  if (fltr->mode == FILTER_MODE_LOWPASS)
+  /* obtain filter pointer */
+  lpf = &G_filter_bank[2 * voice_index + 0];
+
+  if ((cutoff >= 0) && (cutoff < FILTER_NUM_LOWPASS_CUTOFFS))
+    lpf->cutoff = cutoff;
+  else
+    lpf->cutoff = FILTER_LOWPASS_CUTOFF_C8;
+
+  return 0;
+}
+
+/*******************************************************************************
+** filter_set_highpass_cutoff()
+*******************************************************************************/
+short int filter_set_highpass_cutoff(int voice_index, int cutoff)
+{
+  filter* hpf;
+
+  /* make sure that the voice index is valid */
+  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
+    return 1;
+
+  /* obtain filter pointer */
+  hpf = &G_filter_bank[2 * voice_index + 1];
+
+  if ((cutoff >= 0) && (cutoff < FILTER_NUM_HIGHPASS_CUTOFFS))
+    hpf->cutoff = cutoff;
+  else
+    hpf->cutoff = FILTER_HIGHPASS_CUTOFF_A0;
+
+  return 0;
+}
+
+/*******************************************************************************
+** filter_update_all()
+*******************************************************************************/
+short int filter_update_all()
+{
+  int k;
+
+  filter* lpf;
+  filter* hpf;
+
+  int stage_multiplier;
+
+  for (k = 0; k < BANK_NUM_VOICES; k++)
   {
+    /* obtain filter pointers */
+    lpf = &G_filter_bank[2 * k + 0];
+    hpf = &G_filter_bank[2 * k + 1];
+
+    /* see Vadim Zavalishin's "The Art of VA Filter Design" (p. 77) */
+
+    /* lowpass filter */
+
     /* obtain multiplier from table */
     stage_multiplier = 
-      G_lowpass_filter_stage_multiplier_table[fltr->fc_index];
+      G_lowpass_filter_stage_multiplier_table[lpf->cutoff];
 
     /* integrator 1 */
-    fltr->v[0] = ((input - fltr->s[0]) * stage_multiplier) / 32768;
-    fltr->y[0] = fltr->v[0] + fltr->s[0];
-    fltr->s[0] = fltr->y[0] + fltr->v[0];
+    lpf->v[0] = ((lpf->input - lpf->s[0]) * stage_multiplier) / 32768;
+    lpf->y[0] = lpf->v[0] + lpf->s[0];
+    lpf->s[0] = lpf->y[0] + lpf->v[0];
 
     /* integrator 2 */
-    fltr->v[1] = ((fltr->y[0] - fltr->s[1]) * stage_multiplier) / 32768;
-    fltr->y[1] = fltr->v[1] + fltr->s[1];
-    fltr->s[1] = fltr->y[1] + fltr->v[1];
+    lpf->v[1] = ((lpf->y[0] - lpf->s[1]) * stage_multiplier) / 32768;
+    lpf->y[1] = lpf->v[1] + lpf->s[1];
+    lpf->s[1] = lpf->y[1] + lpf->v[1];
 
     /* set output level */
-    fltr->level = fltr->y[1];
-  }
-  else if (fltr->mode == FILTER_MODE_HIGHPASS)
-  {
+    lpf->level = lpf->y[1];
+
+    /* highpass filter */
+    hpf->input = lpf->level;
+
     /* obtain multiplier from table */
     stage_multiplier = 
-      G_highpass_filter_stage_multiplier_table[fltr->fc_index];
+      G_highpass_filter_stage_multiplier_table[hpf->cutoff];
 
     /* integrator 1 */
-    fltr->v[0] = ((input - fltr->s[0]) * stage_multiplier) / 32768;
-    fltr->y[0] = fltr->v[0] + fltr->s[0];
-    fltr->s[0] = fltr->y[0] + fltr->v[0];
+    hpf->v[0] = ((hpf->input - hpf->s[0]) * stage_multiplier) / 32768;
+    hpf->y[0] = hpf->v[0] + hpf->s[0];
+    hpf->s[0] = hpf->y[0] + hpf->v[0];
 
     /* integrator 2 */
-    fltr->v[1] = ((input - fltr->y[0] - fltr->s[1]) * stage_multiplier) / 32768;
-    fltr->y[1] = fltr->v[1] + fltr->s[1];
-    fltr->s[1] = fltr->y[1] + fltr->v[1];
+    hpf->v[1] = ((hpf->input - hpf->y[0] - hpf->s[1]) * stage_multiplier) / 32768;
+    hpf->y[1] = hpf->v[1] + hpf->s[1];
+    hpf->s[1] = hpf->y[1] + hpf->v[1];
 
     /* set output level */
-    fltr->level = input - fltr->y[0] - fltr->y[1];
+    hpf->level = hpf->input - hpf->y[0] - hpf->y[1];
   }
 
   return 0;

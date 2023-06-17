@@ -5,39 +5,26 @@
 #ifndef PATCH_H
 #define PATCH_H
 
+#include "bank.h"
+#include "voice.h"
+
 typedef struct patch
 {
   /* program */
   int program;
 
   /* oscillators */
-  short int osc_1_numerator;
-  short int osc_1_denominator;
-  short int osc_1_detune;
-  short int osc_1_amplitude;
-
-  short int osc_2_numerator;
-  short int osc_2_denominator;
-  short int osc_2_detune;
-  short int osc_2_amplitude;
-
-  short int osc_3_numerator;
-  short int osc_3_denominator;
-  short int osc_3_detune;
-  short int osc_3_amplitude;
-
-  short int osc_4_numerator;
-  short int osc_4_denominator;
-  short int osc_4_detune;
-  short int osc_4_amplitude;
+  short int osc_numerator[VOICE_NUM_OSCS_AND_ENVS];
+  short int osc_denominator[VOICE_NUM_OSCS_AND_ENVS];
+  short int osc_detune[VOICE_NUM_OSCS_AND_ENVS];
+  short int osc_amplitude[VOICE_NUM_OSCS_AND_ENVS];
 
   /* feedback */
   short int feedback;
 
   /* noise generator */
   short int noise_period;
-  short int noise_amplitude;
-  short int noise_alternate;
+  short int noise_mix;
 
   /* carrier envelope */
   short int carr_attack;
@@ -57,24 +44,18 @@ typedef struct patch
   short int mod_rate_keyscaling;
   short int mod_level_keyscaling;
 
-  /* linear envelope settings */
-  int       extra_mode;
-  short int extra_rate;
-  short int extra_keyscaling;
-
   /* lfo settings */
-  int       vibrato_mode;
-  short int vibrato_alternate;
-
-  int tremolo_mode;
-  int wobble_mode;
 
   /* filters */
   int lowpass_cutoff;
   int highpass_cutoff;
 } patch;
 
+/* patch bank */
+extern patch G_patch_bank[BANK_NUM_PATCHES];
+
 /* function declarations */
-short int patch_reset(patch* p);
+short int patch_setup_all();
+short int patch_reset(int patch_index);
 
 #endif

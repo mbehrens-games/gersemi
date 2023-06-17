@@ -10,6 +10,12 @@
 
 #define TEMPO_NUM_BPMS    (TEMPO_UPPER_BOUND - TEMPO_LOWER_BOUND + 1)
 
+#define TEMPO_IS_VALID(tempo)                                                  \
+  ((tempo >= TEMPO_LOWER_BOUND) && (tempo <= TEMPO_UPPER_BOUND))
+
+#define TEMPO_IS_NOT_VALID(tempo)                                              \
+  (!(TEMPO_IS_VALID(tempo)))
+
 #define TEMPO_COMPUTE_INDEX(tempo)                                             \
   (tempo - TEMPO_LOWER_BOUND)
 
@@ -28,14 +34,14 @@ enum
 };
 
 /* with 1:1 swing, each half beat's period is 1/2 of the beat period  */
-/* with p:q swing, the beat is divided into intervals of period "x",  */
+/* with p:q swing, the beat is divided into (p + q) intervals, each   */
+/*   interval having a period of 1/(p + q) of the beat period.        */
 /*   which is determined by: px + qx = 1 -> x = 1/(p + q).            */
 
-/* then, the 1st half beat's period multiplier is px/(1/2) = 2px,     */
-/* and thus its frequncy multiplier is 1/(2px) = (p + q)/2p           */
+/* so, the 1st half beat's period multiplier is: (p/(p + q))/(1/2) = 2p/(p + q) */
+/* and thus its frequncy multiplier is: (p + q)/2p                              */
+/* similarly, the 2nd half beat's frequency multiplier is: (p + q)/2q           */
 
-/* also, the 2nd half beat's period multiplier is qx/(1/2) = 2qx,     */
-/* and thus its frequency multiplier is 1/(2qx) = (p + q)/2q.         */
 #define TEMPO_COMPUTE_MULTIPLIER_FIRST_HALF_BEAT(p, q)                         \
   ((p + q) / (2.0f * p))
 

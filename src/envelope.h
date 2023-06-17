@@ -1,9 +1,11 @@
 /*******************************************************************************
-** envelope.h (amplitude envelope)
+** envelope.h (envelope)
 *******************************************************************************/
 
 #ifndef ENVELOPE_H
 #define ENVELOPE_H
+
+#include "bank.h"
 
 enum
 {
@@ -50,7 +52,7 @@ typedef struct envelope
   unsigned int phase;
 
   /* decay 1 to decay 2 switch level */
-  short int switch_level;
+  short int sustain_level;
 
   /* attenuation */
   short int attenuation;
@@ -63,23 +65,21 @@ typedef struct envelope
   short int level;
 } envelope;
 
+/* envelope bank */
+extern envelope G_envelope_bank[BANK_NUM_ENVELOPES];
+
 /* function declarations */
-short int   envelope_setup( envelope* e, 
-                            int       type, 
-                            short int amplitude, 
-                            short int attack, 
-                            short int decay_1, 
-                            short int decay_2, 
-                            short int release, 
-                            short int sustain, 
-                            short int rate_keyscaling, 
-                            short int level_keyscaling);
+short int envelope_setup_all();
+short int envelope_reset(int voice_index, int num);
 
-short int   envelope_trigger(envelope* e, int note, int volume, int brightness);
-short int   envelope_release(envelope* e);
+short int envelope_load_patch(int voice_index, int num, 
+                              int patch_index, int type);
 
-short int   envelope_update(envelope* e);
+short int envelope_trigger(int voice_index, int num, int note, int volume, int brightness);
+short int envelope_release(int voice_index, int num);
 
-short int   envelope_generate_tables();
+short int envelope_update_all();
+
+short int envelope_generate_tables();
 
 #endif

@@ -40,9 +40,11 @@ extern int  G_lowpass_filter_stage_multiplier_table[];
 extern int  G_highpass_filter_stage_multiplier_table[];
 
 /* function declarations */
-short int tuning_setup();
+short int tuning_reset();
 
 short int tuning_set_system(int system);
 short int tuning_set_fork(int fork);
+
+short int tuning_calculate_tables();
 
 #endif

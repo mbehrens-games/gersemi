@@ -1,11 +1,14 @@
 /*******************************************************************************
-** envelope.c (amplitude envelope)
+** envelope.c (envelope)
 *******************************************************************************/
 
 #include <stdlib.h>
 
+#include "bank.h"
 #include "clock.h"
 #include "envelope.h"
+#include "patch.h"
+#include "voice.h"
 
 #define ENVELOPE_TABLE_NUM_ROWS       16
 #define ENVELOPE_TABLE_RATES_PER_ROW  12
@@ -36,29 +39,43 @@ static float S_envelope_freq_table[12] =
 /*   where DB_STEP_10_BIT = 0.046875                                  */
 
 /* carrier envelope base level table */
-static short int S_envelope_carrier_level_table[9] = 
-  { 190,  /* 10^(-8/9)  */
-    166,  /* 10^(-7/9)  */
-    142,  /* 10^(-6/9)  */
-    118,  /* 10^(-5/9)  */
-     95,  /* 10^(-4/9)  */
-     71,  /* 10^(-3/9)  */
-     47,  /* 10^(-2/9)  */
-     24,  /* 10^(-1/9)  */
-      0   /*  1         */
+static short int S_envelope_carrier_level_table[16] = 
+  { 200,  /* 10^(-15/16)  */
+    187,  /* 10^(-14/16)  */
+    173,  /* 10^(-13/16)  */
+    160,  /* 10^(-12/16)  */
+    147,  /* 10^(-11/16)  */
+    133,  /* 10^(-10/16)  */
+    120,  /*  10^(-9/16)  */
+    107,  /*  10^(-8/16)  */
+     93,  /*  10^(-7/16)  */
+     80,  /*  10^(-6/16)  */
+     67,  /*  10^(-5/16)  */
+     53,  /*  10^(-4/16)  */
+     40,  /*  10^(-3/16)  */
+     27,  /*  10^(-2/16)  */
+     13,  /*  10^(-1/16)  */
+      0   /*   1          */
   };
 
 /* modulator envelope base level table */
-static short int S_envelope_modulator_level_table[9] = 
-  { 204,  /* 1/9  */
-    139,  /* 2/9  */
-    102,  /* 3/9  */
-     75,  /* 4/9  */
-     54,  /* 5/9  */
-     38,  /* 6/9  */
-     23,  /* 7/9  */
-     11,  /* 8/9  */
-      0   /* 9/9  */
+static short int S_envelope_modulator_level_table[16] = 
+  { 257,  /*  1/16  */
+    193,  /*  2/16  */
+    155,  /*  3/16  */
+    128,  /*  4/16  */
+    108,  /*  5/16  */
+     91,  /*  6/16  */
+     76,  /*  7/16  */
+     64,  /*  8/16  */
+     53,  /*  9/16  */
+     44,  /* 10/16  */
+     35,  /* 11/16  */
+     27,  /* 12/16  */
+     19,  /* 13/16  */
+     12,  /* 14/16  */
+      6,  /* 15/16  */
+      0   /* 16/16  */
   };
 
 /* mix table */
@@ -82,15 +99,96 @@ static short int S_envelope_mix_table[17] =
       0   /*  1     */
   };
 
+/* envelope bank */
+envelope G_envelope_bank[BANK_NUM_ENVELOPES];
+
+/*******************************************************************************
+** envelope_setup_all()
+*******************************************************************************/
+short int envelope_setup_all()
+{
+  int k;
+  int m;
+
+  /* setup all envelopes */
+  for (k = 0; k < BANK_NUM_VOICES; k++)
+  {
+    for (m = 0; m < VOICE_NUM_OSCS_AND_ENVS; m++)
+      envelope_reset(k, m);
+  }
+
+  return 0;
+}
+
+/*******************************************************************************
+** envelope_reset()
+*******************************************************************************/
+short int envelope_reset(int voice_index, int num)
+{
+  envelope* e;
+
+  /* make sure that the voice index is valid */
+  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
+    return 1;
+
+  /* make sure the envelope number is valid */
+  if ((num < 0) || (num >= VOICE_NUM_OSCS_AND_ENVS))
+    return 1;
+
+  /* obtain envelope pointer */
+  e = &G_envelope_bank[4 * voice_index + num];
+
+  /* initialize envelope variables */
+  e->type = ENVELOPE_TYPE_CARRIER;
+
+  e->attack_row = 0;
+  e->decay_1_row = 0;
+  e->decay_2_row = 0;
+  e->release_row = 0;
+
+  e->rate_keyscaling = 0;
+  e->level_keyscaling = 0;
+
+  e->state = ENVELOPE_STATE_RELEASE;
+
+  e->keycode = 0;
+
+  e->row = 0;
+
+  e->increment = 0;
+  e->phase = 0;
+
+  e->sustain_level = S_envelope_mix_table[0];
+
+  e->attenuation = 1023;
+
+  e->volume_adjustment = 0;
+  e->amp_adjustment = S_envelope_mix_table[16];
+
+  e->level = 1023;
+
+  return 0;
+}
+
 /*******************************************************************************
 ** envelope_change_state()
 *******************************************************************************/
-short int envelope_change_state(envelope* e, int state)
+short int envelope_change_state(int voice_index, int num, int state)
 {
   short int rate_adjustment;
 
-  if (e == NULL)
+  envelope* e;
+
+  /* make sure that the voice index is valid */
+  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
     return 1;
+
+  /* make sure the envelope number is valid */
+  if ((num < 0) || (num >= VOICE_NUM_OSCS_AND_ENVS))
+    return 1;
+
+  /* obtain envelope pointer */
+  e = &G_envelope_bank[4 * voice_index + num];
 
   /* change the envelope to the new state, and set  */
   /* the row index based on the appropriate rate    */
@@ -148,21 +246,39 @@ short int envelope_change_state(envelope* e, int state)
 }
 
 /*******************************************************************************
-** envelope_setup()
+** envelope_load_patch()
 *******************************************************************************/
-short int envelope_setup( envelope* e, 
-                          int       type, 
-                          short int amplitude, 
-                          short int attack, 
-                          short int decay_1, 
-                          short int decay_2, 
-                          short int release, 
-                          short int sustain, 
-                          short int rate_keyscaling, 
-                          short int level_keyscaling)
+short int envelope_load_patch(int voice_index, int num, 
+                              int patch_index, int type)
 {
-  if (e == NULL)
+  envelope* e;
+  patch* p;
+
+  short int attack;
+  short int decay_1;
+  short int decay_2;
+  short int release;
+  short int sustain;
+  short int rate_keyscaling;
+  short int level_keyscaling;
+
+  /* make sure that the voice index is valid */
+  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
     return 1;
+
+  /* make sure the envelope number is valid */
+  if ((num < 0) || (num >= VOICE_NUM_OSCS_AND_ENVS))
+    return 1;
+
+  /* obtain envelope pointer */
+  e = &G_envelope_bank[4 * voice_index + num];
+
+  /* make sure that the patch index is valid */
+  if (BANK_PATCH_INDEX_IS_NOT_VALID(patch_index))
+    return 1;
+
+  /* obtain patch pointer */
+  p = &G_patch_bank[patch_index];
 
   /* set type */
   if ((type == ENVELOPE_TYPE_CARRIER) || 
@@ -173,9 +289,41 @@ short int envelope_setup( envelope* e,
   else
     e->type = ENVELOPE_TYPE_CARRIER;
 
+  /* determine which set of parameters to use */
+  if (e->type == ENVELOPE_TYPE_CARRIER)
+  {
+    attack = p->carr_attack;
+    decay_1 = p->carr_decay_1;
+    decay_2 = p->carr_decay_2;
+    release = p->carr_release;
+    sustain = p->carr_sustain;
+    rate_keyscaling = p->carr_rate_keyscaling;
+    level_keyscaling = p->carr_level_keyscaling;
+  }
+  else if (e->type == ENVELOPE_TYPE_MODULATOR)
+  {
+    attack = p->mod_attack;
+    decay_1 = p->mod_decay_1;
+    decay_2 = p->mod_decay_2;
+    release = p->mod_release;
+    sustain = p->mod_sustain;
+    rate_keyscaling = p->mod_rate_keyscaling;
+    level_keyscaling = p->mod_level_keyscaling;
+  }
+  else
+  {
+    attack = p->carr_attack;
+    decay_1 = p->carr_decay_1;
+    decay_2 = p->carr_decay_2;
+    release = p->carr_release;
+    sustain = p->carr_sustain;
+    rate_keyscaling = p->carr_rate_keyscaling;
+    level_keyscaling = p->carr_level_keyscaling;
+  }
+
   /* set amplitude adjustment */
-  if ((amplitude >= 0) && (amplitude <= 16))
-    e->amp_adjustment = S_envelope_mix_table[amplitude];
+  if ((p->osc_amplitude[num] >= 0) && (p->osc_amplitude[num] <= 16))
+    e->amp_adjustment = S_envelope_mix_table[p->osc_amplitude[num]];
   else
     e->amp_adjustment = S_envelope_mix_table[16];
 
@@ -223,11 +371,11 @@ short int envelope_setup( envelope* e,
   else
     e->release_row = 0;
 
-  /* set switch level */
+  /* set sustain level */
   if ((sustain >= 0) && (sustain <= 16))
-    e->switch_level = S_envelope_mix_table[sustain];
+    e->sustain_level = S_envelope_mix_table[sustain];
   else
-    e->switch_level = S_envelope_mix_table[0];
+    e->sustain_level = S_envelope_mix_table[0];
 
   /* set keyscaling */
   if ((rate_keyscaling >= 1) && (rate_keyscaling <= 8))
@@ -262,12 +410,22 @@ short int envelope_setup( envelope* e,
 /*******************************************************************************
 ** envelope_trigger()
 *******************************************************************************/
-short int envelope_trigger(envelope* e, int note, int volume, int brightness)
+short int envelope_trigger(int voice_index, int num, int note, int volume, int brightness)
 {
   short int level_adjustment;
 
-  if (e == NULL)
+  envelope* e;
+
+  /* make sure that the voice index is valid */
+  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
     return 1;
+
+  /* make sure the envelope number is valid */
+  if ((num < 0) || (num >= VOICE_NUM_OSCS_AND_ENVS))
+    return 1;
+
+  /* obtain envelope pointer */
+  e = &G_envelope_bank[4 * voice_index + num];
 
   /* make sure the note is valid */
   if ((note < 0) || (note >= 10 * 12))
@@ -285,24 +443,24 @@ short int envelope_trigger(envelope* e, int note, int volume, int brightness)
   /* set volume adjustment */
   if (e->type == ENVELOPE_TYPE_CARRIER)
   {
-    if ((volume >= 1) && (volume <= 9))
+    if ((volume >= 1) && (volume <= 16))
       e->volume_adjustment = S_envelope_carrier_level_table[volume - 1];
     else
-      e->volume_adjustment = S_envelope_carrier_level_table[4];
+      e->volume_adjustment = S_envelope_carrier_level_table[7];
   }
   else if (e->type == ENVELOPE_TYPE_MODULATOR)
   {
-    if ((brightness >= 1) && (brightness <= 9))
+    if ((brightness >= 1) && (brightness <= 16))
       e->volume_adjustment = S_envelope_modulator_level_table[brightness - 1];
     else
-      e->volume_adjustment = S_envelope_modulator_level_table[4];
+      e->volume_adjustment = S_envelope_modulator_level_table[7];
   }
   else
   {
-    if ((volume >= 1) && (volume <= 9))
+    if ((volume >= 1) && (volume <= 16))
       e->volume_adjustment = S_envelope_carrier_level_table[volume - 1];
     else
-      e->volume_adjustment = S_envelope_carrier_level_table[4];
+      e->volume_adjustment = S_envelope_carrier_level_table[7];
   }
 
   /* determine level adjustment from keyscaling */
@@ -345,7 +503,7 @@ short int envelope_trigger(envelope* e, int note, int volume, int brightness)
     e->level = 1023;
 
   /* set the envelope to attack state */
-  envelope_change_state(e, ENVELOPE_STATE_ATTACK);
+  envelope_change_state(voice_index, num, ENVELOPE_STATE_ATTACK);
 
   /* reset phase */
   e->phase = 0;
@@ -356,91 +514,113 @@ short int envelope_trigger(envelope* e, int note, int volume, int brightness)
 /*******************************************************************************
 ** envelope_release()
 *******************************************************************************/
-short int envelope_release(envelope* e)
+short int envelope_release(int voice_index, int num)
 {
-  if (e == NULL)
+  envelope* e;
+
+  /* make sure that the voice index is valid */
+  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
     return 1;
+
+  /* make sure the envelope number is valid */
+  if ((num < 0) || (num >= VOICE_NUM_OSCS_AND_ENVS))
+    return 1;
+
+  /* obtain envelope pointer */
+  e = &G_envelope_bank[4 * voice_index + num];
 
   /* if this envelope is already released, return */
   if (e->state == ENVELOPE_STATE_RELEASE)
     return 0;
 
   /* set the envelope to release state */
-  envelope_change_state(e, ENVELOPE_STATE_RELEASE);
+  envelope_change_state(voice_index, num, ENVELOPE_STATE_RELEASE);
 
   return 0;
 }
 
 /*******************************************************************************
-** envelope_update()
+** envelope_update_all()
 *******************************************************************************/
-short int envelope_update(envelope* e)
+short int envelope_update_all()
 {
   short int amount;
 
-  if (e == NULL)
-    return 1;
+  int k;
+  int m;
 
-  /* update phase */
-  e->phase += e->increment;
+  envelope* e;
 
-  /* check if a period was completed */
-  if (e->phase > 0xFFFFFFF)
+  /* update all envelopes */
+  for (k = 0; k < BANK_NUM_VOICES; k++)
   {
-    amount = (e->phase >> 28) & 0x0F;
-
-    e->phase &= 0xFFFFFFF;
-  }
-  else
-    amount = 0;
-
-  /* if a period has elapsed, update the envelope */
-  if (amount > 0)
-  {
-    /* attack */
-    if (e->state == ENVELOPE_STATE_ATTACK)
+    for (m = 0; m < VOICE_NUM_OSCS_AND_ENVS; m++)
     {
-      e->attenuation += (~e->attenuation * amount) >> 4;
+      /* obtain envelope pointer */
+      e = &G_envelope_bank[4 * k + m];
 
-      if (e->attenuation <= 0)
+      /* update phase */
+      e->phase += e->increment;
+
+      /* check if a period was completed */
+      if (e->phase > 0xFFFFFFF)
       {
-        e->attenuation = 0;
-        envelope_change_state(e, ENVELOPE_STATE_DECAY_1);
+        amount = (e->phase >> 28) & 0x0F;
+
+        e->phase &= 0xFFFFFFF;
+      }
+      else
+        amount = 0;
+
+      /* if a period has elapsed, update the envelope */
+      if (amount > 0)
+      {
+        /* attack */
+        if (e->state == ENVELOPE_STATE_ATTACK)
+        {
+          e->attenuation += (~e->attenuation * amount) >> 4;
+
+          if (e->attenuation <= 0)
+          {
+            e->attenuation = 0;
+            envelope_change_state(k, m, ENVELOPE_STATE_DECAY_1);
+          }
+        }
+        /* decay 1 */
+        else if (e->state == ENVELOPE_STATE_DECAY_1)
+        {
+          e->attenuation += amount;
+
+          if (e->attenuation >= e->sustain_level)
+            envelope_change_state(k, m, ENVELOPE_STATE_DECAY_2);
+        }
+        /* decay 2 */
+        else if (e->state == ENVELOPE_STATE_DECAY_2)
+        {
+          e->attenuation += amount;
+
+          if (e->attenuation >= 1023)
+          {
+            e->attenuation = 1023;
+            envelope_change_state(k, m, ENVELOPE_STATE_RELEASE);
+          }
+        }
+        /* release */
+        else if (e->state == ENVELOPE_STATE_RELEASE)
+        {
+          e->attenuation += amount;
+
+          if (e->attenuation >= 1023)
+            e->attenuation = 1023;
+        }
+
+        /* update level */
+        e->level = e->attenuation + e->volume_adjustment + e->amp_adjustment;
+
+        if (e->level >= 1023)
+          e->level = 1023;
       }
     }
-    /* decay 1 */
-    else if (e->state == ENVELOPE_STATE_DECAY_1)
-    {
-      e->attenuation += amount;
-
-      if (e->attenuation >= e->switch_level)
-        envelope_change_state(e, ENVELOPE_STATE_DECAY_2);
-    }
-    /* decay 2 */
-    else if (e->state == ENVELOPE_STATE_DECAY_2)
-    {
-      e->attenuation += amount;
-
-      if (e->attenuation >= 1023)
-      {
-        e->attenuation = 1023;
-        envelope_change_state(e, ENVELOPE_STATE_RELEASE);
-      }
-    }
-    /* release */
-    else if (e->state == ENVELOPE_STATE_RELEASE)
-    {
-      e->attenuation += amount;
-
-      if (e->attenuation >= 1023)
-        e->attenuation = 1023;
-    }
-
-    /* update level */
-    e->level = e->attenuation + e->volume_adjustment + e->amp_adjustment;
-
-    if (e->level >= 1023)
-      e->level = 1023;
   }
 
   return 0;

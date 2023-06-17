@@ -5,8 +5,10 @@
 #include <math.h>
 
 #include "clock.h"
-#include "pi.h"
 #include "tuning.h"
+
+#define PI      3.14159265358979323846f
+#define TWO_PI  6.28318530717958647693f
 
 /* phase increment table */
 unsigned int G_phase_increment_table[TUNING_TABLE_SIZE];
@@ -16,8 +18,8 @@ int G_lowpass_filter_stage_multiplier_table[4];
 int G_highpass_filter_stage_multiplier_table[4];
 
 /* tuning system & fork */
-int S_tuning_system;
-int S_tuning_fork;
+static int S_tuning_system;
+static int S_tuning_fork;
 
 /* multipliers from c in 12 tone equal temperament */
 static float S_tuning_mult_12_equal_temperament[12] = 
@@ -81,6 +83,53 @@ static float S_tuning_mult_werckmeister_iii[12] =
 
 /* frequencies in octave 4 (populated during generation) */
 static float S_freq_table[12 * TUNING_NUM_SEMITONE_STEPS];
+
+/*******************************************************************************
+** tuning_reset()
+*******************************************************************************/
+short int tuning_reset()
+{
+  S_tuning_system = TUNING_SYSTEM_12_EQUAL_TEMPERAMENT;
+  S_tuning_fork = TUNING_FORK_A440;
+
+  tuning_calculate_tables();
+
+  return 0;
+}
+
+/*******************************************************************************
+** tuning_set_system()
+*******************************************************************************/
+short int tuning_set_system(int system)
+{
+  /* make sure system is valid */
+  if ((system < 0) || (system >= TUNING_NUM_SYSTEMS))
+    return 1;
+
+  /* set tuning system and recalculate tables */
+  S_tuning_system = system;
+
+  tuning_calculate_tables();
+
+  return 0;
+}
+
+/*******************************************************************************
+** tuning_set_fork()
+*******************************************************************************/
+short int tuning_set_fork(int fork)
+{
+  /* make sure fork is valid */
+  if ((fork < 0) || (fork >= TUNING_NUM_FORKS))
+    return 1;
+
+  /* set tuning fork and recalculate tables */
+  S_tuning_fork = fork;
+
+  tuning_calculate_tables();
+
+  return 0;
+}
 
 /*******************************************************************************
 ** tuning_calculate_tables()
@@ -385,53 +434,6 @@ short int tuning_calculate_tables()
                             G_filter_stage_multiplier_table[4 * m + 3]);
   }
 #endif
-
-  return 0;
-}
-
-/*******************************************************************************
-** tuning_setup()
-*******************************************************************************/
-short int tuning_setup()
-{
-  S_tuning_system = TUNING_SYSTEM_12_EQUAL_TEMPERAMENT;
-  S_tuning_fork = TUNING_FORK_A440;
-
-  tuning_calculate_tables();
-
-  return 0;
-}
-
-/*******************************************************************************
-** tuning_set_system()
-*******************************************************************************/
-short int tuning_set_system(int system)
-{
-  /* make sure system is valid */
-  if ((system < 0) || (system >= TUNING_NUM_SYSTEMS))
-    return 1;
-
-  /* set tuning system and recalculate tables */
-  S_tuning_system = system;
-
-  tuning_calculate_tables();
-
-  return 0;
-}
-
-/*******************************************************************************
-** tuning_set_fork()
-*******************************************************************************/
-short int tuning_set_fork(int fork)
-{
-  /* make sure fork is valid */
-  if ((fork < 0) || (fork >= TUNING_NUM_FORKS))
-    return 1;
-
-  /* set tuning fork and recalculate tables */
-  S_tuning_fork = fork;
-
-  tuning_calculate_tables();
 
   return 0;
 }

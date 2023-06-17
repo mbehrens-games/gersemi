@@ -5,8 +5,10 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "pi.h"
 #include "waveform.h"
+
+#define PI      3.14159265358979323846f
+#define TWO_PI  6.28318530717958647693f
 
 static short int S_db_to_linear_table[4096];
 

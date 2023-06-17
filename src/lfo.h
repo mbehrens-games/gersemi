@@ -1,9 +1,11 @@
 /*******************************************************************************
-** lfo.h (vibrato / tremolo)
+** lfo.h (low frequency oscillator)
 *******************************************************************************/
 
 #ifndef LFO_H
 #define LFO_H
+
+#include "bank.h"
 
 enum
 {
@@ -54,17 +56,21 @@ typedef struct lfo
   short int level;
 } lfo;
 
+/* lfo bank */
+extern lfo G_lfo_bank[BANK_NUM_LFOS];
+
 /* function declarations */
-short int lfo_setup(lfo* l, int type, int mode);
+short int lfo_setup_all();
+short int lfo_reset(int voice_index);
 
-short int lfo_set_depth(lfo* l, int depth);
-short int lfo_set_speed(lfo* l, int tempo, int speed);
+short int lfo_set_type_and_mode(int voice_index, int type, int mode);
+short int lfo_set_depth(int voice_index, int depth);
+short int lfo_set_speed(int voice_index, int tempo, int speed);
 
-short int lfo_adjust_to_tempo(lfo* l, int tempo);
+short int lfo_adjust_to_tempo(int voice_index, int tempo);
+short int lfo_trigger(int voice_index);
 
-short int lfo_trigger(lfo* l);
-
-short int lfo_update(lfo* l);
+short int lfo_update_all();
 
 short int lfo_generate_tables();
 

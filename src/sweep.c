@@ -6,18 +6,23 @@
 #include <stdlib.h>
 #include <math.h>
 
+#include "bank.h"
 #include "clock.h"
-#include "pi.h"
 #include "sweep.h"
 #include "tempo.h"
+
+#define PI      3.14159265358979323846f
+#define TWO_PI  6.28318530717958647693f
 
 #define SWEEP_LOWER_BOUND (0 * 12 + 9) /* A0 */
 #define SWEEP_UPPER_BOUND (8 * 12 + 0) /* C8 */
 
+#define SWEEP_NUM_SPEEDS  16
+
 /* sweep phase increment table  */
 /* 1st index: tempo             */
 /* 2nd index: sweep speed       */
-static unsigned int S_sweep_phase_increment_table[TEMPO_NUM_BPMS][9];
+static unsigned int S_sweep_phase_increment_table[TEMPO_NUM_BPMS][SWEEP_NUM_SPEEDS];
 
 /* sweep speed table                        */
 /* speed 1: 1 semitone per quarter note     */
@@ -29,16 +34,56 @@ static unsigned int S_sweep_phase_increment_table[TEMPO_NUM_BPMS][9];
 /* speed 7: 7 semitones per quarter note    */
 /* speed 8: 8 semitones per quarter note    */
 /* speed 9: 12 semitones per quarter note   */
-static float S_sweep_speed_table[9] = 
-              {1.0f, 1.5f, 2.0f, 3.0f, 4.0f, 6.0f, 7.0f, 8.0f, 12.0f};
+static float S_sweep_speed_table[SWEEP_NUM_SPEEDS] = 
+              { 0.5f, 
+                1.0f, 
+                1.5f, 
+                2.0f, 
+                2.5f, 
+                3.0f, 
+                3.5f, 
+                4.0f, 
+                5.0f, 
+                6.0f, 
+                7.0f, 
+                8.0f, 
+                9.0f, 
+               10.0f, 
+               11.0f, 
+               12.0f 
+              };
+
+
+/* sweep bank */
+sweep G_sweep_bank[BANK_NUM_SWEEPS];
 
 /*******************************************************************************
-** sweep_setup()
+** sweep_setup_all()
 *******************************************************************************/
-short int sweep_setup(sweep* sw)
+short int sweep_setup_all()
 {
-  if (sw == NULL)
+  int k;
+
+  /* setup all sweeps */
+  for (k = 0; k < BANK_NUM_VOICES; k++)
+    sweep_reset(k);
+
+  return 0;
+}
+
+/*******************************************************************************
+** sweep_reset()
+*******************************************************************************/
+short int sweep_reset(int voice_index)
+{
+  sweep* sw;
+
+  /* make sure that the voice index is valid */
+  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
     return 1;
+
+  /* obtain sweep pointer */
+  sw = &G_sweep_bank[voice_index];
 
   /* initialize mode & speed */
   sw->mode = SWEEP_MODE_OFF;
@@ -64,12 +109,19 @@ short int sweep_setup(sweep* sw)
 /*******************************************************************************
 ** sweep_set_mode()
 *******************************************************************************/
-short int sweep_set_mode(sweep* sw, int mode)
+short int sweep_set_mode(int voice_index, int mode)
 {
-  if (sw == NULL)
+  sweep* sw;
+
+  /* make sure that the voice index is valid */
+  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
     return 1;
 
-  if ((mode >= 0) && (mode <= 9))
+  /* obtain sweep pointer */
+  sw = &G_sweep_bank[voice_index];
+
+  /* set mode */
+  if ((mode >= 0) && (mode < SWEEP_NUM_MODES))
     sw->mode = mode;
   else
     sw->mode = 0;
@@ -80,17 +132,23 @@ short int sweep_set_mode(sweep* sw, int mode)
 /*******************************************************************************
 ** sweep_set_speed()
 *******************************************************************************/
-short int sweep_set_speed(sweep* sw, int tempo, int speed)
+short int sweep_set_speed(int voice_index, int tempo, int speed)
 {
-  if (sw == NULL)
+  sweep* sw;
+
+  /* make sure that the voice index is valid */
+  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
     return 1;
 
+  /* obtain sweep pointer */
+  sw = &G_sweep_bank[voice_index];
+
   /* make sure tempo is valid */
-  if ((tempo < 0) || (tempo >= TEMPO_NUM_BPMS))
+  if (TEMPO_IS_NOT_VALID(tempo))
     return 0;
 
   /* set the speed */
-  if ((speed >= 1) && (speed <= 9))
+  if ((speed >= 1) && (speed <= SWEEP_NUM_SPEEDS))
     sw->speed = speed;
   else
     sw->speed = 1;
@@ -105,10 +163,16 @@ short int sweep_set_speed(sweep* sw, int tempo, int speed)
 /*******************************************************************************
 ** sweep_adjust_to_tempo()
 *******************************************************************************/
-short int sweep_adjust_to_tempo(sweep* sw, int tempo)
+short int sweep_adjust_to_tempo(int voice_index, int tempo)
 {
-  if (sw == NULL)
+  sweep* sw;
+
+  /* make sure that the voice index is valid */
+  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
     return 1;
+
+  /* obtain sweep pointer */
+  sw = &G_sweep_bank[voice_index];
 
   /* make sure tempo is valid */
   if ((tempo < 0) || (tempo >= TEMPO_NUM_BPMS))
@@ -124,10 +188,16 @@ short int sweep_adjust_to_tempo(sweep* sw, int tempo)
 /*******************************************************************************
 ** sweep_trigger()
 *******************************************************************************/
-short int sweep_trigger(sweep* sw, int old_note, int new_note)
+short int sweep_trigger(int voice_index, int old_note, int new_note)
 {
-  if (sw == NULL)
+  sweep* sw;
+
+  /* make sure that the voice index is valid */
+  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
     return 1;
+
+  /* obtain sweep pointer */
+  sw = &G_sweep_bank[voice_index];
 
   /* upward sweep */
   if ((sw->mode == SWEEP_MODE_PORTAMENTO_UP)          || 
@@ -199,108 +269,115 @@ short int sweep_trigger(sweep* sw, int old_note, int new_note)
 }
 
 /*******************************************************************************
-** sweep_update()
+** sweep_update_all()
 *******************************************************************************/
-short int sweep_update(sweep* sw)
+short int sweep_update_all()
 {
-  if (sw == NULL)
-    return 1;
+  int k;
 
-  /* if the sweep is off, return */
-  if (sw->mode == SWEEP_MODE_OFF)
-    return 0;
+  sweep* sw;
 
-  /* if the sweep has already reached the target, return */
-  if (sw->start + sw->step_coarse == sw->target)
-    return 0;
-
-  /* update phase */
-  sw->phase += sw->increment;
-
-  /* check if a period was completed */
-
-  /* note that the phase register is 28 bits (overflows once per coarse step) */
-  /* we treat this as 22 bits instead (overflows once per fine step)          */
-  if (sw->phase > 0x3FFFFF)
+  /* update all sweeps */
+  for (k = 0; k < BANK_NUM_VOICES; k++)
   {
-    sw->phase &= 0x3FFFFF;
+    sw = &G_sweep_bank[k];
 
-    /* update fine step */
-    if (sw->start < sw->target)
-      sw->step_fine += 1;
-    else if (sw->start > sw->target)
-      sw->step_fine -= 1;
+    /* if the sweep is off, continue */
+    if (sw->mode == SWEEP_MODE_OFF)
+      continue;
 
-    /* update coarse step */
-    if ((sw->mode == SWEEP_MODE_PORTAMENTO_UP)             || 
-        (sw->mode == SWEEP_MODE_HALF_STEP_GLISSANDO_UP)    || 
-        (sw->mode == SWEEP_MODE_PORTAMENTO_DOWN)           || 
-        (sw->mode == SWEEP_MODE_HALF_STEP_GLISSANDO_DOWN)  || 
-        (sw->mode == SWEEP_MODE_PORTAMENTO_TO_NOTE)        || 
-        (sw->mode == SWEEP_MODE_HALF_STEP_GLISSANDO_TO_NOTE))
-    {
-      if ((sw->start < sw->target) && (sw->step_fine >= 64))
-      {
-        sw->step_fine -= 64;
-        sw->step_coarse += 1;
-      }
-      else if ((sw->start > sw->target) && (sw->step_fine <= -64))
-      {
-        sw->step_fine += 64;
-        sw->step_coarse -= 1;
-      }
-    }
-    else if ( (sw->mode == SWEEP_MODE_WHOLE_STEP_GLISSANDO_UP)   || 
-              (sw->mode == SWEEP_MODE_WHOLE_STEP_GLISSANDO_DOWN) || 
-              (sw->mode == SWEEP_MODE_WHOLE_STEP_GLISSANDO_TO_NOTE))
-    {
-      if ((sw->start < sw->target) && (sw->step_fine >= 128))
-      {
-        sw->step_fine -= 128;
-        sw->step_coarse += 2;
-      }
-      else if ((sw->start > sw->target) && (sw->step_fine <= -128))
-      {
-        sw->step_fine += 128;
-        sw->step_coarse -= 2;
-      }
-    }
+    /* if the sweep has already reached the target, continue */
+    if (sw->start + sw->step_coarse == sw->target)
+      continue;
 
-    /* clamp to target */
-    if ((sw->start < sw->target) && (sw->start + sw->step_coarse >= sw->target))
-    {
-      sw->step_coarse = sw->target - sw->start;
-      sw->step_fine = 0;
-    }
-    else if ((sw->start > sw->target) && (sw->start + sw->step_coarse <= sw->target))
-    {
-      sw->step_coarse = sw->target - sw->start;
-      sw->step_fine = 0;
-    }
+    /* update phase */
+    sw->phase += sw->increment;
 
-    /* set level */
-    if ((sw->mode == SWEEP_MODE_PORTAMENTO_UP) || 
-        (sw->mode == SWEEP_MODE_PORTAMENTO_DOWN))
+    /* check if a period was completed */
+
+    /* note that the phase register is 28 bits (overflows once per coarse step) */
+    /* we treat this as 22 bits instead (overflows once per fine step)          */
+    if (sw->phase > 0x3FFFFF)
     {
-      sw->level = (sw->step_coarse * 64) + sw->step_fine;
-    }
-    else if ( (sw->mode == SWEEP_MODE_HALF_STEP_GLISSANDO_UP)   || 
-              (sw->mode == SWEEP_MODE_HALF_STEP_GLISSANDO_DOWN) || 
-              (sw->mode == SWEEP_MODE_WHOLE_STEP_GLISSANDO_UP)  || 
-              (sw->mode == SWEEP_MODE_WHOLE_STEP_GLISSANDO_DOWN))
-    {
-      sw->level = sw->step_coarse * 64;
-    }
-    else if (sw->mode == SWEEP_MODE_PORTAMENTO_TO_NOTE)
-    {
-      sw->level = (sw->start - sw->target) * 64;
-      sw->level += (sw->step_coarse * 64) + sw->step_fine;
-    }
-    else if ( (sw->mode == SWEEP_MODE_HALF_STEP_GLISSANDO_TO_NOTE) || 
-              (sw->mode == SWEEP_MODE_WHOLE_STEP_GLISSANDO_TO_NOTE))
-    {
-      sw->level = (sw->start - sw->target) * 64;
-      sw->level += sw->step_coarse * 64;
+      sw->phase &= 0x3FFFFF;
+
+      /* update fine step */
+      if (sw->start < sw->target)
+        sw->step_fine += 1;
+      else if (sw->start > sw->target)
+        sw->step_fine -= 1;
+
+      /* update coarse step */
+      if ((sw->mode == SWEEP_MODE_PORTAMENTO_UP)             || 
+          (sw->mode == SWEEP_MODE_HALF_STEP_GLISSANDO_UP)    || 
+          (sw->mode == SWEEP_MODE_PORTAMENTO_DOWN)           || 
+          (sw->mode == SWEEP_MODE_HALF_STEP_GLISSANDO_DOWN)  || 
+          (sw->mode == SWEEP_MODE_PORTAMENTO_TO_NOTE)        || 
+          (sw->mode == SWEEP_MODE_HALF_STEP_GLISSANDO_TO_NOTE))
+      {
+        if ((sw->start < sw->target) && (sw->step_fine >= 64))
+        {
+          sw->step_fine -= 64;
+          sw->step_coarse += 1;
+        }
+        else if ((sw->start > sw->target) && (sw->step_fine <= -64))
+        {
+          sw->step_fine += 64;
+          sw->step_coarse -= 1;
+        }
+      }
+      else if ( (sw->mode == SWEEP_MODE_WHOLE_STEP_GLISSANDO_UP)   || 
+                (sw->mode == SWEEP_MODE_WHOLE_STEP_GLISSANDO_DOWN) || 
+                (sw->mode == SWEEP_MODE_WHOLE_STEP_GLISSANDO_TO_NOTE))
+      {
+        if ((sw->start < sw->target) && (sw->step_fine >= 128))
+        {
+          sw->step_fine -= 128;
+          sw->step_coarse += 2;
+        }
+        else if ((sw->start > sw->target) && (sw->step_fine <= -128))
+        {
+          sw->step_fine += 128;
+          sw->step_coarse -= 2;
+        }
+      }
+
+      /* clamp to target */
+      if ((sw->start < sw->target) && (sw->start + sw->step_coarse >= sw->target))
+      {
+        sw->step_coarse = sw->target - sw->start;
+        sw->step_fine = 0;
+      }
+      else if ((sw->start > sw->target) && (sw->start + sw->step_coarse <= sw->target))
+      {
+        sw->step_coarse = sw->target - sw->start;
+        sw->step_fine = 0;
+      }
+
+      /* set level */
+      if ((sw->mode == SWEEP_MODE_PORTAMENTO_UP) || 
+          (sw->mode == SWEEP_MODE_PORTAMENTO_DOWN))
+      {
+        sw->level = (sw->step_coarse * 64) + sw->step_fine;
+      }
+      else if ( (sw->mode == SWEEP_MODE_HALF_STEP_GLISSANDO_UP)   || 
+                (sw->mode == SWEEP_MODE_HALF_STEP_GLISSANDO_DOWN) || 
+                (sw->mode == SWEEP_MODE_WHOLE_STEP_GLISSANDO_UP)  || 
+                (sw->mode == SWEEP_MODE_WHOLE_STEP_GLISSANDO_DOWN))
+      {
+        sw->level = sw->step_coarse * 64;
+      }
+      else if (sw->mode == SWEEP_MODE_PORTAMENTO_TO_NOTE)
+      {
+        sw->level = (sw->start - sw->target) * 64;
+        sw->level += (sw->step_coarse * 64) + sw->step_fine;
+      }
+      else if ( (sw->mode == SWEEP_MODE_HALF_STEP_GLISSANDO_TO_NOTE) || 
+                (sw->mode == SWEEP_MODE_WHOLE_STEP_GLISSANDO_TO_NOTE))
+      {
+        sw->level = (sw->start - sw->target) * 64;
+        sw->level += sw->step_coarse * 64;
+      }
     }
   }
 
@@ -318,7 +395,7 @@ short int sweep_generate_tables()
   /* phase increment table */
   for (m = TEMPO_LOWER_BOUND; m <= TEMPO_UPPER_BOUND; m++)
   {
-    for (n = 0; n < 9; n++)
+    for (n = 0; n < SWEEP_NUM_SPEEDS; n++)
     {
       S_sweep_phase_increment_table[TEMPO_COMPUTE_INDEX(m)][n] = 
         (int) ((TEMPO_COMPUTE_BEAT_FREQUENCY(m) * S_sweep_speed_table[n] * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
@@ -329,7 +406,7 @@ short int sweep_generate_tables()
 #if 0
   printf("Sweep Phase Increment Table (at 120 BPM):\n");
 
-  for (n = 0; n < 9; n++)
+  for (n = 0; n < SWEEP_NUM_SPEEDS; n++)
   {
     printf("Speed: %d, Phase Inc: %d\n", n, 
               S_sweep_phase_increment_table[TEMPO_COMPUTE_INDEX(120)][n]);
@@ -339,7 +416,7 @@ short int sweep_generate_tables()
 #if 0
   printf("Sweep Phase Increment Table (at 150 BPM):\n");
 
-  for (n = 0; n < 9; n++)
+  for (n = 0; n < SWEEP_NUM_SPEEDS; n++)
   {
     printf("Speed: %d, Phase Inc: %d\n", n, 
               S_sweep_phase_increment_table[TEMPO_COMPUTE_INDEX(150)][n]);

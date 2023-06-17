@@ -1,9 +1,11 @@
 /*******************************************************************************
-** sweep.h (pitch sweep, duty cycle sweep)
+** sweep.h (pitch sweep)
 *******************************************************************************/
 
 #ifndef SWEEP_H
 #define SWEEP_H
+
+#include "bank.h"
 
 enum
 {
@@ -44,17 +46,20 @@ typedef struct sweep
   short int level;
 } sweep;
 
+/* sweep bank */
+extern sweep G_sweep_bank[BANK_NUM_SWEEPS];
+
 /* function declarations */
-short int sweep_setup(sweep* sw);
+short int sweep_setup_all();
+short int sweep_reset(int voice_index);
 
-short int sweep_set_mode(sweep* sw, int mode);
-short int sweep_set_speed(sweep* sw, int tempo, int speed);
+short int sweep_set_mode(int voice_index, int mode);
+short int sweep_set_speed(int voice_index, int tempo, int speed);
 
-short int sweep_adjust_to_tempo(sweep* sw, int tempo);
+short int sweep_adjust_to_tempo(int voice_index, int tempo);
+short int sweep_trigger(int voice_index, int old_note, int new_note);
 
-short int sweep_trigger(sweep* sw, int old_note, int new_note);
-
-short int sweep_update(sweep* sw);
+short int sweep_update_all();
 
 short int sweep_generate_tables();
 

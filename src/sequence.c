@@ -17,19 +17,11 @@
 /* 3rd index: half beat             */
 static unsigned int S_sequencer_phase_increment_table[TEMPO_NUM_BPMS][TEMPO_NUM_SWINGS][2];
 
-/* key table */
-
-/* keys: 15 key signatures (0-7 sharps, 0-7 flats)  */
-/* modes: 7 (major, minor, dorian, lydian, etc)     */
-/* notes: 36 (7 per octave, 5 octaves, + 1 extra)   */
-static int  S_key_to_note_table[15][7][36];
-
 /* pattern array */
 pattern     G_sequencer_patterns[SEQUENCER_MAX_PATTERNS];
 int         G_sequencer_num_patterns;
 
-/* key & time signatures */
-int         G_sequencer_key_signature;
+/* time signature */
 int         G_sequencer_time_signature;
 
 /* tempo & swing */
@@ -37,9 +29,6 @@ int         G_sequencer_music_tempo;
 int         G_sequencer_music_swing;
 
 /* internal sequencer variables */
-static int  S_sequencer_key_index;
-static int  S_sequencer_mode_index;
-
 static int  S_sequencer_beats_per_bar;
 static int  S_sequencer_beat_size;
 
@@ -123,14 +112,10 @@ short int sequencer_setup()
 
   G_sequencer_num_patterns = 0;
 
-  G_sequencer_key_signature = SEQUENCER_KEY_SIGNATURE_C_MAJOR;
   G_sequencer_time_signature = SEQUENCER_TIME_SIGNATURE_4_4;
 
   G_sequencer_music_tempo = 120;
   G_sequencer_music_swing = TEMPO_SWING_1_1;
-
-  S_sequencer_key_index = 0;
-  S_sequencer_mode_index = 0;
 
   S_sequencer_beats_per_bar = 4;
   S_sequencer_beat_size = 4;
@@ -155,178 +140,6 @@ short int sequencer_reset()
 {
   S_sequencer_pattern_index = 0;
   S_sequencer_step_index = 0;
-
-  return 0;
-}
-
-/*******************************************************************************
-** sequencer_set_key_signature()
-*******************************************************************************/
-short int sequencer_set_key_signature(int sig)
-{
-  /* make sure key signature is valid */
-  if ((sig < 0) || (sig >= SEQUENCER_NUM_KEY_SIGNATURES))
-    return 1;
-
-  /* set key signature */
-  G_sequencer_key_signature = sig;
-
-  /* set table indices */
-  if (G_sequencer_key_signature == SEQUENCER_KEY_SIGNATURE_C_FLAT_MAJOR)
-  {
-    S_sequencer_key_index = 0;
-    S_sequencer_mode_index = 0;
-  }
-  else if (G_sequencer_key_signature == SEQUENCER_KEY_SIGNATURE_G_FLAT_MAJOR)
-  {
-    S_sequencer_key_index = 1;
-    S_sequencer_mode_index = 0;
-  }
-  else if (G_sequencer_key_signature == SEQUENCER_KEY_SIGNATURE_D_FLAT_MAJOR)
-  {
-    S_sequencer_key_index = 2;
-    S_sequencer_mode_index = 0;
-  }
-  else if (G_sequencer_key_signature == SEQUENCER_KEY_SIGNATURE_A_FLAT_MAJOR)
-  {
-    S_sequencer_key_index = 3;
-    S_sequencer_mode_index = 0;
-  }
-  else if (G_sequencer_key_signature == SEQUENCER_KEY_SIGNATURE_E_FLAT_MAJOR)
-  {
-    S_sequencer_key_index = 4;
-    S_sequencer_mode_index = 0;
-  }
-  else if (G_sequencer_key_signature == SEQUENCER_KEY_SIGNATURE_B_FLAT_MAJOR)
-  {
-    S_sequencer_key_index = 5;
-    S_sequencer_mode_index = 0;
-  }
-  else if (G_sequencer_key_signature == SEQUENCER_KEY_SIGNATURE_F_MAJOR)
-  {
-    S_sequencer_key_index = 6;
-    S_sequencer_mode_index = 0;
-  }
-  else if (G_sequencer_key_signature == SEQUENCER_KEY_SIGNATURE_C_MAJOR)
-  {
-    S_sequencer_key_index = 7;
-    S_sequencer_mode_index = 0;
-  }
-  else if (G_sequencer_key_signature == SEQUENCER_KEY_SIGNATURE_G_MAJOR)
-  {
-    S_sequencer_key_index = 8;
-    S_sequencer_mode_index = 0;
-  }
-  else if (G_sequencer_key_signature == SEQUENCER_KEY_SIGNATURE_D_MAJOR)
-  {
-    S_sequencer_key_index = 9;
-    S_sequencer_mode_index = 0;
-  }
-  else if (G_sequencer_key_signature == SEQUENCER_KEY_SIGNATURE_A_MAJOR)
-  {
-    S_sequencer_key_index = 10;
-    S_sequencer_mode_index = 0;
-  }
-  else if (G_sequencer_key_signature == SEQUENCER_KEY_SIGNATURE_E_MAJOR)
-  {
-    S_sequencer_key_index = 11;
-    S_sequencer_mode_index = 0;
-  }
-  else if (G_sequencer_key_signature == SEQUENCER_KEY_SIGNATURE_B_MAJOR)
-  {
-    S_sequencer_key_index = 12;
-    S_sequencer_mode_index = 0;
-  }
-  else if (G_sequencer_key_signature == SEQUENCER_KEY_SIGNATURE_F_SHARP_MAJOR)
-  {
-    S_sequencer_key_index = 13;
-    S_sequencer_mode_index = 0;
-  }
-  else if (G_sequencer_key_signature == SEQUENCER_KEY_SIGNATURE_C_SHARP_MAJOR)
-  {
-    S_sequencer_key_index = 14;
-    S_sequencer_mode_index = 0;
-  }
-  else if (G_sequencer_key_signature == SEQUENCER_KEY_SIGNATURE_A_FLAT_MINOR)
-  {
-    S_sequencer_key_index = 0;
-    S_sequencer_mode_index = 5;
-  }
-  else if (G_sequencer_key_signature == SEQUENCER_KEY_SIGNATURE_E_FLAT_MINOR)
-  {
-    S_sequencer_key_index = 1;
-    S_sequencer_mode_index = 5;
-  }
-  else if (G_sequencer_key_signature == SEQUENCER_KEY_SIGNATURE_B_FLAT_MINOR)
-  {
-    S_sequencer_key_index = 2;
-    S_sequencer_mode_index = 5;
-  }
-  else if (G_sequencer_key_signature == SEQUENCER_KEY_SIGNATURE_F_MINOR)
-  {
-    S_sequencer_key_index = 3;
-    S_sequencer_mode_index = 5;
-  }
-  else if (G_sequencer_key_signature == SEQUENCER_KEY_SIGNATURE_C_MINOR)
-  {
-    S_sequencer_key_index = 4;
-    S_sequencer_mode_index = 5;
-  }
-  else if (G_sequencer_key_signature == SEQUENCER_KEY_SIGNATURE_G_MINOR)
-  {
-    S_sequencer_key_index = 5;
-    S_sequencer_mode_index = 5;
-  }
-  else if (G_sequencer_key_signature == SEQUENCER_KEY_SIGNATURE_D_MINOR)
-  {
-    S_sequencer_key_index = 6;
-    S_sequencer_mode_index = 5;
-  }
-  else if (G_sequencer_key_signature == SEQUENCER_KEY_SIGNATURE_A_MINOR)
-  {
-    S_sequencer_key_index = 7;
-    S_sequencer_mode_index = 5;
-  }
-  else if (G_sequencer_key_signature == SEQUENCER_KEY_SIGNATURE_E_MINOR)
-  {
-    S_sequencer_key_index = 8;
-    S_sequencer_mode_index = 5;
-  }
-  else if (G_sequencer_key_signature == SEQUENCER_KEY_SIGNATURE_B_MINOR)
-  {
-    S_sequencer_key_index = 9;
-    S_sequencer_mode_index = 5;
-  }
-  else if (G_sequencer_key_signature == SEQUENCER_KEY_SIGNATURE_F_SHARP_MINOR)
-  {
-    S_sequencer_key_index = 10;
-    S_sequencer_mode_index = 5;
-  }
-  else if (G_sequencer_key_signature == SEQUENCER_KEY_SIGNATURE_C_SHARP_MINOR)
-  {
-    S_sequencer_key_index = 11;
-    S_sequencer_mode_index = 5;
-  }
-  else if (G_sequencer_key_signature == SEQUENCER_KEY_SIGNATURE_G_SHARP_MINOR)
-  {
-    S_sequencer_key_index = 12;
-    S_sequencer_mode_index = 5;
-  }
-  else if (G_sequencer_key_signature == SEQUENCER_KEY_SIGNATURE_D_SHARP_MINOR)
-  {
-    S_sequencer_key_index = 13;
-    S_sequencer_mode_index = 5;
-  }
-  else if (G_sequencer_key_signature == SEQUENCER_KEY_SIGNATURE_A_SHARP_MINOR)
-  {
-    S_sequencer_key_index = 14;
-    S_sequencer_mode_index = 5;
-  }
-  else
-  {
-    S_sequencer_key_index = 7;
-    S_sequencer_mode_index = 0;
-  }
 
   return 0;
 }
@@ -469,6 +282,7 @@ short int sequencer_activate_step()
   if (s->brightness != 0)
     S_sequencer_current_brightness = s->brightness;
 
+#if 0
   /* process sweep column */
   if (s->pitch_sweep_speed != 0)
   {
@@ -477,7 +291,9 @@ short int sequencer_activate_step()
     synth_set_pitch_sweep(2, s->pitch_sweep_mode, G_sequencer_music_tempo, s->pitch_sweep_speed);
     synth_set_pitch_sweep(3, s->pitch_sweep_mode, G_sequencer_music_tempo, s->pitch_sweep_speed);
   }
+#endif
 
+#if 0
   /* process lfo columns */
   if (s->vibrato_speed != 0)
   {
@@ -502,7 +318,9 @@ short int sequencer_activate_step()
     synth_set_wobble(2, s->wobble_depth, G_sequencer_music_tempo, s->wobble_speed);
     synth_set_wobble(3, s->wobble_depth, G_sequencer_music_tempo, s->wobble_speed);
   }
+#endif
 
+#if 0
   /* prepare key on / key off commands */
   if (s->note_1 == 37)
     synth_key_off(0);
@@ -535,6 +353,7 @@ short int sequencer_activate_step()
     synth_key_on(3, S_key_to_note_table[S_sequencer_key_index][S_sequencer_mode_index][s->note_4 - 1], 
                     S_sequencer_current_volume, S_sequencer_current_brightness);
   }
+#endif
 
   return 0;
 }
@@ -597,8 +416,6 @@ short int sequencer_update()
 short int sequencer_generate_tables()
 {
   int m;
-  int n;
-  int k;
 
   /* sequencer phase increment table */
   for (m = TEMPO_LOWER_BOUND; m <= TEMPO_UPPER_BOUND; m++)
@@ -661,142 +478,6 @@ short int sequencer_generate_tables()
 
     S_sequencer_phase_increment_table[TEMPO_COMPUTE_INDEX(m)][TEMPO_SWING_3_1][1] = 
       (int) ((TEMPO_COMPUTE_SECOND_HALF_BEAT_FREQUENCY(m, 3, 1) * 4.0f * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
-  }
-
-  /* key table */
-
-  /* set notes for c major in octave 4 */
-  S_key_to_note_table[7][0][2 * 7 + 0] = 4 * 12 + 0;
-  S_key_to_note_table[7][0][2 * 7 + 1] = 4 * 12 + 2;
-  S_key_to_note_table[7][0][2 * 7 + 2] = 4 * 12 + 4;
-  S_key_to_note_table[7][0][2 * 7 + 3] = 4 * 12 + 5;
-  S_key_to_note_table[7][0][2 * 7 + 4] = 4 * 12 + 7;
-  S_key_to_note_table[7][0][2 * 7 + 5] = 4 * 12 + 9;
-  S_key_to_note_table[7][0][2 * 7 + 6] = 4 * 12 + 11;
-
-  /* compute notes in other keys */
-
-  /* note that if the tonic is G, A, or B, it should be below middle c */
-  /*           if the tonic is D, E, or F, it should be above middle c */
-
-  /* adding sharps: sharp the fourth and make the fifth the new tonic */
-  for (m = 8; m < 15; m++)
-  {
-    /* apply transformation */
-    S_key_to_note_table[m][0][2 * 7 + 0] = S_key_to_note_table[m - 1][0][2 * 7 + 4];
-    S_key_to_note_table[m][0][2 * 7 + 1] = S_key_to_note_table[m - 1][0][2 * 7 + 5];
-    S_key_to_note_table[m][0][2 * 7 + 2] = S_key_to_note_table[m - 1][0][2 * 7 + 6];
-    S_key_to_note_table[m][0][2 * 7 + 3] = S_key_to_note_table[m - 1][0][2 * 7 + 0];
-    S_key_to_note_table[m][0][2 * 7 + 4] = S_key_to_note_table[m - 1][0][2 * 7 + 1];
-    S_key_to_note_table[m][0][2 * 7 + 5] = S_key_to_note_table[m - 1][0][2 * 7 + 2];
-    S_key_to_note_table[m][0][2 * 7 + 6] = S_key_to_note_table[m - 1][0][2 * 7 + 3] + 1;
-
-    /* adjust notes so that they are in ascending order */
-    S_key_to_note_table[m][0][2 * 7 + 0] -= 12;
-    S_key_to_note_table[m][0][2 * 7 + 1] -= 12;
-    S_key_to_note_table[m][0][2 * 7 + 2] -= 12;
-
-    /* apply octave adjustment if necessary */
-
-    /* if the tonic is less than Gb3, shift up one octave */
-    while (S_key_to_note_table[m][0][2 * 7 + 0] < 3 * 12 + 6)
-    {
-      for (k = 0; k < 7; k++)
-        S_key_to_note_table[m][0][2 * 7 + k] += 12;
-    }
-
-    /* if the tonic is more than F#5, shift down one octave */
-    while (S_key_to_note_table[m][0][2 * 7 + 0] > 5 * 12 + 6)
-    {
-      for (k = 0; k < 7; k++)
-        S_key_to_note_table[m][0][2 * 7 + k] -= 12;
-    }
-  }
-
-  /* adding flats: flat the seventh and make the fourth the new tonic */
-  for (m = 6; m >= 0; m--)
-  {
-    /* apply transformation */
-    S_key_to_note_table[m][0][2 * 7 + 0] = S_key_to_note_table[m + 1][0][2 * 7 + 3];
-    S_key_to_note_table[m][0][2 * 7 + 1] = S_key_to_note_table[m + 1][0][2 * 7 + 4];
-    S_key_to_note_table[m][0][2 * 7 + 2] = S_key_to_note_table[m + 1][0][2 * 7 + 5];
-    S_key_to_note_table[m][0][2 * 7 + 3] = S_key_to_note_table[m + 1][0][2 * 7 + 6] - 1;
-    S_key_to_note_table[m][0][2 * 7 + 4] = S_key_to_note_table[m + 1][0][2 * 7 + 0];
-    S_key_to_note_table[m][0][2 * 7 + 5] = S_key_to_note_table[m + 1][0][2 * 7 + 1];
-    S_key_to_note_table[m][0][2 * 7 + 6] = S_key_to_note_table[m + 1][0][2 * 7 + 2];
-
-    /* adjust notes so that they are in ascending order */
-    S_key_to_note_table[m][0][2 * 7 + 4] += 12;
-    S_key_to_note_table[m][0][2 * 7 + 5] += 12;
-    S_key_to_note_table[m][0][2 * 7 + 6] += 12;
-
-    /* apply octave adjustment if necessary */
-
-    /* if the tonic is less than Gb3, shift up one octave */
-    while (S_key_to_note_table[m][0][2 * 7 + 0] < 3 * 12 + 6)
-    {
-      for (k = 0; k < 7; k++)
-        S_key_to_note_table[m][0][2 * 7 + k] += 12;
-    }
-
-    /* if the tonic is more than F#5, shift down one octave */
-    while (S_key_to_note_table[m][0][2 * 7 + 0] > 5 * 12 + 6)
-    {
-      for (k = 0; k < 7; k++)
-        S_key_to_note_table[m][0][2 * 7 + k] -= 12;
-    }
-  }
-
-  /* compute modes of each key */
-  for (m = 0; m < 15; m++)
-  {
-    for (n = 1; n < 7; n++)
-    {
-      /* apply transformation */
-      S_key_to_note_table[m][n][2 * 7 + 0] = S_key_to_note_table[m][n - 1][2 * 7 + 1];
-      S_key_to_note_table[m][n][2 * 7 + 1] = S_key_to_note_table[m][n - 1][2 * 7 + 2];
-      S_key_to_note_table[m][n][2 * 7 + 2] = S_key_to_note_table[m][n - 1][2 * 7 + 3];
-      S_key_to_note_table[m][n][2 * 7 + 3] = S_key_to_note_table[m][n - 1][2 * 7 + 4];
-      S_key_to_note_table[m][n][2 * 7 + 4] = S_key_to_note_table[m][n - 1][2 * 7 + 5];
-      S_key_to_note_table[m][n][2 * 7 + 5] = S_key_to_note_table[m][n - 1][2 * 7 + 6];
-      S_key_to_note_table[m][n][2 * 7 + 6] = S_key_to_note_table[m][n - 1][2 * 7 + 0];
-
-      /* adjust notes so that they are in ascending order */
-      S_key_to_note_table[m][n][2 * 7 + 6] += 12;
-
-      /* apply octave adjustment if necessary */
-
-      /* if the tonic is less than Gb3, shift up one octave */
-      while (S_key_to_note_table[m][n][2 * 7 + 0] < 3 * 12 + 6)
-      {
-        for (k = 0; k < 7; k++)
-          S_key_to_note_table[m][n][2 * 7 + k] += 12;
-      }
-
-      /* if the tonic is more than F#5, shift down one octave */
-      while (S_key_to_note_table[m][n][2 * 7 + 0] > 5 * 12 + 6)
-      {
-        for (k = 0; k < 7; k++)
-          S_key_to_note_table[m][n][2 * 7 + k] -= 12;
-      }
-    }
-  }
-
-  /* compute notes for all keys & modes in the other octaves */
-  for (m = 0; m < 15; m++)
-  {
-    for (n = 0; n < 7; n++)
-    {
-      for (k = 0; k < 7; k++)
-      {
-        S_key_to_note_table[m][n][0 * 7 + k] = S_key_to_note_table[m][n][2 * 7 + k] - 24;
-        S_key_to_note_table[m][n][1 * 7 + k] = S_key_to_note_table[m][n][2 * 7 + k] - 12;
-        S_key_to_note_table[m][n][3 * 7 + k] = S_key_to_note_table[m][n][2 * 7 + k] + 12;
-        S_key_to_note_table[m][n][4 * 7 + k] = S_key_to_note_table[m][n][2 * 7 + k] + 24;
-      }
-
-      S_key_to_note_table[m][n][5 * 7 + 0] = S_key_to_note_table[m][n][2 * 7 + 0] + 36;
-    }
   }
 
   return 0;

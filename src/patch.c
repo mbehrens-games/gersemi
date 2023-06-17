@@ -4,59 +4,67 @@
 
 #include <stdio.h>
 
-#include "envelope.h"
 #include "filter.h"
-#include "lfo.h"
-#include "linear.h"
 #include "patch.h"
 #include "voice.h"
-#include "waveform.h"
+
+/* patch bank */
+patch G_patch_bank[BANK_NUM_PATCHES];
+
+/*******************************************************************************
+** patch_setup_all()
+*******************************************************************************/
+short int patch_setup_all()
+{
+  int k;
+
+  /* setup all patches */
+  for (k = 0; k < BANK_NUM_PATCHES; k++)
+    patch_reset(k);
+
+  return 0;
+}
 
 /*******************************************************************************
 ** patch_reset()
 *******************************************************************************/
-short int patch_reset(patch* p)
+short int patch_reset(int patch_index)
 {
-  if (p == NULL)
+  int m;
+
+  patch* p;
+
+  /* make sure that the patch index is valid */
+  if (BANK_PATCH_INDEX_IS_NOT_VALID(patch_index))
     return 1;
+
+  /* obtain patch pointer */
+  p = &G_patch_bank[patch_index];
 
   /* program */
   p->program = VOICE_PROGRAM_SYNC_SQUARE;
 
   /* oscillators */
-  p->osc_1_numerator = 1;
-  p->osc_1_denominator = 1;
-  p->osc_1_detune = 8;
-  p->osc_1_amplitude = 16;
-
-  p->osc_2_numerator = 1;
-  p->osc_2_denominator = 1;
-  p->osc_2_detune = 8;
-  p->osc_2_amplitude = 16;
-
-  p->osc_3_numerator = 1;
-  p->osc_3_denominator = 1;
-  p->osc_3_detune = 8;
-  p->osc_3_amplitude = 16;
-
-  p->osc_4_numerator = 1;
-  p->osc_4_denominator = 1;
-  p->osc_4_detune = 8;
-  p->osc_4_amplitude = 16;
+  for (m = 0; m < VOICE_NUM_OSCS_AND_ENVS; m++)
+  {
+    p->osc_numerator[m] = 1;
+    p->osc_denominator[m] = 1;
+    p->osc_detune[m] = 8;
+    p->osc_amplitude[m] = 16;
+  }
 
   /* feedback */
   p->feedback = 0;
 
   /* noise generator */
   p->noise_period = 0;
-  p->noise_amplitude = 0;
-  p->noise_alternate = 0;
+  p->noise_mix = 0;
 
   /* carrier envelope */
-  p->carr_attack = 1;
-  p->carr_decay_1 = 1;
-  p->carr_decay_2 = 1;
-  p->carr_release = 1;
+  p->carr_attack = 32;
+  p->carr_decay_1 = 16;
+  p->carr_decay_2 = 16;
+  p->carr_release = 16;
   p->carr_sustain = 0;
   p->carr_rate_keyscaling = 1;
   p->carr_level_keyscaling = 1;
@@ -70,17 +78,7 @@ short int patch_reset(patch* p)
   p->mod_rate_keyscaling = 1;
   p->mod_level_keyscaling = 1;
 
-  /* linear envelope settings */
-  p->extra_mode = LINEAR_MODE_CONSTANT;
-  p->extra_rate = 1;
-  p->extra_keyscaling = 1;
-
   /* lfo settings */
-  p->vibrato_mode = LFO_MODE_TRIANGLE;
-  p->vibrato_alternate = 0;
-
-  p->tremolo_mode = LFO_MODE_TRIANGLE;
-  p->wobble_mode = LFO_MODE_TRIANGLE;
 
   /* filters */
   p->lowpass_cutoff = FILTER_LOWPASS_CUTOFF_C8;

@@ -5,11 +5,13 @@
 #ifndef FRAME_H
 #define FRAME_H
 
-#define FRAME_SAMPLE_BUFFER_LENGTH  600
+#include "clock.h"
 
-#define FRAME_SAMPLES_PER_FRAME     600   /* 36000 / 60 */
+#define FRAME_NUM_SAMPLES   (CLOCK_SAMPLING_RATE / 60)   /* 36000 / 60 = 600 */
 
-extern short int  G_frame_sample_buffer[FRAME_SAMPLE_BUFFER_LENGTH];
+#define FRAME_BUFFER_LENGTH (FRAME_NUM_SAMPLES * 2)
+
+extern short int G_frame_sample_buffer[FRAME_BUFFER_LENGTH];
 
 /* function declarations */
 short int frame_reset_buffer();

@@ -5,11 +5,7 @@
 #ifndef FILTER_H
 #define FILTER_H
 
-enum
-{
-  FILTER_MODE_LOWPASS = 0,
-  FILTER_MODE_HIGHPASS
-};
+#include "bank.h"
 
 enum
 {
@@ -33,9 +29,9 @@ enum
 
 typedef struct filter
 {
-  int mode;
+  int cutoff;
 
-  int fc_index;
+  int input;
 
   int s[FILTER_NUM_STAGES];
   int v[FILTER_NUM_STAGES];
@@ -44,12 +40,16 @@ typedef struct filter
   int level;
 } filter;
 
+/* filter bank */
+extern filter G_filter_bank[BANK_NUM_FILTERS];
+
 /* function declarations */
-short int filter_setup(filter* fltr, int mode, int fc_index);
+short int filter_setup_all();
+short int filter_reset(int voice_index);
 
-short int filter_set_index(filter* fltr, int fc_index);
+short int filter_set_lowpass_cutoff(int voice_index, int cutoff);
+short int filter_set_highpass_cutoff(int voice_index, int cutoff);
 
-short int filter_reset(filter* fltr);
-short int filter_update(filter* fltr, int input);
+short int filter_update_all();
 
 #endif

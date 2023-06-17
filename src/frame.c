@@ -7,20 +7,19 @@
 
 #include "clock.h"
 #include "frame.h"
-#include "sequence.h"
 #include "synth.h"
 
-short int   G_frame_sample_buffer[FRAME_SAMPLE_BUFFER_LENGTH];
+short int G_frame_sample_buffer[FRAME_BUFFER_LENGTH];
 
 /*******************************************************************************
 ** frame_reset_buffer()
 *******************************************************************************/
 short int frame_reset_buffer()
 {
-  int m;
+  int k;
 
-  for (m = 0; m < FRAME_SAMPLE_BUFFER_LENGTH; m++)
-    G_frame_sample_buffer[m] = 0;
+  for (k = 0; k < FRAME_BUFFER_LENGTH; k++)
+    G_frame_sample_buffer[k] = 0;
 
   return 0;
 }
@@ -30,7 +29,6 @@ short int frame_reset_buffer()
 *******************************************************************************/
 short int frame_prepare_for_playback()
 {
-  sequencer_activate_step();
 
   return 0;
 }
@@ -40,24 +38,28 @@ short int frame_prepare_for_playback()
 *******************************************************************************/
 short int frame_generate_one_frame()
 {
-  int m;
+  int k;
 
   /* generate one frame of samples */
-  for (m = 0; m < FRAME_SAMPLES_PER_FRAME; m++)
+  for (k = 0; k < FRAME_NUM_SAMPLES; k++)
   {
-    /* update sequencer */
-    sequencer_update();
-
     /* update voices */
     synth_update();
 
     /* add sample to buffer */
-    if (G_synth_level > 32767)
-      G_frame_sample_buffer[m] = 32767;
-    else if (G_synth_level < -32768)
-      G_frame_sample_buffer[m] = -32768;
+    if (G_synth_level_left > 32767)
+      G_frame_sample_buffer[2 * k + 0] = 32767;
+    else if (G_synth_level_left < -32768)
+      G_frame_sample_buffer[2 * k + 0] = -32768;
     else
-      G_frame_sample_buffer[m] = (short int) G_synth_level;
+      G_frame_sample_buffer[2 * k + 0] = (short int) G_synth_level_left;
+
+    if (G_synth_level_right > 32767)
+      G_frame_sample_buffer[2 * k + 1] = 32767;
+    else if (G_synth_level_right < -32768)
+      G_frame_sample_buffer[2 * k + 1] = -32768;
+    else
+      G_frame_sample_buffer[2 * k + 1] = (short int) G_synth_level_right;
   }
 
   return 0;
