@@ -10,77 +10,83 @@
 
 enum
 {
-  GRAPHICS_RESOLUTION_640_480 = 0,
-  GRAPHICS_RESOLUTION_800_600,
-  GRAPHICS_RESOLUTION_960_720,
-  GRAPHICS_RESOLUTION_1024_768,
-  GRAPHICS_RESOLUTION_1280_960,
-  GRAPHICS_RESOLUTION_1440_1080,
+  GRAPHICS_RESOLUTION_480P = 0,
+  GRAPHICS_RESOLUTION_600P,
+  GRAPHICS_RESOLUTION_720P,
+  GRAPHICS_RESOLUTION_768P,
+  GRAPHICS_RESOLUTION_1080P,
   GRAPHICS_NUM_RESOLUTIONS
 };
 
 enum
 {
   GRAPHICS_TILE_LAYER_BACKGROUND = 0,
+  GRAPHICS_TILE_LAYER_PANELS,
   GRAPHICS_NUM_TILE_LAYERS
 };
 
 enum
 {
-  GRAPHICS_SPRITE_LAYER_PANELS_AND_BUTTONS = 0,
+  GRAPHICS_SPRITE_LAYER_BUTTONS = 0,
   GRAPHICS_SPRITE_LAYER_OVERLAY,
   GRAPHICS_NUM_SPRITE_LAYERS
 };
 
-#define GRAPHICS_OVERSCAN_WIDTH   320
-#define GRAPHICS_OVERSCAN_HEIGHT  240
+#define GRAPHICS_OVERSCAN_WIDTH   400
+#define GRAPHICS_OVERSCAN_HEIGHT  224
 
 #define GRAPHICS_INTERMEDIATE_TEXTURE_WIDTH   2048
 #define GRAPHICS_INTERMEDIATE_TEXTURE_HEIGHT  1024
 
 /* the maximum number of tiles is determined as follows:        */
-/*   number of 16x16 background tiles (1 screen): 20 * 15 = 300 */
-/* overall, this is 300                                         */
-#define GRAPHICS_MAX_BACKGROUND_TILES 300
+/*   number of 16x16 background tiles (1 screen): 25 * 14 = 350 */
+/*   number of 8x8 panel pieces (1 screen): 50 * 28 = 1400      */
+/* overall, this is 350 + 1400 = 1750                           */
+#define GRAPHICS_MAX_BACKGROUND_TILES 350
+#define GRAPHICS_MAX_PANELS_TILES     1400
 
-#define GRAPHICS_MAX_TILES  GRAPHICS_MAX_BACKGROUND_TILES
+#define GRAPHICS_MAX_TILES  ( GRAPHICS_MAX_BACKGROUND_TILES +                  \
+                              GRAPHICS_MAX_PANELS_TILES)
 
 #define GRAPHICS_BACKGROUND_TILES_START_INDEX 0
 #define GRAPHICS_BACKGROUND_TILES_END_INDEX   ( GRAPHICS_BACKGROUND_TILES_START_INDEX + \
                                                 GRAPHICS_MAX_BACKGROUND_TILES)
 
-/* the maximum number of sprites is determined as follows:    */
-/*   number of 16x16 panel pieces (1 screen): 20 * 15 = 300   */
-/*   number of 16x16 button pieces (1 screen): 20 * 15 = 300  */
-/*   number of 8x8 text characters (1 screen): 40 * 30 = 1200 */
-/* overall, this is 300 + 300 + 1200 = 1800                   */
-#define GRAPHICS_MAX_PANELS_AND_BUTTONS_SPRITES 600
-#define GRAPHICS_MAX_OVERLAY_SPRITES            1200
+#define GRAPHICS_PANELS_TILES_START_INDEX GRAPHICS_BACKGROUND_TILES_END_INDEX
+#define GRAPHICS_PANELS_TILES_END_INDEX   ( GRAPHICS_PANELS_TILES_START_INDEX + \
+                                            GRAPHICS_MAX_PANELS_TILES)
 
-#define GRAPHICS_MAX_SPRITES  ( GRAPHICS_MAX_PANELS_AND_BUTTONS_SPRITES +        \
+/* the maximum number of sprites is determined as follows:    */
+/*   number of 16x16 button pieces (1 screen): 25 * 14 = 350  */
+/*   number of 8x8 text characters (1 screen): 50 * 28 = 1400 */
+/* overall, this is 350 + 1400 = 1750                         */
+#define GRAPHICS_MAX_BUTTONS_SPRITES  350
+#define GRAPHICS_MAX_OVERLAY_SPRITES  1400
+
+#define GRAPHICS_MAX_SPRITES  ( GRAPHICS_MAX_BUTTONS_SPRITES +                 \
                                 GRAPHICS_MAX_OVERLAY_SPRITES)
 
-#define GRAPHICS_PANELS_AND_BUTTONS_SPRITES_START_INDEX   0
-#define GRAPHICS_PANELS_AND_BUTTONS_SPRITES_END_INDEX     ( GRAPHICS_PANELS_AND_BUTTONS_SPRITES_START_INDEX + \
-                                                            GRAPHICS_MAX_PANELS_AND_BUTTONS_SPRITES)
+#define GRAPHICS_BUTTONS_SPRITES_START_INDEX  0
+#define GRAPHICS_BUTTONS_SPRITES_END_INDEX    ( GRAPHICS_BUTTONS_SPRITES_START_INDEX + \
+                                                GRAPHICS_MAX_BUTTONS_SPRITES)
 
-#define GRAPHICS_OVERLAY_SPRITES_START_INDEX  GRAPHICS_PANELS_AND_BUTTONS_SPRITES_END_INDEX
+#define GRAPHICS_OVERLAY_SPRITES_START_INDEX  GRAPHICS_BUTTONS_SPRITES_END_INDEX
 #define GRAPHICS_OVERLAY_SPRITES_END_INDEX    ( GRAPHICS_OVERLAY_SPRITES_START_INDEX + \
                                                 GRAPHICS_MAX_OVERLAY_SPRITES)
 
 /* the near and far planes are from 0.125 (near) to 1.375 (far)   */
-#define GRAPHICS_Z_LEVEL_BACKGROUND  1.25f
+#define GRAPHICS_Z_LEVEL_BACKGROUND 1.25f
+#define GRAPHICS_Z_LEVEL_PANELS     1.0f
 
-/* the z levels for the panels and overlay shouldn't  */
+/* the z levels for the buttons and overlay shouldn't */
 /* matter, as the depth buffer should be reset and    */
 /* the depth test should be off when we draw them.    */
-#define GRAPHICS_Z_LEVEL_PANELS   0.5f
-#define GRAPHICS_Z_LEVEL_BUTTONS  0.375f
-#define GRAPHICS_Z_LEVEL_OVERLAY  0.25f
+#define GRAPHICS_Z_LEVEL_BUTTONS    0.5f
+#define GRAPHICS_Z_LEVEL_OVERLAY    0.25f
 
 /* for the postprocessing, the z level of the fullscreen  */
 /* quad is set to the midpoint of the near and far planes */
-#define GRAPHICS_Z_LEVEL_FULL_SCREEN_QUAD   0.75f
+#define GRAPHICS_Z_LEVEL_FULL_SCREEN_QUAD 0.75f
 
 /* sdl window, various sizes, etc */
 extern SDL_Window* G_sdl_window;

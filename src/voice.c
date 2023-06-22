@@ -7,6 +7,7 @@
 #include <math.h>
 
 #include "clock.h"
+#include "dbstep.h"
 #include "envelope.h"
 #include "filter.h"
 #include "lfo.h"
@@ -14,129 +15,79 @@
 #include "sweep.h"
 #include "tuning.h"
 #include "voice.h"
-#include "waveform.h"
 
-#define VOICE_UPDATE_FM_OSCILLATOR_1()                                         \
-  /* compute feedback phase mod                     */                         \
-  /* we take the average of the last two values,    */                         \
-  /* and then find the phase mod amount normally    */                         \
-  /* (right shift by another 3, and then mask it).  */                         \
-  fb_phase_mod = ((v->feed_in[0] + v->feed_in[1]) >> 4) & 0x3FF;               \
+#define PI      3.14159265358979323846f
+#define TWO_PI  6.28318530717958647693f
+
+#define VOICE_WAVETABLE_LOOKUP(num, phase)                                     \
+  masked_phase = ((phase) & 0x3FF);                                            \
                                                                                \
-  /* oscillator 1 */                                                           \
-  osc_1_level = waveform_wave_lookup( WAVEFORM_SINE,                           \
-                                      (v->osc_1_phase >> 18) + fb_phase_mod,   \
-                                      osc_1_env_index);                        \
+  if (masked_phase < 512)                                                      \
+  {                                                                            \
+    final_index = S_voice_wavetable_sine[masked_phase];                        \
+    final_index += (osc_env_index[num] << 2);                                  \
                                                                                \
-  osc_1_phase_mod = (osc_1_level >> 3) & 0x3FF;                                \
+    if (final_index < 0)                                                       \
+      final_index = 0;                                                         \
+    else if (final_index > 4095)                                               \
+      final_index = 4095;                                                      \
                                                                                \
-  /* cycle feedback                                             */             \
-  /* note that the feedback values from 0-8 are divided by 16,  */             \
-  /* so the max feedback is 8/16 = 1/2 of the oscillator level. */             \
-  v->feed_in[1] = v->feed_in[0];                                               \
-  v->feed_in[0] = (osc_1_level * v->feedback) >> 4;
-
-#define VOICE_UPDATE_FM_OSCILLATOR_2_NO_MOD()                                  \
-  osc_2_level =                                                                \
-    waveform_wave_lookup( WAVEFORM_SINE,                                       \
-                          (v->osc_2_phase >> 18),                              \
-                          osc_2_env_index);                                    \
+    osc_level[num] = S_voice_db_to_linear_table[final_index];                  \
+  }                                                                            \
+  else                                                                         \
+  {                                                                            \
+    final_index = S_voice_wavetable_sine[masked_phase - 512];                  \
+    final_index += (osc_env_index[num] << 2);                                  \
                                                                                \
-  osc_2_phase_mod = (osc_2_level >> 3) & 0x3FF;
-
-#define VOICE_UPDATE_FM_OSCILLATOR_2_MOD_1()                                   \
-  osc_2_level =                                                                \
-    waveform_wave_lookup( WAVEFORM_SINE,                                       \
-                          (v->osc_2_phase >> 18) + osc_1_phase_mod,            \
-                          osc_2_env_index);                                    \
+    if (final_index < 0)                                                       \
+      final_index = 0;                                                         \
+    else if (final_index > 4095)                                               \
+      final_index = 4095;                                                      \
                                                                                \
-  osc_2_phase_mod = (osc_2_level >> 3) & 0x3FF;
+    osc_level[num] = -S_voice_db_to_linear_table[final_index];                 \
+  }
 
-#define VOICE_UPDATE_FM_OSCILLATOR_3_NO_MOD()                                  \
-  osc_3_level =                                                                \
-    waveform_wave_lookup( WAVEFORM_SINE,                                       \
-                          (v->osc_3_phase >> 18),                              \
-                          osc_3_env_index);                                    \
+#define VOICE_UPDATE_OSCILLATOR_FEEDBACK(num)                                           \
+  /* compute feedback phase mod                     */                                  \
+  /* we take the average of the last two values,    */                                  \
+  /* and then find the phase mod amount normally    */                                  \
+  /* (right shift by another 3, and then mask it).  */                                  \
+  osc_fb_mod[num] = ((v->feed_in[2 * num + 0] + v->feed_in[2 * num + 1]) >> 4) & 0x3FF; \
+                                                                                        \
+  /* update oscillator */                                                               \
+  VOICE_WAVETABLE_LOOKUP(num, (v->osc_phase[num] >> 18) + osc_fb_mod[num])              \
+                                                                                        \
+  /* cycle feedback                                             */                      \
+  /* note that the feedback values from 0-8 are divided by 16,  */                      \
+  /* so the max feedback is 8/16 = 1/2 of the oscillator level. */                      \
+  v->feed_in[2 * num + 1] = v->feed_in[2 * num + 0];                                    \
+  v->feed_in[2 * num + 0] = (osc_level[num] * v->osc_feedback[num]) >> 4;
+
+#define VOICE_UPDATE_OSCILLATOR_NO_MOD(num)                                    \
+  VOICE_WAVETABLE_LOOKUP(num, (v->osc_phase[num] >> 18) + osc_fb_mod[num])     \
                                                                                \
-  osc_3_phase_mod = (osc_3_level >> 3) & 0x3FF;
+  osc_phase_mod[num] = (osc_level[num] >> 3) & 0x3FF;
 
-#define VOICE_UPDATE_FM_OSCILLATOR_3_MOD_1()                                   \
-  osc_3_level =                                                                \
-    waveform_wave_lookup( WAVEFORM_SINE,                                       \
-                          (v->osc_3_phase >> 18) + osc_1_phase_mod,            \
-                          osc_3_env_index);                                    \
+#define VOICE_UPDATE_OSCILLATOR_MOD_X1(num, mod1)                              \
+  VOICE_WAVETABLE_LOOKUP(num, (v->osc_phase[num] >> 18) + osc_fb_mod[num]      \
+                                                        + osc_phase_mod[mod1]) \
                                                                                \
-  osc_3_phase_mod = (osc_3_level >> 3) & 0x3FF;
+  osc_phase_mod[num] = (osc_level[num] >> 3) & 0x3FF;
 
-#define VOICE_UPDATE_FM_OSCILLATOR_3_MOD_2()                                   \
-  osc_3_level =                                                                \
-    waveform_wave_lookup( WAVEFORM_SINE,                                       \
-                          (v->osc_3_phase >> 18) + osc_2_phase_mod,            \
-                          osc_3_env_index);                                    \
+#define VOICE_UPDATE_OSCILLATOR_MOD_X2(num, mod1, mod2)                        \
+  VOICE_WAVETABLE_LOOKUP(num, (v->osc_phase[num] >> 18) + osc_fb_mod[num]      \
+                                                        + osc_phase_mod[mod1]  \
+                                                        + osc_phase_mod[mod2]) \
                                                                                \
-  osc_3_phase_mod = (osc_3_level >> 3) & 0x3FF;
+  osc_phase_mod[num] = (osc_level[num] >> 3) & 0x3FF;
 
-#define VOICE_UPDATE_FM_OSCILLATOR_3_MOD_1_AND_2()                             \
-  osc_3_level =                                                                \
-    waveform_wave_lookup( WAVEFORM_SINE,                                       \
-                          (v->osc_3_phase >> 18)  + osc_1_phase_mod            \
-                                                  + osc_2_phase_mod,           \
-                          osc_3_env_index);                                    \
+#define VOICE_UPDATE_OSCILLATOR_MOD_X3(num, mod1, mod2, mod3)                  \
+  VOICE_WAVETABLE_LOOKUP(num, (v->osc_phase[num] >> 18) + osc_fb_mod[num]      \
+                                                        + osc_phase_mod[mod1]  \
+                                                        + osc_phase_mod[mod2]  \
+                                                        + osc_phase_mod[mod3]) \
                                                                                \
-  osc_3_phase_mod = (osc_3_level >> 3) & 0x3FF;
-
-#define VOICE_UPDATE_FM_OSCILLATOR_4_NO_MOD()                                  \
-  osc_4_level =                                                                \
-    waveform_wave_lookup( WAVEFORM_SINE,                                       \
-                          (v->osc_4_phase >> 18),                              \
-                          osc_4_env_index);
-
-#define VOICE_UPDATE_FM_OSCILLATOR_4_MOD_1()                                   \
-  osc_4_level =                                                                \
-    waveform_wave_lookup( WAVEFORM_SINE,                                       \
-                          (v->osc_4_phase >> 18) + osc_1_phase_mod,            \
-                          osc_4_env_index);
-
-#define VOICE_UPDATE_FM_OSCILLATOR_4_MOD_2()                                   \
-  osc_4_level =                                                                \
-    waveform_wave_lookup( WAVEFORM_SINE,                                       \
-                          (v->osc_4_phase >> 18) + osc_2_phase_mod,            \
-                          osc_4_env_index);
-
-#define VOICE_UPDATE_FM_OSCILLATOR_4_MOD_3()                                   \
-  osc_4_level =                                                                \
-    waveform_wave_lookup( WAVEFORM_SINE,                                       \
-                          (v->osc_4_phase >> 18) + osc_3_phase_mod,            \
-                          osc_4_env_index);
-
-#define VOICE_UPDATE_FM_OSCILLATOR_4_MOD_1_AND_2()                             \
-  osc_4_level =                                                                \
-    waveform_wave_lookup( WAVEFORM_SINE,                                       \
-                          (v->osc_4_phase >> 18)  + osc_1_phase_mod            \
-                                                  + osc_2_phase_mod,           \
-                          osc_4_env_index);
-
-#define VOICE_UPDATE_FM_OSCILLATOR_4_MOD_1_AND_3()                             \
-  osc_4_level =                                                                \
-    waveform_wave_lookup( WAVEFORM_SINE,                                       \
-                          (v->osc_4_phase >> 18)  + osc_1_phase_mod            \
-                                                  + osc_3_phase_mod,           \
-                          osc_4_env_index);
-
-#define VOICE_UPDATE_FM_OSCILLATOR_4_MOD_2_AND_3()                             \
-  osc_4_level =                                                                \
-    waveform_wave_lookup( WAVEFORM_SINE,                                       \
-                          (v->osc_4_phase >> 18)  + osc_2_phase_mod            \
-                                                  + osc_3_phase_mod,           \
-                          osc_4_env_index);
-
-#define VOICE_UPDATE_FM_OSCILLATOR_4_MOD_1_2_AND_3()                           \
-  osc_4_level =                                                                \
-    waveform_wave_lookup( WAVEFORM_SINE,                                       \
-                          (v->osc_4_phase >> 18)  + osc_1_phase_mod            \
-                                                  + osc_2_phase_mod            \
-                                                  + osc_3_phase_mod,           \
-                          osc_4_env_index);
+  osc_phase_mod[num] = (osc_level[num] >> 3) & 0x3FF;
 
 #if 0
 /* phase offset table     */
@@ -179,24 +130,25 @@ static int  S_voice_multiple_table[16] =
 /* detune table */
 static int  S_voice_detune_table[17] = 
             { (-24 * TUNING_NUM_SEMITONE_STEPS) / 64, 
-              (-20 * TUNING_NUM_SEMITONE_STEPS) / 64, 
-              (-16 * TUNING_NUM_SEMITONE_STEPS) / 64, 
+              (-21 * TUNING_NUM_SEMITONE_STEPS) / 64, 
+              (-18 * TUNING_NUM_SEMITONE_STEPS) / 64, 
+              (-15 * TUNING_NUM_SEMITONE_STEPS) / 64, 
               (-12 * TUNING_NUM_SEMITONE_STEPS) / 64, 
-              ( -8 * TUNING_NUM_SEMITONE_STEPS) / 64, 
+              ( -9 * TUNING_NUM_SEMITONE_STEPS) / 64, 
               ( -6 * TUNING_NUM_SEMITONE_STEPS) / 64, 
-              ( -4 * TUNING_NUM_SEMITONE_STEPS) / 64, 
-              ( -2 * TUNING_NUM_SEMITONE_STEPS) / 64, 
+              ( -3 * TUNING_NUM_SEMITONE_STEPS) / 64, 
               0, 
-              (  2 * TUNING_NUM_SEMITONE_STEPS) / 64, 
-              (  4 * TUNING_NUM_SEMITONE_STEPS) / 64, 
+              (  3 * TUNING_NUM_SEMITONE_STEPS) / 64, 
               (  6 * TUNING_NUM_SEMITONE_STEPS) / 64, 
-              (  8 * TUNING_NUM_SEMITONE_STEPS) / 64, 
+              (  9 * TUNING_NUM_SEMITONE_STEPS) / 64, 
               ( 12 * TUNING_NUM_SEMITONE_STEPS) / 64, 
-              ( 16 * TUNING_NUM_SEMITONE_STEPS) / 64, 
-              ( 20 * TUNING_NUM_SEMITONE_STEPS) / 64, 
+              ( 15 * TUNING_NUM_SEMITONE_STEPS) / 64, 
+              ( 18 * TUNING_NUM_SEMITONE_STEPS) / 64, 
+              ( 21 * TUNING_NUM_SEMITONE_STEPS) / 64, 
               ( 24 * TUNING_NUM_SEMITONE_STEPS) / 64
             };
 
+#if 0
 /* noise note table */
 static int  S_voice_noise_note_table[16] = 
             { 3 * 12 + 9, /* A-3  */
@@ -216,6 +168,12 @@ static int  S_voice_noise_note_table[16] =
               9 * 12 + 5, /* F-9  */
               9 * 12 + 9  /* A-9  */
             };
+#endif
+
+/* tables */
+static short int S_voice_db_to_linear_table[4096];
+
+static short int S_voice_wavetable_sine[512];
 
 /* voice bank */
 voice G_voice_bank[BANK_NUM_VOICES];
@@ -250,10 +208,13 @@ short int voice_reset(int voice_index)
   /* obtain voice pointer */
   v = &G_voice_bank[voice_index];
 
-  /* program */
-  v->program = VOICE_PROGRAM_SYNC_SQUARE;
+  /* algorithm */
+  v->algorithm = VOICE_ALGORITHM_1_CAR_CHAIN;
 
-  /* notes, base pitch table indices, phases, offsets */
+  /* base note */
+  v->base_note = 0;
+
+  /* notes, base pitch table indices, phases, feedback, offsets */
   for (m = 0; m < VOICE_NUM_OSCS_AND_ENVS; m++)
   {
     v->osc_note[m] = 0;
@@ -261,19 +222,17 @@ short int voice_reset(int voice_index)
     v->osc_phase[m] = 0;
     v->osc_offset_coarse[m] = 0;
     v->osc_offset_fine[m] = 0;
+    v->osc_feedback[m] = 0;
+
+    v->feed_in[2 * m + 0] = 0;
+    v->feed_in[2 * m + 1] = 0;
   }
 
-  /* feedback */
-  v->feedback = 0;
-
-  v->feed_in[0] = 0;
-  v->feed_in[1] = 0;
-
+#if 0
   /* noise generator */
-  v->noise_period = 0;
-  v->noise_mix = 0;
-
+  v->noise_period = S_voice_noise_note_table[0];
   v->noise_lfsr = 0x0001;
+#endif
 
   /* envelope levels */
   for (m = 0; m < VOICE_NUM_OSCS_AND_ENVS; m++)
@@ -307,45 +266,52 @@ short int voice_load_patch(int voice_index, int patch_index)
   v = &G_voice_bank[voice_index];
   p = &G_patch_bank[patch_index];
 
-  /* program */
-  if ((p->program >= 0) && (p->program < VOICE_NUM_PROGRAMS))
-    v->program = p->program;
+  /* algorithm */
+  if ((p->algorithm >= 0) && (p->algorithm < VOICE_NUM_ALGORITHMS))
+    v->algorithm = p->algorithm;
   else
-    v->program = VOICE_PROGRAM_SYNC_SQUARE;
+    v->algorithm = VOICE_ALGORITHM_1_CAR_CHAIN;
 
-  /* pitch offsets */
+  /* feedback, pitch offsets, current notes */
   for (m = 0; m < VOICE_NUM_OSCS_AND_ENVS; m++)
   {
-    /* determine base pitch indices */
-    v->osc_offset_coarse[m] = 0;
-    v->osc_offset_fine[m] = 0;
+    /* feedback */
+    if ((p->osc_feedback[m] >= PATCH_OSC_FEEDBACK_LOWER_BOUND) && 
+        (p->osc_feedback[m] <= PATCH_OSC_FEEDBACK_UPPER_BOUND))
+    {
+      v->osc_feedback[m] = p->osc_feedback[m];
+    }
+    else
+      v->osc_feedback[m] = PATCH_OSC_FEEDBACK_LOWER_BOUND;
 
-    if ((p->osc_numerator[m] >= 1) && (p->osc_numerator[m] <= 16))
-      v->osc_offset_coarse[m] += S_voice_multiple_table[p->osc_numerator[m] - 1];
+    /* pitch offsets */
+    if ((p->osc_multiple[m] >= PATCH_OSC_MULTIPLE_LOWER_BOUND) && 
+        (p->osc_multiple[m] <= PATCH_OSC_MULTIPLE_UPPER_BOUND))
+    {
+      v->osc_offset_coarse[m] = S_voice_multiple_table[p->osc_multiple[m] - 1];
+    }
+    else
+      v->osc_offset_coarse[m] = S_voice_multiple_table[0];
 
-    if ((p->osc_denominator[m] >= 1) && (p->osc_denominator[m] <= 16))
-      v->osc_offset_coarse[m] -= S_voice_multiple_table[p->osc_denominator[m] - 1];
+    if ((p->osc_detune[m] >= PATCH_OSC_DETUNE_LOWER_BOUND) && 
+        (p->osc_detune[m] <= PATCH_OSC_DETUNE_UPPER_BOUND))
+    {
+      v->osc_offset_fine[m] = S_voice_detune_table[8 + p->osc_detune[m]];
+    }
+    else
+      v->osc_offset_fine[m] = 0;
 
-    if ((p->osc_detune[m] >= 0) && (p->osc_detune[m] <= 16))
-      v->osc_offset_fine[m] = S_voice_detune_table[p->osc_detune[m]];
+    /* current notes */
+    v->osc_note[m] = v->base_note + v->osc_offset_coarse[m];
+
+    v->osc_base_pitch_index[m] = 
+      (v->osc_note[m] * TUNING_NUM_SEMITONE_STEPS) + v->osc_offset_fine[m];
+
+    if (v->osc_base_pitch_index[m] < 0)
+      v->osc_base_pitch_index[m] = 0;
+    else if (v->osc_base_pitch_index[m] >= TUNING_TABLE_SIZE)
+      v->osc_base_pitch_index[m] = TUNING_TABLE_SIZE - 1;
   }
-
-  /* feedback */
-  if ((p->feedback >= 0) && (p->feedback <= 8))
-    v->feedback = p->feedback;
-  else
-    v->feedback = 0;
-
-  /* noise generator */
-  if ((p->noise_period >= 0) && (p->noise_period < 16))
-    v->noise_period = p->noise_period;
-  else
-    v->noise_period = 0;
-
-  if ((p->noise_mix >= 0) && (p->noise_mix <= 16))
-    v->noise_mix = p->noise_mix;
-  else
-    v->noise_mix = 0;
 
   return 0;
 }
@@ -370,10 +336,13 @@ short int voice_set_note(int voice_index, int note)
   if ((note < 0) || (note >= TUNING_NUM_NOTES))
     return 0;
 
+  /* set base note */
+  v->base_note = note;
+
   /* determine notes & base pitch indices, reset phases */
   for (m = 0; m < VOICE_NUM_OSCS_AND_ENVS; m++)
   {
-    v->osc_note[m] = note + v->osc_offset_coarse[m];
+    v->osc_note[m] = v->base_note + v->osc_offset_coarse[m];
 
     v->osc_base_pitch_index[m] = 
       (v->osc_note[m] * TUNING_NUM_SEMITONE_STEPS) + v->osc_offset_fine[m];
@@ -396,14 +365,14 @@ short int voice_update_all()
 {
   short int osc_env_index[VOICE_NUM_OSCS_AND_ENVS];
 
+  int osc_fb_mod[VOICE_NUM_OSCS_AND_ENVS];
+  int osc_phase_mod[VOICE_NUM_OSCS_AND_ENVS];
+
   int osc_pitch_index[VOICE_NUM_OSCS_AND_ENVS];
-
-  int fb_phase_mod;
-  int osc_1_phase_mod;
-  int osc_2_phase_mod;
-  int osc_3_phase_mod;
-
   int osc_level[VOICE_NUM_OSCS_AND_ENVS];
+
+  unsigned int masked_phase;
+  int final_index;
 
   int level;
 
@@ -433,7 +402,7 @@ short int voice_update_all()
         osc_env_index[m] = 1023;
     }
 
-    /* update pitches, phases */
+    /* update pitches & phases */
     for (m = 0; m < VOICE_NUM_OSCS_AND_ENVS; m++)
     {
       osc_pitch_index[m] = v->osc_base_pitch_index[m];
@@ -446,376 +415,110 @@ short int voice_update_all()
         osc_pitch_index[m] = TUNING_TABLE_SIZE - 1;
 
       v->osc_phase[m] += G_phase_increment_table[osc_pitch_index[m]];
+
+      /* wraparound phase register (28 bits) */
+      if (v->osc_phase[m] > 0xFFFFFFF)
+        v->osc_phase[m] &= 0xFFFFFFF;
     }
 
-    /* check if oscillators have completed a period */
+    /* update oscillator feedback */
+    VOICE_UPDATE_OSCILLATOR_FEEDBACK(0)
+    VOICE_UPDATE_OSCILLATOR_FEEDBACK(1)
+    VOICE_UPDATE_OSCILLATOR_FEEDBACK(2)
+    VOICE_UPDATE_OSCILLATOR_FEEDBACK(3)
 
-    /* sync on */
-    if ((v->program == VOICE_PROGRAM_SYNC_SQUARE)   || 
-        (v->program == VOICE_PROGRAM_SYNC_TRIANGLE) || 
-        (v->program == VOICE_PROGRAM_SYNC_SAW)      || 
-        (v->program == VOICE_PROGRAM_SYNC_PHAT_SAW))
-    {
-      /* oscillator 3 syncs with oscillator 1 */
-      if (v->osc_phase[0] > 0xFFFFFFF)
-      {
-        v->osc_phase[0] &= 0xFFFFFFF;
-        v->osc_phase[2] = v->osc_phase[0];
-      }
+    /* update oscillator levels based on current algorithm */
 
-      /* oscillator 4 syncs with oscillator 2 */
-      if (v->osc_phase[1] > 0xFFFFFFF)
-      {
-        v->osc_phase[1] &= 0xFFFFFFF;
-        v->osc_phase[3] = v->osc_phase[1];
-      }
-
-      if (v->osc_phase[2] > 0xFFFFFFF)
-        v->osc_phase[2] &= 0xFFFFFFF;
-
-      if (v->osc_phase[3] > 0xFFFFFFF)
-        v->osc_phase[3] &= 0xFFFFFFF;
-    }
-    /* sync off */
-    else
-    {
-      if (v->osc_phase[0] > 0xFFFFFFF)
-        v->osc_phase[0] &= 0xFFFFFFF;
-
-      if (v->osc_phase[1] > 0xFFFFFFF)
-        v->osc_phase[1] &= 0xFFFFFFF;
-
-      if (v->osc_phase[2] > 0xFFFFFFF)
-        v->osc_phase[2] &= 0xFFFFFFF;
-
-      if (v->osc_phase[3] > 0xFFFFFFF)
-        v->osc_phase[3] &= 0xFFFFFFF;
-    }
-
-    /* update oscillator levels based on current program */
-
-    osc_level[2] = waveform_wave_lookup(WAVEFORM_SQUARE, 
-                                        (v->osc_phase[2] >> 18), 
-                                        osc_env_index[2]);
-
-    osc_level[3] = waveform_wave_lookup(WAVEFORM_SQUARE, 
-                                        (v->osc_phase[3] >> 18), 
-                                        osc_env_index[3]);
-
-    level = osc_level[2] + osc_level[3];
-
-#if 0
-    /* sync square */
-    if (v->program == VOICE_PROGRAM_SYNC_SQUARE)
-    {
-      osc_3_level = waveform_wave_lookup( WAVEFORM_SQUARE, 
-                                          (v->osc_3_phase >> 18), 
-                                          osc_3_env_index);
-
-      osc_4_level = waveform_wave_lookup( WAVEFORM_SQUARE, 
-                                          (v->osc_4_phase >> 18), 
-                                          osc_4_env_index);
-
-      level = osc_3_level + osc_4_level;
-    }
-    /* sync triangle */
-    else if (v->program == VOICE_PROGRAM_SYNC_TRIANGLE)
-    {
-      osc_3_level = waveform_wave_lookup( WAVEFORM_TRIANGLE, 
-                                          (v->osc_3_phase >> 18), 
-                                          osc_3_env_index);
-
-      osc_4_level = waveform_wave_lookup( WAVEFORM_TRIANGLE, 
-                                          (v->osc_4_phase >> 18), 
-                                          osc_4_env_index);
-
-      level = osc_3_level + osc_4_level;
-    }
-    /* sync saw */
-    else if (v->program == VOICE_PROGRAM_SYNC_SAW)
-    {
-      osc_3_level = waveform_wave_lookup( WAVEFORM_SAW, 
-                                          (v->osc_3_phase >> 18), 
-                                          osc_3_env_index);
-
-      osc_4_level = waveform_wave_lookup( WAVEFORM_SAW, 
-                                          (v->osc_4_phase >> 18), 
-                                          osc_4_env_index);
-
-      level = osc_3_level + osc_4_level;
-    }
-    /* sync phat saw */
-    else if (v->program == VOICE_PROGRAM_SYNC_PHAT_SAW)
-    {
-      osc_3_level = waveform_wave_lookup( WAVEFORM_PHAT_SAW, 
-                                          (v->osc_3_phase >> 18), 
-                                          osc_3_env_index);
-
-      osc_4_level = waveform_wave_lookup( WAVEFORM_PHAT_SAW, 
-                                          (v->osc_4_phase >> 18), 
-                                          osc_4_env_index);
-
-      level = osc_3_level + osc_4_level;
-    }
-    /* ring mod square */
-    else if (v->program == VOICE_PROGRAM_RING_SQUARE)
-    {
-      osc_3_level = waveform_wave_lookup( WAVEFORM_SQUARE, 
-                                          (v->osc_3_phase >> 18), 
-                                          osc_3_env_index);
-
-      osc_4_level = waveform_wave_lookup( WAVEFORM_SQUARE, 
-                                          (v->osc_4_phase >> 18), 
-                                          osc_4_env_index);
-
-      if (v->osc_1_phase >= 0x8000000)
-        osc_3_level = -osc_3_level;
-
-      if (v->osc_2_phase >= 0x8000000)
-        osc_4_level = -osc_4_level;
-
-      level = osc_3_level + osc_4_level;
-    }
-    /* ring mod triangle */
-    else if (v->program == VOICE_PROGRAM_RING_TRIANGLE)
-    {
-      osc_3_level = waveform_wave_lookup( WAVEFORM_TRIANGLE, 
-                                          (v->osc_3_phase >> 18), 
-                                          osc_3_env_index);
-
-      osc_4_level = waveform_wave_lookup( WAVEFORM_TRIANGLE, 
-                                          (v->osc_4_phase >> 18), 
-                                          osc_4_env_index);
-
-      if (v->osc_1_phase >= 0x8000000)
-        osc_3_level = -osc_3_level;
-
-      if (v->osc_2_phase >= 0x8000000)
-        osc_4_level = -osc_4_level;
-
-      level = osc_3_level + osc_4_level;
-    }
-    /* ring mod saw */
-    else if (v->program == VOICE_PROGRAM_RING_SAW)
-    {
-      osc_3_level = waveform_wave_lookup( WAVEFORM_SAW, 
-                                          (v->osc_3_phase >> 18), 
-                                          osc_3_env_index);
-
-      osc_4_level = waveform_wave_lookup( WAVEFORM_SAW, 
-                                          (v->osc_4_phase >> 18), 
-                                          osc_4_env_index);
-
-      if (v->osc_1_phase >= 0x8000000)
-        osc_3_level = -osc_3_level;
-
-      if (v->osc_2_phase >= 0x8000000)
-        osc_4_level = -osc_4_level;
-
-      level = osc_3_level + osc_4_level;
-    }
-    /* ring mod phat saw */
-    else if (v->program == VOICE_PROGRAM_RING_PHAT_SAW)
-    {
-      osc_3_level = waveform_wave_lookup( WAVEFORM_PHAT_SAW, 
-                                          (v->osc_3_phase >> 18), 
-                                          osc_3_env_index);
-
-      osc_4_level = waveform_wave_lookup( WAVEFORM_PHAT_SAW, 
-                                          (v->osc_4_phase >> 18), 
-                                          osc_4_env_index);
-
-      if (v->osc_1_phase >= 0x8000000)
-        osc_3_level = -osc_3_level;
-
-      if (v->osc_2_phase >= 0x8000000)
-        osc_4_level = -osc_4_level;
-
-      level = osc_3_level + osc_4_level;
-    }
-    /* pulse waves */
-    else if (v->program == VOICE_PROGRAM_PULSE_WAVES)
-    {
-      osc_3_level = waveform_pulse_lookup(v->extra_env.level, 
-                                          (v->osc_3_phase >> 18), 
-                                          osc_3_env_index);
-
-      osc_4_level = waveform_pulse_lookup(v->extra_env.level, 
-                                          (v->osc_4_phase >> 18), 
-                                          osc_4_env_index);
-
-      level = osc_3_level + osc_4_level;
-
-      level = 0;
-    }
     /* 1 carrier - chain  */
     /*   1 -> 2 -> 3 -> 4 */
-    else if (v->program == VOICE_PROGRAM_FM_1_CARRIER_CHAIN)
+    if (v->algorithm == VOICE_ALGORITHM_1_CAR_CHAIN)
     {
-      VOICE_UPDATE_FM_OSCILLATOR_1()
-      VOICE_UPDATE_FM_OSCILLATOR_2_MOD_1()
-      VOICE_UPDATE_FM_OSCILLATOR_3_MOD_2()
-      VOICE_UPDATE_FM_OSCILLATOR_4_MOD_3()
+      VOICE_UPDATE_OSCILLATOR_NO_MOD(0)
+      VOICE_UPDATE_OSCILLATOR_MOD_X1(1, 0)
+      VOICE_UPDATE_OSCILLATOR_MOD_X1(2, 1)
+      VOICE_UPDATE_OSCILLATOR_MOD_X1(3, 2)
 
-      level = osc_4_level;
+      level = osc_level[3];
     }
     /* 1 carrier - Y        */
     /*   (1 + 2) -> 3 -> 4  */
-    else if (v->program == VOICE_PROGRAM_FM_1_CARRIER_Y)
+    else if (v->algorithm == VOICE_ALGORITHM_1_CAR_Y)
     {
-      VOICE_UPDATE_FM_OSCILLATOR_1()
-      VOICE_UPDATE_FM_OSCILLATOR_2_NO_MOD()
-      VOICE_UPDATE_FM_OSCILLATOR_3_MOD_1_AND_2()
-      VOICE_UPDATE_FM_OSCILLATOR_4_MOD_3()
+      VOICE_UPDATE_OSCILLATOR_NO_MOD(0)
+      VOICE_UPDATE_OSCILLATOR_NO_MOD(1)
+      VOICE_UPDATE_OSCILLATOR_MOD_X2(2, 0, 1)
+      VOICE_UPDATE_OSCILLATOR_MOD_X1(3, 2)
 
-      level = osc_4_level;
+      level = osc_level[3];
     }
-    /* 1 carrier - left crab claw */
-    /*   1 -> 2, (2 + 3) -> 4     */
-    else if (v->program == VOICE_PROGRAM_FM_1_CARRIER_LEFT_CRAB_CLAW)
+    /* 1 carrier - crab claw  */
+    /*   1 -> 2, (2 + 3) -> 4 */
+    else if (v->algorithm == VOICE_ALGORITHM_1_CAR_CRAB_CLAW)
     {
-      VOICE_UPDATE_FM_OSCILLATOR_1()
-      VOICE_UPDATE_FM_OSCILLATOR_2_MOD_1()
-      VOICE_UPDATE_FM_OSCILLATOR_3_NO_MOD()
-      VOICE_UPDATE_FM_OSCILLATOR_4_MOD_2_AND_3()
+      VOICE_UPDATE_OSCILLATOR_NO_MOD(0)
+      VOICE_UPDATE_OSCILLATOR_MOD_X1(1, 0)
+      VOICE_UPDATE_OSCILLATOR_NO_MOD(2)
+      VOICE_UPDATE_OSCILLATOR_MOD_X2(3, 1, 2)
 
-      level = osc_4_level;
-    }
-    /* 1 carrier - right crab claw  */
-    /*   2 -> 3, (1 + 3) -> 4       */
-    else if (v->program == VOICE_PROGRAM_FM_1_CARRIER_RIGHT_CRAB_CLAW)
-    {
-      VOICE_UPDATE_FM_OSCILLATOR_1()
-      VOICE_UPDATE_FM_OSCILLATOR_2_NO_MOD()
-      VOICE_UPDATE_FM_OSCILLATOR_3_MOD_2()
-      VOICE_UPDATE_FM_OSCILLATOR_4_MOD_1_AND_3()
-
-      level = osc_4_level;
-    }
-    /* 1 carrier - diamond            */
-    /*   1 -> 2, 1 -> 3, (2 + 3) -> 4 */
-    else if (v->program == VOICE_PROGRAM_FM_1_CARRIER_DIAMOND)
-    {
-      VOICE_UPDATE_FM_OSCILLATOR_1()
-      VOICE_UPDATE_FM_OSCILLATOR_2_MOD_1()
-      VOICE_UPDATE_FM_OSCILLATOR_3_MOD_1()
-      VOICE_UPDATE_FM_OSCILLATOR_4_MOD_2_AND_3()
-
-      level = osc_4_level;
-    }
-    /* 1 carrier - three to one */
-    /*   (1 + 2 + 3) -> 4       */
-    else if (v->program == VOICE_PROGRAM_FM_1_CARRIER_THREE_TO_ONE)
-    {
-      VOICE_UPDATE_FM_OSCILLATOR_1()
-      VOICE_UPDATE_FM_OSCILLATOR_2_NO_MOD()
-      VOICE_UPDATE_FM_OSCILLATOR_3_NO_MOD()
-      VOICE_UPDATE_FM_OSCILLATOR_4_MOD_1_2_AND_3()
-
-      level = osc_4_level;
+      level = osc_level[3];
     }
     /* 2 carriers - twin                  */
     /*   1 -> 3, 2 -> 4, output is 3 + 4  */
-    else if (v->program == VOICE_PROGRAM_FM_2_CARRIERS_TWIN)
+    else if (v->algorithm == VOICE_ALGORITHM_2_CAR_TWIN)
     {
-      VOICE_UPDATE_FM_OSCILLATOR_1()
-      VOICE_UPDATE_FM_OSCILLATOR_2_NO_MOD()
-      VOICE_UPDATE_FM_OSCILLATOR_3_MOD_1()
-      VOICE_UPDATE_FM_OSCILLATOR_4_MOD_2()
+      VOICE_UPDATE_OSCILLATOR_NO_MOD(0)
+      VOICE_UPDATE_OSCILLATOR_NO_MOD(1)
+      VOICE_UPDATE_OSCILLATOR_MOD_X1(2, 0)
+      VOICE_UPDATE_OSCILLATOR_MOD_X1(3, 1)
 
-      level = osc_3_level + osc_4_level;
+      level = osc_level[2] + osc_level[3];
     }
-    /* 2 carriers - stack             */
+    /* 2 carriers - stacked           */
     /*   1 -> 2 -> 3, output is 3 + 4 */
-    else if (v->program == VOICE_PROGRAM_FM_2_CARRIERS_STACK)
+    else if (v->algorithm == VOICE_ALGORITHM_2_CAR_STACKED)
     {
-      VOICE_UPDATE_FM_OSCILLATOR_1()
-      VOICE_UPDATE_FM_OSCILLATOR_2_MOD_1()
-      VOICE_UPDATE_FM_OSCILLATOR_3_MOD_2()
-      VOICE_UPDATE_FM_OSCILLATOR_4_NO_MOD()
+      VOICE_UPDATE_OSCILLATOR_NO_MOD(0)
+      VOICE_UPDATE_OSCILLATOR_MOD_X1(1, 0)
+      VOICE_UPDATE_OSCILLATOR_MOD_X1(2, 1)
+      VOICE_UPDATE_OSCILLATOR_NO_MOD(3)
 
-      level = osc_3_level + osc_4_level;
-    }
-    /* 2 carriers - stack alternate   */
-    /*   2 -> 3 -> 4, output is 1 + 4 */
-    else if (v->program == VOICE_PROGRAM_FM_2_CARRIERS_STACK_ALT)
-    {
-      VOICE_UPDATE_FM_OSCILLATOR_1()
-      VOICE_UPDATE_FM_OSCILLATOR_2_NO_MOD()
-      VOICE_UPDATE_FM_OSCILLATOR_3_MOD_2()
-      VOICE_UPDATE_FM_OSCILLATOR_4_MOD_3()
-
-      level = osc_1_level + osc_4_level;
-    }
-    /* 2 carriers - shared                          */
-    /*   1 -> 2 -> 3, 1 -> 2 -> 4, output is 3 + 4  */
-    else if (v->program == VOICE_PROGRAM_FM_2_CARRIERS_SHARED)
-    {
-      VOICE_UPDATE_FM_OSCILLATOR_1()
-      VOICE_UPDATE_FM_OSCILLATOR_2_MOD_1()
-      VOICE_UPDATE_FM_OSCILLATOR_3_MOD_2()
-      VOICE_UPDATE_FM_OSCILLATOR_4_MOD_2()
-
-      level = osc_3_level + osc_4_level;
+      level = osc_level[2] + osc_level[3];
     }
     /* 3 carriers - one to three                      */
     /*   1 -> 2, 1 -> 3, 1 -> 4, output is 2 + 3 + 4  */
-    else if (v->program == VOICE_PROGRAM_FM_3_CARRIERS_ONE_TO_THREE)
+    else if (v->algorithm == VOICE_ALGORITHM_3_CAR_ONE_TO_THREE)
     {
-      VOICE_UPDATE_FM_OSCILLATOR_1()
-      VOICE_UPDATE_FM_OSCILLATOR_2_MOD_1()
-      VOICE_UPDATE_FM_OSCILLATOR_3_MOD_1()
-      VOICE_UPDATE_FM_OSCILLATOR_4_MOD_1()
+      VOICE_UPDATE_OSCILLATOR_NO_MOD(0)
+      VOICE_UPDATE_OSCILLATOR_MOD_X1(1, 0)
+      VOICE_UPDATE_OSCILLATOR_MOD_X1(2, 0)
+      VOICE_UPDATE_OSCILLATOR_MOD_X1(3, 0)
 
-      level = osc_2_level + osc_3_level + osc_4_level;
-    }
-    /* 3 carriers - one to two                */
-    /*   1 -> 2, 1 -> 3, output is 2 + 3 + 4  */
-    else if (v->program == VOICE_PROGRAM_FM_3_CARRIERS_ONE_TO_TWO)
-    {
-      VOICE_UPDATE_FM_OSCILLATOR_1()
-      VOICE_UPDATE_FM_OSCILLATOR_2_MOD_1()
-      VOICE_UPDATE_FM_OSCILLATOR_3_MOD_1()
-      VOICE_UPDATE_FM_OSCILLATOR_4_NO_MOD()
-
-      level = osc_2_level + osc_3_level + osc_4_level;
+      level = osc_level[1] + osc_level[2] + osc_level[3];
     }
     /* 3 carriers - one to one        */
     /*   1 -> 2, output is 2 + 3 + 4  */
-    else if (v->program == VOICE_PROGRAM_FM_3_CARRIERS_ONE_TO_ONE)
+    else if (v->algorithm == VOICE_ALGORITHM_3_CAR_ONE_TO_ONE)
     {
-      VOICE_UPDATE_FM_OSCILLATOR_1()
-      VOICE_UPDATE_FM_OSCILLATOR_2_MOD_1()
-      VOICE_UPDATE_FM_OSCILLATOR_3_NO_MOD()
-      VOICE_UPDATE_FM_OSCILLATOR_4_NO_MOD()
+      VOICE_UPDATE_OSCILLATOR_NO_MOD(0)
+      VOICE_UPDATE_OSCILLATOR_MOD_X1(1, 0)
+      VOICE_UPDATE_OSCILLATOR_NO_MOD(2)
+      VOICE_UPDATE_OSCILLATOR_NO_MOD(3)
 
-      level = osc_2_level + osc_3_level + osc_4_level;
-    }
-    /* 3 carriers - one to one alternate  */
-    /*   2 -> 3, output is 1 + 3 + 4      */
-    else if (v->program == VOICE_PROGRAM_FM_3_CARRIERS_ONE_TO_ONE_ALT)
-    {
-      VOICE_UPDATE_FM_OSCILLATOR_1()
-      VOICE_UPDATE_FM_OSCILLATOR_2_NO_MOD()
-      VOICE_UPDATE_FM_OSCILLATOR_3_MOD_2()
-      VOICE_UPDATE_FM_OSCILLATOR_4_NO_MOD()
-
-      level = osc_1_level + osc_3_level + osc_4_level;
+      level = osc_level[1] + osc_level[2] + osc_level[3];
     }
     /* 4 carriers - pipes         */
     /*   output is 1 + 2 + 3 + 4  */
-    else if (v->program == VOICE_PROGRAM_FM_4_CARRIERS_PIPES)
+    else if (v->algorithm == VOICE_ALGORITHM_4_CAR_PIPES)
     {
-      VOICE_UPDATE_FM_OSCILLATOR_1()
-      VOICE_UPDATE_FM_OSCILLATOR_2_NO_MOD()
-      VOICE_UPDATE_FM_OSCILLATOR_3_NO_MOD()
-      VOICE_UPDATE_FM_OSCILLATOR_4_NO_MOD()
+      VOICE_UPDATE_OSCILLATOR_NO_MOD(0)
+      VOICE_UPDATE_OSCILLATOR_NO_MOD(1)
+      VOICE_UPDATE_OSCILLATOR_NO_MOD(2)
+      VOICE_UPDATE_OSCILLATOR_NO_MOD(3)
 
-      level = osc_1_level + osc_2_level + osc_3_level + osc_4_level;
+      level = osc_level[0] + osc_level[1] + osc_level[2] + osc_level[3];
     }
     else
       level = 0;
-#endif
 
 #if 0
     /* update noise phase */
@@ -835,7 +538,7 @@ short int voice_update_all()
     }
 
     /* compute noise level */
-    noise_level = waveform_noise_lookup(v->noise_alternate, v->noise_lfsr, osc_1_env_index);
+    noise_level = waveform_noise_lookup(v->noise_lfsr, osc_env_index[0]);
 
     /* mix in noise */
     level += noise_level;
@@ -844,6 +547,68 @@ short int voice_update_all()
     /* set voice level */
     v->level = level;
   }
+
+  return 0;
+}
+
+/*******************************************************************************
+** voice_generate_tables()
+*******************************************************************************/
+short int voice_generate_tables()
+{
+  int     i;
+  double  val;
+
+  /* ym2612 - 10 bit envelope (shifted to 12 bit), 12 bit sine, 13 bit sum    */
+  /* 10 bit db: 24, 12, 6, 3, 1.5, 0.75, 0.375, 0.1875, 0.09375, 0.046875     */
+  /* 12 bit db: adds on 0.0234375, 0.01171875 in back                         */
+  /* 13 bit db: adds on 48 in front                                           */
+
+  /* db to linear scale conversion */
+  S_voice_db_to_linear_table[0] = 32767;
+
+  for (i = 1; i < 4095; i++)
+  {
+    S_voice_db_to_linear_table[i] = 
+      (short int) ((32767.0f * exp(-log(10) * (DB_STEP_12_BIT / 10) * i)) + 0.5f);
+  }
+
+  S_voice_db_to_linear_table[4095] = 0;
+
+  /* wavetable (sine) */
+  S_voice_wavetable_sine[0] = 4095;
+  S_voice_wavetable_sine[256] = 0;
+
+  for (i = 1; i < 256; i++)
+  {
+    val = sin(TWO_PI * (i / 1024.0f));
+    S_voice_wavetable_sine[i] = (short int) ((10 * (log(1 / val) / log(10)) / DB_STEP_12_BIT) + 0.5f);
+    S_voice_wavetable_sine[512 - i] = S_voice_wavetable_sine[i];
+  }
+
+#if 0
+  /* wavetable (triangle) */
+  S_voice_wavetable_tri[0] = 4095;
+  S_voice_wavetable_tri[256] = 0;
+
+  for (i = 1; i < 256; i++)
+  {
+    val = i / 256.0f;
+    S_voice_wavetable_tri[i] = (short int) ((10 * (log(1 / val) / log(10)) / DB_STEP_12_BIT) + 0.5f);
+    S_voice_wavetable_tri[512 - i] = S_voice_wavetable_tri[i];
+  }
+
+  /* wavetable (sawtooth) */
+  S_voice_wavetable_saw[0] = 4095;
+  S_voice_wavetable_saw[512] = 0;
+
+  for (i = 1; i < 512; i++)
+  {
+    val = i / 512.0f;
+    S_voice_wavetable_saw[i] = (short int) ((10 * (log(1 / val) / log(10)) / DB_STEP_12_BIT) + 0.5f);
+    S_voice_wavetable_saw[1024 - i] = S_voice_wavetable_saw[i];
+  }
+#endif
 
   return 0;
 }

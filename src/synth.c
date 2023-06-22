@@ -16,7 +16,6 @@
 #include "synth.h"
 #include "tuning.h"
 #include "voice.h"
-#include "waveform.h"
 
 int G_synth_level_left;
 int G_synth_level_right;
@@ -30,7 +29,7 @@ short int synth_generate_tables()
   key_generate_tables();
   lfo_generate_tables();
   sweep_generate_tables();
-  waveform_generate_tables();
+  voice_generate_tables();
 
   return 0;
 }
@@ -83,66 +82,32 @@ short int synth_load_patch(int voice_index, int patch_index)
   voice_load_patch(voice_index, patch_index);
 
   /* envelopes */
-  if ((v->program == VOICE_PROGRAM_SYNC_SQUARE)   || 
-      (v->program == VOICE_PROGRAM_SYNC_TRIANGLE) || 
-      (v->program == VOICE_PROGRAM_SYNC_SAW)      || 
-      (v->program == VOICE_PROGRAM_SYNC_PHAT_SAW) || 
-      (v->program == VOICE_PROGRAM_RING_SQUARE)   || 
-      (v->program == VOICE_PROGRAM_RING_TRIANGLE) || 
-      (v->program == VOICE_PROGRAM_RING_SAW)      || 
-      (v->program == VOICE_PROGRAM_RING_PHAT_SAW) || 
-      (v->program == VOICE_PROGRAM_PULSE_WAVES))
-  {
-    envelope_load_patch(voice_index, 0, patch_index, ENVELOPE_TYPE_MODULATOR);
-    envelope_load_patch(voice_index, 1, patch_index, ENVELOPE_TYPE_MODULATOR);
-    envelope_load_patch(voice_index, 2, patch_index, ENVELOPE_TYPE_CARRIER);
-    envelope_load_patch(voice_index, 3, patch_index, ENVELOPE_TYPE_CARRIER);
-  }
-  else if ( (v->program == VOICE_PROGRAM_FM_1_CARRIER_CHAIN)            || 
-            (v->program == VOICE_PROGRAM_FM_1_CARRIER_Y)                || 
-            (v->program == VOICE_PROGRAM_FM_1_CARRIER_LEFT_CRAB_CLAW)   || 
-            (v->program == VOICE_PROGRAM_FM_1_CARRIER_RIGHT_CRAB_CLAW)  || 
-            (v->program == VOICE_PROGRAM_FM_1_CARRIER_DIAMOND)          || 
-            (v->program == VOICE_PROGRAM_FM_1_CARRIER_THREE_TO_ONE))
+  if ((v->algorithm == VOICE_ALGORITHM_1_CAR_CHAIN) || 
+      (v->algorithm == VOICE_ALGORITHM_1_CAR_Y)     || 
+      (v->algorithm == VOICE_ALGORITHM_1_CAR_CRAB_CLAW))
   {
     envelope_load_patch(voice_index, 0, patch_index, ENVELOPE_TYPE_MODULATOR);
     envelope_load_patch(voice_index, 1, patch_index, ENVELOPE_TYPE_MODULATOR);
     envelope_load_patch(voice_index, 2, patch_index, ENVELOPE_TYPE_MODULATOR);
     envelope_load_patch(voice_index, 3, patch_index, ENVELOPE_TYPE_CARRIER);
   }
-  else if ( (v->program == VOICE_PROGRAM_FM_2_CARRIERS_TWIN)      || 
-            (v->program == VOICE_PROGRAM_FM_2_CARRIERS_STACK)     || 
-            (v->program == VOICE_PROGRAM_FM_2_CARRIERS_SHARED))
+  else if ( (v->algorithm == VOICE_ALGORITHM_2_CAR_TWIN) || 
+            (v->algorithm == VOICE_ALGORITHM_2_CAR_STACKED))
   {
     envelope_load_patch(voice_index, 0, patch_index, ENVELOPE_TYPE_MODULATOR);
     envelope_load_patch(voice_index, 1, patch_index, ENVELOPE_TYPE_MODULATOR);
     envelope_load_patch(voice_index, 2, patch_index, ENVELOPE_TYPE_CARRIER);
     envelope_load_patch(voice_index, 3, patch_index, ENVELOPE_TYPE_CARRIER);
   }
-  else if (v->program == VOICE_PROGRAM_FM_2_CARRIERS_STACK_ALT)
-  {
-    envelope_load_patch(voice_index, 0, patch_index, ENVELOPE_TYPE_CARRIER);
-    envelope_load_patch(voice_index, 1, patch_index, ENVELOPE_TYPE_MODULATOR);
-    envelope_load_patch(voice_index, 2, patch_index, ENVELOPE_TYPE_MODULATOR);
-    envelope_load_patch(voice_index, 3, patch_index, ENVELOPE_TYPE_CARRIER);
-  }
-  else if ( (v->program == VOICE_PROGRAM_FM_3_CARRIERS_ONE_TO_THREE)  || 
-            (v->program == VOICE_PROGRAM_FM_3_CARRIERS_ONE_TO_TWO)    || 
-            (v->program == VOICE_PROGRAM_FM_3_CARRIERS_ONE_TO_ONE))
+  else if ( (v->algorithm == VOICE_ALGORITHM_3_CAR_ONE_TO_THREE) || 
+            (v->algorithm == VOICE_ALGORITHM_3_CAR_ONE_TO_ONE))
   {
     envelope_load_patch(voice_index, 0, patch_index, ENVELOPE_TYPE_MODULATOR);
     envelope_load_patch(voice_index, 1, patch_index, ENVELOPE_TYPE_CARRIER);
     envelope_load_patch(voice_index, 2, patch_index, ENVELOPE_TYPE_CARRIER);
     envelope_load_patch(voice_index, 3, patch_index, ENVELOPE_TYPE_CARRIER);
   }
-  else if (v->program == VOICE_PROGRAM_FM_3_CARRIERS_ONE_TO_ONE_ALT)
-  {
-    envelope_load_patch(voice_index, 0, patch_index, ENVELOPE_TYPE_CARRIER);
-    envelope_load_patch(voice_index, 1, patch_index, ENVELOPE_TYPE_MODULATOR);
-    envelope_load_patch(voice_index, 2, patch_index, ENVELOPE_TYPE_CARRIER);
-    envelope_load_patch(voice_index, 3, patch_index, ENVELOPE_TYPE_CARRIER);
-  }
-  else if (v->program == VOICE_PROGRAM_FM_4_CARRIERS_PIPES)
+  else if (v->algorithm == VOICE_ALGORITHM_4_CAR_PIPES)
   {
     envelope_load_patch(voice_index, 0, patch_index, ENVELOPE_TYPE_CARRIER);
     envelope_load_patch(voice_index, 1, patch_index, ENVELOPE_TYPE_CARRIER);

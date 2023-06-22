@@ -531,46 +531,39 @@ short int graphics_setup_overscan_mvp_matrix()
 short int graphics_set_graphics_resolution(int resolution)
 {
   /* set resolution */
-  if (resolution == GRAPHICS_RESOLUTION_640_480)
+  if (resolution == GRAPHICS_RESOLUTION_480P)
   {
-    G_graphics_resolution = GRAPHICS_RESOLUTION_640_480;
+    G_graphics_resolution = GRAPHICS_RESOLUTION_480P;
 
-    S_window_w = 640;
+    S_window_w = 854;
     S_window_h = 480;
   }
-  else if (resolution == GRAPHICS_RESOLUTION_800_600)
+  else if (resolution == GRAPHICS_RESOLUTION_600P)
   {
-    G_graphics_resolution = GRAPHICS_RESOLUTION_800_600;
+    G_graphics_resolution = GRAPHICS_RESOLUTION_600P;
 
-    S_window_w = 800;
+    S_window_w = 1067;
     S_window_h = 600;
   }
-  else if (resolution == GRAPHICS_RESOLUTION_960_720)
+  else if (resolution == GRAPHICS_RESOLUTION_720P)
   {
-    G_graphics_resolution = GRAPHICS_RESOLUTION_960_720;
-
-    S_window_w = 960;
-    S_window_h = 720;
-  }
-  else if (resolution == GRAPHICS_RESOLUTION_1024_768)
-  {
-    G_graphics_resolution = GRAPHICS_RESOLUTION_1024_768;
-
-    S_window_w = 1024;
-    S_window_h = 768;
-  }
-  else if (resolution == GRAPHICS_RESOLUTION_1280_960)
-  {
-    G_graphics_resolution = GRAPHICS_RESOLUTION_1280_960;
+    G_graphics_resolution = GRAPHICS_RESOLUTION_720P;
 
     S_window_w = 1280;
-    S_window_h = 960;
+    S_window_h = 720;
   }
-  else if (resolution == GRAPHICS_RESOLUTION_1440_1080)
+  else if (resolution == GRAPHICS_RESOLUTION_768P)
   {
-    G_graphics_resolution = GRAPHICS_RESOLUTION_1440_1080;
+    G_graphics_resolution = GRAPHICS_RESOLUTION_768P;
 
-    S_window_w = 1440;
+    S_window_w = 1366;
+    S_window_h = 768;
+  }
+  else if (resolution == GRAPHICS_RESOLUTION_1080P)
+  {
+    G_graphics_resolution = GRAPHICS_RESOLUTION_1080P;
+
+    S_window_w = 1920;
     S_window_h = 1080;
   }
 

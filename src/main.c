@@ -129,6 +129,9 @@ int main(int argc, char *argv[])
   /* initialize tables */
   synth_generate_tables();
 
+  /* initialize controller input states */
+  controls_setup();
+
   /* reset synth */
   synth_reset_banks();
 
@@ -189,11 +192,25 @@ int main(int argc, char *argv[])
           controls_keyboard_key_pressed(event.key.keysym.scancode);
       }
 
-      /* mouse (mouse button down) */
+      /* keyboard (key up) */
+      if (event.type == SDL_KEYUP)
+      {
+        if ((event.key.state == SDL_RELEASED) && (event.key.repeat == 0))
+          controls_keyboard_key_released(event.key.keysym.scancode);
+      }
+
+      /* mouse button (click) */
       if (event.type == SDL_MOUSEBUTTONDOWN)
       {
         if (event.button.state == SDL_PRESSED)
           controls_mouse_button_pressed(event.button.button, event.button.x, event.button.y);
+      }
+
+      /* mouse wheel (wheel up/down) */
+      if (event.type == SDL_MOUSEWHEEL)
+      {
+        if (event.wheel.y != 0)
+          controls_mouse_wheel_moved(event.wheel.y);
       }
     }
 

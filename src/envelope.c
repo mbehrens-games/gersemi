@@ -38,9 +38,10 @@ static float S_envelope_freq_table[12] =
 /*   (10 * (log(1 / val) / log(10)) / DB_STEP_10_BIT,                 */
 /*   where DB_STEP_10_BIT = 0.046875                                  */
 
-/* carrier envelope base level table */
-static short int S_envelope_carrier_level_table[16] = 
-  { 200,  /* 10^(-15/16)  */
+/* carrier envelope level table */
+static short int S_envelope_carrier_level_table[17] = 
+  { 213,  /* 10^(-16/16)  */
+    200,  /* 10^(-15/16)  */
     187,  /* 10^(-14/16)  */
     173,  /* 10^(-13/16)  */
     160,  /* 10^(-12/16)  */
@@ -58,9 +59,31 @@ static short int S_envelope_carrier_level_table[16] =
       0   /*   1          */
   };
 
-/* modulator envelope base level table */
-static short int S_envelope_modulator_level_table[16] = 
-  { 257,  /*  1/16  */
+/* modulator envelope level table */
+static short int S_envelope_modulator_level_table[17] = 
+  { 108,  /*  8/24  */
+     91,  /*  9/24  */
+     81,  /* 10/24  */
+     72,  /* 11/24  */
+     64,  /* 12/24  */
+     57,  /* 13/24  */
+     50,  /* 14/24  */
+     44,  /* 15/24  */
+     38,  /* 16/24  */
+     32,  /* 17/24  */
+     27,  /* 18/24  */
+     22,  /* 19/24  */
+     17,  /* 20/24  */
+     12,  /* 21/24  */
+      8,  /* 22/24  */
+      4,  /* 23/24  */
+      0   /* 24/24  */
+  };
+
+/* volume table */
+static short int S_envelope_volume_table[17] = 
+  {1023,  /*  0/16  */
+    257,  /*  1/16  */
     193,  /*  2/16  */
     155,  /*  3/16  */
     128,  /*  4/16  */
@@ -78,25 +101,46 @@ static short int S_envelope_modulator_level_table[16] =
       0   /* 16/16  */
   };
 
-/* mix table */
-static short int S_envelope_mix_table[17] = 
-  {1023,  /*  0     */
-    257,  /*  1/16  */
-    193,  /*  1/8   */
-    155,  /*  3/16  */
-    128,  /*  1/4   */
-    108,  /*  5/16  */
-     91,  /*  3/8   */
-     76,  /*  7/16  */
-     64,  /*  1/2   */
+/* brightness table */
+static short int S_envelope_brightness_table[17] = 
+  {  64,  /*  8/16  */
      53,  /*  9/16  */
-     44,  /*  5/8   */
+     44,  /* 10/16  */
      35,  /* 11/16  */
-     27,  /*  3/4   */
+     27,  /* 12/16  */
      19,  /* 13/16  */
-     12,  /*  7/8   */
+     12,  /* 14/16  */
       6,  /* 15/16  */
-      0   /*  1     */
+      0,  /* 16/16  */
+     -6,  /* 17/16  */
+    -11,  /* 18/16  */
+    -16,  /* 19/16  */
+    -21,  /* 20/16  */
+    -25,  /* 21/16  */
+    -30,  /* 22/16  */
+    -34,  /* 23/16  */
+    -38   /* 24/16  */
+  };
+
+/* sustain table */
+static short int S_envelope_sustain_table[17] = 
+  {1023,  /*  0/16  */
+    257,  /*  1/16  */
+    193,  /*  2/16  */
+    155,  /*  3/16  */
+    128,  /*  4/16  */
+    108,  /*  5/16  */
+     91,  /*  6/16  */
+     76,  /*  7/16  */
+     64,  /*  8/16  */
+     53,  /*  9/16  */
+     44,  /* 10/16  */
+     35,  /* 11/16  */
+     27,  /* 12/16  */
+     19,  /* 13/16  */
+     12,  /* 14/16  */
+      6,  /* 15/16  */
+      0   /* 16/16  */
   };
 
 /* envelope bank */
@@ -158,12 +202,12 @@ short int envelope_reset(int voice_index, int num)
   e->increment = 0;
   e->phase = 0;
 
-  e->sustain_level = S_envelope_mix_table[0];
+  e->sustain_level = S_envelope_sustain_table[0];
 
   e->attenuation = 1023;
 
   e->volume_adjustment = 0;
-  e->amp_adjustment = S_envelope_mix_table[16];
+  e->amp_adjustment = S_envelope_carrier_level_table[16];
 
   e->level = 1023;
 
@@ -292,13 +336,18 @@ short int envelope_load_patch(int voice_index, int num,
   /* determine which set of parameters to use */
   if (e->type == ENVELOPE_TYPE_CARRIER)
   {
-    attack = p->carr_attack;
-    decay_1 = p->carr_decay_1;
-    decay_2 = p->carr_decay_2;
-    release = p->carr_release;
-    sustain = p->carr_sustain;
-    rate_keyscaling = p->carr_rate_keyscaling;
-    level_keyscaling = p->carr_level_keyscaling;
+    attack = p->car_attack;
+    decay_1 = p->car_decay_1;
+    decay_2 = p->car_decay_2;
+    release = p->car_release;
+    sustain = p->car_sustain;
+    rate_keyscaling = p->car_rate_keyscaling;
+    level_keyscaling = p->car_level_keyscaling;
+
+    if ((p->osc_amplitude[num] >= 0) && (p->osc_amplitude[num] <= 16))
+      e->amp_adjustment = S_envelope_carrier_level_table[p->osc_amplitude[num]];
+    else
+      e->amp_adjustment = S_envelope_carrier_level_table[16];
   }
   else if (e->type == ENVELOPE_TYPE_MODULATOR)
   {
@@ -309,23 +358,27 @@ short int envelope_load_patch(int voice_index, int num,
     sustain = p->mod_sustain;
     rate_keyscaling = p->mod_rate_keyscaling;
     level_keyscaling = p->mod_level_keyscaling;
+
+    if ((p->osc_amplitude[num] >= 0) && (p->osc_amplitude[num] <= 16))
+      e->amp_adjustment = S_envelope_modulator_level_table[p->osc_amplitude[num]];
+    else
+      e->amp_adjustment = S_envelope_modulator_level_table[16];
   }
   else
   {
-    attack = p->carr_attack;
-    decay_1 = p->carr_decay_1;
-    decay_2 = p->carr_decay_2;
-    release = p->carr_release;
-    sustain = p->carr_sustain;
-    rate_keyscaling = p->carr_rate_keyscaling;
-    level_keyscaling = p->carr_level_keyscaling;
-  }
+    attack = p->car_attack;
+    decay_1 = p->car_decay_1;
+    decay_2 = p->car_decay_2;
+    release = p->car_release;
+    sustain = p->car_sustain;
+    rate_keyscaling = p->car_rate_keyscaling;
+    level_keyscaling = p->car_level_keyscaling;
 
-  /* set amplitude adjustment */
-  if ((p->osc_amplitude[num] >= 0) && (p->osc_amplitude[num] <= 16))
-    e->amp_adjustment = S_envelope_mix_table[p->osc_amplitude[num]];
-  else
-    e->amp_adjustment = S_envelope_mix_table[16];
+    if ((p->osc_amplitude[num] >= 0) && (p->osc_amplitude[num] <= 16))
+      e->amp_adjustment = S_envelope_carrier_level_table[p->osc_amplitude[num]];
+    else
+      e->amp_adjustment = S_envelope_carrier_level_table[16];
+  }
 
   /* set attack rate */
   if ((attack >= 1) && (attack <= 32))
@@ -373,9 +426,9 @@ short int envelope_load_patch(int voice_index, int num,
 
   /* set sustain level */
   if ((sustain >= 0) && (sustain <= 16))
-    e->sustain_level = S_envelope_mix_table[sustain];
+    e->sustain_level = S_envelope_sustain_table[sustain];
   else
-    e->sustain_level = S_envelope_mix_table[0];
+    e->sustain_level = S_envelope_sustain_table[0];
 
   /* set keyscaling */
   if ((rate_keyscaling >= 1) && (rate_keyscaling <= 8))
@@ -389,6 +442,7 @@ short int envelope_load_patch(int voice_index, int num,
     e->level_keyscaling = 1;
 
   /* initialize other envelope variables */
+#if 0
   e->state = ENVELOPE_STATE_RELEASE;
 
   e->keycode = 0;
@@ -403,6 +457,7 @@ short int envelope_load_patch(int voice_index, int num,
   e->volume_adjustment = 0;
 
   e->level = 1023;
+#endif
 
   return 0;
 }
@@ -443,24 +498,24 @@ short int envelope_trigger(int voice_index, int num, int note, int volume, int b
   /* set volume adjustment */
   if (e->type == ENVELOPE_TYPE_CARRIER)
   {
-    if ((volume >= 1) && (volume <= 16))
-      e->volume_adjustment = S_envelope_carrier_level_table[volume - 1];
+    if ((volume >= 0) && (volume <= 16))
+      e->volume_adjustment = S_envelope_volume_table[volume];
     else
-      e->volume_adjustment = S_envelope_carrier_level_table[7];
+      e->volume_adjustment = S_envelope_volume_table[8];
   }
   else if (e->type == ENVELOPE_TYPE_MODULATOR)
   {
-    if ((brightness >= 1) && (brightness <= 16))
-      e->volume_adjustment = S_envelope_modulator_level_table[brightness - 1];
+    if ((brightness >= 0) && (brightness <= 16))
+      e->volume_adjustment = S_envelope_brightness_table[brightness];
     else
-      e->volume_adjustment = S_envelope_modulator_level_table[7];
+      e->volume_adjustment = S_envelope_brightness_table[8];
   }
   else
   {
-    if ((volume >= 1) && (volume <= 16))
-      e->volume_adjustment = S_envelope_carrier_level_table[volume - 1];
+    if ((volume >= 0) && (volume <= 16))
+      e->volume_adjustment = S_envelope_volume_table[volume];
     else
-      e->volume_adjustment = S_envelope_carrier_level_table[7];
+      e->volume_adjustment = S_envelope_volume_table[8];
   }
 
   /* determine level adjustment from keyscaling */
@@ -490,16 +545,13 @@ short int envelope_trigger(int voice_index, int num, int note, int volume, int b
   /* apply level keyscaling */
   e->volume_adjustment += level_adjustment;
 
-  /* bound volume adjustment */
-  if (e->volume_adjustment < 0)
-    e->volume_adjustment = 0;
-  else if (e->volume_adjustment > 1023)
-    e->volume_adjustment = 1023;
-
   /* set level */
   e->level = e->attenuation + e->volume_adjustment + e->amp_adjustment;
 
-  if (e->level >= 1023)
+  /* bound level */
+  if (e->level < 0)
+    e->level = 0;
+  else if (e->level > 1023)
     e->level = 1023;
 
   /* set the envelope to attack state */
@@ -544,7 +596,7 @@ short int envelope_release(int voice_index, int num)
 *******************************************************************************/
 short int envelope_update_all()
 {
-  short int amount;
+  short int periods;
 
   int k;
   int m;
@@ -565,20 +617,20 @@ short int envelope_update_all()
       /* check if a period was completed */
       if (e->phase > 0xFFFFFFF)
       {
-        amount = (e->phase >> 28) & 0x0F;
+        periods = (e->phase >> 28) & 0x0F;
 
         e->phase &= 0xFFFFFFF;
       }
       else
-        amount = 0;
+        periods = 0;
 
       /* if a period has elapsed, update the envelope */
-      if (amount > 0)
+      if (periods > 0)
       {
         /* attack */
         if (e->state == ENVELOPE_STATE_ATTACK)
         {
-          e->attenuation += (~e->attenuation * amount) >> 4;
+          e->attenuation += (~e->attenuation * periods) >> 4;
 
           if (e->attenuation <= 0)
           {
@@ -589,7 +641,7 @@ short int envelope_update_all()
         /* decay 1 */
         else if (e->state == ENVELOPE_STATE_DECAY_1)
         {
-          e->attenuation += amount;
+          e->attenuation += periods;
 
           if (e->attenuation >= e->sustain_level)
             envelope_change_state(k, m, ENVELOPE_STATE_DECAY_2);
@@ -597,7 +649,7 @@ short int envelope_update_all()
         /* decay 2 */
         else if (e->state == ENVELOPE_STATE_DECAY_2)
         {
-          e->attenuation += amount;
+          e->attenuation += periods;
 
           if (e->attenuation >= 1023)
           {
@@ -608,7 +660,7 @@ short int envelope_update_all()
         /* release */
         else if (e->state == ENVELOPE_STATE_RELEASE)
         {
-          e->attenuation += amount;
+          e->attenuation += periods;
 
           if (e->attenuation >= 1023)
             e->attenuation = 1023;

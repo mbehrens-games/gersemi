@@ -76,9 +76,9 @@ short int hola_opengl()
     fprintf(stdout, "Failed to turn on vsync.\n");
 
   /* initialize 640x480 windowed mode */
-  G_graphics_resolution = GRAPHICS_RESOLUTION_640_480;
+  G_graphics_resolution = GRAPHICS_RESOLUTION_480P;
 
-  if (graphics_set_window_size(GRAPHICS_RESOLUTION_640_480) != 0)
+  if (graphics_set_window_size(GRAPHICS_RESOLUTION_480P) != 0)
   {
     fprintf(stdout, "Failed to set 640x480 window size.\n");
     return 1;

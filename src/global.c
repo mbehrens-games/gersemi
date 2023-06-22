@@ -17,6 +17,13 @@ int           G_flag_quit_program;
 unsigned int  G_timer_count;
 unsigned int  G_saved_timer_count;
 
+int           G_patch_edit_patch_index;
+int           G_patch_edit_voice_index;
+int           G_patch_edit_octave;
+int           G_patch_edit_degree;
+int           G_patch_edit_volume;
+int           G_patch_edit_brightness;
+
 /*******************************************************************************
 ** globals_init_variables()
 *******************************************************************************/
@@ -30,6 +37,13 @@ short int globals_init_variables()
 
   G_timer_count = 0;
   G_saved_timer_count = 0;
+
+  G_patch_edit_patch_index = 0;
+  G_patch_edit_voice_index = 0;
+  G_patch_edit_octave = 2;
+  G_patch_edit_degree = 0;
+  G_patch_edit_volume = 8;
+  G_patch_edit_brightness = 8;
 
   return 0;
 }

@@ -35,7 +35,7 @@ short int program_loop_change_screen(int screen)
 
     render_reset_vbos();
 
-    vb_all_load_menu_background();
+    vb_all_load_background();
     vb_all_load_patches_panels_and_buttons();
     vb_all_load_patches_overlay();
   }
@@ -46,7 +46,7 @@ short int program_loop_change_screen(int screen)
 
     render_reset_vbos();
 
-    vb_all_load_menu_background();
+    vb_all_load_background();
     vb_all_load_patterns_panels_and_buttons();
     vb_all_load_patterns_overlay();
   }
@@ -64,6 +64,9 @@ short int program_loop_change_screen(int screen)
 *******************************************************************************/
 short int program_loop_advance_frame()
 {
+  /* process user input */
+  controls_process_user_input_standard();
+
   /* check for quit flag */
   if (G_flag_quit_program == 1)
     return 0;
