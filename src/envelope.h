@@ -26,40 +26,41 @@ typedef struct envelope
   /* type */
   int type;
 
-  /* rate settings */
-  short int attack_row;
-  short int decay_1_row;
-  short int decay_2_row;
-  short int release_row;
+  /* envelope settings */
+  short int attack;
+  short int decay_1;
+  short int decay_2;
+  short int release;
+  short int sustain;
+  short int rate_ks;
+  short int level_ks;
 
-  /* key scaling settings */
-  short int rate_keyscaling;
-  short int level_keyscaling;
+  /* adjustments */
+  short int rate_adjustment;
+  short int level_adjustment;
+  short int ampl_adjustment;
+  short int volume_adjustment;
 
-  /* current state */
-  int state;
-
-  /* current keycode */
-  short int keycode;
-
-  /* phase increment table row */
-  int row;
-
-  /* phase increment */
-  unsigned int increment;
-
-  /* phase */
-  unsigned int phase;
+  /* rows */
+  int       a_row;
+  int       d1_row;
+  int       d2_row;
+  int       r_row;
 
   /* decay 1 to decay 2 switch level */
-  short int sustain_level;
+  short int transition_level;
+
+  /* current state, keycode, row */
+  int       state;
+  short int keycode;
+  int       row;
+
+  /* phase increment, phase */
+  unsigned int increment;
+  unsigned int phase;
 
   /* attenuation */
   short int attenuation;
-
-  /* adjustments */
-  short int volume_adjustment;
-  short int amp_adjustment;
 
   /* level (current attenuation + adjustments) */
   short int level;

@@ -257,10 +257,10 @@ int key_note_lookup(int voice_index, int octave, int degree)
     return 0;
 
   /* make sure that the octave and degree are valid */
-  if ((octave < 0) || (octave >= 5))
+  if ((octave < 2) || (octave > 6))
     return 0;
 
-  if ((degree < 0) || (degree >= 8))
+  if ((degree < 0) || (degree > 7))
     return 0;
 
   /* determine adjusted indices */
@@ -268,7 +268,7 @@ int key_note_lookup(int voice_index, int octave, int degree)
   mode_index = G_key_signature_bank[voice_index].mode;
 
   /* lookup note */
-  note = S_key_to_note_table[sig_index][mode_index][octave * 7 + degree];
+  note = S_key_to_note_table[sig_index][mode_index][(octave - 2) * 7 + degree];
 
   return note;
 }

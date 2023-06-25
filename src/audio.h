@@ -9,6 +9,9 @@
 short int audio_init();
 short int audio_deinit();
 
+short int audio_pause();
+short int audio_unpause();
+
 short int audio_queue_frame();
 
 #endif

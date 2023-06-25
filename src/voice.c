@@ -109,22 +109,22 @@ static int  S_phi_table[16] =
 /* the values are relative to the note played; they are   */
 /* chosen to be approximately multiples of the base pitch */
 static int  S_voice_multiple_table[16] = 
-            { 0 * 12 + 0,   /* note:       1x */
-              1 * 12 + 0,   /* 1 octave:   2x */
-              1 * 12 + 7,   /*             3x */
-              2 * 12 + 0,   /* 2 octaves:  4x */
-              2 * 12 + 4,   /*             5x */
-              2 * 12 + 7,   /*             6x */
-              2 * 12 + 10,  /*             7x */
-              3 * 12 + 0,   /* 3 octaves:  8x */
-              3 * 12 + 2,   /*             9x */
-              3 * 12 + 4,   /*            10x */
-              3 * 12 + 6,   /*            11x */
-              3 * 12 + 7,   /*            12x */
-              3 * 12 + 8,   /*            13x */
-              3 * 12 + 10,  /*            14x */
-              3 * 12 + 11,  /*            15x */
-              4 * 12 + 0    /* 4 octaves: 16x */
+            {-1 * 12 + 0,   /* 0.5x (1 oct down)  */
+              0 * 12 + 0,   /*   1x               */
+              1 * 12 + 0,   /*   2x (1 oct up)    */
+              1 * 12 + 7,   /*   3x               */
+              2 * 12 + 0,   /*   4x (2 octs up)   */
+              2 * 12 + 4,   /*   5x               */
+              2 * 12 + 7,   /*   6x               */
+              2 * 12 + 10,  /*   7x               */
+              3 * 12 + 0,   /*   8x (3 octs up)   */
+              3 * 12 + 2,   /*   9x               */
+              3 * 12 + 4,   /*  10x               */
+              3 * 12 + 6,   /*  11x               */
+              3 * 12 + 7,   /*  12x               */
+              3 * 12 + 8,   /*  13x               */
+              3 * 12 + 10,  /*  14x               */
+              3 * 12 + 11   /*  15x               */
             };
 
 /* detune table */
@@ -288,10 +288,10 @@ short int voice_load_patch(int voice_index, int patch_index)
     if ((p->osc_multiple[m] >= PATCH_OSC_MULTIPLE_LOWER_BOUND) && 
         (p->osc_multiple[m] <= PATCH_OSC_MULTIPLE_UPPER_BOUND))
     {
-      v->osc_offset_coarse[m] = S_voice_multiple_table[p->osc_multiple[m] - 1];
+      v->osc_offset_coarse[m] = S_voice_multiple_table[p->osc_multiple[m]];
     }
     else
-      v->osc_offset_coarse[m] = S_voice_multiple_table[0];
+      v->osc_offset_coarse[m] = S_voice_multiple_table[1];
 
     if ((p->osc_detune[m] >= PATCH_OSC_DETUNE_LOWER_BOUND) && 
         (p->osc_detune[m] <= PATCH_OSC_DETUNE_UPPER_BOUND))

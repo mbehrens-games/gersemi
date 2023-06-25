@@ -9,7 +9,9 @@
 #include "frame.h"
 #include "synth.h"
 
-short int G_frame_sample_buffer[FRAME_BUFFER_LENGTH];
+short int G_frame_sample_buffer[FRAME_BUFFER_MAX_SAMPLES];
+
+int G_frame_num_samples;
 
 /*******************************************************************************
 ** frame_reset_buffer()
@@ -18,30 +20,31 @@ short int frame_reset_buffer()
 {
   int k;
 
-  for (k = 0; k < FRAME_BUFFER_LENGTH; k++)
+  for (k = 0; k < FRAME_BUFFER_MAX_SAMPLES; k++)
     G_frame_sample_buffer[k] = 0;
 
-  return 0;
-}
-
-/*******************************************************************************
-** frame_prepare_for_playback()
-*******************************************************************************/
-short int frame_prepare_for_playback()
-{
+  G_frame_num_samples = 0;
 
   return 0;
 }
 
 /*******************************************************************************
-** frame_generate_one_frame()
+** frame_generate()
 *******************************************************************************/
-short int frame_generate_one_frame()
+short int frame_generate(unsigned int ms)
 {
   int k;
 
-  /* generate one frame of samples */
-  for (k = 0; k < FRAME_NUM_SAMPLES; k++)
+  int num_pairs;
+
+  /* determine number of sample pairs to generate */
+  if (ms >= FRAME_BUFFER_MAX_MS)
+    num_pairs = FRAME_BUFFER_MAX_MS * FRAME_BUFFER_PAIRS_PER_MS;
+  else
+    num_pairs = ms * FRAME_BUFFER_PAIRS_PER_MS;
+
+  /* generate samples */
+  for (k = 0; k < num_pairs; k++)
   {
     /* update voices */
     synth_update();
@@ -61,6 +64,9 @@ short int frame_generate_one_frame()
     else
       G_frame_sample_buffer[2 * k + 1] = (short int) G_synth_level_right;
   }
+
+  /* set number of samples */
+  G_frame_num_samples = num_pairs * 2;
 
   return 0;
 }

@@ -116,15 +116,15 @@ int main(int argc, char *argv[])
     goto cleanup_textures;
   }
 
+  /* initialize sample frame */
+  frame_reset_buffer();
+
   /* initialize audio */
   if (audio_init())
   {
     fprintf(stdout, "Error initializing audio device.\n");
     goto cleanup_textures;
   }
-
-  /* initialize sample frame */
-  frame_reset_buffer();
 
   /* initialize tables */
   synth_generate_tables();
@@ -174,6 +174,7 @@ int main(int argc, char *argv[])
             (event.window.event == SDL_WINDOWEVENT_FOCUS_LOST))
         {
           G_flag_window_minimized = 1;
+          audio_pause();
         }
 
         /* if focus is gained, unpause */
@@ -181,6 +182,7 @@ int main(int argc, char *argv[])
             (event.window.event == SDL_WINDOWEVENT_FOCUS_GAINED))
         {
           G_flag_window_minimized = 0;
+          audio_unpause();
           ticks_last_update = SDL_GetTicks();
         }
       }
@@ -232,7 +234,7 @@ int main(int argc, char *argv[])
       program_loop_advance_frame();
 
       /* generate samples for this frame */
-      frame_generate_one_frame();
+      frame_generate(ticks_current - ticks_last_update);
 
       /* send samples to audio output */
       audio_queue_frame();

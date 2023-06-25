@@ -57,10 +57,10 @@ enum
                                             GRAPHICS_MAX_PANELS_TILES)
 
 /* the maximum number of sprites is determined as follows:    */
-/*   number of 16x16 button pieces (1 screen): 25 * 14 = 350  */
+/*   number of 8x16 button pieces (1 screen): 50 * 14 = 700   */
 /*   number of 8x8 text characters (1 screen): 50 * 28 = 1400 */
-/* overall, this is 350 + 1400 = 1750                         */
-#define GRAPHICS_MAX_BUTTONS_SPRITES  350
+/* overall, this is 700 + 1400 = 1750                         */
+#define GRAPHICS_MAX_BUTTONS_SPRITES  700
 #define GRAPHICS_MAX_OVERLAY_SPRITES  1400
 
 #define GRAPHICS_MAX_SPRITES  ( GRAPHICS_MAX_BUTTONS_SPRITES +                 \

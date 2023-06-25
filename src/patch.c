@@ -50,32 +50,22 @@ short int patch_reset(int patch_index)
   /* algorithm */
   p->algorithm = VOICE_ALGORITHM_1_CAR_CHAIN;
 
-  /* oscillators */
+  /* oscillators and envelopes */
   for (m = 0; m < VOICE_NUM_OSCS_AND_ENVS; m++)
   {
     p->osc_feedback[m] = 0;
     p->osc_multiple[m] = 1;
     p->osc_detune[m] = 0;
-    p->osc_amplitude[m] = 16;
+    p->osc_amplitude[m] = 8;
+
+    p->env_attack[m] = 32;
+    p->env_decay_1[m] = 32;
+    p->env_decay_2[m] = 32;
+    p->env_release[m] = 32;
+    p->env_sustain[m] = 0;
+    p->env_rate_ks[m] = 1;
+    p->env_level_ks[m] = 1;
   }
-
-  /* carrier envelope */
-  p->car_attack = 32;
-  p->car_decay_1 = 16;
-  p->car_decay_2 = 16;
-  p->car_release = 16;
-  p->car_sustain = 0;
-  p->car_rate_keyscaling = 1;
-  p->car_level_keyscaling = 1;
-
-  /* modulator envelope */
-  p->mod_attack = 32;
-  p->mod_decay_1 = 16;
-  p->mod_decay_2 = 16;
-  p->mod_release = 16;
-  p->mod_sustain = 0;
-  p->mod_rate_keyscaling = 1;
-  p->mod_level_keyscaling = 1;
 
   /* lfo settings */
 
@@ -89,7 +79,7 @@ short int patch_reset(int patch_index)
 /*******************************************************************************
 ** patch_adjust_parameter()
 *******************************************************************************/
-short int patch_adjust_parameter(int patch_index, int param, int amount)
+short int patch_adjust_parameter(int patch_index, int param, int num, int amount)
 {
   patch* p;
 
@@ -100,6 +90,10 @@ short int patch_adjust_parameter(int patch_index, int param, int amount)
   /* obtain patch pointer */
   p = &G_patch_bank[patch_index];
 
+  /* make sure the oscillator / envelope number is valid */
+  if ((num < 0) || (num >= VOICE_NUM_OSCS_AND_ENVS))
+    return 1;
+
   /* adjust the parameter by the amount */
 
   /* algorithm */
@@ -109,251 +103,95 @@ short int patch_adjust_parameter(int patch_index, int param, int amount)
 
     PATCH_BOUND_PARAMETER(p->algorithm, 0, VOICE_NUM_ALGORITHMS - 1)
   }
-  /* carrier envelope */
-  else if (param == PATCH_PARAM_CAR_ENV_ATTACK)
+  /* oscillator */
+  else if (param == PATCH_PARAM_OSC_FEEDBACK)
   {
-    p->car_attack += amount;
+    p->osc_feedback[num] += amount;
 
-    PATCH_BOUND_PARAMETER(p->car_attack, 
+    PATCH_BOUND_PARAMETER(p->osc_feedback[num], 
+                          PATCH_OSC_FEEDBACK_LOWER_BOUND, 
+                          PATCH_OSC_FEEDBACK_UPPER_BOUND)
+  }
+  else if (param == PATCH_PARAM_OSC_MULTIPLE)
+  {
+    p->osc_multiple[num] += amount;
+
+    PATCH_BOUND_PARAMETER(p->osc_multiple[num], 
+                          PATCH_OSC_MULTIPLE_LOWER_BOUND, 
+                          PATCH_OSC_MULTIPLE_UPPER_BOUND)
+  }
+  else if (param == PATCH_PARAM_OSC_DETUNE)
+  {
+    p->osc_detune[num] += amount;
+
+    PATCH_BOUND_PARAMETER(p->osc_detune[num], 
+                          PATCH_OSC_DETUNE_LOWER_BOUND, 
+                          PATCH_OSC_DETUNE_UPPER_BOUND)
+  }
+  else if (param == PATCH_PARAM_OSC_AMPLITUDE)
+  {
+    p->osc_amplitude[num] += amount;
+
+    PATCH_BOUND_PARAMETER(p->osc_amplitude[num], 
+                          PATCH_OSC_AMPLITUDE_LOWER_BOUND, 
+                          PATCH_OSC_AMPLITUDE_UPPER_BOUND)
+  }
+  /* envelope */
+  else if (param == PATCH_PARAM_ENV_ATTACK)
+  {
+    p->env_attack[num] += amount;
+
+    PATCH_BOUND_PARAMETER(p->env_attack[num], 
                           PATCH_ENV_ATTACK_LOWER_BOUND, 
                           PATCH_ENV_ATTACK_UPPER_BOUND)
   }
-  else if (param == PATCH_PARAM_CAR_ENV_DECAY_1)
+  else if (param == PATCH_PARAM_ENV_DECAY_1)
   {
-    p->car_decay_1 += amount;
+    p->env_decay_1[num] += amount;
 
-    PATCH_BOUND_PARAMETER(p->car_decay_1, 
+    PATCH_BOUND_PARAMETER(p->env_decay_1[num], 
                           PATCH_ENV_DECAY_1_LOWER_BOUND, 
                           PATCH_ENV_DECAY_1_UPPER_BOUND)
   }
-  else if (param == PATCH_PARAM_CAR_ENV_DECAY_2)
+  else if (param == PATCH_PARAM_ENV_DECAY_2)
   {
-    p->car_decay_2 += amount;
+    p->env_decay_2[num] += amount;
 
-    PATCH_BOUND_PARAMETER(p->car_decay_2, 
+    PATCH_BOUND_PARAMETER(p->env_decay_2[num], 
                           PATCH_ENV_DECAY_2_LOWER_BOUND, 
                           PATCH_ENV_DECAY_2_UPPER_BOUND)
   }
-  else if (param == PATCH_PARAM_CAR_ENV_RELEASE)
+  else if (param == PATCH_PARAM_ENV_RELEASE)
   {
-    p->car_release += amount;
+    p->env_release[num] += amount;
 
-    PATCH_BOUND_PARAMETER(p->car_release, 
+    PATCH_BOUND_PARAMETER(p->env_release[num], 
                           PATCH_ENV_RELEASE_LOWER_BOUND, 
                           PATCH_ENV_RELEASE_UPPER_BOUND)
   }
-  else if (param == PATCH_PARAM_CAR_ENV_SUSTAIN)
+  else if (param == PATCH_PARAM_ENV_SUSTAIN)
   {
-    p->car_sustain += amount;
+    p->env_sustain[num] += amount;
 
-    PATCH_BOUND_PARAMETER(p->car_sustain, 
+    PATCH_BOUND_PARAMETER(p->env_sustain[num], 
                           PATCH_ENV_SUSTAIN_LOWER_BOUND, 
                           PATCH_ENV_SUSTAIN_UPPER_BOUND)
   }
-  else if (param == PATCH_PARAM_CAR_ENV_RATE_KS)
+  else if (param == PATCH_PARAM_ENV_RATE_KS)
   {
-    p->car_rate_keyscaling += amount;
+    p->env_rate_ks[num] += amount;
 
-    PATCH_BOUND_PARAMETER(p->car_rate_keyscaling, 
+    PATCH_BOUND_PARAMETER(p->env_rate_ks[num], 
                           PATCH_ENV_RATE_KS_LOWER_BOUND, 
                           PATCH_ENV_RATE_KS_UPPER_BOUND)
   }
-  else if (param == PATCH_PARAM_CAR_ENV_LEVEL_KS)
+  else if (param == PATCH_PARAM_ENV_LEVEL_KS)
   {
-    p->car_level_keyscaling += amount;
+    p->env_level_ks[num] += amount;
 
-    PATCH_BOUND_PARAMETER(p->car_level_keyscaling, 
+    PATCH_BOUND_PARAMETER(p->env_level_ks[num], 
                           PATCH_ENV_LEVEL_KS_LOWER_BOUND, 
                           PATCH_ENV_LEVEL_KS_UPPER_BOUND)
-  }
-  /* modulator envelope */
-  else if (param == PATCH_PARAM_MOD_ENV_ATTACK)
-  {
-    p->mod_attack += amount;
-
-    PATCH_BOUND_PARAMETER(p->mod_attack, 
-                          PATCH_ENV_ATTACK_LOWER_BOUND, 
-                          PATCH_ENV_ATTACK_UPPER_BOUND)
-  }
-  else if (param == PATCH_PARAM_MOD_ENV_DECAY_1)
-  {
-    p->mod_decay_1 += amount;
-
-    PATCH_BOUND_PARAMETER(p->mod_decay_1, 
-                          PATCH_ENV_DECAY_1_LOWER_BOUND, 
-                          PATCH_ENV_DECAY_1_UPPER_BOUND)
-  }
-  else if (param == PATCH_PARAM_MOD_ENV_DECAY_2)
-  {
-    p->mod_decay_2 += amount;
-
-    PATCH_BOUND_PARAMETER(p->mod_decay_2, 
-                          PATCH_ENV_DECAY_2_LOWER_BOUND, 
-                          PATCH_ENV_DECAY_2_UPPER_BOUND)
-  }
-  else if (param == PATCH_PARAM_MOD_ENV_RELEASE)
-  {
-    p->mod_release += amount;
-
-    PATCH_BOUND_PARAMETER(p->mod_release, 
-                          PATCH_ENV_RELEASE_LOWER_BOUND, 
-                          PATCH_ENV_RELEASE_UPPER_BOUND)
-  }
-  else if (param == PATCH_PARAM_MOD_ENV_SUSTAIN)
-  {
-    p->mod_sustain += amount;
-
-    PATCH_BOUND_PARAMETER(p->mod_sustain, 
-                          PATCH_ENV_SUSTAIN_LOWER_BOUND, 
-                          PATCH_ENV_SUSTAIN_UPPER_BOUND)
-  }
-  else if (param == PATCH_PARAM_MOD_ENV_RATE_KS)
-  {
-    p->mod_rate_keyscaling += amount;
-
-    PATCH_BOUND_PARAMETER(p->mod_rate_keyscaling, 
-                          PATCH_ENV_RATE_KS_LOWER_BOUND, 
-                          PATCH_ENV_RATE_KS_UPPER_BOUND)
-  }
-  else if (param == PATCH_PARAM_MOD_ENV_LEVEL_KS)
-  {
-    p->mod_level_keyscaling += amount;
-
-    PATCH_BOUND_PARAMETER(p->mod_level_keyscaling, 
-                          PATCH_ENV_LEVEL_KS_LOWER_BOUND, 
-                          PATCH_ENV_LEVEL_KS_UPPER_BOUND)
-  }
-  /* oscillator 1 */
-  else if (param == PATCH_PARAM_OSC_1_FEEDBACK)
-  {
-    p->osc_feedback[0] += amount;
-
-    PATCH_BOUND_PARAMETER(p->osc_feedback[0], 
-                          PATCH_OSC_FEEDBACK_LOWER_BOUND, 
-                          PATCH_OSC_FEEDBACK_UPPER_BOUND)
-  }
-  else if (param == PATCH_PARAM_OSC_1_MULTIPLE)
-  {
-    p->osc_multiple[0] += amount;
-
-    PATCH_BOUND_PARAMETER(p->osc_multiple[0], 
-                          PATCH_OSC_MULTIPLE_LOWER_BOUND, 
-                          PATCH_OSC_MULTIPLE_UPPER_BOUND)
-  }
-  else if (param == PATCH_PARAM_OSC_1_DETUNE)
-  {
-    p->osc_detune[0] += amount;
-
-    PATCH_BOUND_PARAMETER(p->osc_detune[0], 
-                          PATCH_OSC_DETUNE_LOWER_BOUND, 
-                          PATCH_OSC_DETUNE_UPPER_BOUND)
-  }
-  else if (param == PATCH_PARAM_OSC_1_AMPLITUDE)
-  {
-    p->osc_amplitude[0] += amount;
-
-    PATCH_BOUND_PARAMETER(p->osc_amplitude[0], 
-                          PATCH_OSC_AMPLITUDE_LOWER_BOUND, 
-                          PATCH_OSC_AMPLITUDE_UPPER_BOUND)
-  }
-  /* oscillator 2 */
-  else if (param == PATCH_PARAM_OSC_2_FEEDBACK)
-  {
-    p->osc_feedback[1] += amount;
-
-    PATCH_BOUND_PARAMETER(p->osc_feedback[1], 
-                          PATCH_OSC_FEEDBACK_LOWER_BOUND, 
-                          PATCH_OSC_FEEDBACK_UPPER_BOUND)
-  }
-  else if (param == PATCH_PARAM_OSC_2_MULTIPLE)
-  {
-    p->osc_multiple[1] += amount;
-
-    PATCH_BOUND_PARAMETER(p->osc_multiple[1], 
-                          PATCH_OSC_MULTIPLE_LOWER_BOUND, 
-                          PATCH_OSC_MULTIPLE_UPPER_BOUND)
-  }
-  else if (param == PATCH_PARAM_OSC_2_DETUNE)
-  {
-    p->osc_detune[1] += amount;
-
-    PATCH_BOUND_PARAMETER(p->osc_detune[1], 
-                          PATCH_OSC_DETUNE_LOWER_BOUND, 
-                          PATCH_OSC_DETUNE_UPPER_BOUND)
-  }
-  else if (param == PATCH_PARAM_OSC_2_AMPLITUDE)
-  {
-    p->osc_amplitude[1] += amount;
-
-    PATCH_BOUND_PARAMETER(p->osc_amplitude[1], 
-                          PATCH_OSC_AMPLITUDE_LOWER_BOUND, 
-                          PATCH_OSC_AMPLITUDE_UPPER_BOUND)
-  }
-  /* oscillator 3 */
-  else if (param == PATCH_PARAM_OSC_3_FEEDBACK)
-  {
-    p->osc_feedback[2] += amount;
-
-    PATCH_BOUND_PARAMETER(p->osc_feedback[2], 
-                          PATCH_OSC_FEEDBACK_LOWER_BOUND, 
-                          PATCH_OSC_FEEDBACK_UPPER_BOUND)
-  }
-  else if (param == PATCH_PARAM_OSC_3_MULTIPLE)
-  {
-    p->osc_multiple[2] += amount;
-
-    PATCH_BOUND_PARAMETER(p->osc_multiple[2], 
-                          PATCH_OSC_MULTIPLE_LOWER_BOUND, 
-                          PATCH_OSC_MULTIPLE_UPPER_BOUND)
-  }
-  else if (param == PATCH_PARAM_OSC_3_DETUNE)
-  {
-    p->osc_detune[2] += amount;
-
-    PATCH_BOUND_PARAMETER(p->osc_detune[2], 
-                          PATCH_OSC_DETUNE_LOWER_BOUND, 
-                          PATCH_OSC_DETUNE_UPPER_BOUND)
-  }
-  else if (param == PATCH_PARAM_OSC_3_AMPLITUDE)
-  {
-    p->osc_amplitude[2] += amount;
-
-    PATCH_BOUND_PARAMETER(p->osc_amplitude[2], 
-                          PATCH_OSC_AMPLITUDE_LOWER_BOUND, 
-                          PATCH_OSC_AMPLITUDE_UPPER_BOUND)
-  }
-  /* oscillator 4 */
-  else if (param == PATCH_PARAM_OSC_4_FEEDBACK)
-  {
-    p->osc_feedback[3] += amount;
-
-    PATCH_BOUND_PARAMETER(p->osc_feedback[3], 
-                          PATCH_OSC_FEEDBACK_LOWER_BOUND, 
-                          PATCH_OSC_FEEDBACK_UPPER_BOUND)
-  }
-  else if (param == PATCH_PARAM_OSC_4_MULTIPLE)
-  {
-    p->osc_multiple[3] += amount;
-
-    PATCH_BOUND_PARAMETER(p->osc_multiple[3], 
-                          PATCH_OSC_MULTIPLE_LOWER_BOUND, 
-                          PATCH_OSC_MULTIPLE_UPPER_BOUND)
-  }
-  else if (param == PATCH_PARAM_OSC_4_DETUNE)
-  {
-    p->osc_detune[3] += amount;
-
-    PATCH_BOUND_PARAMETER(p->osc_detune[3], 
-                          PATCH_OSC_DETUNE_LOWER_BOUND, 
-                          PATCH_OSC_DETUNE_UPPER_BOUND)
-  }
-  else if (param == PATCH_PARAM_OSC_4_AMPLITUDE)
-  {
-    p->osc_amplitude[3] += amount;
-
-    PATCH_BOUND_PARAMETER(p->osc_amplitude[3], 
-                          PATCH_OSC_AMPLITUDE_LOWER_BOUND, 
-                          PATCH_OSC_AMPLITUDE_UPPER_BOUND)
   }
   /* filters */
   else if (param == PATCH_PARAM_LOWPASS_CUTOFF)

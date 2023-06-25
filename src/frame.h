@@ -7,16 +7,20 @@
 
 #include "clock.h"
 
-#define FRAME_NUM_SAMPLES   (CLOCK_SAMPLING_RATE / 60)   /* 36000 / 60 = 600 */
+#define FRAME_BUFFER_PAIRS_PER_MS (CLOCK_SAMPLING_RATE / 1000)  /* 32000 / 1000 = 32 */
+#define FRAME_BUFFER_MAX_MS       40
 
-#define FRAME_BUFFER_LENGTH (FRAME_NUM_SAMPLES * 2)
+/* 2 samples per pair (left/right) */
+#define FRAME_BUFFER_MAX_PAIRS    (FRAME_BUFFER_MAX_MS * FRAME_BUFFER_PAIRS_PER_MS)
+#define FRAME_BUFFER_MAX_SAMPLES  (FRAME_BUFFER_MAX_PAIRS * 2)
 
-extern short int G_frame_sample_buffer[FRAME_BUFFER_LENGTH];
+extern short int G_frame_sample_buffer[FRAME_BUFFER_MAX_SAMPLES];
+
+extern int G_frame_num_samples;
 
 /* function declarations */
 short int frame_reset_buffer();
 
-short int frame_prepare_for_playback();
-short int frame_generate_one_frame();
+short int frame_generate(unsigned int ms);
 
 #endif
