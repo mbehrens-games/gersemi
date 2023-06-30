@@ -36,7 +36,7 @@ short int program_loop_change_screen(int screen)
     render_reset_vbos();
 
     vb_all_load_background();
-    vb_all_load_patches_panels_and_buttons();
+    vb_all_load_common_panels_and_buttons();
     vb_all_load_patches_overlay();
   }
   /* patterns screen */
@@ -47,7 +47,7 @@ short int program_loop_change_screen(int screen)
     render_reset_vbos();
 
     vb_all_load_background();
-    vb_all_load_patterns_panels_and_buttons();
+    vb_all_load_common_panels_and_buttons();
     vb_all_load_patterns_overlay();
   }
   /* quit command issued */
@@ -73,9 +73,15 @@ short int program_loop_advance_frame()
 
   /* update vbos */
   if (G_game_screen == PROGRAM_SCREEN_PATCHES)
+  {
+    vb_all_load_common_overlay();
     vb_all_load_patches_overlay();
+  }
   else if (G_game_screen == PROGRAM_SCREEN_PATTERNS)
+  {
+    vb_all_load_common_overlay();
     vb_all_load_patterns_overlay();
+  }
 
   /* rendering */
   render_all();

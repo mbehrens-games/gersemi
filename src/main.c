@@ -17,6 +17,7 @@
 #include "global.h"
 #include "graphics.h"
 #include "hola.h"
+#include "layout.h"
 #include "palette.h"
 #include "path.h"
 #include "progloop.h"
@@ -128,6 +129,9 @@ int main(int argc, char *argv[])
 
   /* initialize tables */
   synth_generate_tables();
+
+  /* generate screen layouts */
+  layout_setup_all();
 
   /* initialize controller input states */
   controls_setup();

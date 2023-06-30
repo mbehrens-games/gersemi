@@ -14,6 +14,8 @@ extern int          G_flag_quit_program;
 extern unsigned int G_timer_count;
 extern unsigned int G_saved_timer_count;
 
+extern int          G_current_scroll_amount;
+
 extern int          G_patch_edit_patch_index;
 extern int          G_patch_edit_voice_index;
 extern int          G_patch_edit_octave;

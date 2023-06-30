@@ -57,11 +57,9 @@
   /* update oscillator */                                                               \
   VOICE_WAVETABLE_LOOKUP(num, (v->osc_phase[num] >> 18) + osc_fb_mod[num])              \
                                                                                         \
-  /* cycle feedback                                             */                      \
-  /* note that the feedback values from 0-8 are divided by 16,  */                      \
-  /* so the max feedback is 8/16 = 1/2 of the oscillator level. */                      \
+  /* cycle feedback */                                                                  \
   v->feed_in[2 * num + 1] = v->feed_in[2 * num + 0];                                    \
-  v->feed_in[2 * num + 0] = (osc_level[num] * v->osc_feedback[num]) >> 4;
+  v->feed_in[2 * num + 0] = (osc_level[num] * S_voice_feedback_table[v->osc_feedback[num]]) >> 6;
 
 #define VOICE_UPDATE_OSCILLATOR_NO_MOD(num)                                    \
   VOICE_WAVETABLE_LOOKUP(num, (v->osc_phase[num] >> 18) + osc_fb_mod[num])     \
@@ -103,6 +101,10 @@ static int  S_phi_table[16] =
               0x0C000000, 0x0D555555, 0x0E000000, 0x0EAAAAAA 
             };
 #endif
+
+/* feedback table */
+static int  S_voice_feedback_table[8] = 
+            { 0, 1, 2, 4, 8, 16, 32, 64};
 
 /* multiple table */
 

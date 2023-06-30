@@ -17,6 +17,8 @@ int           G_flag_quit_program;
 unsigned int  G_timer_count;
 unsigned int  G_saved_timer_count;
 
+int           G_current_scroll_amount;
+
 int           G_patch_edit_patch_index;
 int           G_patch_edit_voice_index;
 int           G_patch_edit_octave;
@@ -37,6 +39,8 @@ short int globals_init_variables()
 
   G_timer_count = 0;
   G_saved_timer_count = 0;
+
+  G_current_scroll_amount = 0;
 
   G_patch_edit_patch_index = 0;
   G_patch_edit_voice_index = 0;

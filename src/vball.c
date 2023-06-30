@@ -36,18 +36,6 @@ enum
 
 enum
 {
-  VB_ALL_PANEL_TYPE_NORMAL = 0,
-  VB_ALL_PANEL_TYPE_THIN
-};
-
-enum
-{
-  VB_ALL_BUTTON_OFF = 0,
-  VB_ALL_BUTTON_ON
-};
-
-enum
-{
   VB_ALL_SPRITE_NAME_ADJUST_PARAM_LEFT = 0,
   VB_ALL_SPRITE_NAME_ADJUST_PARAM_RIGHT
 };
@@ -500,9 +488,9 @@ short int vb_all_load_panel(int offset_x, int offset_y,
       }
 
       /* select panel type */
-      if (type == VB_ALL_PANEL_TYPE_NORMAL)
+      if (type == LAYOUT_PANEL_TYPE_NORMAL)
         cell_x += 0;
-      else if (type == VB_ALL_PANEL_TYPE_THIN)
+      else if (type == LAYOUT_PANEL_TYPE_THIN)
         cell_x += 4;
       else
         cell_x += 0;
@@ -668,12 +656,12 @@ short int vb_all_load_button(int offset_x, int offset_y, int width, int state)
     return 1;
 
   /* set lighting and palette */
-  if (state == VB_ALL_BUTTON_OFF)
+  if (state == LAYOUT_BUTTON_STATE_OFF)
   {
     lighting = 0;
     palette = 6;
   }
-  else if (state == VB_ALL_BUTTON_ON)
+  else if (state == LAYOUT_BUTTON_STATE_ON)
   {
     lighting = 1;
     palette = VB_ALL_PALETTE_1;
@@ -1212,10 +1200,15 @@ short int vb_all_load_highpass_filter_name( int offset_x, int offset_y,
 }
 
 /*******************************************************************************
-** vb_all_load_patches_panels_and_buttons()
+** vb_all_load_common_panels_and_buttons()
 *******************************************************************************/
-short int vb_all_load_patches_panels_and_buttons()
+short int vb_all_load_common_panels_and_buttons()
 {
+  int k;
+
+  panel*  pn;
+  button* b;
+
   /* reset panels tile vbo count */
   G_tile_layer_counts[GRAPHICS_TILE_LAYER_PANELS] = 0;
 
@@ -1223,25 +1216,28 @@ short int vb_all_load_patches_panels_and_buttons()
   G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_BUTTONS] = 0;
   G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_OVERLAY] = 0;
 
-  /* top panel */
-  vb_all_load_panel(0, -22, 50, 6, VB_ALL_PANEL_TYPE_NORMAL);
+  /* panels */
+  for (k = 0; k < LAYOUT_NUM_PANELS; k++)
+  {
+    pn = &G_layout_panels[k];
 
-  /* top buttons */
-  vb_all_load_button( LAYOUT_TOP_PANEL_PATCHES_BUTTON_X, 
-                      LAYOUT_TOP_PANEL_PATCHES_BUTTON_Y, 
-                      LAYOUT_TOP_PANEL_PATCHES_BUTTON_WIDTH, 
-                      VB_ALL_BUTTON_ON);
-
-  vb_all_load_button( LAYOUT_TOP_PANEL_PATTERNS_BUTTON_X, 
-                      LAYOUT_TOP_PANEL_PATTERNS_BUTTON_Y, 
-                      LAYOUT_TOP_PANEL_PATTERNS_BUTTON_WIDTH, 
-                      VB_ALL_BUTTON_OFF);
+    vb_all_load_panel(pn->center_x, pn->center_y, 
+                      pn->width, pn->height, pn->type);
+  }
 
   /* vertical scrollbar */
   vb_all_load_vertical_scrollbar(47, 3, 19);
 
-  /* bottom panel */
-  vb_all_load_panel(0, 25, 50, 3, VB_ALL_PANEL_TYPE_THIN);
+  /* top panel buttons */
+  for ( k = LAYOUT_TOP_PANEL_BUTTONS_START_INDEX; 
+        k < LAYOUT_TOP_PANEL_BUTTONS_END_INDEX; 
+        k++)
+  {
+    b = &G_layout_buttons[k];
+
+    vb_all_load_button( b->center_x, b->center_y, 
+                        b->width, b->state);
+  }
 
   /* update vbos */
   VB_ALL_UPDATE_PANELS_TILES_IN_VBOS()
@@ -1251,11 +1247,97 @@ short int vb_all_load_patches_panels_and_buttons()
 }
 
 /*******************************************************************************
+** vb_all_load_common_overlay()
+*******************************************************************************/
+short int vb_all_load_common_overlay()
+{
+  int k;
+
+  button* b;
+  header* hd;
+
+  /* reset overlay sprite vbo count */
+  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_OVERLAY] = 0;
+
+  /* top panel headers */
+  for ( k = LAYOUT_TOP_PANEL_HEADERS_START_INDEX; 
+        k < LAYOUT_TOP_PANEL_HEADERS_END_INDEX; 
+        k++)
+  {
+    hd = &G_layout_headers[k];
+
+    if (hd->label == LAYOUT_HEADER_TOP_PANEL_LABEL_NAME)
+    {
+      vb_all_load_text( hd->center_x, hd->center_y, 
+                        VB_ALL_ALIGN_CENTER, 0, 6, 32, "Gersemi");
+    }
+    else if (hd->label == LAYOUT_HEADER_TOP_PANEL_LABEL_VERSION)
+    {
+      vb_all_load_text( hd->center_x, hd->center_y, 
+                        VB_ALL_ALIGN_CENTER, 0, 6, 32, "v0.9");
+    }
+  }
+
+  /* bottom panel headers */
+  for ( k = LAYOUT_BOTTOM_PANEL_HEADERS_START_INDEX; 
+        k < LAYOUT_BOTTOM_PANEL_HEADERS_END_INDEX; 
+        k++)
+  {
+    hd = &G_layout_headers[k];
+
+    if (hd->label == LAYOUT_HEADER_BOTTOM_PANEL_LABEL_OCTAVE)
+    {
+      vb_all_load_text( hd->center_x, hd->center_y, 
+                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_1, 32, "Octave");
+    }
+    else if (hd->label == LAYOUT_HEADER_BOTTOM_PANEL_LABEL_KEY)
+    {
+      vb_all_load_text( hd->center_x, hd->center_y, 
+                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_1, 32, "Key");
+    }
+  }
+
+  /* bottom panel text (extra) */
+  vb_all_load_value(-31, 25, 0, 6, G_patch_edit_octave);
+
+  vb_all_load_text(9, 25, VB_ALL_ALIGN_LEFT, 0, 6, 32, "C  D  E  F  G  A  Bb");
+
+  /* top panel buttons */
+  for ( k = LAYOUT_TOP_PANEL_BUTTONS_START_INDEX; 
+        k < LAYOUT_TOP_PANEL_BUTTONS_END_INDEX; 
+        k++)
+  {
+    b = &G_layout_buttons[k];
+
+    if (b->label == LAYOUT_BUTTON_LABEL_PATCHES)
+    {
+      vb_all_load_text( b->center_x, b->center_y, 
+                        VB_ALL_ALIGN_CENTER, 0, 6, 16, "Patches");
+    }
+    else if (b->label == LAYOUT_BUTTON_LABEL_PATTERNS)
+    {
+      vb_all_load_text( b->center_x, b->center_y, 
+                        VB_ALL_ALIGN_CENTER, 0, 6, 16, "Patterns");
+    }
+  }
+
+  /* update vbos */
+  VB_ALL_UPDATE_OVERLAY_SPRITES_IN_VBOS()
+
+  return 0;
+}
+
+/*******************************************************************************
 ** vb_all_load_patches_overlay()
 *******************************************************************************/
 short int vb_all_load_patches_overlay()
 {
+  int k;
+
   patch* p;
+
+  header* hd;
+  param*  pr;
 
   /* make sure that the patch index is valid */
   if (BANK_PATCH_INDEX_IS_NOT_VALID(0))
@@ -1264,20 +1346,7 @@ short int vb_all_load_patches_overlay()
   /* obtain patch pointer */
   p = &G_patch_bank[0];
 
-  /* reset overlay sprite vbo count */
-  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_OVERLAY] = 0;
-
-  /* top panel text */
-  vb_all_load_text(0, -24, VB_ALL_ALIGN_CENTER, 0, 6, 32, "Gersemi v0.9");
-
-  /* top button text */
-  vb_all_load_text( LAYOUT_TOP_PANEL_PATCHES_BUTTON_X, 
-                    LAYOUT_TOP_PANEL_PATCHES_BUTTON_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, 6, 16, "Patches");
-  vb_all_load_text( LAYOUT_TOP_PANEL_PATTERNS_BUTTON_X, 
-                    LAYOUT_TOP_PANEL_PATTERNS_BUTTON_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, 6, 16, "Patterns");
-
+#if 0
   /* patch settings text */
   vb_all_load_text(-47, -13, VB_ALL_ALIGN_LEFT, 0, VB_ALL_PALETTE_2, 16, "Patch");
 
@@ -1297,336 +1366,196 @@ short int vb_all_load_patches_overlay()
   vb_all_load_algorithm_name( LAYOUT_PATCH_EDIT_ALGORITHM_PARAM_X, 
                               LAYOUT_PATCH_EDIT_ALGORITHM_Y, 
                               0, 6, p->algorithm);
-
-  /* oscillator header */
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_1_CENTER_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_OSC_HEADER_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_3, 16, "Osc 1");
-
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_2_CENTER_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_OSC_HEADER_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_3, 16, "Osc 2");
-
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_3_CENTER_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_OSC_HEADER_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_3, 16, "Osc 3");
-
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_4_CENTER_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_OSC_HEADER_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_3, 16, "Osc 4");
-
-  /* oscillator feedback */
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_1_NAME_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_OSC_FEEDBACK_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "FBk");
-
-  vb_all_load_adjustable_parameter( LAYOUT_PATCH_EDIT_COLUMN_1_PARAM_X, 
-                                    LAYOUT_PATCH_EDIT_PARAM_OSC_FEEDBACK_Y, 
-                                    0, 6, p->osc_feedback[0], 
-                                    PATCH_OSC_FEEDBACK_LOWER_BOUND, PATCH_OSC_FEEDBACK_UPPER_BOUND);
-
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_2_NAME_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_OSC_FEEDBACK_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "FBk");
-
-  vb_all_load_adjustable_parameter( LAYOUT_PATCH_EDIT_COLUMN_2_PARAM_X, 
-                                    LAYOUT_PATCH_EDIT_PARAM_OSC_FEEDBACK_Y, 
-                                    0, 6, p->osc_feedback[1], 
-                                    PATCH_OSC_FEEDBACK_LOWER_BOUND, PATCH_OSC_FEEDBACK_UPPER_BOUND);
-
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_3_NAME_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_OSC_FEEDBACK_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "FBk");
-
-  vb_all_load_adjustable_parameter( LAYOUT_PATCH_EDIT_COLUMN_3_PARAM_X, 
-                                    LAYOUT_PATCH_EDIT_PARAM_OSC_FEEDBACK_Y, 
-                                    0, 6, p->osc_feedback[2], 
-                                    PATCH_OSC_FEEDBACK_LOWER_BOUND, PATCH_OSC_FEEDBACK_UPPER_BOUND);
-
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_4_NAME_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_OSC_FEEDBACK_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "FBk");
-
-  vb_all_load_adjustable_parameter( LAYOUT_PATCH_EDIT_COLUMN_4_PARAM_X, 
-                                    LAYOUT_PATCH_EDIT_PARAM_OSC_FEEDBACK_Y, 
-                                    0, 6, p->osc_feedback[3], 
-                                    PATCH_OSC_FEEDBACK_LOWER_BOUND, PATCH_OSC_FEEDBACK_UPPER_BOUND);
-
-  /* oscillator multiple */
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_1_NAME_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_OSC_MULTIPLE_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "Mul");
-
-  vb_all_load_adjustable_parameter( LAYOUT_PATCH_EDIT_COLUMN_1_PARAM_X, 
-                                    LAYOUT_PATCH_EDIT_PARAM_OSC_MULTIPLE_Y, 
-                                    0, 6, p->osc_multiple[0], 
-                                    PATCH_OSC_MULTIPLE_LOWER_BOUND, PATCH_OSC_MULTIPLE_UPPER_BOUND);
-
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_2_NAME_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_OSC_MULTIPLE_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "Mul");
-
-  vb_all_load_adjustable_parameter( LAYOUT_PATCH_EDIT_COLUMN_2_PARAM_X, 
-                                    LAYOUT_PATCH_EDIT_PARAM_OSC_MULTIPLE_Y, 
-                                    0, 6, p->osc_multiple[1], 
-                                    PATCH_OSC_MULTIPLE_LOWER_BOUND, PATCH_OSC_MULTIPLE_UPPER_BOUND);
-
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_3_NAME_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_OSC_MULTIPLE_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "Mul");
-
-  vb_all_load_adjustable_parameter( LAYOUT_PATCH_EDIT_COLUMN_3_PARAM_X, 
-                                    LAYOUT_PATCH_EDIT_PARAM_OSC_MULTIPLE_Y, 
-                                    0, 6, p->osc_multiple[2], 
-                                    PATCH_OSC_MULTIPLE_LOWER_BOUND, PATCH_OSC_MULTIPLE_UPPER_BOUND);
-
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_4_NAME_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_OSC_MULTIPLE_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "Mul");
-
-  vb_all_load_adjustable_parameter( LAYOUT_PATCH_EDIT_COLUMN_4_PARAM_X, 
-                                    LAYOUT_PATCH_EDIT_PARAM_OSC_MULTIPLE_Y, 
-                                    0, 6, p->osc_multiple[3], 
-                                    PATCH_OSC_MULTIPLE_LOWER_BOUND, PATCH_OSC_MULTIPLE_UPPER_BOUND);
-
-  /* oscillator detune */
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_1_NAME_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_OSC_DETUNE_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "Det");
-
-  vb_all_load_adjustable_parameter( LAYOUT_PATCH_EDIT_COLUMN_1_PARAM_X, 
-                                    LAYOUT_PATCH_EDIT_PARAM_OSC_DETUNE_Y, 
-                                    0, 6, p->osc_detune[0], 
-                                    PATCH_OSC_DETUNE_LOWER_BOUND, PATCH_OSC_DETUNE_UPPER_BOUND);
-
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_2_NAME_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_OSC_DETUNE_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "Det");
-
-  vb_all_load_adjustable_parameter( LAYOUT_PATCH_EDIT_COLUMN_2_PARAM_X, 
-                                    LAYOUT_PATCH_EDIT_PARAM_OSC_DETUNE_Y, 
-                                    0, 6, p->osc_detune[1], 
-                                    PATCH_OSC_DETUNE_LOWER_BOUND, PATCH_OSC_DETUNE_UPPER_BOUND);
-
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_3_NAME_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_OSC_DETUNE_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "Det");
-
-  vb_all_load_adjustable_parameter( LAYOUT_PATCH_EDIT_COLUMN_3_PARAM_X, 
-                                    LAYOUT_PATCH_EDIT_PARAM_OSC_DETUNE_Y, 
-                                    0, 6, p->osc_detune[2], 
-                                    PATCH_OSC_DETUNE_LOWER_BOUND, PATCH_OSC_DETUNE_UPPER_BOUND);
-
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_4_NAME_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_OSC_DETUNE_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "Det");
-
-  vb_all_load_adjustable_parameter( LAYOUT_PATCH_EDIT_COLUMN_4_PARAM_X, 
-                                    LAYOUT_PATCH_EDIT_PARAM_OSC_DETUNE_Y, 
-                                    0, 6, p->osc_detune[3], 
-                                    PATCH_OSC_DETUNE_LOWER_BOUND, PATCH_OSC_DETUNE_UPPER_BOUND);
-
-  /* oscillator amplitude */
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_1_NAME_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_OSC_AMPLITUDE_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "Lev");
-
-  vb_all_load_adjustable_parameter( LAYOUT_PATCH_EDIT_COLUMN_1_PARAM_X, 
-                                    LAYOUT_PATCH_EDIT_PARAM_OSC_AMPLITUDE_Y, 
-                                    0, 6, p->osc_amplitude[0], 
-                                    PATCH_OSC_AMPLITUDE_LOWER_BOUND, PATCH_OSC_AMPLITUDE_UPPER_BOUND);
-
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_2_NAME_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_OSC_AMPLITUDE_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "Lev");
-
-  vb_all_load_adjustable_parameter( LAYOUT_PATCH_EDIT_COLUMN_2_PARAM_X, 
-                                    LAYOUT_PATCH_EDIT_PARAM_OSC_AMPLITUDE_Y, 
-                                    0, 6, p->osc_amplitude[1], 
-                                    PATCH_OSC_AMPLITUDE_LOWER_BOUND, PATCH_OSC_AMPLITUDE_UPPER_BOUND);
-
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_3_NAME_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_OSC_AMPLITUDE_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "Lev");
-
-  vb_all_load_adjustable_parameter( LAYOUT_PATCH_EDIT_COLUMN_3_PARAM_X, 
-                                    LAYOUT_PATCH_EDIT_PARAM_OSC_AMPLITUDE_Y, 
-                                    0, 6, p->osc_amplitude[2], 
-                                    PATCH_OSC_AMPLITUDE_LOWER_BOUND, PATCH_OSC_AMPLITUDE_UPPER_BOUND);
-
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_4_NAME_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_OSC_AMPLITUDE_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "Lev");
-
-  vb_all_load_adjustable_parameter( LAYOUT_PATCH_EDIT_COLUMN_4_PARAM_X, 
-                                    LAYOUT_PATCH_EDIT_PARAM_OSC_AMPLITUDE_Y, 
-                                    0, 6, p->osc_amplitude[3], 
-                                    PATCH_OSC_AMPLITUDE_LOWER_BOUND, PATCH_OSC_AMPLITUDE_UPPER_BOUND);
-
-  /* envelope header */
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_1_CENTER_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_ENV_HEADER_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_3, 16, "Env 1");
-
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_2_CENTER_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_ENV_HEADER_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_3, 16, "Env 2");
-
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_3_CENTER_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_ENV_HEADER_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_3, 16, "Env 3");
-
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_4_CENTER_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_ENV_HEADER_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_3, 16, "Env 4");
-
-  /* envelope attack */
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_1_NAME_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_ENV_ATTACK_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "Att");
-
-  vb_all_load_adjustable_parameter( LAYOUT_PATCH_EDIT_COLUMN_1_PARAM_X, 
-                                    LAYOUT_PATCH_EDIT_PARAM_ENV_ATTACK_Y, 
-                                    0, 6, p->env_attack[0], 
-                                    PATCH_ENV_ATTACK_LOWER_BOUND, PATCH_ENV_ATTACK_UPPER_BOUND);
-
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_2_NAME_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_ENV_ATTACK_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "Att");
-
-  vb_all_load_adjustable_parameter( LAYOUT_PATCH_EDIT_COLUMN_2_PARAM_X, 
-                                    LAYOUT_PATCH_EDIT_PARAM_ENV_ATTACK_Y, 
-                                    0, 6, p->env_attack[1], 
-                                    PATCH_ENV_ATTACK_LOWER_BOUND, PATCH_ENV_ATTACK_UPPER_BOUND);
-
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_3_NAME_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_ENV_ATTACK_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "Att");
-
-  vb_all_load_adjustable_parameter( LAYOUT_PATCH_EDIT_COLUMN_3_PARAM_X, 
-                                    LAYOUT_PATCH_EDIT_PARAM_ENV_ATTACK_Y, 
-                                    0, 6, p->env_attack[2], 
-                                    PATCH_ENV_ATTACK_LOWER_BOUND, PATCH_ENV_ATTACK_UPPER_BOUND);
-
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_4_NAME_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_ENV_ATTACK_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "Att");
-
-  vb_all_load_adjustable_parameter( LAYOUT_PATCH_EDIT_COLUMN_4_PARAM_X, 
-                                    LAYOUT_PATCH_EDIT_PARAM_ENV_ATTACK_Y, 
-                                    0, 6, p->env_attack[3], 
-                                    PATCH_ENV_ATTACK_LOWER_BOUND, PATCH_ENV_ATTACK_UPPER_BOUND);
-
-  /* envelope decay 1 */
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_1_NAME_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_ENV_DECAY_1_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "D1");
-
-  vb_all_load_adjustable_parameter( LAYOUT_PATCH_EDIT_COLUMN_1_PARAM_X, 
-                                    LAYOUT_PATCH_EDIT_PARAM_ENV_DECAY_1_Y, 
-                                    0, 6, p->env_decay_1[0], 
-                                    PATCH_ENV_DECAY_1_LOWER_BOUND, PATCH_ENV_DECAY_1_UPPER_BOUND);
-
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_2_NAME_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_ENV_DECAY_1_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "D1");
-
-  vb_all_load_adjustable_parameter( LAYOUT_PATCH_EDIT_COLUMN_2_PARAM_X, 
-                                    LAYOUT_PATCH_EDIT_PARAM_ENV_DECAY_1_Y, 
-                                    0, 6, p->env_decay_1[1], 
-                                    PATCH_ENV_DECAY_1_LOWER_BOUND, PATCH_ENV_DECAY_1_UPPER_BOUND);
-
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_3_NAME_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_ENV_DECAY_1_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "D1");
-
-  vb_all_load_adjustable_parameter( LAYOUT_PATCH_EDIT_COLUMN_3_PARAM_X, 
-                                    LAYOUT_PATCH_EDIT_PARAM_ENV_DECAY_1_Y, 
-                                    0, 6, p->env_decay_1[2], 
-                                    PATCH_ENV_DECAY_1_LOWER_BOUND, PATCH_ENV_DECAY_1_UPPER_BOUND);
-
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_4_NAME_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_ENV_DECAY_1_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "D1");
-
-  vb_all_load_adjustable_parameter( LAYOUT_PATCH_EDIT_COLUMN_4_PARAM_X, 
-                                    LAYOUT_PATCH_EDIT_PARAM_ENV_DECAY_1_Y, 
-                                    0, 6, p->env_decay_1[3], 
-                                    PATCH_ENV_DECAY_1_LOWER_BOUND, PATCH_ENV_DECAY_1_UPPER_BOUND);
-
-  /* envelope decay 2 */
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_1_NAME_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_ENV_DECAY_2_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "D2");
-
-  vb_all_load_adjustable_parameter( LAYOUT_PATCH_EDIT_COLUMN_1_PARAM_X, 
-                                    LAYOUT_PATCH_EDIT_PARAM_ENV_DECAY_2_Y, 
-                                    0, 6, p->env_decay_2[0], 
-                                    PATCH_ENV_DECAY_2_LOWER_BOUND, PATCH_ENV_DECAY_2_UPPER_BOUND);
-
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_2_NAME_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_ENV_DECAY_2_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "D2");
-
-  vb_all_load_adjustable_parameter( LAYOUT_PATCH_EDIT_COLUMN_2_PARAM_X, 
-                                    LAYOUT_PATCH_EDIT_PARAM_ENV_DECAY_2_Y, 
-                                    0, 6, p->env_decay_2[1], 
-                                    PATCH_ENV_DECAY_2_LOWER_BOUND, PATCH_ENV_DECAY_2_UPPER_BOUND);
-
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_3_NAME_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_ENV_DECAY_2_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "D2");
-
-  vb_all_load_adjustable_parameter( LAYOUT_PATCH_EDIT_COLUMN_3_PARAM_X, 
-                                    LAYOUT_PATCH_EDIT_PARAM_ENV_DECAY_2_Y, 
-                                    0, 6, p->env_decay_2[2], 
-                                    PATCH_ENV_DECAY_2_LOWER_BOUND, PATCH_ENV_DECAY_2_UPPER_BOUND);
-
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_4_NAME_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_ENV_DECAY_2_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "D2");
-
-  vb_all_load_adjustable_parameter( LAYOUT_PATCH_EDIT_COLUMN_4_PARAM_X, 
-                                    LAYOUT_PATCH_EDIT_PARAM_ENV_DECAY_2_Y, 
-                                    0, 6, p->env_decay_2[3], 
-                                    PATCH_ENV_DECAY_2_LOWER_BOUND, PATCH_ENV_DECAY_2_UPPER_BOUND);
-
-  /* envelope release */
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_1_NAME_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_ENV_RELEASE_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "Rel");
-
-  vb_all_load_adjustable_parameter( LAYOUT_PATCH_EDIT_COLUMN_1_PARAM_X, 
-                                    LAYOUT_PATCH_EDIT_PARAM_ENV_RELEASE_Y, 
-                                    0, 6, p->env_release[0], 
-                                    PATCH_ENV_RELEASE_LOWER_BOUND, PATCH_ENV_RELEASE_UPPER_BOUND);
-
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_2_NAME_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_ENV_RELEASE_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "Rel");
-
-  vb_all_load_adjustable_parameter( LAYOUT_PATCH_EDIT_COLUMN_2_PARAM_X, 
-                                    LAYOUT_PATCH_EDIT_PARAM_ENV_RELEASE_Y, 
-                                    0, 6, p->env_release[1], 
-                                    PATCH_ENV_RELEASE_LOWER_BOUND, PATCH_ENV_RELEASE_UPPER_BOUND);
-
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_3_NAME_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_ENV_RELEASE_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "Rel");
-
-  vb_all_load_adjustable_parameter( LAYOUT_PATCH_EDIT_COLUMN_3_PARAM_X, 
-                                    LAYOUT_PATCH_EDIT_PARAM_ENV_RELEASE_Y, 
-                                    0, 6, p->env_release[2], 
-                                    PATCH_ENV_RELEASE_LOWER_BOUND, PATCH_ENV_RELEASE_UPPER_BOUND);
-
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_4_NAME_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_ENV_RELEASE_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "Rel");
-
-  vb_all_load_adjustable_parameter( LAYOUT_PATCH_EDIT_COLUMN_4_PARAM_X, 
-                                    LAYOUT_PATCH_EDIT_PARAM_ENV_RELEASE_Y, 
-                                    0, 6, p->env_release[3], 
-                                    PATCH_ENV_RELEASE_LOWER_BOUND, PATCH_ENV_RELEASE_UPPER_BOUND);
+#endif
+
+  /* headers */
+  for ( k = LAYOUT_PATCH_EDIT_HEADERS_START_INDEX; 
+        k < LAYOUT_PATCH_EDIT_HEADERS_END_INDEX; 
+        k++)
+  {
+    hd = &G_layout_headers[k];
+
+    /* make sure this header is within the viewable area */
+    if (LAYOUT_PATCH_HEADER_IS_NOT_IN_MAIN_AREA(hd))
+      continue;
+
+    /* load the header */
+    if (hd->label == LAYOUT_HEADER_PATCH_EDIT_LABEL_OSC_1)
+    {
+      vb_all_load_text( hd->center_x, hd->center_y - G_current_scroll_amount, 
+                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_3, 16, "Osc 1");
+    }
+    else if (hd->label == LAYOUT_HEADER_PATCH_EDIT_LABEL_OSC_2)
+    {
+      vb_all_load_text( hd->center_x, hd->center_y - G_current_scroll_amount, 
+                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_3, 16, "Osc 2");
+    }
+    else if (hd->label == LAYOUT_HEADER_PATCH_EDIT_LABEL_OSC_3)
+    {
+      vb_all_load_text( hd->center_x, hd->center_y - G_current_scroll_amount, 
+                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_3, 16, "Osc 3");
+    }
+    else if (hd->label == LAYOUT_HEADER_PATCH_EDIT_LABEL_OSC_4)
+    {
+      vb_all_load_text( hd->center_x, hd->center_y - G_current_scroll_amount, 
+                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_3, 16, "Osc 4");
+    }
+    else if (hd->label == LAYOUT_HEADER_PATCH_EDIT_LABEL_ENV_1)
+    {
+      vb_all_load_text( hd->center_x, hd->center_y - G_current_scroll_amount, 
+                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_3, 16, "Env 1");
+    }
+    else if (hd->label == LAYOUT_HEADER_PATCH_EDIT_LABEL_ENV_2)
+    {
+      vb_all_load_text( hd->center_x, hd->center_y - G_current_scroll_amount, 
+                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_3, 16, "Env 2");
+    }
+    else if (hd->label == LAYOUT_HEADER_PATCH_EDIT_LABEL_ENV_3)
+    {
+      vb_all_load_text( hd->center_x, hd->center_y - G_current_scroll_amount, 
+                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_3, 16, "Env 3");
+    }
+    else if (hd->label == LAYOUT_HEADER_PATCH_EDIT_LABEL_ENV_4)
+    {
+      vb_all_load_text( hd->center_x, hd->center_y - G_current_scroll_amount, 
+                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_3, 16, "Env 4");
+    }
+  }
+
+  /* parameters */
+  for ( k = LAYOUT_PATCH_EDIT_PARAMS_START_INDEX; 
+        k < LAYOUT_PATCH_EDIT_PARAMS_END_INDEX; 
+        k++)
+  {
+    pr = &G_layout_params[k];
+
+    /* make sure this parameter is within the viewable area */
+    if (LAYOUT_PATCH_PARAM_IS_NOT_IN_MAIN_AREA(pr))
+      continue;
+
+    /* load the parameter */
+    if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_FEEDBACK)
+    {
+      vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_NAME_OFFSET_X, 
+                        pr->center_y - G_current_scroll_amount, 
+                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "FBk");
+
+      vb_all_load_adjustable_parameter( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_VALUE_OFFSET_X, 
+                                        pr->center_y - G_current_scroll_amount, 
+                                        0, 6, p->osc_feedback[pr->num], 
+                                        PATCH_OSC_FEEDBACK_LOWER_BOUND, PATCH_OSC_FEEDBACK_UPPER_BOUND);
+    }
+    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_MULTIPLE)
+    {
+      vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_NAME_OFFSET_X, 
+                        pr->center_y - G_current_scroll_amount, 
+                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "Mul");
+
+      vb_all_load_adjustable_parameter( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_VALUE_OFFSET_X, 
+                                        pr->center_y - G_current_scroll_amount, 
+                                        0, 6, p->osc_multiple[pr->num], 
+                                        PATCH_OSC_MULTIPLE_LOWER_BOUND, PATCH_OSC_MULTIPLE_UPPER_BOUND);
+    }
+    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_DETUNE)
+    {
+      vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_NAME_OFFSET_X, 
+                        pr->center_y - G_current_scroll_amount, 
+                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "Det");
+
+      vb_all_load_adjustable_parameter( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_VALUE_OFFSET_X, 
+                                        pr->center_y - G_current_scroll_amount, 
+                                        0, 6, p->osc_detune[pr->num], 
+                                        PATCH_OSC_DETUNE_LOWER_BOUND, PATCH_OSC_DETUNE_UPPER_BOUND);
+    }
+    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_AMPLITUDE)
+    {
+      vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_NAME_OFFSET_X, 
+                        pr->center_y - G_current_scroll_amount, 
+                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "Lev");
+
+      vb_all_load_adjustable_parameter( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_VALUE_OFFSET_X, 
+                                        pr->center_y - G_current_scroll_amount, 
+                                        0, 6, p->osc_amplitude[pr->num], 
+                                        PATCH_OSC_AMPLITUDE_LOWER_BOUND, PATCH_OSC_AMPLITUDE_UPPER_BOUND);
+    }
+    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_ATTACK)
+    {
+      vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_NAME_OFFSET_X, 
+                        pr->center_y - G_current_scroll_amount, 
+                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "Att");
+
+      vb_all_load_adjustable_parameter( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_VALUE_OFFSET_X, 
+                                        pr->center_y - G_current_scroll_amount, 
+                                        0, 6, p->env_attack[pr->num], 
+                                        PATCH_ENV_ATTACK_LOWER_BOUND, PATCH_ENV_ATTACK_UPPER_BOUND);
+    }
+    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_DECAY_1)
+    {
+      vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_NAME_OFFSET_X, 
+                        pr->center_y - G_current_scroll_amount, 
+                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "D1");
+
+      vb_all_load_adjustable_parameter( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_VALUE_OFFSET_X, 
+                                        pr->center_y - G_current_scroll_amount, 
+                                        0, 6, p->env_decay_1[pr->num], 
+                                        PATCH_ENV_DECAY_1_LOWER_BOUND, PATCH_ENV_DECAY_1_UPPER_BOUND);
+    }
+    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_DECAY_2)
+    {
+      vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_NAME_OFFSET_X, 
+                        pr->center_y - G_current_scroll_amount, 
+                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "D2");
+
+      vb_all_load_adjustable_parameter( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_VALUE_OFFSET_X, 
+                                        pr->center_y - G_current_scroll_amount, 
+                                        0, 6, p->env_decay_2[pr->num], 
+                                        PATCH_ENV_DECAY_2_LOWER_BOUND, PATCH_ENV_DECAY_2_UPPER_BOUND);
+    }
+    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_RELEASE)
+    {
+      vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_NAME_OFFSET_X, 
+                        pr->center_y - G_current_scroll_amount, 
+                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "Rel");
+
+      vb_all_load_adjustable_parameter( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_VALUE_OFFSET_X, 
+                                        pr->center_y - G_current_scroll_amount, 
+                                        0, 6, p->env_release[pr->num], 
+                                        PATCH_ENV_RELEASE_LOWER_BOUND, PATCH_ENV_RELEASE_UPPER_BOUND);
+    }
+    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_SUSTAIN)
+    {
+      vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_NAME_OFFSET_X, 
+                        pr->center_y - G_current_scroll_amount, 
+                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "Sus");
+
+      vb_all_load_adjustable_parameter( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_VALUE_OFFSET_X, 
+                                        pr->center_y - G_current_scroll_amount, 
+                                        0, 6, p->env_sustain[pr->num], 
+                                        PATCH_ENV_SUSTAIN_LOWER_BOUND, PATCH_ENV_SUSTAIN_UPPER_BOUND);
+    }
+    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_RATE_KS)
+    {
+      vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_NAME_OFFSET_X, 
+                        pr->center_y - G_current_scroll_amount, 
+                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "RKS");
+
+      vb_all_load_adjustable_parameter( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_VALUE_OFFSET_X, 
+                                        pr->center_y - G_current_scroll_amount, 
+                                        0, 6, p->env_rate_ks[pr->num], 
+                                        PATCH_ENV_RATE_KS_LOWER_BOUND, PATCH_ENV_RATE_KS_UPPER_BOUND);
+    }
+    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_LEVEL_KS)
+    {
+      vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_NAME_OFFSET_X, 
+                        pr->center_y - G_current_scroll_amount, 
+                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "LKS");
+
+      vb_all_load_adjustable_parameter( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_VALUE_OFFSET_X, 
+                                        pr->center_y - G_current_scroll_amount, 
+                                        0, 6, p->env_level_ks[pr->num], 
+                                        PATCH_ENV_LEVEL_KS_LOWER_BOUND, PATCH_ENV_LEVEL_KS_UPPER_BOUND);
+    }
+  }
 
 #if 0
   /* filter settings text */
@@ -1660,53 +1589,8 @@ short int vb_all_load_patches_overlay()
                     VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_3, 16, "Noise");
 #endif
 
-  /* bottom panel text */
-  vb_all_load_text(-47, 25, VB_ALL_ALIGN_LEFT, 0, VB_ALL_PALETTE_1, 32, "Octave");
-
-  vb_all_load_value(-31, 25, 0, 6, G_patch_edit_octave);
-
-  vb_all_load_text(2, 25, VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_1, 32, "Key");
-
-  vb_all_load_text(9, 25, VB_ALL_ALIGN_LEFT, 0, 6, 32, "C  D  E  F  G  A  Bb");
-
   /* update vbos */
   VB_ALL_UPDATE_OVERLAY_SPRITES_IN_VBOS()
-
-  return 0;
-}
-
-/*******************************************************************************
-** vb_all_load_patterns_panels_and_buttons()
-*******************************************************************************/
-short int vb_all_load_patterns_panels_and_buttons()
-{
-  /* reset panels tile vbo count */
-  G_tile_layer_counts[GRAPHICS_TILE_LAYER_PANELS] = 0;
-
-  /* reset sprite vbo counts */
-  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_BUTTONS] = 0;
-  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_OVERLAY] = 0;
-
-  /* top panel */
-  vb_all_load_panel(0, -22, 50, 6, VB_ALL_PANEL_TYPE_NORMAL);
-
-  /* top buttons */
-  vb_all_load_button( LAYOUT_TOP_PANEL_PATCHES_BUTTON_X, 
-                      LAYOUT_TOP_PANEL_PATCHES_BUTTON_Y, 
-                      LAYOUT_TOP_PANEL_PATCHES_BUTTON_WIDTH, 
-                      VB_ALL_BUTTON_OFF);
-
-  vb_all_load_button( LAYOUT_TOP_PANEL_PATTERNS_BUTTON_X, 
-                      LAYOUT_TOP_PANEL_PATTERNS_BUTTON_Y, 
-                      LAYOUT_TOP_PANEL_PATTERNS_BUTTON_WIDTH, 
-                      VB_ALL_BUTTON_ON);
-
-  /* bottom panel */
-  vb_all_load_panel(0, 25, 50, 3, VB_ALL_PANEL_TYPE_THIN);
-
-  /* update vbos */
-  VB_ALL_UPDATE_PANELS_TILES_IN_VBOS()
-  VB_ALL_UPDATE_BUTTONS_SPRITES_IN_VBOS()
 
   return 0;
 }
@@ -1716,20 +1600,6 @@ short int vb_all_load_patterns_panels_and_buttons()
 *******************************************************************************/
 short int vb_all_load_patterns_overlay()
 {
-  /* reset overlay sprite vbo count */
-  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_OVERLAY] = 0;
-
-  /* top panel text */
-  vb_all_load_text(0, -24, VB_ALL_ALIGN_CENTER, 0, 6, 32, "Gersemi v0.9");
-
-  /* top button text */
-  vb_all_load_text( LAYOUT_TOP_PANEL_PATCHES_BUTTON_X, 
-                    LAYOUT_TOP_PANEL_PATCHES_BUTTON_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, 6, 16, "Patches");
-  vb_all_load_text( LAYOUT_TOP_PANEL_PATTERNS_BUTTON_X, 
-                    LAYOUT_TOP_PANEL_PATTERNS_BUTTON_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, 6, 16, "Patterns");
-
   /* update vbos */
   VB_ALL_UPDATE_OVERLAY_SPRITES_IN_VBOS()
 

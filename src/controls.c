@@ -65,31 +65,25 @@ enum
     (S_key_states[index] == CONTROLS_KEY_STATE_RELEASED))
 
 /* screen regions */
-#define CONTROLS_MOUSE_CURSOR_IS_OVER_TOP_PANEL()                              \
-  ( (S_mouse_remapped_pos_x >= 0)                         &&                   \
-    (S_mouse_remapped_pos_x <  GRAPHICS_OVERSCAN_WIDTH)   &&                   \
-    (S_mouse_remapped_pos_y >= LAYOUT_TOP_PANEL_START_Y)  &&                   \
-    (S_mouse_remapped_pos_y <  LAYOUT_TOP_PANEL_END_Y))
+#define CONTROLS_MOUSE_CURSOR_IS_OVER_TOP_PANEL()                                   \
+  ( (S_mouse_remapped_pos_x >= 0)                                               &&  \
+    (S_mouse_remapped_pos_x <  GRAPHICS_OVERSCAN_WIDTH)                         &&  \
+    (S_mouse_remapped_pos_y >= LAYOUT_SCREEN_AREA_TOP_PANEL_LOWER_BOUND_PIXELS) &&  \
+    (S_mouse_remapped_pos_y <  LAYOUT_SCREEN_AREA_TOP_PANEL_UPPER_BOUND_PIXELS))
 
-#define CONTROLS_MOUSE_CURSOR_IS_OVER_MAIN_AREA()                              \
-  ( (S_mouse_remapped_pos_x >= 0)                         &&                   \
-    (S_mouse_remapped_pos_x <  GRAPHICS_OVERSCAN_WIDTH)   &&                   \
-    (S_mouse_remapped_pos_y >= LAYOUT_MAIN_AREA_START_Y)  &&                   \
-    (S_mouse_remapped_pos_y <  LAYOUT_MAIN_AREA_END_Y))
+#define CONTROLS_MOUSE_CURSOR_IS_OVER_BOTTOM_PANEL()                                    \
+  ( (S_mouse_remapped_pos_x >= 0)                                                   &&  \
+    (S_mouse_remapped_pos_x <  GRAPHICS_OVERSCAN_WIDTH)                             &&  \
+    (S_mouse_remapped_pos_y >= LAYOUT_SCREEN_AREA_BOTTOM_PANEL_LOWER_BOUND_PIXELS)  &&  \
+    (S_mouse_remapped_pos_y <  LAYOUT_SCREEN_AREA_BOTTOM_PANEL_UPPER_BOUND_PIXELS))
 
-#define CONTROLS_MOUSE_CURSOR_IS_OVER_BOTTOM_PANEL()                           \
-  ( (S_mouse_remapped_pos_x >= 0)                           &&                 \
-    (S_mouse_remapped_pos_x <  GRAPHICS_OVERSCAN_WIDTH)     &&                 \
-    (S_mouse_remapped_pos_y >= LAYOUT_BOTTOM_PANEL_START_Y) &&                 \
-    (S_mouse_remapped_pos_y <  LAYOUT_BOTTOM_PANEL_END_Y))
+#define CONTROLS_MOUSE_CURSOR_IS_OVER_MAIN_AREA()                               \
+  ( (S_mouse_remapped_pos_x >= 0)                                           &&  \
+    (S_mouse_remapped_pos_x <  GRAPHICS_OVERSCAN_WIDTH)                     &&  \
+    (S_mouse_remapped_pos_y >= LAYOUT_SCREEN_AREA_MAIN_LOWER_BOUND_PIXELS)  &&  \
+    (S_mouse_remapped_pos_y <  LAYOUT_SCREEN_AREA_MAIN_UPPER_BOUND_PIXELS))
 
-/* buttons */
-#define CONTROLS_MOUSE_CURSOR_IS_OVER_BUTTON(name)                                                                                    \
-  ( (S_mouse_remapped_pos_x >= (GRAPHICS_OVERSCAN_WIDTH - 8 * LAYOUT_##name##_BUTTON_WIDTH) / 2 + (4 * LAYOUT_##name##_BUTTON_X)) &&  \
-    (S_mouse_remapped_pos_x <  (GRAPHICS_OVERSCAN_WIDTH + 8 * LAYOUT_##name##_BUTTON_WIDTH) / 2 + (4 * LAYOUT_##name##_BUTTON_X)) &&  \
-    (S_mouse_remapped_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT - 16 * 1) / 2 + (4 * LAYOUT_##name##_BUTTON_Y))                          &&  \
-    (S_mouse_remapped_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT + 16 * 1) / 2 + (4 * LAYOUT_##name##_BUTTON_Y)))
-
+#if 0
 /* patch editor algorithm */
 #define CONTROLS_MOUSE_CURSOR_IS_OVER_ALGORITHM_VALUE()                                                                 \
   ( (S_mouse_remapped_pos_x >= (GRAPHICS_OVERSCAN_WIDTH - 8 * 11) / 2 + (4 * LAYOUT_PATCH_EDIT_ALGORITHM_PARAM_X))  &&  \
@@ -114,31 +108,7 @@ enum
     (S_mouse_remapped_pos_x <  (GRAPHICS_OVERSCAN_WIDTH + 8 * 13) / 2 + (4 * LAYOUT_PATCH_EDIT_ALGORITHM_PARAM_X))  &&  \
     (S_mouse_remapped_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT - 8 * 1) / 2 + (4 * LAYOUT_PATCH_EDIT_ALGORITHM_Y))        &&  \
     (S_mouse_remapped_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT + 8 * 1) / 2 + (4 * LAYOUT_PATCH_EDIT_ALGORITHM_Y)))
-
-/* patch editor parameter */
-#define CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(column, name)                                                         \
-  ( (S_mouse_remapped_pos_x >= (GRAPHICS_OVERSCAN_WIDTH - 8 * 3) / 2 + (4 * LAYOUT_PATCH_EDIT_##column##_PARAM_X))  &&  \
-    (S_mouse_remapped_pos_x <  (GRAPHICS_OVERSCAN_WIDTH + 8 * 3) / 2 + (4 * LAYOUT_PATCH_EDIT_##column##_PARAM_X))  &&  \
-    (S_mouse_remapped_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT - 8 * 1) / 2 + (4 * LAYOUT_PATCH_EDIT_PARAM_##name##_Y))   &&  \
-    (S_mouse_remapped_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT + 8 * 1) / 2 + (4 * LAYOUT_PATCH_EDIT_PARAM_##name##_Y)))
-
-#define CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(column, name)                                                         \
-  ( (S_mouse_remapped_pos_x >= (GRAPHICS_OVERSCAN_WIDTH - 8 * 1) / 2 + (4 * LAYOUT_PATCH_EDIT_##column##_ADJUST_LEFT_X)) &&   \
-    (S_mouse_remapped_pos_x <  (GRAPHICS_OVERSCAN_WIDTH + 8 * 1) / 2 + (4 * LAYOUT_PATCH_EDIT_##column##_ADJUST_LEFT_X)) &&   \
-    (S_mouse_remapped_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT - 8 * 1) / 2 + (4 * LAYOUT_PATCH_EDIT_PARAM_##name##_Y))        &&   \
-    (S_mouse_remapped_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT + 8 * 1) / 2 + (4 * LAYOUT_PATCH_EDIT_PARAM_##name##_Y)))
-
-#define CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(column, name)                                                        \
-  ( (S_mouse_remapped_pos_x >= (GRAPHICS_OVERSCAN_WIDTH - 8 * 1) / 2 + (4 * LAYOUT_PATCH_EDIT_##column##_ADJUST_RIGHT_X)) &&  \
-    (S_mouse_remapped_pos_x <  (GRAPHICS_OVERSCAN_WIDTH + 8 * 1) / 2 + (4 * LAYOUT_PATCH_EDIT_##column##_ADJUST_RIGHT_X)) &&  \
-    (S_mouse_remapped_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT - 8 * 1) / 2 + (4 * LAYOUT_PATCH_EDIT_PARAM_##name##_Y))         &&  \
-    (S_mouse_remapped_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT + 8 * 1) / 2 + (4 * LAYOUT_PATCH_EDIT_PARAM_##name##_Y)))
-
-#define CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(column, name)                                                        \
-  ( (S_mouse_remapped_pos_x >= (GRAPHICS_OVERSCAN_WIDTH - 8 * 5) / 2 + (4 * LAYOUT_PATCH_EDIT_##column##_PARAM_X))  &&  \
-    (S_mouse_remapped_pos_x <  (GRAPHICS_OVERSCAN_WIDTH + 8 * 5) / 2 + (4 * LAYOUT_PATCH_EDIT_##column##_PARAM_X))  &&  \
-    (S_mouse_remapped_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT - 8 * 1) / 2 + (4 * LAYOUT_PATCH_EDIT_PARAM_##name##_Y))   &&  \
-    (S_mouse_remapped_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT + 8 * 1) / 2 + (4 * LAYOUT_PATCH_EDIT_PARAM_##name##_Y)))
+#endif
 
 static int S_key_states[CONTROLS_NUM_KEY_INDICES];
 
@@ -172,121 +142,53 @@ short int controls_setup()
 /*******************************************************************************
 ** controls_patch_parameter_adjustment()
 *******************************************************************************/
-short int controls_patch_parameter_adjustment(int amount)
+short int controls_patch_parameter_adjustment(int param_index, int amount)
 {
-  /* patches screen */
-  if (G_game_screen == PROGRAM_SCREEN_PATCHES)
-  {
-    /* algorithm */
-    if (CONTROLS_MOUSE_CURSOR_IS_OVER_ALGORITHM_ENTIRE())
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_ALGORITHM, 0, amount);
-#if 0
-    /* filters */
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_1, FILTERS_HIGHPASS))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_HIGHPASS_CUTOFF, 0, amount);
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_2, FILTERS_LOWPASS))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_LOWPASS_CUTOFF, 0, amount);
-#endif
-    /* oscillator 1 */
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_1, OSC_FEEDBACK))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_OSC_FEEDBACK, 0, amount);
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_1, OSC_MULTIPLE))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_OSC_MULTIPLE, 0, amount);
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_1, OSC_DETUNE))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_OSC_DETUNE, 0, amount);
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_1, OSC_AMPLITUDE))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_OSC_AMPLITUDE, 0, amount);
-    /* envelope 1 */
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_1, ENV_ATTACK))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_ENV_ATTACK, 0, amount);
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_1, ENV_DECAY_1))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_ENV_DECAY_1, 0, amount);
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_1, ENV_DECAY_2))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_ENV_DECAY_2, 0, amount);
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_1, ENV_RELEASE))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_ENV_RELEASE, 0, amount);
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_1, ENV_SUSTAIN))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_ENV_SUSTAIN, 0, amount);
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_1, ENV_RATE_KS))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_ENV_RATE_KS, 0, amount);
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_1, ENV_LEVEL_KS))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_ENV_LEVEL_KS, 0, amount);
-    /* oscillator 2 */
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_2, OSC_FEEDBACK))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_OSC_FEEDBACK, 1, amount);
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_2, OSC_MULTIPLE))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_OSC_MULTIPLE, 1, amount);
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_2, OSC_DETUNE))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_OSC_DETUNE, 1, amount);
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_2, OSC_AMPLITUDE))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_OSC_AMPLITUDE, 1, amount);
-    /* envelope 2 */
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_2, ENV_ATTACK))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_ENV_ATTACK, 1, amount);
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_2, ENV_DECAY_1))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_ENV_DECAY_1, 1, amount);
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_2, ENV_DECAY_2))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_ENV_DECAY_2, 1, amount);
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_2, ENV_RELEASE))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_ENV_RELEASE, 1, amount);
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_2, ENV_SUSTAIN))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_ENV_SUSTAIN, 1, amount);
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_2, ENV_RATE_KS))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_ENV_RATE_KS, 1, amount);
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_2, ENV_LEVEL_KS))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_ENV_LEVEL_KS, 1, amount);
-    /* oscillator 3 */
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_3, OSC_FEEDBACK))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_OSC_FEEDBACK, 2, amount);
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_3, OSC_MULTIPLE))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_OSC_MULTIPLE, 2, amount);
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_3, OSC_DETUNE))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_OSC_DETUNE, 2, amount);
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_3, OSC_AMPLITUDE))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_OSC_AMPLITUDE, 2, amount);
-    /* envelope 3 */
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_3, ENV_ATTACK))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_ENV_ATTACK, 2, amount);
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_3, ENV_DECAY_1))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_ENV_DECAY_1, 2, amount);
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_3, ENV_DECAY_2))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_ENV_DECAY_2, 2, amount);
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_3, ENV_RELEASE))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_ENV_RELEASE, 2, amount);
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_3, ENV_SUSTAIN))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_ENV_SUSTAIN, 2, amount);
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_3, ENV_RATE_KS))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_ENV_RATE_KS, 2, amount);
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_3, ENV_LEVEL_KS))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_ENV_LEVEL_KS, 2, amount);
-    /* oscillator 4 */
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_4, OSC_FEEDBACK))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_OSC_FEEDBACK, 3, amount);
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_4, OSC_MULTIPLE))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_OSC_MULTIPLE, 3, amount);
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_4, OSC_DETUNE))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_OSC_DETUNE, 3, amount);
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_4, OSC_AMPLITUDE))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_OSC_AMPLITUDE, 3, amount);
-    /* envelope 4 */
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_4, ENV_ATTACK))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_ENV_ATTACK, 3, amount);
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_4, ENV_DECAY_1))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_ENV_DECAY_1, 3, amount);
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_4, ENV_DECAY_2))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_ENV_DECAY_2, 3, amount);
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_4, ENV_RELEASE))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_ENV_RELEASE, 3, amount);
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_4, ENV_SUSTAIN))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_ENV_SUSTAIN, 3, amount);
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_4, ENV_RATE_KS))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_ENV_RATE_KS, 3, amount);
-    else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_4, ENV_LEVEL_KS))
-      patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_ENV_LEVEL_KS, 3, amount);
+  param* pr;
 
-    /* testing */
-    synth_load_patch(0, G_patch_edit_patch_index);
-  }
+  if (LAYOUT_PARAM_INDEX_IS_NOT_VALID(param_index))
+    return 1;
+
+  pr = &G_layout_params[param_index];
+
+#if 0
+  /* algorithm */
+  if (CONTROLS_MOUSE_CURSOR_IS_OVER_ALGORITHM_ENTIRE())
+    patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_ALGORITHM, 0, amount);
+  /* filters */
+  else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_1, FILTERS_HIGHPASS))
+    patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_HIGHPASS_CUTOFF, 0, amount);
+  else if (CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ENTIRE(COLUMN_2, FILTERS_LOWPASS))
+    patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_LOWPASS_CUTOFF, 0, amount);
+#endif
+
+  /* oscillator */
+  if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_FEEDBACK)
+    patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_OSC_FEEDBACK, pr->num, amount);
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_MULTIPLE)
+    patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_OSC_MULTIPLE, pr->num, amount);
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_DETUNE)
+    patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_OSC_DETUNE, pr->num, amount);
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_AMPLITUDE)
+    patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_OSC_AMPLITUDE, pr->num, amount);
+  /* envelope */
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_ATTACK)
+    patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_ENV_ATTACK, pr->num, amount);
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_DECAY_1)
+    patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_ENV_DECAY_1, pr->num, amount);
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_DECAY_2)
+    patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_ENV_DECAY_2, pr->num, amount);
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_RELEASE)
+    patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_ENV_RELEASE, pr->num, amount);
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_SUSTAIN)
+    patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_ENV_SUSTAIN, pr->num, amount);
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_RATE_KS)
+    patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_ENV_RATE_KS, pr->num, amount);
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_LEVEL_KS)
+    patch_adjust_parameter(G_patch_edit_patch_index, PATCH_PARAM_ENV_LEVEL_KS, pr->num, amount);
+
+  /* testing */
+  synth_load_patch(0, G_patch_edit_patch_index);
 
   return 0;
 }
@@ -557,23 +459,40 @@ short int controls_remove_edges()
 *******************************************************************************/
 short int controls_process_user_input_standard()
 {
-  int amount;
+  int k;
+
+  button* b;
+  param*  pr;
 
   /* check top panel mouse button clicks */
-  if (G_game_screen == PROGRAM_SCREEN_PATCHES)
+  if (CONTROLS_MOUSE_CURSOR_IS_OVER_TOP_PANEL())
   {
-    if (S_mouse_action == CONTROLS_MOUSE_ACTION_LEFT_CLICK)
+    for ( k = LAYOUT_TOP_PANEL_BUTTONS_START_INDEX; 
+          k < LAYOUT_TOP_PANEL_BUTTONS_END_INDEX; 
+          k++)
     {
-      if (CONTROLS_MOUSE_CURSOR_IS_OVER_BUTTON(TOP_PANEL_PATTERNS))
-        program_loop_change_screen(PROGRAM_SCREEN_PATTERNS);
-    }
-  }
-  else if (G_game_screen == PROGRAM_SCREEN_PATTERNS)
-  {
-    if (S_mouse_action == CONTROLS_MOUSE_ACTION_LEFT_CLICK)
-    {
-      if (CONTROLS_MOUSE_CURSOR_IS_OVER_BUTTON(TOP_PANEL_PATCHES))
-        program_loop_change_screen(PROGRAM_SCREEN_PATCHES);
+      b = &G_layout_buttons[k];
+
+      /* if the cursor is over this button, click it! */
+      if ((S_mouse_remapped_pos_x >= (GRAPHICS_OVERSCAN_WIDTH - 8 * b->width) / 2 + (4 * b->center_x))  && 
+          (S_mouse_remapped_pos_x <  (GRAPHICS_OVERSCAN_WIDTH + 8 * b->width) / 2 + (4 * b->center_x))  && 
+          (S_mouse_remapped_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT - 16 * 1) / 2 + (4 * b->center_y))       && 
+          (S_mouse_remapped_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT + 16 * 1) / 2 + (4 * b->center_y)))
+      {
+        if (S_mouse_action == CONTROLS_MOUSE_ACTION_LEFT_CLICK)
+        {
+          layout_reset_top_panel_button_states();
+
+          b->state = LAYOUT_BUTTON_STATE_ON;
+
+          if (b->label == LAYOUT_BUTTON_LABEL_PATCHES)
+            program_loop_change_screen(PROGRAM_SCREEN_PATCHES);
+          else if (b->label == LAYOUT_BUTTON_LABEL_PATTERNS)
+            program_loop_change_screen(PROGRAM_SCREEN_PATTERNS);
+        }
+
+        break;
+      }
     }
   }
 
@@ -746,204 +665,63 @@ short int controls_process_user_input_standard()
   /* remove edges */
   controls_remove_edges();
 
-  /* check mouse state */
-  if ((S_mouse_action == CONTROLS_MOUSE_ACTION_LEFT_CLICK)  || 
-      (S_mouse_action == CONTROLS_MOUSE_ACTION_RIGHT_CLICK) || 
-      (S_mouse_action == CONTROLS_MOUSE_ACTION_WHEEL_MOVED))
+  /* check for main area clicks */
+  if (CONTROLS_MOUSE_CURSOR_IS_OVER_MAIN_AREA())
   {
-    /* set initial amount */
-    if (S_mouse_action == CONTROLS_MOUSE_ACTION_LEFT_CLICK)
-      amount = 1;
-    else if (S_mouse_action == CONTROLS_MOUSE_ACTION_RIGHT_CLICK)
-      amount = 4;
-    else if (S_mouse_action == CONTROLS_MOUSE_ACTION_WHEEL_MOVED)
-    {
-      if (S_mouse_wheel_movement > 0)
-        amount = (S_mouse_wheel_movement / 8) + 1;
-      else if (S_mouse_wheel_movement < 0)
-        amount = (S_mouse_wheel_movement / 8) - 1;
-      else
-        amount = 0;
-    }
-    else
-      amount = 0;
-
     /* patches screen */
     if (G_game_screen == PROGRAM_SCREEN_PATCHES)
     {
-      /* left / right click */
-      if ((S_mouse_action == CONTROLS_MOUSE_ACTION_LEFT_CLICK) || 
-          (S_mouse_action == CONTROLS_MOUSE_ACTION_RIGHT_CLICK))
+      /* check for mouse wheel scrolling */
+      if (S_mouse_action == CONTROLS_MOUSE_ACTION_WHEEL_MOVED)
       {
-        if (CONTROLS_MOUSE_CURSOR_IS_OVER_ALGORITHM_ADJUST_LEFT()                       || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_1, OSC_FEEDBACK)     || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_1, OSC_MULTIPLE)     || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_1, OSC_DETUNE)       || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_1, OSC_AMPLITUDE)    || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_1, ENV_ATTACK)       || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_1, ENV_DECAY_1)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_1, ENV_DECAY_2)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_1, ENV_RELEASE)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_1, ENV_SUSTAIN)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_1, ENV_RATE_KS)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_1, ENV_LEVEL_KS)     || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_2, OSC_FEEDBACK)     || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_2, OSC_MULTIPLE)     || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_2, OSC_DETUNE)       || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_2, OSC_AMPLITUDE)    || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_2, ENV_ATTACK)       || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_2, ENV_DECAY_1)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_2, ENV_DECAY_2)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_2, ENV_RELEASE)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_2, ENV_SUSTAIN)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_2, ENV_RATE_KS)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_2, ENV_LEVEL_KS)     || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_3, OSC_FEEDBACK)     || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_3, OSC_MULTIPLE)     || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_3, OSC_DETUNE)       || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_3, OSC_AMPLITUDE)    || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_3, ENV_ATTACK)       || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_3, ENV_DECAY_1)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_3, ENV_DECAY_2)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_3, ENV_RELEASE)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_3, ENV_SUSTAIN)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_3, ENV_RATE_KS)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_3, ENV_LEVEL_KS)     || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_4, OSC_FEEDBACK)     || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_4, OSC_MULTIPLE)     || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_4, OSC_DETUNE)       || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_4, OSC_AMPLITUDE)    || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_4, ENV_ATTACK)       || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_4, ENV_DECAY_1)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_4, ENV_DECAY_2)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_4, ENV_RELEASE)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_4, ENV_SUSTAIN)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_4, ENV_RATE_KS)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_4, ENV_LEVEL_KS))
-#if 0
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_1, FILTERS_HIGHPASS) || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_LEFT(COLUMN_2, FILTERS_LOWPASS))
-#endif
-        {
-          amount *= -1;
-        }
-        else if ( CONTROLS_MOUSE_CURSOR_IS_OVER_ALGORITHM_ADJUST_RIGHT()                      || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_1, OSC_FEEDBACK)    || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_1, OSC_MULTIPLE)    || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_1, OSC_DETUNE)      || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_1, OSC_AMPLITUDE)   || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_1, ENV_ATTACK)      || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_1, ENV_DECAY_1)     || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_1, ENV_DECAY_2)     || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_1, ENV_RELEASE)     || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_1, ENV_SUSTAIN)     || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_1, ENV_RATE_KS)     || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_1, ENV_LEVEL_KS)    || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_2, OSC_FEEDBACK)    || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_2, OSC_MULTIPLE)    || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_2, OSC_DETUNE)      || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_2, OSC_AMPLITUDE)   || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_2, ENV_ATTACK)      || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_2, ENV_DECAY_1)     || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_2, ENV_DECAY_2)     || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_2, ENV_RELEASE)     || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_2, ENV_SUSTAIN)     || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_2, ENV_RATE_KS)     || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_2, ENV_LEVEL_KS)    || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_3, OSC_FEEDBACK)    || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_3, OSC_MULTIPLE)    || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_3, OSC_DETUNE)      || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_3, OSC_AMPLITUDE)   || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_3, ENV_ATTACK)      || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_3, ENV_DECAY_1)     || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_3, ENV_DECAY_2)     || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_3, ENV_RELEASE)     || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_3, ENV_SUSTAIN)     || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_3, ENV_RATE_KS)     || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_3, ENV_LEVEL_KS)    || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_4, OSC_FEEDBACK)    || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_4, OSC_MULTIPLE)    || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_4, OSC_DETUNE)      || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_4, OSC_AMPLITUDE)   || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_4, ENV_ATTACK)      || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_4, ENV_DECAY_1)     || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_4, ENV_DECAY_2)     || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_4, ENV_RELEASE)     || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_4, ENV_SUSTAIN)     || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_4, ENV_RATE_KS)     || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_4, ENV_LEVEL_KS))
-#if 0
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_1, FILTERS_HIGHPASS) || 
-                  CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_ADJUST_RIGHT(COLUMN_2, FILTERS_LOWPASS))
-#endif
-        {
-          amount *= 1;
-        }
-        else
-          amount = 0;
-      }
-      /* mouse wheel movement */
-      else if (S_mouse_action == CONTROLS_MOUSE_ACTION_WHEEL_MOVED)
-      {
-        if (CONTROLS_MOUSE_CURSOR_IS_OVER_ALGORITHM_VALUE()                       || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_1, OSC_FEEDBACK)     || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_1, OSC_MULTIPLE)     || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_1, OSC_DETUNE)       || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_1, OSC_AMPLITUDE)    || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_1, ENV_ATTACK)       || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_1, ENV_DECAY_1)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_1, ENV_DECAY_2)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_1, ENV_RELEASE)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_1, ENV_SUSTAIN)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_1, ENV_RATE_KS)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_1, ENV_LEVEL_KS)     || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_2, OSC_FEEDBACK)     || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_2, OSC_MULTIPLE)     || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_2, OSC_DETUNE)       || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_2, OSC_AMPLITUDE)    || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_2, ENV_ATTACK)       || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_2, ENV_DECAY_1)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_2, ENV_DECAY_2)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_2, ENV_RELEASE)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_2, ENV_SUSTAIN)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_2, ENV_RATE_KS)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_2, ENV_LEVEL_KS)     || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_3, OSC_FEEDBACK)     || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_3, OSC_MULTIPLE)     || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_3, OSC_DETUNE)       || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_3, OSC_AMPLITUDE)    || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_3, ENV_ATTACK)       || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_3, ENV_DECAY_1)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_3, ENV_DECAY_2)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_3, ENV_RELEASE)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_3, ENV_SUSTAIN)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_3, ENV_RATE_KS)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_3, ENV_LEVEL_KS)     || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_4, OSC_FEEDBACK)     || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_4, OSC_MULTIPLE)     || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_4, OSC_DETUNE)       || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_4, OSC_AMPLITUDE)    || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_4, ENV_ATTACK)       || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_4, ENV_DECAY_1)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_4, ENV_DECAY_2)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_4, ENV_RELEASE)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_4, ENV_SUSTAIN)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_4, ENV_RATE_KS)      || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_4, ENV_LEVEL_KS))
-#if 0
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_1, FILTERS_HIGHPASS) || 
-            CONTROLS_MOUSE_CURSOR_IS_OVER_PARAM_VALUE(COLUMN_2, FILTERS_LOWPASS))
-#endif
-        {
-          amount *= 1;
-        }
-        else
-          amount = 0;
+        if (S_mouse_wheel_movement > 0)
+          G_current_scroll_amount -= (S_mouse_wheel_movement / 8) + 1;
+        else if (S_mouse_wheel_movement < 0)
+          G_current_scroll_amount += (-S_mouse_wheel_movement / 8) + 1;
+
+        if (G_current_scroll_amount < 0)
+          G_current_scroll_amount = 0;
+        else if (G_current_scroll_amount > LAYOUT_PATCH_EDIT_MAX_SCROLL_AMOUNT)
+          G_current_scroll_amount = LAYOUT_PATCH_EDIT_MAX_SCROLL_AMOUNT;
       }
 
-      /* update parameter if necessary */
-      if (amount != 0)
-        controls_patch_parameter_adjustment(amount);
+      /* check for parameter adjustment clicks */
+      for ( k = LAYOUT_PATCH_EDIT_PARAMS_START_INDEX; 
+            k < LAYOUT_PATCH_EDIT_PARAMS_END_INDEX; 
+            k++)
+      {
+        pr = &G_layout_params[k];
+
+        /* make sure this parameter is within the viewable area */
+        if (LAYOUT_PATCH_PARAM_IS_NOT_IN_MAIN_AREA(pr))
+          continue;
+
+        /* if the cursor is over an adjustment arrow, click it! */
+        if ((S_mouse_remapped_pos_x >= (GRAPHICS_OVERSCAN_WIDTH - 8 * 1) / 2 + (4 * (pr->center_x + LAYOUT_PATCH_EDIT_PARAM_ADJUST_LEFT_OFFSET_X))) && 
+            (S_mouse_remapped_pos_x <  (GRAPHICS_OVERSCAN_WIDTH + 8 * 1) / 2 + (4 * (pr->center_x + LAYOUT_PATCH_EDIT_PARAM_ADJUST_LEFT_OFFSET_X))) && 
+            (S_mouse_remapped_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT - 8 * 1) / 2 + (4 * (pr->center_y - G_current_scroll_amount)))                     && 
+            (S_mouse_remapped_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT + 8 * 1) / 2 + (4 * (pr->center_y - G_current_scroll_amount))))
+        {
+          if (S_mouse_action == CONTROLS_MOUSE_ACTION_LEFT_CLICK)
+            controls_patch_parameter_adjustment(k, -1);
+          else if (S_mouse_action == CONTROLS_MOUSE_ACTION_RIGHT_CLICK)
+            controls_patch_parameter_adjustment(k, -4);
+
+          break;
+        }
+        else if ( (S_mouse_remapped_pos_x >= (GRAPHICS_OVERSCAN_WIDTH - 8 * 1) / 2 + (4 * (pr->center_x + LAYOUT_PATCH_EDIT_PARAM_ADJUST_RIGHT_OFFSET_X)))  && 
+                  (S_mouse_remapped_pos_x <  (GRAPHICS_OVERSCAN_WIDTH + 8 * 1) / 2 + (4 * (pr->center_x + LAYOUT_PATCH_EDIT_PARAM_ADJUST_RIGHT_OFFSET_X)))  && 
+                  (S_mouse_remapped_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT - 8 * 1) / 2 + (4 * (pr->center_y - G_current_scroll_amount)))                       && 
+                  (S_mouse_remapped_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT + 8 * 1) / 2 + (4 * (pr->center_y - G_current_scroll_amount))))
+        {
+          if (S_mouse_action == CONTROLS_MOUSE_ACTION_LEFT_CLICK)
+            controls_patch_parameter_adjustment(k, 1);
+          else if (S_mouse_action == CONTROLS_MOUSE_ACTION_RIGHT_CLICK)
+            controls_patch_parameter_adjustment(k, 4);
+
+          break;
+        }
+      }
     }
   }
 
