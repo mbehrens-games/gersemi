@@ -233,6 +233,17 @@ enum
     sprite_index += 1;                                                                      \
   }
 
+#define VB_ALL_ADD_SLIDER_PIECE_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, lighting, palette) \
+  if (sprite_index < GRAPHICS_OVERLAY_SPRITES_END_INDEX)                                    \
+  {                                                                                         \
+    VB_ALL_ADD_SPRITE_TO_VERTEX_BUFFER(pos_x, pos_y, 1, 1, GRAPHICS_Z_LEVEL_SLIDERS)        \
+    VB_ALL_ADD_SPRITE_TO_TEXTURE_COORD_BUFFER(cell_x, cell_y, 1, 1)                         \
+    VB_ALL_ADD_SPRITE_TO_LIGHTING_AND_PALETTE_BUFFER(lighting, palette)                     \
+    VB_ALL_ADD_SPRITE_TO_ELEMENT_BUFFER()                                                   \
+                                                                                            \
+    sprite_index += 1;                                                                      \
+  }
+
 #define VB_ALL_ADD_FONT_CHARACTER_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, lighting, palette) \
   if (sprite_index < GRAPHICS_OVERLAY_SPRITES_END_INDEX)                                      \
   {                                                                                           \
@@ -304,6 +315,17 @@ enum
                   GRAPHICS_OVERLAY_SPRITES_START_INDEX * 6 * sizeof(unsigned short),                  \
                   G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_OVERLAY] * 6 * sizeof(unsigned short),  \
                   &G_index_buffer_sprites[GRAPHICS_OVERLAY_SPRITES_START_INDEX * 6]);
+
+static char S_patch_edit_header_labels[LAYOUT_HEADER_PATCH_EDIT_NUM_LABELS][8] = 
+  { "n/a",  "Osc 1", "Osc 2", "Osc 3", "Osc 4", 
+            "Env 1", "Env 2", "Env 3", "Env 4" 
+  };
+
+static char S_patch_edit_parameter_labels[LAYOUT_PARAM_PATCH_EDIT_NUM_LABELS][4] = 
+  { "Alg", "LPF", "HPF", 
+    "FBk", "Mul", "Det", "Lev", 
+    "Att", "D1", "D2", "Rel", "Sus", "RKS", "LKS" 
+  };
 
 /*******************************************************************************
 ** vb_all_load_background()
@@ -631,7 +653,7 @@ short int vb_all_load_button(int offset_x, int offset_y, int width, int state)
 
   /* make sure the width is valid       */
   /* the width is in terms of 8x8 cells */
-  if ((width < 1) || (width > GRAPHICS_OVERSCAN_WIDTH / 8))
+  if ((width < 2) || (width > GRAPHICS_OVERSCAN_WIDTH / 8))
     return 1;
 
   /* determine coordinates of top left corner */
@@ -1077,29 +1099,144 @@ short int vb_all_load_value(int offset_x, int offset_y,
 }
 
 /*******************************************************************************
-** vb_all_load_adjustable_parameter()
+** vb_all_load_slider()
 *******************************************************************************/
-short int vb_all_load_adjustable_parameter( int offset_x, int offset_y, 
-                                            int lighting, int palette, 
-                                            short int param, short int low, short int high)
+short int vb_all_load_slider( int offset_x, int offset_y, int width, 
+                              short int value, 
+                              short int lower_bound, short int upper_bound)
 {
+  int m;
+
+  int sprite_index;
+
+  int corner_x;
+  int corner_y;
+
+  int pos_x;
+  int pos_y;
+
+  int cell_x;
+  int cell_y;
+
+  int lighting;
+  int palette;
+
+  /* make sure the width is valid       */
+  /* the width is in terms of 8x8 cells */
+  if ((width < 2) || (width > GRAPHICS_OVERSCAN_WIDTH / 8))
+    return 1;
+
   /* make sure the bounds are valid */
-  if (low > high)
+  if (upper_bound <= lower_bound)
     return 1;
 
-  /* make sure the parameter is valid */
-  if ((param < low) || (param > high))
+  if ((value < lower_bound) || (value > upper_bound))
     return 1;
 
-  /* draw sprites for parameter value */
-  vb_all_load_value(offset_x, offset_y, lighting, palette, param);
+  /* determine coordinates of top left corner */
+  corner_x = (GRAPHICS_OVERSCAN_WIDTH - 8 * width) / 2;
+  corner_y = (GRAPHICS_OVERSCAN_HEIGHT - 8 * 1) / 2;
 
-  /* draw sprites for adjustment arrows if necessary */
-  if (param > low)
-    vb_all_load_named_sprite(VB_ALL_SPRITE_NAME_ADJUST_PARAM_LEFT, offset_x - 4, offset_y, 0, VB_ALL_PALETTE_1);
+  /* the offsets from the screen center are in 4x4 half-cells */
+  corner_x += 4 * offset_x;
+  corner_y += 4 * offset_y;
 
-  if (param < high)
-    vb_all_load_named_sprite(VB_ALL_SPRITE_NAME_ADJUST_PARAM_RIGHT, offset_x + 4, offset_y, 0, VB_ALL_PALETTE_1);
+  /* make sure the button is on the screen */
+  if (corner_x + (8 * width) < 0)
+    return 1;
+
+  if (corner_x > GRAPHICS_OVERSCAN_WIDTH)
+    return 1;
+
+  if (corner_y + (8 * 1) < 0)
+    return 1;
+
+  if (corner_y > GRAPHICS_OVERSCAN_HEIGHT)
+    return 1;
+
+  /* set lighting and palette */
+  lighting = 0;
+  palette = VB_ALL_PALETTE_1;
+
+  /* draw the slider track */
+  sprite_index =  GRAPHICS_OVERLAY_SPRITES_START_INDEX + 
+                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_OVERLAY];
+
+  for (m = 0; m < width; m++)
+  {
+    /* determine center of this piece */
+    pos_x = corner_x + (8 * m) + 4;
+    pos_y = corner_y + (8 * 0) + 4;
+
+    /* left piece */
+    if (m == 0)
+    {
+      cell_x = 8;
+      cell_y = 7;
+    }
+    /* right piece */
+    else if (m == width - 1)
+    {
+      cell_x = 11;
+      cell_y = 7;
+    }
+    /* middle piece */
+    else
+    {
+      cell_x = 9;
+      cell_y = 7;
+    }
+
+    VB_ALL_ADD_SLIDER_PIECE_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, lighting, palette)
+  }
+
+  /* draw the slider itself */
+  pos_x = corner_x + (8 * 0) + 4;
+  pos_y = corner_y + (8 * 0) + 4;
+
+  pos_x += ((value - lower_bound) * 8 * (width - 1)) / (upper_bound - lower_bound);
+
+  cell_x = 7;
+  cell_y = 7;
+
+  VB_ALL_ADD_NAMED_SPRITE_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, 1, 1, lighting, palette)
+
+  /* update panels sprite layer count */
+  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_OVERLAY] = 
+    sprite_index - GRAPHICS_OVERLAY_SPRITES_START_INDEX;
+
+  return 0;
+}
+
+/*******************************************************************************
+** vb_all_load_param_with_slider()
+*******************************************************************************/
+short int vb_all_load_param_with_slider(int label, 
+                                        int offset_x, int offset_y, 
+                                        short int value, 
+                                        short int lower_bound, short int upper_bound)
+{
+  /* load the parameter name, value, slider, and adjustment arrows */
+  vb_all_load_text( offset_x + LAYOUT_PATCH_EDIT_PARAM_NAME_X, offset_y, 
+                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, 
+                    S_patch_edit_parameter_labels[label]);
+
+  vb_all_load_value(offset_x + LAYOUT_PATCH_EDIT_PARAM_VALUE_X, offset_y, 
+                    0, 6, value);
+
+  vb_all_load_slider( offset_x + LAYOUT_PATCH_EDIT_PARAM_SLIDER_X, offset_y, 
+                      LAYOUT_PATCH_EDIT_PARAM_SLIDER_WIDTH, 
+                      value, lower_bound, upper_bound);
+
+#if 0
+  vb_all_load_named_sprite( VB_ALL_SPRITE_NAME_ADJUST_PARAM_LEFT, 
+                            offset_x + LAYOUT_PATCH_EDIT_PARAM_ADJUST_L_X, 
+                            offset_y, 0, VB_ALL_PALETTE_1);
+
+  vb_all_load_named_sprite( VB_ALL_SPRITE_NAME_ADJUST_PARAM_RIGHT, 
+                            offset_x + LAYOUT_PATCH_EDIT_PARAM_ADJUST_R_X, 
+                            offset_y, 0, VB_ALL_PALETTE_1);
+#endif
 
   return 0;
 }
@@ -1339,12 +1476,22 @@ short int vb_all_load_patches_overlay()
   header* hd;
   param*  pr;
 
+  short int value;
+
   /* make sure that the patch index is valid */
   if (BANK_PATCH_INDEX_IS_NOT_VALID(0))
     return 1;
 
   /* obtain patch pointer */
   p = &G_patch_bank[0];
+
+  /* patch settings text */
+  if (G_current_scroll_amount < 3)
+  {
+    vb_all_load_text( LAYOUT_PATCH_EDIT_PATCH_NUMBER_X, 
+                      LAYOUT_PATCH_EDIT_PATCH_NUMBER_Y - G_current_scroll_amount, 
+                      VB_ALL_ALIGN_LEFT, 0, VB_ALL_PALETTE_2, 16, "Patch");
+  }
 
 #if 0
   /* patch settings text */
@@ -1357,15 +1504,6 @@ short int vb_all_load_patches_overlay()
   vb_all_load_named_sprite(VB_ALL_SPRITE_NAME_ADJUST_PARAM_RIGHT, -28, -13, 0, VB_ALL_PALETTE_1);
 
   vb_all_load_text(-24, -13, VB_ALL_ALIGN_LEFT, 0, 6, 16, "Name of Patch");
-
-  /* algorithm settings text */
-  vb_all_load_text( LAYOUT_PATCH_EDIT_ALGORITHM_NAME_X, 
-                    LAYOUT_PATCH_EDIT_ALGORITHM_Y, 
-                    VB_ALL_ALIGN_LEFT, 0, VB_ALL_PALETTE_2, 16, "Algo");
-
-  vb_all_load_algorithm_name( LAYOUT_PATCH_EDIT_ALGORITHM_PARAM_X, 
-                              LAYOUT_PATCH_EDIT_ALGORITHM_Y, 
-                              0, 6, p->algorithm);
 #endif
 
   /* headers */
@@ -1379,47 +1517,14 @@ short int vb_all_load_patches_overlay()
     if (LAYOUT_PATCH_HEADER_IS_NOT_IN_MAIN_AREA(hd))
       continue;
 
-    /* load the header */
-    if (hd->label == LAYOUT_HEADER_PATCH_EDIT_LABEL_OSC_1)
-    {
-      vb_all_load_text( hd->center_x, hd->center_y - G_current_scroll_amount, 
-                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_3, 16, "Osc 1");
-    }
-    else if (hd->label == LAYOUT_HEADER_PATCH_EDIT_LABEL_OSC_2)
-    {
-      vb_all_load_text( hd->center_x, hd->center_y - G_current_scroll_amount, 
-                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_3, 16, "Osc 2");
-    }
-    else if (hd->label == LAYOUT_HEADER_PATCH_EDIT_LABEL_OSC_3)
-    {
-      vb_all_load_text( hd->center_x, hd->center_y - G_current_scroll_amount, 
-                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_3, 16, "Osc 3");
-    }
-    else if (hd->label == LAYOUT_HEADER_PATCH_EDIT_LABEL_OSC_4)
-    {
-      vb_all_load_text( hd->center_x, hd->center_y - G_current_scroll_amount, 
-                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_3, 16, "Osc 4");
-    }
-    else if (hd->label == LAYOUT_HEADER_PATCH_EDIT_LABEL_ENV_1)
-    {
-      vb_all_load_text( hd->center_x, hd->center_y - G_current_scroll_amount, 
-                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_3, 16, "Env 1");
-    }
-    else if (hd->label == LAYOUT_HEADER_PATCH_EDIT_LABEL_ENV_2)
-    {
-      vb_all_load_text( hd->center_x, hd->center_y - G_current_scroll_amount, 
-                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_3, 16, "Env 2");
-    }
-    else if (hd->label == LAYOUT_HEADER_PATCH_EDIT_LABEL_ENV_3)
-    {
-      vb_all_load_text( hd->center_x, hd->center_y - G_current_scroll_amount, 
-                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_3, 16, "Env 3");
-    }
-    else if (hd->label == LAYOUT_HEADER_PATCH_EDIT_LABEL_ENV_4)
-    {
-      vb_all_load_text( hd->center_x, hd->center_y - G_current_scroll_amount, 
-                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_3, 16, "Env 4");
-    }
+    /* make sure the label is valid */
+    if ((hd->label < 0) || (hd->label >= LAYOUT_HEADER_PATCH_EDIT_NUM_LABELS))
+      continue;
+
+    /* load the header! */
+    vb_all_load_text( hd->center_x, hd->center_y - G_current_scroll_amount, 
+                      VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_3, 16, 
+                      S_patch_edit_header_labels[hd->label]);
   }
 
   /* parameters */
@@ -1433,128 +1538,46 @@ short int vb_all_load_patches_overlay()
     if (LAYOUT_PATCH_PARAM_IS_NOT_IN_MAIN_AREA(pr))
       continue;
 
-    /* load the parameter */
-    if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_FEEDBACK)
-    {
-      vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_NAME_OFFSET_X, 
-                        pr->center_y - G_current_scroll_amount, 
-                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "FBk");
+    /* make sure the label is valid */
+    if ((pr->label < 0) || (pr->label >= LAYOUT_PARAM_PATCH_EDIT_NUM_LABELS))
+      continue;
 
-      vb_all_load_adjustable_parameter( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_VALUE_OFFSET_X, 
-                                        pr->center_y - G_current_scroll_amount, 
-                                        0, 6, p->osc_feedback[pr->num], 
-                                        PATCH_OSC_FEEDBACK_LOWER_BOUND, PATCH_OSC_FEEDBACK_UPPER_BOUND);
-    }
+    /* determine parameter value */
+    if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ALGORITHM)
+      value = p->algorithm;
+    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LOWPASS_CUTOFF)
+      value = p->lowpass_cutoff;
+    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_HIGHPASS_CUTOFF)
+      value = p->highpass_cutoff;
+    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_FEEDBACK)
+      value = p->osc_feedback[pr->num];
     else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_MULTIPLE)
-    {
-      vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_NAME_OFFSET_X, 
-                        pr->center_y - G_current_scroll_amount, 
-                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "Mul");
-
-      vb_all_load_adjustable_parameter( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_VALUE_OFFSET_X, 
-                                        pr->center_y - G_current_scroll_amount, 
-                                        0, 6, p->osc_multiple[pr->num], 
-                                        PATCH_OSC_MULTIPLE_LOWER_BOUND, PATCH_OSC_MULTIPLE_UPPER_BOUND);
-    }
+      value = p->osc_multiple[pr->num];
     else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_DETUNE)
-    {
-      vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_NAME_OFFSET_X, 
-                        pr->center_y - G_current_scroll_amount, 
-                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "Det");
-
-      vb_all_load_adjustable_parameter( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_VALUE_OFFSET_X, 
-                                        pr->center_y - G_current_scroll_amount, 
-                                        0, 6, p->osc_detune[pr->num], 
-                                        PATCH_OSC_DETUNE_LOWER_BOUND, PATCH_OSC_DETUNE_UPPER_BOUND);
-    }
+      value = p->osc_detune[pr->num];
     else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_AMPLITUDE)
-    {
-      vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_NAME_OFFSET_X, 
-                        pr->center_y - G_current_scroll_amount, 
-                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "Lev");
-
-      vb_all_load_adjustable_parameter( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_VALUE_OFFSET_X, 
-                                        pr->center_y - G_current_scroll_amount, 
-                                        0, 6, p->osc_amplitude[pr->num], 
-                                        PATCH_OSC_AMPLITUDE_LOWER_BOUND, PATCH_OSC_AMPLITUDE_UPPER_BOUND);
-    }
+      value = p->osc_amplitude[pr->num];
     else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_ATTACK)
-    {
-      vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_NAME_OFFSET_X, 
-                        pr->center_y - G_current_scroll_amount, 
-                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "Att");
-
-      vb_all_load_adjustable_parameter( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_VALUE_OFFSET_X, 
-                                        pr->center_y - G_current_scroll_amount, 
-                                        0, 6, p->env_attack[pr->num], 
-                                        PATCH_ENV_ATTACK_LOWER_BOUND, PATCH_ENV_ATTACK_UPPER_BOUND);
-    }
+      value = p->env_attack[pr->num];
     else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_DECAY_1)
-    {
-      vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_NAME_OFFSET_X, 
-                        pr->center_y - G_current_scroll_amount, 
-                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "D1");
-
-      vb_all_load_adjustable_parameter( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_VALUE_OFFSET_X, 
-                                        pr->center_y - G_current_scroll_amount, 
-                                        0, 6, p->env_decay_1[pr->num], 
-                                        PATCH_ENV_DECAY_1_LOWER_BOUND, PATCH_ENV_DECAY_1_UPPER_BOUND);
-    }
+      value = p->env_decay_1[pr->num];
     else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_DECAY_2)
-    {
-      vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_NAME_OFFSET_X, 
-                        pr->center_y - G_current_scroll_amount, 
-                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "D2");
-
-      vb_all_load_adjustable_parameter( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_VALUE_OFFSET_X, 
-                                        pr->center_y - G_current_scroll_amount, 
-                                        0, 6, p->env_decay_2[pr->num], 
-                                        PATCH_ENV_DECAY_2_LOWER_BOUND, PATCH_ENV_DECAY_2_UPPER_BOUND);
-    }
+      value = p->env_decay_2[pr->num];
     else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_RELEASE)
-    {
-      vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_NAME_OFFSET_X, 
-                        pr->center_y - G_current_scroll_amount, 
-                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "Rel");
-
-      vb_all_load_adjustable_parameter( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_VALUE_OFFSET_X, 
-                                        pr->center_y - G_current_scroll_amount, 
-                                        0, 6, p->env_release[pr->num], 
-                                        PATCH_ENV_RELEASE_LOWER_BOUND, PATCH_ENV_RELEASE_UPPER_BOUND);
-    }
+      value = p->env_release[pr->num];
     else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_SUSTAIN)
-    {
-      vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_NAME_OFFSET_X, 
-                        pr->center_y - G_current_scroll_amount, 
-                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "Sus");
-
-      vb_all_load_adjustable_parameter( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_VALUE_OFFSET_X, 
-                                        pr->center_y - G_current_scroll_amount, 
-                                        0, 6, p->env_sustain[pr->num], 
-                                        PATCH_ENV_SUSTAIN_LOWER_BOUND, PATCH_ENV_SUSTAIN_UPPER_BOUND);
-    }
+      value = p->env_sustain[pr->num];
     else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_RATE_KS)
-    {
-      vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_NAME_OFFSET_X, 
-                        pr->center_y - G_current_scroll_amount, 
-                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "RKS");
-
-      vb_all_load_adjustable_parameter( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_VALUE_OFFSET_X, 
-                                        pr->center_y - G_current_scroll_amount, 
-                                        0, 6, p->env_rate_ks[pr->num], 
-                                        PATCH_ENV_RATE_KS_LOWER_BOUND, PATCH_ENV_RATE_KS_UPPER_BOUND);
-    }
+      value = p->env_rate_ks[pr->num];
     else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_LEVEL_KS)
-    {
-      vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_NAME_OFFSET_X, 
-                        pr->center_y - G_current_scroll_amount, 
-                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "LKS");
+      value = p->env_level_ks[pr->num];
+    else
+      value = 0;
 
-      vb_all_load_adjustable_parameter( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_VALUE_OFFSET_X, 
-                                        pr->center_y - G_current_scroll_amount, 
-                                        0, 6, p->env_level_ks[pr->num], 
-                                        PATCH_ENV_LEVEL_KS_LOWER_BOUND, PATCH_ENV_LEVEL_KS_UPPER_BOUND);
-    }
+    /* load the parameter! */
+    vb_all_load_param_with_slider(pr->label, 
+                                  pr->center_x, pr->center_y - G_current_scroll_amount, 
+                                  value, pr->lower_bound, pr->upper_bound);
   }
 
 #if 0

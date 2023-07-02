@@ -6,6 +6,7 @@
 #include <stdlib.h>
 
 #include "layout.h"
+#include "patch.h"
 
 panel  G_layout_panels[LAYOUT_NUM_PANELS];
 button G_layout_buttons[LAYOUT_NUM_BUTTONS];
@@ -263,8 +264,7 @@ short int layout_setup_params()
 {
   int k;
 
-  int quotient;
-  int remainder;
+  int shifted_index;
 
   param* pr;
 
@@ -275,96 +275,143 @@ short int layout_setup_params()
   {
     pr = &G_layout_params[k];
 
-    quotient = (k - LAYOUT_PATCH_EDIT_PARAMS_START_INDEX) / (LAYOUT_NUM_PATCH_EDIT_PARAMS / 4);
-    remainder = (k - LAYOUT_PATCH_EDIT_PARAMS_START_INDEX) % (LAYOUT_NUM_PATCH_EDIT_PARAMS / 4);
+    /* determine label and oscillator / envelope number */
+    shifted_index = k - LAYOUT_PATCH_EDIT_PARAMS_START_INDEX;
 
-    /* the quotient determines the oscillator / envelope number */
-    if (quotient == 0)
+    if ((shifted_index >= 0) && (shifted_index < LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_FEEDBACK))
     {
+      pr->label = shifted_index;
       pr->num = 0;
+    }
+    else
+    {
+      pr->label = (shifted_index - LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_FEEDBACK) % LAYOUT_PARAM_PATCH_EDIT_NUM_OSC_ENV_LABELS;
+      pr->label += LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_FEEDBACK;
+
+      pr->num = (shifted_index - LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_FEEDBACK) / LAYOUT_PARAM_PATCH_EDIT_NUM_OSC_ENV_LABELS;
+    }
+
+    /* set position and bounds */
+    if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ALGORITHM)
+    {
       pr->center_x = LAYOUT_PATCH_EDIT_COLUMN_1_CENTER_X;
-    }
-    else if (quotient == 1)
-    {
-      pr->num = 1;
-      pr->center_x = LAYOUT_PATCH_EDIT_COLUMN_2_CENTER_X;
-    }
-    else if (quotient == 2)
-    {
-      pr->num = 2;
-      pr->center_x = LAYOUT_PATCH_EDIT_COLUMN_3_CENTER_X;
-    }
-    else if (quotient == 3)
-    {
-      pr->num = 3;
-      pr->center_x = LAYOUT_PATCH_EDIT_COLUMN_4_CENTER_X;
-    }
-    else
-    {
-      pr->num = 0;
-      pr->center_x = 0;
-    }
+      pr->center_y = LAYOUT_PATCH_EDIT_ALGORITHM_Y;
 
-    /* the remainder determines the parameter */
-    if (remainder == 0)
-    {
-      pr->label = LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_FEEDBACK;
-      pr->center_y = LAYOUT_PATCH_EDIT_OSC_FEEDBACK_Y;
+      pr->lower_bound = PATCH_ALGORITHM_LOWER_BOUND;
+      pr->upper_bound = PATCH_ALGORITHM_UPPER_BOUND;
     }
-    else if (remainder == 1)
+    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LOWPASS_CUTOFF)
     {
-      pr->label = LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_MULTIPLE;
-      pr->center_y = LAYOUT_PATCH_EDIT_OSC_MULTIPLE_Y;
+      pr->center_x = LAYOUT_PATCH_EDIT_COLUMN_4_CENTER_X;
+      pr->center_y = LAYOUT_PATCH_EDIT_FILTER_CUTOFF_Y;
+
+      pr->lower_bound = PATCH_LOWPASS_CUTOFF_LOWER_BOUND;
+      pr->upper_bound = PATCH_LOWPASS_CUTOFF_UPPER_BOUND;
     }
-    else if (remainder == 2)
+    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_HIGHPASS_CUTOFF)
     {
-      pr->label = LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_DETUNE;
-      pr->center_y = LAYOUT_PATCH_EDIT_OSC_DETUNE_Y;
-    }
-    else if (remainder == 3)
-    {
-      pr->label = LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_AMPLITUDE;
-      pr->center_y = LAYOUT_PATCH_EDIT_OSC_AMPLITUDE_Y;
-    }
-    else if (remainder == 4)
-    {
-      pr->label = LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_ATTACK;
-      pr->center_y = LAYOUT_PATCH_EDIT_ENV_ATTACK_Y;
-    }
-    else if (remainder == 5)
-    {
-      pr->label = LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_DECAY_1;
-      pr->center_y = LAYOUT_PATCH_EDIT_ENV_DECAY_1_Y;
-    }
-    else if (remainder == 6)
-    {
-      pr->label = LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_DECAY_2;
-      pr->center_y = LAYOUT_PATCH_EDIT_ENV_DECAY_2_Y;
-    }
-    else if (remainder == 7)
-    {
-      pr->label = LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_RELEASE;
-      pr->center_y = LAYOUT_PATCH_EDIT_ENV_RELEASE_Y;
-    }
-    else if (remainder == 8)
-    {
-      pr->label = LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_SUSTAIN;
-      pr->center_y = LAYOUT_PATCH_EDIT_ENV_SUSTAIN_Y;
-    }
-    else if (remainder == 9)
-    {
-      pr->label = LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_RATE_KS;
-      pr->center_y = LAYOUT_PATCH_EDIT_ENV_RATE_KS_Y;
-    }
-    else if (remainder == 10)
-    {
-      pr->label = LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_LEVEL_KS;
-      pr->center_y = LAYOUT_PATCH_EDIT_ENV_LEVEL_KS_Y;
+      pr->center_x = LAYOUT_PATCH_EDIT_COLUMN_3_CENTER_X;
+      pr->center_y = LAYOUT_PATCH_EDIT_FILTER_CUTOFF_Y;
+
+      pr->lower_bound = PATCH_HIGHPASS_CUTOFF_LOWER_BOUND;
+      pr->upper_bound = PATCH_HIGHPASS_CUTOFF_UPPER_BOUND;
     }
     else
     {
-      pr->label = LAYOUT_PARAM_PATCH_EDIT_LABEL_NONE;
-      pr->center_y = 0;
+      /* determine column */
+      if (pr->num == 0)
+        pr->center_x = LAYOUT_PATCH_EDIT_COLUMN_1_CENTER_X;
+      else if (pr->num == 1)
+        pr->center_x = LAYOUT_PATCH_EDIT_COLUMN_2_CENTER_X;
+      else if (pr->num == 2)
+        pr->center_x = LAYOUT_PATCH_EDIT_COLUMN_3_CENTER_X;
+      else if (pr->num == 3)
+        pr->center_x = LAYOUT_PATCH_EDIT_COLUMN_4_CENTER_X;
+      else
+        pr->center_x = 0;
+
+      /* determine vertical position and bounds */
+      if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_FEEDBACK)
+      {
+        pr->center_y = LAYOUT_PATCH_EDIT_OSC_FEEDBACK_Y;
+
+        pr->lower_bound = PATCH_OSC_FEEDBACK_LOWER_BOUND;
+        pr->upper_bound = PATCH_OSC_FEEDBACK_UPPER_BOUND;
+      }
+      else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_MULTIPLE)
+      {
+        pr->center_y = LAYOUT_PATCH_EDIT_OSC_MULTIPLE_Y;
+
+        pr->lower_bound = PATCH_OSC_MULTIPLE_LOWER_BOUND;
+        pr->upper_bound = PATCH_OSC_MULTIPLE_UPPER_BOUND;
+      }
+      else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_DETUNE)
+      {
+        pr->center_y = LAYOUT_PATCH_EDIT_OSC_DETUNE_Y;
+
+        pr->lower_bound = PATCH_OSC_DETUNE_LOWER_BOUND;
+        pr->upper_bound = PATCH_OSC_DETUNE_UPPER_BOUND;
+      }
+      else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_AMPLITUDE)
+      {
+        pr->center_y = LAYOUT_PATCH_EDIT_OSC_AMPLITUDE_Y;
+
+        pr->lower_bound = PATCH_OSC_AMPLITUDE_LOWER_BOUND;
+        pr->upper_bound = PATCH_OSC_AMPLITUDE_UPPER_BOUND;
+      }
+      else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_ATTACK)
+      {
+        pr->center_y = LAYOUT_PATCH_EDIT_ENV_ATTACK_Y;
+
+        pr->lower_bound = PATCH_ENV_ATTACK_LOWER_BOUND;
+        pr->upper_bound = PATCH_ENV_ATTACK_UPPER_BOUND;
+      }
+      else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_DECAY_1)
+      {
+        pr->center_y = LAYOUT_PATCH_EDIT_ENV_DECAY_1_Y;
+
+        pr->lower_bound = PATCH_ENV_DECAY_1_LOWER_BOUND;
+        pr->upper_bound = PATCH_ENV_DECAY_1_UPPER_BOUND;
+      }
+      else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_DECAY_2)
+      {
+        pr->center_y = LAYOUT_PATCH_EDIT_ENV_DECAY_2_Y;
+
+        pr->lower_bound = PATCH_ENV_DECAY_2_LOWER_BOUND;
+        pr->upper_bound = PATCH_ENV_DECAY_2_UPPER_BOUND;
+      }
+      else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_RELEASE)
+      {
+        pr->center_y = LAYOUT_PATCH_EDIT_ENV_RELEASE_Y;
+
+        pr->lower_bound = PATCH_ENV_RELEASE_LOWER_BOUND;
+        pr->upper_bound = PATCH_ENV_RELEASE_UPPER_BOUND;
+      }
+      else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_SUSTAIN)
+      {
+        pr->center_y = LAYOUT_PATCH_EDIT_ENV_SUSTAIN_Y;
+
+        pr->lower_bound = PATCH_ENV_SUSTAIN_LOWER_BOUND;
+        pr->upper_bound = PATCH_ENV_SUSTAIN_UPPER_BOUND;
+      }
+      else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_RATE_KS)
+      {
+        pr->center_y = LAYOUT_PATCH_EDIT_ENV_RATE_KS_Y;
+
+        pr->lower_bound = PATCH_ENV_RATE_KS_LOWER_BOUND;
+        pr->upper_bound = PATCH_ENV_RATE_KS_UPPER_BOUND;
+      }
+      else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_LEVEL_KS)
+      {
+        pr->center_y = LAYOUT_PATCH_EDIT_ENV_LEVEL_KS_Y;
+
+        pr->lower_bound = PATCH_ENV_LEVEL_KS_LOWER_BOUND;
+        pr->upper_bound = PATCH_ENV_LEVEL_KS_UPPER_BOUND;
+      }
+      else
+      {
+        printf("Unknown parameter found during setup.\n");
+      }
     }
   }
 

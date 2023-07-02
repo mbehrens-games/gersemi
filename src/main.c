@@ -205,11 +205,25 @@ int main(int argc, char *argv[])
           controls_keyboard_key_released(event.key.keysym.scancode);
       }
 
-      /* mouse button (click) */
+      /* mouse (button down) */
       if (event.type == SDL_MOUSEBUTTONDOWN)
       {
         if (event.button.state == SDL_PRESSED)
           controls_mouse_button_pressed(event.button.button, event.button.x, event.button.y);
+      }
+
+      /* mouse (button up) */
+      if (event.type == SDL_MOUSEBUTTONUP)
+      {
+        if (event.button.state == SDL_RELEASED)
+          controls_mouse_button_released(event.button.button);
+      }
+
+      /* mouse (cursor moved) */
+      if (event.type == SDL_MOUSEMOTION)
+      {
+        if ((event.motion.xrel != 0) || (event.motion.yrel != 0))
+          controls_mouse_cursor_moved(event.motion.x, event.motion.y);
       }
 
       /* mouse wheel (wheel up/down) */

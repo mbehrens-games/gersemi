@@ -58,10 +58,11 @@ enum
 
 /* the maximum number of sprites is determined as follows:    */
 /*   number of 8x16 button pieces (1 screen): 50 * 14 = 700   */
+/*   number of 8x8 slider pieces (1 screen): 50 * 28 = 1400   */
 /*   number of 8x8 text characters (1 screen): 50 * 28 = 1400 */
-/* overall, this is 700 + 1400 = 1750                         */
+/* overall, this is 700 + 1400 + 1400 = 3500                  */
 #define GRAPHICS_MAX_BUTTONS_SPRITES  700
-#define GRAPHICS_MAX_OVERLAY_SPRITES  1400
+#define GRAPHICS_MAX_OVERLAY_SPRITES  2800
 
 #define GRAPHICS_MAX_SPRITES  ( GRAPHICS_MAX_BUTTONS_SPRITES +                 \
                                 GRAPHICS_MAX_OVERLAY_SPRITES)
@@ -82,6 +83,7 @@ enum
 /* matter, as the depth buffer should be reset and    */
 /* the depth test should be off when we draw them.    */
 #define GRAPHICS_Z_LEVEL_BUTTONS    0.5f
+#define GRAPHICS_Z_LEVEL_SLIDERS    0.375f
 #define GRAPHICS_Z_LEVEL_OVERLAY    0.25f
 
 /* for the postprocessing, the z level of the fullscreen  */

@@ -11,7 +11,15 @@
 
 enum
 {
+  PATCH_ADJUST_MODE_DIRECT = 0, 
+  PATCH_ADJUST_MODE_RELATIVE 
+};
+
+enum
+{
   PATCH_PARAM_ALGORITHM = 0, 
+  PATCH_PARAM_LOWPASS_CUTOFF, 
+  PATCH_PARAM_HIGHPASS_CUTOFF, 
   PATCH_PARAM_OSC_FEEDBACK, 
   PATCH_PARAM_OSC_MULTIPLE, 
   PATCH_PARAM_OSC_DETUNE, 
@@ -23,10 +31,17 @@ enum
   PATCH_PARAM_ENV_SUSTAIN, 
   PATCH_PARAM_ENV_RATE_KS, 
   PATCH_PARAM_ENV_LEVEL_KS, 
-  PATCH_PARAM_LOWPASS_CUTOFF, 
-  PATCH_PARAM_HIGHPASS_CUTOFF, 
   PATCH_NUM_PARAMS
 };
+
+#define PATCH_ALGORITHM_LOWER_BOUND   0
+#define PATCH_ALGORITHM_UPPER_BOUND   7
+
+#define PATCH_LOWPASS_CUTOFF_LOWER_BOUND 0
+#define PATCH_LOWPASS_CUTOFF_UPPER_BOUND 3
+
+#define PATCH_HIGHPASS_CUTOFF_LOWER_BOUND 0
+#define PATCH_HIGHPASS_CUTOFF_UPPER_BOUND 3
 
 #define PATCH_OSC_FEEDBACK_LOWER_BOUND  0
 #define PATCH_OSC_FEEDBACK_UPPER_BOUND  7
@@ -66,8 +81,12 @@ typedef struct patch
   /* algorithm */
   int algorithm;
 
+  /* filters */
+  int lowpass_cutoff;
+  int highpass_cutoff;
+
   /* oscillators */
-  int       osc_feedback[VOICE_NUM_OSCS_AND_ENVS];
+  short int osc_feedback[VOICE_NUM_OSCS_AND_ENVS];
   short int osc_multiple[VOICE_NUM_OSCS_AND_ENVS];
   short int osc_detune[VOICE_NUM_OSCS_AND_ENVS];
   short int osc_amplitude[VOICE_NUM_OSCS_AND_ENVS];
@@ -81,11 +100,6 @@ typedef struct patch
   short int env_rate_ks[VOICE_NUM_OSCS_AND_ENVS];
   short int env_level_ks[VOICE_NUM_OSCS_AND_ENVS];
 
-  /* noise settings */
-
-  /* filters */
-  int lowpass_cutoff;
-  int highpass_cutoff;
 } patch;
 
 /* patch bank */
@@ -95,6 +109,7 @@ extern patch G_patch_bank[BANK_NUM_PATCHES];
 short int patch_setup_all();
 short int patch_reset(int patch_index);
 
-short int patch_adjust_parameter(int patch_index, int param, int num, int amount);
+short int patch_adjust_parameter( int patch_index, int param, int num, 
+                                  int mode, int value);
 
 #endif
