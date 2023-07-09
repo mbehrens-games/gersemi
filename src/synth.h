@@ -15,8 +15,7 @@ short int synth_reset_banks();
 short int synth_load_patch(int voice_index, int patch_index);
 
 short int synth_key_on( int voice_index, 
-                        int octave, int degree, 
-                        int volume, int brightness);
+                        int octave, int degree, int volume);
 short int synth_key_off(int voice_index);
 
 short int synth_update();

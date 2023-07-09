@@ -9,46 +9,30 @@
 
 #define VOICE_NUM_OSCS_AND_ENVS 4
 
-enum
-{
-  VOICE_ALGORITHM_1_CAR_CHAIN = 0,
-  VOICE_ALGORITHM_1_CAR_Y,
-  VOICE_ALGORITHM_1_CAR_CRAB_CLAW,
-  VOICE_ALGORITHM_2_CAR_TWIN,
-  VOICE_ALGORITHM_2_CAR_STACKED,
-  VOICE_ALGORITHM_3_CAR_ONE_TO_THREE,
-  VOICE_ALGORITHM_3_CAR_ONE_TO_ONE,
-  VOICE_ALGORITHM_4_CAR_PIPES,
-  VOICE_NUM_ALGORITHMS
-};
-
 typedef struct voice
 {
   /* algorithm */
-  int algorithm;
+  short int algorithm;
 
-  /* base note */
+  /* currently playing notes, pitch indices */
   int base_note;
-
-  /* current notes */
   int osc_note[VOICE_NUM_OSCS_AND_ENVS];
-
-  /* base pitch table indices */
-  int osc_base_pitch_index[VOICE_NUM_OSCS_AND_ENVS];
+  int osc_pitch_index[VOICE_NUM_OSCS_AND_ENVS];
 
   /* phases */
   unsigned int osc_phase[VOICE_NUM_OSCS_AND_ENVS];
 
-  /* pitch offsets */
-  short int osc_offset_coarse[VOICE_NUM_OSCS_AND_ENVS];
-  short int osc_offset_fine[VOICE_NUM_OSCS_AND_ENVS];
-
-  /* feedback */
-  int osc_feedback[VOICE_NUM_OSCS_AND_ENVS];
-
+  /* feedback levels */
   int feed_in[2 * VOICE_NUM_OSCS_AND_ENVS];
 
-  /* envelopes */
+  /* voice parameters */
+  short int osc_waveform[VOICE_NUM_OSCS_AND_ENVS];
+  short int osc_feedback_multiplier[VOICE_NUM_OSCS_AND_ENVS];
+
+  short int osc_detune_coarse[VOICE_NUM_OSCS_AND_ENVS];
+  short int osc_detune_fine[VOICE_NUM_OSCS_AND_ENVS];
+
+  /* envelope levels */
   short int env_input[VOICE_NUM_OSCS_AND_ENVS];
 
   /* output level */

@@ -63,8 +63,10 @@ short int synth_reset_banks()
 *******************************************************************************/
 short int synth_load_patch(int voice_index, int patch_index)
 {
+#if 0
   voice* v;
   patch* p;
+#endif
 
   /* make sure that the voice index is valid */
   if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
@@ -74,52 +76,25 @@ short int synth_load_patch(int voice_index, int patch_index)
   if (BANK_PATCH_INDEX_IS_NOT_VALID(patch_index))
     return 1;
 
+#if 0
   /* obtain voice and patch pointers */
   v = &G_voice_bank[voice_index];
   p = &G_patch_bank[patch_index];
+#endif
 
   /* voice */
   voice_load_patch(voice_index, patch_index);
 
   /* envelopes */
-  if ((v->algorithm == VOICE_ALGORITHM_1_CAR_CHAIN) || 
-      (v->algorithm == VOICE_ALGORITHM_1_CAR_Y)     || 
-      (v->algorithm == VOICE_ALGORITHM_1_CAR_CRAB_CLAW))
-  {
-    envelope_load_patch(voice_index, 0, patch_index, ENVELOPE_TYPE_MODULATOR);
-    envelope_load_patch(voice_index, 1, patch_index, ENVELOPE_TYPE_MODULATOR);
-    envelope_load_patch(voice_index, 2, patch_index, ENVELOPE_TYPE_MODULATOR);
-    envelope_load_patch(voice_index, 3, patch_index, ENVELOPE_TYPE_CARRIER);
-  }
-  else if ( (v->algorithm == VOICE_ALGORITHM_2_CAR_TWIN) || 
-            (v->algorithm == VOICE_ALGORITHM_2_CAR_STACKED))
-  {
-    envelope_load_patch(voice_index, 0, patch_index, ENVELOPE_TYPE_MODULATOR);
-    envelope_load_patch(voice_index, 1, patch_index, ENVELOPE_TYPE_MODULATOR);
-    envelope_load_patch(voice_index, 2, patch_index, ENVELOPE_TYPE_CARRIER);
-    envelope_load_patch(voice_index, 3, patch_index, ENVELOPE_TYPE_CARRIER);
-  }
-  else if ( (v->algorithm == VOICE_ALGORITHM_3_CAR_ONE_TO_THREE) || 
-            (v->algorithm == VOICE_ALGORITHM_3_CAR_ONE_TO_ONE))
-  {
-    envelope_load_patch(voice_index, 0, patch_index, ENVELOPE_TYPE_MODULATOR);
-    envelope_load_patch(voice_index, 1, patch_index, ENVELOPE_TYPE_CARRIER);
-    envelope_load_patch(voice_index, 2, patch_index, ENVELOPE_TYPE_CARRIER);
-    envelope_load_patch(voice_index, 3, patch_index, ENVELOPE_TYPE_CARRIER);
-  }
-  else if (v->algorithm == VOICE_ALGORITHM_4_CAR_PIPES)
-  {
-    envelope_load_patch(voice_index, 0, patch_index, ENVELOPE_TYPE_CARRIER);
-    envelope_load_patch(voice_index, 1, patch_index, ENVELOPE_TYPE_CARRIER);
-    envelope_load_patch(voice_index, 2, patch_index, ENVELOPE_TYPE_CARRIER);
-    envelope_load_patch(voice_index, 3, patch_index, ENVELOPE_TYPE_CARRIER);
-  }
+  envelope_load_patch(voice_index, 0, patch_index);
+  envelope_load_patch(voice_index, 1, patch_index);
+  envelope_load_patch(voice_index, 2, patch_index);
+  envelope_load_patch(voice_index, 3, patch_index);
 
   /* lfos */
 
   /* filters */
-  filter_set_lowpass_cutoff(voice_index, p->lowpass_cutoff);
-  filter_set_highpass_cutoff(voice_index, p->highpass_cutoff);
+  filter_load_patch(voice_index, patch_index);
 
   return 0;
 }
@@ -128,8 +103,7 @@ short int synth_load_patch(int voice_index, int patch_index)
 ** synth_key_on()
 *******************************************************************************/
 short int synth_key_on( int voice_index, 
-                        int octave, int degree, 
-                        int volume, int brightness)
+                        int octave, int degree, int volume)
 {
   int m;
 
@@ -152,7 +126,7 @@ short int synth_key_on( int voice_index,
 
   /* trigger envelopes */
   for (m = 0; m < VOICE_NUM_OSCS_AND_ENVS; m++)
-    envelope_trigger(voice_index, m, v->osc_note[m], volume, brightness);
+    envelope_trigger(voice_index, m, v->osc_note[m], volume);
 
   return 0;
 }

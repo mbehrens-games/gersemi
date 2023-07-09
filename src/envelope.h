@@ -9,12 +9,6 @@
 
 enum
 {
-  ENVELOPE_TYPE_CARRIER = 0, 
-  ENVELOPE_TYPE_MODULATOR
-};
-
-enum
-{
   ENVELOPE_STATE_ATTACK = 0,
   ENVELOPE_STATE_DECAY_1,
   ENVELOPE_STATE_DECAY_2,
@@ -31,14 +25,15 @@ typedef struct envelope
   short int decay_1;
   short int decay_2;
   short int release;
+  short int amplitude;
   short int sustain;
   short int rate_ks;
   short int level_ks;
 
   /* adjustments */
+  short int ampl_adjustment;
   short int rate_adjustment;
   short int level_adjustment;
-  short int ampl_adjustment;
   short int volume_adjustment;
 
   /* rows */
@@ -73,10 +68,9 @@ extern envelope G_envelope_bank[BANK_NUM_ENVELOPES];
 short int envelope_setup_all();
 short int envelope_reset(int voice_index, int num);
 
-short int envelope_load_patch(int voice_index, int num, 
-                              int patch_index, int type);
+short int envelope_load_patch(int voice_index, int num, int patch_index);
 
-short int envelope_trigger(int voice_index, int num, int note, int volume, int brightness);
+short int envelope_trigger(int voice_index, int num, int note, int volume);
 short int envelope_release(int voice_index, int num);
 
 short int envelope_update_all();

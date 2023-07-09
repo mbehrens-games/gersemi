@@ -316,16 +316,96 @@ enum
                   G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_OVERLAY] * 6 * sizeof(unsigned short),  \
                   &G_index_buffer_sprites[GRAPHICS_OVERLAY_SPRITES_START_INDEX * 6]);
 
-static char S_patch_edit_header_labels[LAYOUT_HEADER_PATCH_EDIT_NUM_LABELS][8] = 
-  { "n/a",  "Osc 1", "Osc 2", "Osc 3", "Osc 4", 
-            "Env 1", "Env 2", "Env 3", "Env 4" 
+static char S_patch_edit_header_labels[LAYOUT_HEADER_PATCH_EDIT_NUM_LABELS][12] = 
+  { "Filters", "Noise", 
+    "Osc 1", "Osc 2", "Osc 3", "Osc 4", 
+    "Env 1", "Env 2", "Env 3", "Env 4" 
   };
 
 static char S_patch_edit_parameter_labels[LAYOUT_PARAM_PATCH_EDIT_NUM_LABELS][4] = 
-  { "Alg", "LPF", "HPF", 
-    "FBk", "Mul", "Det", "Lev", 
-    "Att", "D1", "D2", "Rel", "Sus", "RKS", "LKS" 
+  { "Alg", "HPF", "LPF", "Per", "Mix", 
+    "Wav", "FBk", "Frq", "Mul", "Div", "Det", 
+    "Att", "D1", "D2", "Rel", "Lev", "Sus", "RKS", "LKS", "Spc" 
   };
+
+static char S_patch_edit_algorithm_values[PATCH_ALGORITHM_NUM_VALUES][4] = 
+  { "1", "2", "3", "4", "5", "6", "7", "8" };
+
+/*
+static char S_patch_edit_algorithm_values[PATCH_ALGORITHM_NUM_VALUES][12] = 
+  { "1C Chain", 
+    "1C The Y", 
+    "1C Crab", 
+    "2C Twin",
+    "2C Stacked",
+    "3C 1 to 3",
+    "3C 1 to 1",
+    "4C Pipes"
+  };
+*/
+
+static char S_patch_edit_highpass_cutoff_values[PATCH_HIGHPASS_CUTOFF_NUM_VALUES][4] = 
+  { "A0", "A1", "A2", "A3" };
+
+static char S_patch_edit_lowpass_cutoff_values[PATCH_LOWPASS_CUTOFF_NUM_VALUES][4] = 
+  { "E7", "G7", "A7", "C8" };
+
+static char S_patch_edit_noise_period_values[PATCH_NOISE_PERIOD_NUM_VALUES][4] = 
+  { "1",  "2",  "3",  "4",  "5",  "6",  "7",  "8", 
+    "9", "10", "11", "12", "13", "14", "15", "16" 
+  };
+
+static char S_patch_edit_noise_mix_values[PATCH_NOISE_MIX_NUM_VALUES][4] = 
+  { "0",  "1",  "2",  "3",  "4",  "5",  "6",  "7",  "8", 
+          "9", "10", "11", "12", "13", "14", "15", "16" 
+  };
+
+static char S_patch_edit_osc_waveform_values[PATCH_OSC_WAVEFORM_NUM_VALUES][8] = 
+  { "Sine", "Half", "Full", "Quar" };
+
+static char S_patch_edit_osc_feedback_values[PATCH_OSC_FEEDBACK_NUM_VALUES][4] = 
+  { "0", "1", "2", "3", "4", "5", "6", "7" };
+
+static char S_patch_edit_osc_freq_mode_values[PATCH_OSC_FREQ_MODE_NUM_VALUES][8] = 
+  { "Ratio", "Fixed" };
+
+static char S_patch_edit_osc_multiple_values[PATCH_OSC_MULTIPLE_NUM_VALUES][4] = 
+  { "1",  "2",  "3",  "4",  "5",  "6",  "7",  "8", 
+    "9", "10", "11", "12", "13", "14", "15", "16" 
+  };
+
+static char S_patch_edit_osc_divisor_values[PATCH_OSC_DIVISOR_NUM_VALUES][4] = 
+  { "1",  "2",  "3",  "4",  "5",  "6",  "7",  "8" };
+
+static char S_patch_edit_osc_detune_values[PATCH_OSC_DETUNE_NUM_VALUES][4] = 
+  { "-8", "-7", "-6", "-5", "-4", "-3", "-2", "-1", "0", 
+     "1",  "2",  "3",  "4",  "5",  "6",  "7",  "8" 
+  };
+
+static char S_patch_edit_env_rate_values[PATCH_ENV_RATE_NUM_VALUES][4] = 
+  {  "1",  "2",  "3",  "4",  "5",  "6",  "7",  "8", 
+     "9", "10", "11", "12", "13", "14", "15", "16", 
+    "17", "18", "19", "20", "21", "22", "23", "24", 
+    "25", "26", "27", "28", "29", "30", "31", "32" 
+  };
+
+static char S_patch_edit_env_amplitude_values[PATCH_ENV_AMPLITUDE_NUM_VALUES][4] = 
+  { "0",  "1",  "2",  "3",  "4",  "5",  "6",  "7", "8", 
+          "9", "10", "11", "12", "13", "14", "15", "16", 
+         "17", "18", "19", "20", "21", "22", "23", "24", 
+         "25", "26", "27", "28", "29", "30", "31", "32" 
+  };
+
+static char S_patch_edit_env_sustain_values[PATCH_ENV_SUSTAIN_NUM_VALUES][4] = 
+  { "0",  "1",  "2",  "3",  "4",  "5",  "6",  "7", "8", 
+          "9", "10", "11", "12", "13", "14", "15", "16" 
+  };
+
+static char S_patch_edit_env_keyscale_values[PATCH_ENV_KEYSCALE_NUM_VALUES][4] = 
+  { "1",  "2",  "3",  "4",  "5",  "6",  "7", "8" };
+
+static char S_patch_edit_env_special_mode_values[PATCH_ENV_SPECIAL_MODE_NUM_VALUES][4] = 
+  { "Off", "DL",  "DH",  "DD",  "DU",  "UH",  "UL",  "UU", "UD" };
 
 /*******************************************************************************
 ** vb_all_load_background()
@@ -943,162 +1023,6 @@ short int vb_all_load_named_sprite( int name,
 }
 
 /*******************************************************************************
-** vb_all_load_value()
-*******************************************************************************/
-short int vb_all_load_value(int offset_x, int offset_y, 
-                                int lighting, int palette, 
-                                short int value)
-{
-  int length;
-
-  int sprite_index;
-
-  int start_x;
-  int start_y;
-
-  int pos_x;
-  int pos_y;
-
-  int cell_x;
-  int cell_y;
-
-  /* determine length of value string */
-  if ((value >= -99) && (value <= -10))
-    length = 3;
-  else if ((value >= -9) && (value <= -1))
-    length = 2;
-  else if ((value >= 0) && (value <= 9))
-    length = 1;
-  else if ((value >= 10) && (value <= 99))
-    length = 2;
-  else
-    return 1;
-
-  /* determine coordinates of center of first character */
-  /* note that each character is 8x8                    */
-  start_x = (GRAPHICS_OVERSCAN_WIDTH / 2);
-  start_y = (GRAPHICS_OVERSCAN_HEIGHT / 2);
-
-  /* the alignment is set to "center" here */
-  start_x -= 4 * (length - 1);
-
-  /* the offsets from the screen center are in 4x4 half-cells */
-  start_x += 4 * offset_x;
-  start_y += 4 * offset_y;
-
-  /* make sure the value string is on the screen */
-  if (start_x + (8 * (length - 1)) + 4 < 0)
-    return 1;
-
-  if (start_x - 4 > GRAPHICS_OVERSCAN_WIDTH)
-    return 1;
-
-  if (start_y + 4 < 0)
-    return 1;
-
-  if (start_y - 4 > GRAPHICS_OVERSCAN_HEIGHT)
-    return 1;
-
-  /* bound lighting and palette */
-  if ((lighting < -4) || (lighting > 3))
-    lighting = 0;
-
-  if ((palette < 0) || (palette > 15))
-    palette = 0;
-
-  /* draw the value string */
-  sprite_index =  GRAPHICS_OVERLAY_SPRITES_START_INDEX + 
-                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_OVERLAY];
-
-  if ((value >= -99) && (value <= -10))
-  {
-    /* minus sign */
-    pos_x = start_x;
-    pos_y = start_y;
-
-    cell_x = 13;
-    cell_y = 0;
-
-    VB_ALL_ADD_FONT_CHARACTER_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, lighting, palette)
-
-    /* tens place */
-    pos_x = start_x + 8;
-    pos_y = start_y;
-
-    cell_x = (-value) / 10;
-    cell_y = 1;
-
-    VB_ALL_ADD_FONT_CHARACTER_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, lighting, palette)
-
-    /* ones place */
-    pos_x = start_x + 16;
-    pos_y = start_y;
-
-    cell_x = (-value) % 10;
-    cell_y = 1;
-
-    VB_ALL_ADD_FONT_CHARACTER_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, lighting, palette)
-  }
-  else if ((value >= -9) && (value <= -1))
-  {
-    /* minus sign */
-    pos_x = start_x;
-    pos_y = start_y;
-
-    cell_x = 13;
-    cell_y = 0;
-
-    VB_ALL_ADD_FONT_CHARACTER_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, lighting, palette)
-
-    /* ones place */
-    pos_x = start_x + 8;
-    pos_y = start_y;
-
-    cell_x = (-value) % 10;
-    cell_y = 1;
-
-    VB_ALL_ADD_FONT_CHARACTER_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, lighting, palette)
-  }
-  else if ((value >= 0) && (value <= 9))
-  {
-    /* ones place */
-    pos_x = start_x;
-    pos_y = start_y;
-
-    cell_x = value % 10;
-    cell_y = 1;
-
-    VB_ALL_ADD_FONT_CHARACTER_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, lighting, palette)
-  }
-  else if ((value >= 10) && (value <= 99))
-  {
-    /* tens place */
-    pos_x = start_x;
-    pos_y = start_y;
-
-    cell_x = value / 10;
-    cell_y = 1;
-
-    VB_ALL_ADD_FONT_CHARACTER_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, lighting, palette)
-
-    /* ones place */
-    pos_x = start_x + 8;
-    pos_y = start_y;
-
-    cell_x = value % 10;
-    cell_y = 1;
-
-    VB_ALL_ADD_FONT_CHARACTER_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, lighting, palette)
-  }
-
-  /* update overlay sprite layer count */
-  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_OVERLAY] = 
-    sprite_index - GRAPHICS_OVERLAY_SPRITES_START_INDEX;
-
-  return 0;
-}
-
-/*******************************************************************************
 ** vb_all_load_slider()
 *******************************************************************************/
 short int vb_all_load_slider( int offset_x, int offset_y, int width, 
@@ -1209,134 +1133,6 @@ short int vb_all_load_slider( int offset_x, int offset_y, int width,
 }
 
 /*******************************************************************************
-** vb_all_load_param_with_slider()
-*******************************************************************************/
-short int vb_all_load_param_with_slider(int label, 
-                                        int offset_x, int offset_y, 
-                                        short int value, 
-                                        short int lower_bound, short int upper_bound)
-{
-  /* load the parameter name, value, slider, and adjustment arrows */
-  vb_all_load_text( offset_x + LAYOUT_PATCH_EDIT_PARAM_NAME_X, offset_y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, 
-                    S_patch_edit_parameter_labels[label]);
-
-  vb_all_load_value(offset_x + LAYOUT_PATCH_EDIT_PARAM_VALUE_X, offset_y, 
-                    0, 6, value);
-
-  vb_all_load_slider( offset_x + LAYOUT_PATCH_EDIT_PARAM_SLIDER_X, offset_y, 
-                      LAYOUT_PATCH_EDIT_PARAM_SLIDER_WIDTH, 
-                      value, lower_bound, upper_bound);
-
-#if 0
-  vb_all_load_named_sprite( VB_ALL_SPRITE_NAME_ADJUST_PARAM_LEFT, 
-                            offset_x + LAYOUT_PATCH_EDIT_PARAM_ADJUST_L_X, 
-                            offset_y, 0, VB_ALL_PALETTE_1);
-
-  vb_all_load_named_sprite( VB_ALL_SPRITE_NAME_ADJUST_PARAM_RIGHT, 
-                            offset_x + LAYOUT_PATCH_EDIT_PARAM_ADJUST_R_X, 
-                            offset_y, 0, VB_ALL_PALETTE_1);
-#endif
-
-  return 0;
-}
-
-/*******************************************************************************
-** vb_all_load_algorithm_name()
-*******************************************************************************/
-short int vb_all_load_algorithm_name( int offset_x, int offset_y, 
-                                      int lighting, int palette, 
-                                      int algorithm)
-{
-  /* draw algorithm name */
-  if (algorithm == VOICE_ALGORITHM_1_CAR_CHAIN)
-    vb_all_load_text(offset_x, offset_y, VB_ALL_ALIGN_CENTER, lighting, palette, 12, "1C Chain");
-  else if (algorithm == VOICE_ALGORITHM_1_CAR_Y)
-    vb_all_load_text(offset_x, offset_y, VB_ALL_ALIGN_CENTER, lighting, palette, 12, "1C The Y");
-  else if (algorithm == VOICE_ALGORITHM_1_CAR_CRAB_CLAW)
-    vb_all_load_text(offset_x, offset_y, VB_ALL_ALIGN_CENTER, lighting, palette, 12, "1C Crab");
-  else if (algorithm == VOICE_ALGORITHM_2_CAR_TWIN)
-    vb_all_load_text(offset_x, offset_y, VB_ALL_ALIGN_CENTER, lighting, palette, 12, "2C Twin");
-  else if (algorithm == VOICE_ALGORITHM_2_CAR_STACKED)
-    vb_all_load_text(offset_x, offset_y, VB_ALL_ALIGN_CENTER, lighting, palette, 12, "2C Stacked");
-  else if (algorithm == VOICE_ALGORITHM_3_CAR_ONE_TO_THREE)
-    vb_all_load_text(offset_x, offset_y, VB_ALL_ALIGN_CENTER, lighting, palette, 12, "3C 1 to 3");
-  else if (algorithm == VOICE_ALGORITHM_3_CAR_ONE_TO_ONE)
-    vb_all_load_text(offset_x, offset_y, VB_ALL_ALIGN_CENTER, lighting, palette, 12, "3C 1 to 1");
-  else if (algorithm == VOICE_ALGORITHM_4_CAR_PIPES)
-    vb_all_load_text(offset_x, offset_y, VB_ALL_ALIGN_CENTER, lighting, palette, 12, "4C Pipes");
-  else
-    return 0;
-
-  /* draw sprites for adjustment arrows if necessary */
-  if (algorithm > 0)
-    vb_all_load_named_sprite(VB_ALL_SPRITE_NAME_ADJUST_PARAM_LEFT, offset_x - 12, offset_y, 0, VB_ALL_PALETTE_1);
-
-  if (algorithm < VOICE_NUM_ALGORITHMS - 1)
-    vb_all_load_named_sprite(VB_ALL_SPRITE_NAME_ADJUST_PARAM_RIGHT, offset_x + 12, offset_y, 0, VB_ALL_PALETTE_1);
-
-  return 0;
-}
-
-/*******************************************************************************
-** vb_all_load_lowpass_filter_name()
-*******************************************************************************/
-short int vb_all_load_lowpass_filter_name(int offset_x, int offset_y, 
-                                          int lighting, int palette, 
-                                          int cutoff)
-{
-  /* draw filter name */
-  if (cutoff == FILTER_LOWPASS_CUTOFF_E7)
-    vb_all_load_text(offset_x, offset_y, VB_ALL_ALIGN_CENTER, lighting, palette, 4, "E7");
-  else if (cutoff == FILTER_LOWPASS_CUTOFF_G7)
-    vb_all_load_text(offset_x, offset_y, VB_ALL_ALIGN_CENTER, lighting, palette, 4, "G7");
-  else if (cutoff == FILTER_LOWPASS_CUTOFF_A7)
-    vb_all_load_text(offset_x, offset_y, VB_ALL_ALIGN_CENTER, lighting, palette, 4, "A7");
-  else if (cutoff == FILTER_LOWPASS_CUTOFF_C8)
-    vb_all_load_text(offset_x, offset_y, VB_ALL_ALIGN_CENTER, lighting, palette, 4, "C8");
-  else
-    return 0;
-
-  /* draw sprites for adjustment arrows if necessary */
-  if (cutoff > 0)
-    vb_all_load_named_sprite(VB_ALL_SPRITE_NAME_ADJUST_PARAM_LEFT, offset_x - 4, offset_y, 0, VB_ALL_PALETTE_1);
-
-  if (cutoff < FILTER_NUM_LOWPASS_CUTOFFS - 1)
-    vb_all_load_named_sprite(VB_ALL_SPRITE_NAME_ADJUST_PARAM_RIGHT, offset_x + 4, offset_y, 0, VB_ALL_PALETTE_1);
-
-  return 0;
-}
-
-/*******************************************************************************
-** vb_all_load_highpass_filter_name()
-*******************************************************************************/
-short int vb_all_load_highpass_filter_name( int offset_x, int offset_y, 
-                                            int lighting, int palette, 
-                                            int cutoff)
-{
-  /* draw filter name */
-  if (cutoff == FILTER_HIGHPASS_CUTOFF_A0)
-    vb_all_load_text(offset_x, offset_y, VB_ALL_ALIGN_CENTER, lighting, palette, 4, "A0");
-  else if (cutoff == FILTER_HIGHPASS_CUTOFF_A1)
-    vb_all_load_text(offset_x, offset_y, VB_ALL_ALIGN_CENTER, lighting, palette, 4, "A1");
-  else if (cutoff == FILTER_HIGHPASS_CUTOFF_A2)
-    vb_all_load_text(offset_x, offset_y, VB_ALL_ALIGN_CENTER, lighting, palette, 4, "A2");
-  else if (cutoff == FILTER_HIGHPASS_CUTOFF_A3)
-    vb_all_load_text(offset_x, offset_y, VB_ALL_ALIGN_CENTER, lighting, palette, 4, "A3");
-  else
-    return 0;
-
-  /* draw sprites for adjustment arrows if necessary */
-  if (cutoff > 0)
-    vb_all_load_named_sprite(VB_ALL_SPRITE_NAME_ADJUST_PARAM_LEFT, offset_x - 4, offset_y, 0, VB_ALL_PALETTE_1);
-
-  if (cutoff < FILTER_NUM_HIGHPASS_CUTOFFS - 1)
-    vb_all_load_named_sprite(VB_ALL_SPRITE_NAME_ADJUST_PARAM_RIGHT, offset_x + 4, offset_y, 0, VB_ALL_PALETTE_1);
-
-  return 0;
-}
-
-/*******************************************************************************
 ** vb_all_load_common_panels_and_buttons()
 *******************************************************************************/
 short int vb_all_load_common_panels_and_buttons()
@@ -1435,7 +1231,7 @@ short int vb_all_load_common_overlay()
   }
 
   /* bottom panel text (extra) */
-  vb_all_load_value(-31, 25, 0, 6, G_patch_edit_octave);
+  /*vb_all_load_value(-31, 25, 0, 6, G_patch_edit_octave);*/
 
   vb_all_load_text(9, 25, VB_ALL_ALIGN_LEFT, 0, 6, 32, "C  D  E  F  G  A  Bb");
 
@@ -1477,6 +1273,7 @@ short int vb_all_load_patches_overlay()
   param*  pr;
 
   short int value;
+  char*     value_string;
 
   /* make sure that the patch index is valid */
   if (BANK_PATCH_INDEX_IS_NOT_VALID(0))
@@ -1492,19 +1289,6 @@ short int vb_all_load_patches_overlay()
                       LAYOUT_PATCH_EDIT_PATCH_NUMBER_Y - G_current_scroll_amount, 
                       VB_ALL_ALIGN_LEFT, 0, VB_ALL_PALETTE_2, 16, "Patch");
   }
-
-#if 0
-  /* patch settings text */
-  vb_all_load_text(-47, -13, VB_ALL_ALIGN_LEFT, 0, VB_ALL_PALETTE_2, 16, "Patch");
-
-  /*vb_all_load_adjustable_parameter(-22, -15, 0, 6, patch_num, 1, 16);*/
-
-  vb_all_load_named_sprite(VB_ALL_SPRITE_NAME_ADJUST_PARAM_LEFT, -36, -13, 0, VB_ALL_PALETTE_1);
-  vb_all_load_text(-32, -13, VB_ALL_ALIGN_CENTER, 0, 6, 16, "01");
-  vb_all_load_named_sprite(VB_ALL_SPRITE_NAME_ADJUST_PARAM_RIGHT, -28, -13, 0, VB_ALL_PALETTE_1);
-
-  vb_all_load_text(-24, -13, VB_ALL_ALIGN_LEFT, 0, 6, 16, "Name of Patch");
-#endif
 
   /* headers */
   for ( k = LAYOUT_PATCH_EDIT_HEADERS_START_INDEX; 
@@ -1542,75 +1326,160 @@ short int vb_all_load_patches_overlay()
     if ((pr->label < 0) || (pr->label >= LAYOUT_PARAM_PATCH_EDIT_NUM_LABELS))
       continue;
 
-    /* determine parameter value */
+    /* determine parameter value and string */
     if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ALGORITHM)
+    {
       value = p->algorithm;
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LOWPASS_CUTOFF)
-      value = p->lowpass_cutoff;
+      value_string = S_patch_edit_algorithm_values[p->algorithm - PATCH_ALGORITHM_LOWER_BOUND];
+    }
     else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_HIGHPASS_CUTOFF)
+    {
       value = p->highpass_cutoff;
+      value_string = S_patch_edit_highpass_cutoff_values[p->highpass_cutoff - PATCH_HIGHPASS_CUTOFF_LOWER_BOUND];
+    }
+    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LOWPASS_CUTOFF)
+    {
+      value = p->lowpass_cutoff;
+      value_string = S_patch_edit_lowpass_cutoff_values[p->lowpass_cutoff - PATCH_LOWPASS_CUTOFF_LOWER_BOUND];
+    }
+    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_NOISE_PERIOD)
+    {
+      value = p->noise_period;
+      value_string = S_patch_edit_noise_period_values[p->noise_period - PATCH_NOISE_PERIOD_LOWER_BOUND];
+    }
+    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_NOISE_MIX)
+    {
+      value = p->noise_mix;
+      value_string = S_patch_edit_noise_mix_values[p->noise_mix - PATCH_NOISE_MIX_LOWER_BOUND];
+    }
+    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_WAVEFORM)
+    {
+      value = p->osc_waveform[pr->num];
+      value_string = S_patch_edit_osc_waveform_values[p->osc_waveform[pr->num] - PATCH_OSC_WAVEFORM_LOWER_BOUND];
+    }
     else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_FEEDBACK)
+    {
       value = p->osc_feedback[pr->num];
+      value_string = S_patch_edit_osc_feedback_values[p->osc_feedback[pr->num] - PATCH_OSC_FEEDBACK_LOWER_BOUND];
+    }
+    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_FREQ_MODE)
+    {
+      value = p->osc_freq_mode[pr->num];
+      value_string = S_patch_edit_osc_freq_mode_values[p->osc_freq_mode[pr->num] - PATCH_OSC_FREQ_MODE_LOWER_BOUND];
+    }
     else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_MULTIPLE)
+    {
       value = p->osc_multiple[pr->num];
+      value_string = S_patch_edit_osc_multiple_values[p->osc_multiple[pr->num] - PATCH_OSC_MULTIPLE_LOWER_BOUND];
+    }
+    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_DIVISOR)
+    {
+      value = p->osc_divisor[pr->num];
+      value_string = S_patch_edit_osc_divisor_values[p->osc_divisor[pr->num] - PATCH_OSC_DIVISOR_LOWER_BOUND];
+    }
     else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_DETUNE)
+    {
       value = p->osc_detune[pr->num];
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_AMPLITUDE)
-      value = p->osc_amplitude[pr->num];
+      value_string = S_patch_edit_osc_detune_values[p->osc_detune[pr->num] - PATCH_OSC_DETUNE_LOWER_BOUND];
+    }
     else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_ATTACK)
+    {
       value = p->env_attack[pr->num];
+      value_string = S_patch_edit_env_rate_values[p->env_attack[pr->num] - PATCH_ENV_RATE_LOWER_BOUND];
+    }
     else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_DECAY_1)
+    {
       value = p->env_decay_1[pr->num];
+      value_string = S_patch_edit_env_rate_values[p->env_decay_1[pr->num] - PATCH_ENV_RATE_LOWER_BOUND];
+    }
     else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_DECAY_2)
+    {
       value = p->env_decay_2[pr->num];
+      value_string = S_patch_edit_env_rate_values[p->env_decay_2[pr->num] - PATCH_ENV_RATE_LOWER_BOUND];
+    }
     else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_RELEASE)
+    {
       value = p->env_release[pr->num];
+      value_string = S_patch_edit_env_rate_values[p->env_release[pr->num] - PATCH_ENV_RATE_LOWER_BOUND];
+    }
+    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_AMPLITUDE)
+    {
+      value = p->env_amplitude[pr->num];
+      value_string = S_patch_edit_env_amplitude_values[p->env_amplitude[pr->num] - PATCH_ENV_AMPLITUDE_LOWER_BOUND];
+    }
     else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_SUSTAIN)
+    {
       value = p->env_sustain[pr->num];
+      value_string = S_patch_edit_env_sustain_values[p->env_sustain[pr->num] - PATCH_ENV_SUSTAIN_LOWER_BOUND];
+    }
     else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_RATE_KS)
+    {
       value = p->env_rate_ks[pr->num];
+      value_string = S_patch_edit_env_keyscale_values[p->env_rate_ks[pr->num] - PATCH_ENV_KEYSCALE_LOWER_BOUND];
+    }
     else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_LEVEL_KS)
+    {
       value = p->env_level_ks[pr->num];
+      value_string = S_patch_edit_env_keyscale_values[p->env_level_ks[pr->num] - PATCH_ENV_KEYSCALE_LOWER_BOUND];
+    }
+    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_SPECIAL_MODE)
+    {
+      value = p->env_special_mode[pr->num];
+      value_string = S_patch_edit_env_special_mode_values[p->env_special_mode[pr->num] - PATCH_ENV_SPECIAL_MODE_LOWER_BOUND];
+    }
     else
+    {
       value = 0;
+      value_string = NULL;
+    }
 
-    /* load the parameter! */
-    vb_all_load_param_with_slider(pr->label, 
-                                  pr->center_x, pr->center_y - G_current_scroll_amount, 
-                                  value, pr->lower_bound, pr->upper_bound);
+    /* load the parameter name, value, and slider or arrows */
+    if (pr->adjust_type == LAYOUT_PARAM_PATCH_EDIT_ADJUST_TYPE_SLIDER)
+    {
+      vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_NAME_X, 
+                        pr->center_y - G_current_scroll_amount, 
+                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, 
+                        S_patch_edit_parameter_labels[pr->label]);
+
+      vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_SLIDER_VALUE_X, 
+                        pr->center_y - G_current_scroll_amount, 
+                        VB_ALL_ALIGN_CENTER, 0, 6, 16, 
+                        value_string);
+
+      vb_all_load_slider( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_SLIDER_TRACK_X, 
+                          pr->center_y - G_current_scroll_amount, 
+                          LAYOUT_PATCH_EDIT_PARAM_SLIDER_WIDTH, 
+                          value, pr->lower_bound, pr->upper_bound);
+    }
+    else if (pr->adjust_type == LAYOUT_PARAM_PATCH_EDIT_ADJUST_TYPE_ARROWS)
+    {
+      vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_NAME_X, 
+                        pr->center_y - G_current_scroll_amount, 
+                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, 
+                        S_patch_edit_parameter_labels[pr->label]);
+
+      vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_ADJUST_VALUE_X, 
+                        pr->center_y - G_current_scroll_amount, 
+                        VB_ALL_ALIGN_CENTER, 0, 6, 16, 
+                        value_string);
+
+      if (value > pr->lower_bound)
+      {
+        vb_all_load_named_sprite( VB_ALL_SPRITE_NAME_ADJUST_PARAM_LEFT, 
+                                  pr->center_x + LAYOUT_PATCH_EDIT_PARAM_ADJUST_LEFT_X, 
+                                  pr->center_y - G_current_scroll_amount, 
+                                  0, VB_ALL_PALETTE_1);
+      }
+
+      if (value < pr->upper_bound)
+      {
+        vb_all_load_named_sprite( VB_ALL_SPRITE_NAME_ADJUST_PARAM_RIGHT, 
+                                  pr->center_x + LAYOUT_PATCH_EDIT_PARAM_ADJUST_RIGHT_X, 
+                                  pr->center_y - G_current_scroll_amount, 
+                                  0, VB_ALL_PALETTE_1);
+      }
+    }
   }
-
-#if 0
-  /* filter settings text */
-  vb_all_load_text( (LAYOUT_PATCH_EDIT_COLUMN_1_CENTER_X + LAYOUT_PATCH_EDIT_COLUMN_2_CENTER_X) / 2, 
-                    LAYOUT_PATCH_EDIT_PARAM_FILTERS_HEADER_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_3, 16, "Filters");
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_1_NAME_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_FILTERS_HIGHPASS_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "HP");
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_2_NAME_X, 
-                    LAYOUT_PATCH_EDIT_PARAM_FILTERS_LOWPASS_Y, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, "LP");
-
-  vb_all_load_highpass_filter_name( LAYOUT_PATCH_EDIT_COLUMN_1_PARAM_X, 
-                                    LAYOUT_PATCH_EDIT_PARAM_FILTERS_HIGHPASS_Y, 
-                                    0, 6, p->highpass_cutoff);
-  vb_all_load_lowpass_filter_name(  LAYOUT_PATCH_EDIT_COLUMN_2_PARAM_X, 
-                                    LAYOUT_PATCH_EDIT_PARAM_FILTERS_HIGHPASS_Y, 
-                                    0, 6, p->lowpass_cutoff);
-#endif
-
-#if 0
-  /* ssg envelope settings text */
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_5_CENTER_X, 
-                    -9, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_3, 16, "SSG");
-
-  /* noise generator text */
-  vb_all_load_text( LAYOUT_PATCH_EDIT_COLUMN_5_CENTER_X, 
-                    7, 
-                    VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_3, 16, "Noise");
-#endif
 
   /* update vbos */
   VB_ALL_UPDATE_OVERLAY_SPRITES_IN_VBOS()

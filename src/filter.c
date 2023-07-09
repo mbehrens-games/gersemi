@@ -7,6 +7,7 @@
 
 #include "bank.h"
 #include "filter.h"
+#include "patch.h"
 #include "tuning.h"
 
 /* filter bank */
@@ -45,8 +46,8 @@ short int filter_reset(int voice_index)
   hpf = &G_filter_bank[2 * voice_index + 1];
 
   /* set cutoffs */
-  lpf->cutoff = FILTER_LOWPASS_CUTOFF_C8;
-  hpf->cutoff = FILTER_HIGHPASS_CUTOFF_A0;
+  lpf->cutoff = PATCH_LOWPASS_CUTOFF_UPPER_BOUND;
+  hpf->cutoff = PATCH_HIGHPASS_CUTOFF_LOWER_BOUND;
 
   /* reset state */
   lpf->input = 0;
@@ -70,45 +71,46 @@ short int filter_reset(int voice_index)
 }
 
 /*******************************************************************************
-** filter_set_lowpass_cutoff()
+** filter_load_patch()
 *******************************************************************************/
-short int filter_set_lowpass_cutoff(int voice_index, int cutoff)
+short int filter_load_patch(int voice_index, int patch_index)
 {
   filter* lpf;
-
-  /* make sure that the voice index is valid */
-  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
-    return 1;
-
-  /* obtain filter pointer */
-  lpf = &G_filter_bank[2 * voice_index + 0];
-
-  if ((cutoff >= 0) && (cutoff < FILTER_NUM_LOWPASS_CUTOFFS))
-    lpf->cutoff = cutoff;
-  else
-    lpf->cutoff = FILTER_LOWPASS_CUTOFF_C8;
-
-  return 0;
-}
-
-/*******************************************************************************
-** filter_set_highpass_cutoff()
-*******************************************************************************/
-short int filter_set_highpass_cutoff(int voice_index, int cutoff)
-{
   filter* hpf;
 
+  patch* p;
+
   /* make sure that the voice index is valid */
   if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
     return 1;
 
-  /* obtain filter pointer */
+  /* make sure that the patch index is valid */
+  if (BANK_PATCH_INDEX_IS_NOT_VALID(patch_index))
+    return 1;
+
+  /* obtain filter and patch pointers */
+  lpf = &G_filter_bank[2 * voice_index + 0];
   hpf = &G_filter_bank[2 * voice_index + 1];
 
-  if ((cutoff >= 0) && (cutoff < FILTER_NUM_HIGHPASS_CUTOFFS))
-    hpf->cutoff = cutoff;
+  p = &G_patch_bank[patch_index];
+
+  /* set lowpass cutoff */
+  if ((p->lowpass_cutoff >= PATCH_LOWPASS_CUTOFF_LOWER_BOUND) && 
+      (p->lowpass_cutoff <= PATCH_LOWPASS_CUTOFF_UPPER_BOUND))
+  {
+    lpf->cutoff = p->lowpass_cutoff;
+  }
   else
-    hpf->cutoff = FILTER_HIGHPASS_CUTOFF_A0;
+    lpf->cutoff = PATCH_LOWPASS_CUTOFF_UPPER_BOUND;
+
+  /* set highpass cutoff */
+  if ((p->highpass_cutoff >= PATCH_HIGHPASS_CUTOFF_LOWER_BOUND) && 
+      (p->highpass_cutoff <= PATCH_HIGHPASS_CUTOFF_UPPER_BOUND))
+  {
+    hpf->cutoff = p->highpass_cutoff;
+  }
+  else
+    hpf->cutoff = PATCH_HIGHPASS_CUTOFF_LOWER_BOUND;
 
   return 0;
 }
