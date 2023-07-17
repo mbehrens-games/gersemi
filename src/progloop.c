@@ -6,8 +6,9 @@
 #include <stdlib.h>
 
 #include "controls.h"
-#include "progloop.h"
 #include "global.h"
+#include "layout.h"
+#include "progloop.h"
 #include "render.h"
 #include "screen.h"
 #include "vball.h"
@@ -33,6 +34,9 @@ short int program_loop_change_screen(int screen)
   {
     G_timer_count = 0;
 
+    G_current_scroll_amount = 0;
+    G_max_scroll_amount = LAYOUT_PATCH_EDIT_MAX_SCROLL_AMOUNT;
+
     render_reset_vbos();
 
     vb_all_load_background();
@@ -43,6 +47,9 @@ short int program_loop_change_screen(int screen)
   else if (screen == PROGRAM_SCREEN_PATTERNS)
   {
     G_timer_count = 0;
+
+    G_current_scroll_amount = 0;
+    G_max_scroll_amount = LAYOUT_PATTERN_EDIT_MAX_SCROLL_AMOUNT;
 
     render_reset_vbos();
 

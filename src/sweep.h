@@ -1,5 +1,5 @@
 /*******************************************************************************
-** sweep.h (pitch sweep)
+** sweep.h (portamento / glissando)
 *******************************************************************************/
 
 #ifndef SWEEP_H
@@ -53,14 +53,8 @@ extern sweep G_sweep_bank[BANK_NUM_SWEEPS];
 short int sweep_setup_all();
 short int sweep_reset(int voice_index);
 
-short int sweep_set_mode(int voice_index, int mode);
-short int sweep_set_speed(int voice_index, int tempo, int speed);
-
-short int sweep_adjust_to_tempo(int voice_index, int tempo);
 short int sweep_trigger(int voice_index, int old_note, int new_note);
 
 short int sweep_update_all();
-
-short int sweep_generate_tables();
 
 #endif

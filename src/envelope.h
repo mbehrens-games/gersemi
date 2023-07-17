@@ -34,21 +34,19 @@ typedef struct envelope
   short int ampl_adjustment;
   short int rate_adjustment;
   short int level_adjustment;
-  short int volume_adjustment;
-
-  /* rows */
-  int       a_row;
-  int       d1_row;
-  int       d2_row;
-  int       r_row;
 
   /* decay 1 to decay 2 switch level */
   short int transition_level;
 
-  /* current state, keycode, row */
-  int       state;
-  short int keycode;
-  int       row;
+  /* rows */
+  int a_row;
+  int d1_row;
+  int d2_row;
+  int r_row;
+
+  /* current state, row */
+  int state;
+  int row;
 
   /* phase increment, phase */
   unsigned int increment;
@@ -70,7 +68,7 @@ short int envelope_reset(int voice_index, int num);
 
 short int envelope_load_patch(int voice_index, int num, int patch_index);
 
-short int envelope_trigger(int voice_index, int num, int note, int volume);
+short int envelope_trigger(int voice_index, int num, int note);
 short int envelope_release(int voice_index, int num);
 
 short int envelope_update_all();

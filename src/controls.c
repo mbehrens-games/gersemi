@@ -106,6 +106,28 @@ enum
     (S_mouse_remapped_pos_y >= LAYOUT_SCREEN_AREA_MAIN_LOWER_BOUND_PIXELS)  &&  \
     (S_mouse_remapped_pos_y <  LAYOUT_SCREEN_AREA_MAIN_UPPER_BOUND_PIXELS))
 
+/* vertical scrollbar */
+#define CONTROLS_MOUSE_CURSOR_IS_OVER_VERTICAL_SCROLLBAR_UP_ARROW()                                                               \
+  ( (S_mouse_remapped_pos_x >= (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (LAYOUT_SCROLLBAR_X - 1))                                  &&  \
+    (S_mouse_remapped_pos_x <  (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (LAYOUT_SCROLLBAR_X + 1))                                  &&  \
+    (S_mouse_remapped_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (LAYOUT_SCROLLBAR_Y - (LAYOUT_SCROLLBAR_HEIGHT - 1) - 1)) &&  \
+    (S_mouse_remapped_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (LAYOUT_SCROLLBAR_Y - (LAYOUT_SCROLLBAR_HEIGHT - 1) + 1)))
+
+#define CONTROLS_MOUSE_CURSOR_IS_OVER_VERTICAL_SCROLLBAR_DOWN_ARROW()                                                             \
+  ( (S_mouse_remapped_pos_x >= (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (LAYOUT_SCROLLBAR_X - 1))                                  &&  \
+    (S_mouse_remapped_pos_x <  (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (LAYOUT_SCROLLBAR_X + 1))                                  &&  \
+    (S_mouse_remapped_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (LAYOUT_SCROLLBAR_Y + (LAYOUT_SCROLLBAR_HEIGHT - 1) - 1)) &&  \
+    (S_mouse_remapped_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (LAYOUT_SCROLLBAR_Y + (LAYOUT_SCROLLBAR_HEIGHT - 1) + 1)))
+
+#define CONTROLS_MOUSE_CURSOR_IS_OVER_VERTICAL_SCROLLBAR_TRACK()                                                                  \
+  ( (S_mouse_remapped_pos_x >= (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (LAYOUT_SCROLLBAR_X - 1))                                  &&  \
+    (S_mouse_remapped_pos_x <  (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (LAYOUT_SCROLLBAR_X + 1))                                  &&  \
+    (S_mouse_remapped_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (LAYOUT_SCROLLBAR_Y - (LAYOUT_SCROLLBAR_HEIGHT - 1) + 1)) &&  \
+    (S_mouse_remapped_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (LAYOUT_SCROLLBAR_Y + (LAYOUT_SCROLLBAR_HEIGHT - 1) - 1)))
+
+#define CONTROLS_VERTICAL_SCROLLBAR_POS_Y_LOWER_BOUND                          \
+  ((GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (LAYOUT_SCROLLBAR_Y - (LAYOUT_SCROLLBAR_HEIGHT - 3) + 1))
+
 /* patch edit parameter silders and adjustment arrows */
 #define CONTROLS_MOUSE_CURSOR_IS_OVER_PATCH_PARAM_SLIDER()                                                                                                            \
   ( (S_mouse_remapped_pos_x >= (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_PATCH_EDIT_PARAM_SLIDER_TRACK_X - LAYOUT_PATCH_EDIT_PARAM_SLIDER_WIDTH)) && \
@@ -195,11 +217,6 @@ short int controls_patch_parameter_adjust(int param_index, int amount)
     param_name = PATCH_PARAM_HIGHPASS_CUTOFF;
   else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LOWPASS_CUTOFF)
     param_name = PATCH_PARAM_LOWPASS_CUTOFF;
-  /* noise */
-  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_NOISE_PERIOD)
-    param_name = PATCH_PARAM_NOISE_PERIOD;
-  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_NOISE_MIX)
-    param_name = PATCH_PARAM_NOISE_MIX;
   /* oscillator */
   else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_WAVEFORM)
     param_name = PATCH_PARAM_OSC_WAVEFORM;
@@ -209,10 +226,10 @@ short int controls_patch_parameter_adjust(int param_index, int amount)
     param_name = PATCH_PARAM_OSC_FREQ_MODE;
   else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_MULTIPLE)
     param_name = PATCH_PARAM_OSC_MULTIPLE;
-  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_DIVISOR)
-    param_name = PATCH_PARAM_OSC_DIVISOR;
-  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_DETUNE)
-    param_name = PATCH_PARAM_OSC_DETUNE;
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_DETUNE_COARSE)
+    param_name = PATCH_PARAM_OSC_DETUNE_COARSE;
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_DETUNE_FINE)
+    param_name = PATCH_PARAM_OSC_DETUNE_FINE;
   /* envelope */
   else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_ATTACK)
     param_name = PATCH_PARAM_ENV_ATTACK;
@@ -232,6 +249,35 @@ short int controls_patch_parameter_adjust(int param_index, int amount)
     param_name = PATCH_PARAM_ENV_LEVEL_KS;
   else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_SPECIAL_MODE)
     param_name = PATCH_PARAM_ENV_SPECIAL_MODE;
+  /* lfo */
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LFO_WAVEFORM)
+    param_name = PATCH_PARAM_LFO_WAVEFORM;
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LFO_OCTAVE)
+    param_name = PATCH_PARAM_LFO_OCTAVE;
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LFO_NOTE)
+    param_name = PATCH_PARAM_LFO_NOTE;
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LFO_DELAY)
+    param_name = PATCH_PARAM_LFO_DELAY;
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LFO_SYNC)
+    param_name = PATCH_PARAM_LFO_SYNC;
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LFO_VIBRATO)
+    param_name = PATCH_PARAM_LFO_VIBRATO;
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LFO_TREMOLO)
+    param_name = PATCH_PARAM_LFO_TREMOLO;
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LFO_WOBBLE)
+    param_name = PATCH_PARAM_LFO_WOBBLE;
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_MOD_WHEEL_VIBRATO)
+    param_name = PATCH_PARAM_MOD_WHEEL_VIBRATO;
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_MOD_WHEEL_TREMOLO)
+    param_name = PATCH_PARAM_MOD_WHEEL_TREMOLO;
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_MOD_WHEEL_WOBBLE)
+    param_name = PATCH_PARAM_MOD_WHEEL_WOBBLE;
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_AFTERTOUCH_VIBRATO)
+    param_name = PATCH_PARAM_AFTERTOUCH_VIBRATO;
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_AFTERTOUCH_TREMOLO)
+    param_name = PATCH_PARAM_AFTERTOUCH_TREMOLO;
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_AFTERTOUCH_WOBBLE)
+    param_name = PATCH_PARAM_AFTERTOUCH_WOBBLE;
   else
     return 0;
 
@@ -602,8 +648,7 @@ short int controls_process_user_input_standard()
 
     synth_key_on( G_patch_edit_voice_index, 
                   G_patch_edit_octave, 
-                  G_patch_edit_degree, 
-                  G_patch_edit_volume);
+                  G_patch_edit_degree);
   }
   else if ( (CONTROLS_KEY_IS_RELEASED(CONTROLS_KEY_INDEX_DEGREE_1)) && 
             (G_patch_edit_degree == 0))
@@ -618,8 +663,7 @@ short int controls_process_user_input_standard()
 
     synth_key_on( G_patch_edit_voice_index, 
                   G_patch_edit_octave, 
-                  G_patch_edit_degree, 
-                  G_patch_edit_volume);
+                  G_patch_edit_degree);
   }
   else if ( (CONTROLS_KEY_IS_RELEASED(CONTROLS_KEY_INDEX_DEGREE_2)) && 
             (G_patch_edit_degree == 1))
@@ -634,8 +678,7 @@ short int controls_process_user_input_standard()
 
     synth_key_on( G_patch_edit_voice_index, 
                   G_patch_edit_octave, 
-                  G_patch_edit_degree, 
-                  G_patch_edit_volume);
+                  G_patch_edit_degree);
   }
   else if ( (CONTROLS_KEY_IS_RELEASED(CONTROLS_KEY_INDEX_DEGREE_3)) && 
             (G_patch_edit_degree == 2))
@@ -650,8 +693,7 @@ short int controls_process_user_input_standard()
 
     synth_key_on( G_patch_edit_voice_index, 
                   G_patch_edit_octave, 
-                  G_patch_edit_degree, 
-                  G_patch_edit_volume);
+                  G_patch_edit_degree);
   }
   else if ( (CONTROLS_KEY_IS_RELEASED(CONTROLS_KEY_INDEX_DEGREE_4)) && 
             (G_patch_edit_degree == 3))
@@ -666,8 +708,7 @@ short int controls_process_user_input_standard()
 
     synth_key_on( G_patch_edit_voice_index, 
                   G_patch_edit_octave, 
-                  G_patch_edit_degree, 
-                  G_patch_edit_volume);
+                  G_patch_edit_degree);
   }
   else if ( (CONTROLS_KEY_IS_RELEASED(CONTROLS_KEY_INDEX_DEGREE_5)) && 
             (G_patch_edit_degree == 4))
@@ -682,8 +723,7 @@ short int controls_process_user_input_standard()
 
     synth_key_on( G_patch_edit_voice_index, 
                   G_patch_edit_octave, 
-                  G_patch_edit_degree, 
-                  G_patch_edit_volume);
+                  G_patch_edit_degree);
   }
   else if ( (CONTROLS_KEY_IS_RELEASED(CONTROLS_KEY_INDEX_DEGREE_6)) && 
             (G_patch_edit_degree == 5))
@@ -698,8 +738,7 @@ short int controls_process_user_input_standard()
 
     synth_key_on( G_patch_edit_voice_index, 
                   G_patch_edit_octave, 
-                  G_patch_edit_degree, 
-                  G_patch_edit_volume);
+                  G_patch_edit_degree);
   }
   else if ( (CONTROLS_KEY_IS_RELEASED(CONTROLS_KEY_INDEX_DEGREE_7)) && 
             (G_patch_edit_degree == 6))
@@ -714,8 +753,7 @@ short int controls_process_user_input_standard()
 
     synth_key_on( G_patch_edit_voice_index, 
                   G_patch_edit_octave, 
-                  G_patch_edit_degree, 
-                  G_patch_edit_volume);
+                  G_patch_edit_degree);
   }
   else if ( (CONTROLS_KEY_IS_RELEASED(CONTROLS_KEY_INDEX_DEGREE_8)) && 
             (G_patch_edit_degree == 7))
@@ -751,8 +789,8 @@ short int controls_process_user_input_standard()
   {
     G_current_scroll_amount += 2;
 
-    if (G_current_scroll_amount > LAYOUT_PATCH_EDIT_MAX_SCROLL_AMOUNT)
-      G_current_scroll_amount = LAYOUT_PATCH_EDIT_MAX_SCROLL_AMOUNT;
+    if (G_current_scroll_amount > G_max_scroll_amount)
+      G_current_scroll_amount = G_max_scroll_amount;
   }
 
   /* check top panel mouse button clicks */
@@ -789,6 +827,38 @@ short int controls_process_user_input_standard()
   /* check for main area mouse button clicks */
   else if (CONTROLS_MOUSE_CURSOR_IS_OVER_MAIN_AREA())
   {
+    /* vertical scrollbar */
+    if (CONTROLS_MOUSE_CURSOR_IS_OVER_VERTICAL_SCROLLBAR_UP_ARROW() && 
+        CONTROLS_MOUSE_BUTTON_IS_PRESSED(CONTROLS_MOUSE_BUTTON_INDEX_LEFT))
+    {
+      G_current_scroll_amount -= 2;
+
+      if (G_current_scroll_amount < 0)
+        G_current_scroll_amount = 0;
+    }
+    else if ( CONTROLS_MOUSE_CURSOR_IS_OVER_VERTICAL_SCROLLBAR_DOWN_ARROW() && 
+              CONTROLS_MOUSE_BUTTON_IS_PRESSED(CONTROLS_MOUSE_BUTTON_INDEX_LEFT))
+    {
+      G_current_scroll_amount += 2;
+
+      if (G_current_scroll_amount > G_max_scroll_amount)
+        G_current_scroll_amount = G_max_scroll_amount;
+    }
+    else if ( CONTROLS_MOUSE_CURSOR_IS_OVER_VERTICAL_SCROLLBAR_TRACK() && 
+              CONTROLS_MOUSE_BUTTON_IS_ON_OR_PRESSED(CONTROLS_MOUSE_BUTTON_INDEX_LEFT))
+    {
+      G_current_scroll_amount = G_max_scroll_amount;
+
+      G_current_scroll_amount *= S_mouse_remapped_pos_y - CONTROLS_VERTICAL_SCROLLBAR_POS_Y_LOWER_BOUND;
+      G_current_scroll_amount /= 8 * (LAYOUT_SCROLLBAR_HEIGHT - 4);
+
+      if (G_current_scroll_amount < 0)
+        G_current_scroll_amount = 0;
+
+      if (G_current_scroll_amount > G_max_scroll_amount)
+        G_current_scroll_amount = G_max_scroll_amount;
+    }
+
     /* patches screen */
     if (G_game_screen == PROGRAM_SCREEN_PATCHES)
     {
@@ -802,8 +872,8 @@ short int controls_process_user_input_standard()
 
         if (G_current_scroll_amount < 0)
           G_current_scroll_amount = 0;
-        else if (G_current_scroll_amount > LAYOUT_PATCH_EDIT_MAX_SCROLL_AMOUNT)
-          G_current_scroll_amount = LAYOUT_PATCH_EDIT_MAX_SCROLL_AMOUNT;
+        else if (G_current_scroll_amount > G_max_scroll_amount)
+          G_current_scroll_amount = G_max_scroll_amount;
       }
 
       /* check for parameter adjustment clicks */

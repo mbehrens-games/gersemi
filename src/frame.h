@@ -7,8 +7,8 @@
 
 #include "clock.h"
 
-#define FRAME_BUFFER_PAIRS_PER_MS (CLOCK_SAMPLING_RATE / 1000)  /* 32000 / 1000 = 32 */
-#define FRAME_BUFFER_MAX_MS       40
+#define FRAME_BUFFER_PAIRS_PER_MS (CLOCK_SAMPLING_RATE / 1000)  /* 36000 / 1000 = 36 */
+#define FRAME_BUFFER_MAX_MS       50
 
 /* 2 samples per pair (left/right) */
 #define FRAME_BUFFER_MAX_PAIRS    (FRAME_BUFFER_MAX_MS * FRAME_BUFFER_PAIRS_PER_MS)

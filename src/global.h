@@ -15,13 +15,12 @@ extern unsigned int G_timer_count;
 extern unsigned int G_saved_timer_count;
 
 extern int          G_current_scroll_amount;
+extern int          G_max_scroll_amount;
 
 extern int          G_patch_edit_patch_index;
 extern int          G_patch_edit_voice_index;
 extern int          G_patch_edit_octave;
 extern int          G_patch_edit_degree;
-extern int          G_patch_edit_volume;
-extern int          G_patch_edit_brightness;
 
 /* function declarations */
 short int globals_init_variables();

@@ -7,53 +7,45 @@
 
 #include "bank.h"
 
-enum
-{
-  LFO_TYPE_VIBRATO = 0,
-  LFO_TYPE_VIBRATO_ALTERNATE,
-  LFO_TYPE_TREMOLO,
-  LFO_TYPE_WOBBLE_AMPLITUDE,
-  LFO_TYPE_WOBBLE_PITCH,
-  LFO_TYPE_WOBBLE_PULSE_WIDTH,
-  LFO_NUM_TYPES
-};
-
-enum
-{
-  LFO_MODE_TRIANGLE = 0,
-  LFO_MODE_SQUARE,
-  LFO_MODE_SAW_UP,
-  LFO_MODE_SAW_DOWN,
-  LFO_MODE_RANDOM_SQUARE,
-  LFO_MODE_RANDOM_SAW,
-  LFO_NUM_MODES
-};
-
 typedef struct lfo
 {
-  /* type, mode */
-  int type;
-  int mode;
+  /* lfo parameters */
+  short int waveform;
+  short int octave;
+  short int note;
+  short int delay;
+  short int sync;
+  short int vibrato_mode;
 
-  /* depth, speed */
-  int depth;
-  int speed;
+  short int base_vibrato;
+  short int base_tremolo;
+  short int base_wobble;
 
-  /* wavetable row & index */
-  int row;
-  int index;
+  /* mod wheel sensitivity */
+  short int mod_wheel_vibrato;
+  short int mod_wheel_tremolo;
+  short int mod_wheel_wobble;
+
+  /* aftertouch sensitivity */
+  short int aftertouch_vibrato;
+  short int aftertouch_tremolo;
+  short int aftertouch_wobble;
+
+  /* phase, phase increment */
+  unsigned int phase;
+  unsigned int increment;
 
   /* noise lfsr */
   unsigned int lfsr;
 
-  /* phase increment */
-  unsigned int increment;
+  /* mod wheel and aftertouch inputs */
+  short int mod_wheel_input;
+  short int aftertouch_input;
 
-  /* phase */
-  unsigned int phase;
-
-  /* level */
-  short int level;
+  /* levels */
+  short int vibrato_level;
+  short int tremolo_level;
+  short int wobble_level;
 } lfo;
 
 /* lfo bank */
@@ -63,11 +55,8 @@ extern lfo G_lfo_bank[BANK_NUM_LFOS];
 short int lfo_setup_all();
 short int lfo_reset(int voice_index);
 
-short int lfo_set_type_and_mode(int voice_index, int type, int mode);
-short int lfo_set_depth(int voice_index, int depth);
-short int lfo_set_speed(int voice_index, int tempo, int speed);
+short int lfo_load_patch(int voice_index, int patch_index);
 
-short int lfo_adjust_to_tempo(int voice_index, int tempo);
 short int lfo_trigger(int voice_index);
 
 short int lfo_update_all();

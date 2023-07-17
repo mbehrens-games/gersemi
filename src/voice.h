@@ -14,6 +14,8 @@ typedef struct voice
   /* algorithm */
   short int algorithm;
 
+  short int num_modulators;
+
   /* currently playing notes, pitch indices */
   int base_note;
   int osc_note[VOICE_NUM_OSCS_AND_ENVS];
@@ -29,11 +31,26 @@ typedef struct voice
   short int osc_waveform[VOICE_NUM_OSCS_AND_ENVS];
   short int osc_feedback_multiplier[VOICE_NUM_OSCS_AND_ENVS];
 
+  short int osc_multiple[VOICE_NUM_OSCS_AND_ENVS];
   short int osc_detune_coarse[VOICE_NUM_OSCS_AND_ENVS];
   short int osc_detune_fine[VOICE_NUM_OSCS_AND_ENVS];
 
+#if 0
+  /* noise */
+  int       noise_pitch_index;
+  short int noise_mode;
+
+  unsigned int noise_phase;
+  unsigned int noise_lfsr;
+#endif
+
   /* envelope levels */
   short int env_input[VOICE_NUM_OSCS_AND_ENVS];
+
+  /* lfo levels */
+  short int vibrato_input;
+  short int tremolo_input;
+  short int wobble_input;
 
   /* output level */
   int level;

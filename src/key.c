@@ -8,6 +8,7 @@
 
 #include "bank.h"
 #include "key.h"
+#include "tuning.h"
 
 /* key table */
 
@@ -284,19 +285,19 @@ short int key_generate_tables()
 
   /* key table */
 
-  /* set notes for c major in octave 4 */
-  S_key_to_note_table[7][0][2 * 7 + 0] = 4 * 12 + 0;
-  S_key_to_note_table[7][0][2 * 7 + 1] = 4 * 12 + 2;
-  S_key_to_note_table[7][0][2 * 7 + 2] = 4 * 12 + 4;
-  S_key_to_note_table[7][0][2 * 7 + 3] = 4 * 12 + 5;
-  S_key_to_note_table[7][0][2 * 7 + 4] = 4 * 12 + 7;
-  S_key_to_note_table[7][0][2 * 7 + 5] = 4 * 12 + 9;
-  S_key_to_note_table[7][0][2 * 7 + 6] = 4 * 12 + 11;
+  /* set notes for c major in the middle octave */
+  S_key_to_note_table[7][0][2 * 7 + 0] = 12 * TUNING_MIDDLE_OCTAVE + 0;
+  S_key_to_note_table[7][0][2 * 7 + 1] = 12 * TUNING_MIDDLE_OCTAVE + 2;
+  S_key_to_note_table[7][0][2 * 7 + 2] = 12 * TUNING_MIDDLE_OCTAVE + 4;
+  S_key_to_note_table[7][0][2 * 7 + 3] = 12 * TUNING_MIDDLE_OCTAVE + 5;
+  S_key_to_note_table[7][0][2 * 7 + 4] = 12 * TUNING_MIDDLE_OCTAVE + 7;
+  S_key_to_note_table[7][0][2 * 7 + 5] = 12 * TUNING_MIDDLE_OCTAVE + 9;
+  S_key_to_note_table[7][0][2 * 7 + 6] = 12 * TUNING_MIDDLE_OCTAVE + 11;
 
   /* compute notes in other keys */
 
-  /* note that if the tonic is G, A, or B, it should be below middle c */
-  /*           if the tonic is D, E, or F, it should be above middle c */
+  /* note that if the tonic is G, A, or B, it should be below middle C */
+  /*           if the tonic is D, E, or F, it should be above middle C */
 
   /* adding sharps: sharp the fourth and make the fifth the new tonic */
   for (m = 8; m < 15; m++)

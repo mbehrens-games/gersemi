@@ -81,7 +81,7 @@ static float S_tuning_mult_werckmeister_iii[12] =
           1.77777777777778,     /* 16:9             Bb */
           1.87924087309072};    /* 128*2^(1/4):81   B  */
 
-/* frequencies in octave 4 (populated during generation) */
+/* frequencies in the middle octave (populated during generation) */
 static float S_freq_table[12 * TUNING_NUM_SEMITONE_STEPS];
 
 /*******************************************************************************
@@ -177,7 +177,7 @@ short int tuning_calculate_tables()
   else
     S_freq_table[9 * TUNING_NUM_SEMITONE_STEPS] = 440;
 
-  /* compute frequencies for the other notes in octave 4 */
+  /* compute frequencies for the other notes in the middle octave */
   if (S_tuning_fork == TUNING_FORK_C256)
   {
     for (m = 1; m < 12; m++)
@@ -198,7 +198,7 @@ short int tuning_calculate_tables()
     }
   }
 
-  /* compute frequencies between the notes in octave 4 */
+  /* compute frequencies between the notes in the middle octave */
   for (m = 0; m < 12; m++)
   {
     if (m < 11)
@@ -216,34 +216,46 @@ short int tuning_calculate_tables()
   /* compute phase increments in all octaves */
   for (n = 0; n < 12 * TUNING_NUM_SEMITONE_STEPS; n++)
   {
-    G_phase_increment_table[(0 * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
+    G_phase_increment_table[((TUNING_MIDDLE_OCTAVE - 8) * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
+      (int) (((S_freq_table[n] / 256) * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
+
+    G_phase_increment_table[((TUNING_MIDDLE_OCTAVE - 7) * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
+      (int) (((S_freq_table[n] / 128) * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
+
+    G_phase_increment_table[((TUNING_MIDDLE_OCTAVE - 6) * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
+      (int) (((S_freq_table[n] / 64) * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
+
+    G_phase_increment_table[((TUNING_MIDDLE_OCTAVE - 5) * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
+      (int) (((S_freq_table[n] / 32) * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
+
+    G_phase_increment_table[((TUNING_MIDDLE_OCTAVE - 4) * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
       (int) (((S_freq_table[n] / 16) * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
 
-    G_phase_increment_table[(1 * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
+    G_phase_increment_table[((TUNING_MIDDLE_OCTAVE - 3) * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
       (int) (((S_freq_table[n] / 8) * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
 
-    G_phase_increment_table[(2 * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
+    G_phase_increment_table[((TUNING_MIDDLE_OCTAVE - 2) * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
       (int) (((S_freq_table[n] / 4) * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
 
-    G_phase_increment_table[(3 * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
+    G_phase_increment_table[((TUNING_MIDDLE_OCTAVE - 1) * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
       (int) (((S_freq_table[n] / 2) * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
 
-    G_phase_increment_table[(4 * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
+    G_phase_increment_table[((TUNING_MIDDLE_OCTAVE + 0) * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
       (int) ((S_freq_table[n] * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
 
-    G_phase_increment_table[(5 * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
+    G_phase_increment_table[((TUNING_MIDDLE_OCTAVE + 1) * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
       (int) (((S_freq_table[n] * 2) * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
 
-    G_phase_increment_table[(6 * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
+    G_phase_increment_table[((TUNING_MIDDLE_OCTAVE + 2) * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
       (int) (((S_freq_table[n] * 4) * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
 
-    G_phase_increment_table[(7 * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
+    G_phase_increment_table[((TUNING_MIDDLE_OCTAVE + 3) * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
       (int) (((S_freq_table[n] * 8) * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
 
-    G_phase_increment_table[(8 * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
+    G_phase_increment_table[((TUNING_MIDDLE_OCTAVE + 4) * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
       (int) (((S_freq_table[n] * 16) * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
 
-    G_phase_increment_table[(9 * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
+    G_phase_increment_table[((TUNING_MIDDLE_OCTAVE + 5) * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
       (int) (((S_freq_table[n] * 32) * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
   }
 

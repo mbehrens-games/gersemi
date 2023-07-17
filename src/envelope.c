@@ -8,7 +8,7 @@
 #include "clock.h"
 #include "envelope.h"
 #include "patch.h"
-#include "voice.h"
+#include "tuning.h"
 
 #define ENVELOPE_TABLE_NUM_ROWS       16
 #define ENVELOPE_TABLE_RATES_PER_ROW  12
@@ -111,6 +111,7 @@ static short int S_envelope_sustain_table[17] =
          0    /*  1           */
   };
 
+#if 0
 /* volume table */
 static short int S_envelope_volume_table[17] = 
   {  64,  /*  8/16  */
@@ -131,6 +132,7 @@ static short int S_envelope_volume_table[17] =
     -34,  /* 23/16  */
     -38   /* 24/16  */
   };
+#endif
 
 /* envelope bank */
 envelope G_envelope_bank[BANK_NUM_ENVELOPES];
@@ -184,17 +186,15 @@ short int envelope_reset(int voice_index, int num)
   e->ampl_adjustment = S_envelope_amplitude_table[0];
   e->rate_adjustment = 0;
   e->level_adjustment = 0;
-  e->volume_adjustment = 0;
+
+  e->transition_level = S_envelope_sustain_table[0];
 
   e->a_row = 0;
   e->d1_row = 0;
   e->d2_row = 0;
   e->r_row = 0;
 
-  e->transition_level = S_envelope_sustain_table[0];
-
   e->state = ENVELOPE_STATE_RELEASE;
-  e->keycode = 0;
   e->row = 0;
 
   e->increment = 0;
@@ -338,13 +338,9 @@ short int envelope_load_patch(int voice_index, int num, int patch_index)
       (p->env_rate_ks[num] <= PATCH_ENV_KEYSCALE_UPPER_BOUND))
   {
     e->rate_ks = p->env_rate_ks[num];
-    e->rate_adjustment = (e->rate_ks * e->keycode) / 8;
   }
   else
-  {
     e->rate_ks = PATCH_ENV_KEYSCALE_LOWER_BOUND;
-    e->rate_adjustment = (e->rate_ks * e->keycode) / 8;
-  }
 
   /* set level keyscaling */
 
@@ -357,25 +353,13 @@ short int envelope_load_patch(int voice_index, int num, int patch_index)
   /*      for every increase by 1 octave  */
   /*   8: the level is multiplied by 1/4  */
   /*      for every increase by 1 octave  */
-
-  /* note that adding 64 to the base level is   */
-  /* the same as multiplying it by 1/2 (once    */
-  /* converted back to linear instead of log).  */
-
-  /* additional tweak to the level scaling:     */
-  /* the adjustment is shifted so that 0 occurs */
-  /* at G2 (which is at keycode 31)             */
   if ((p->env_level_ks[num] >= PATCH_ENV_KEYSCALE_LOWER_BOUND) && 
       (p->env_level_ks[num] <= PATCH_ENV_KEYSCALE_UPPER_BOUND))
   {
     e->level_ks = p->env_level_ks[num];
-    e->level_adjustment = (16 * e->level_ks * (e->keycode - 31)) / 12;
   }
   else
-  {
     e->level_ks = PATCH_ENV_KEYSCALE_LOWER_BOUND;
-    e->level_adjustment = (16 * e->level_ks * (e->keycode - 31)) / 12;
-  }
 
   return 0;
 }
@@ -383,9 +367,11 @@ short int envelope_load_patch(int voice_index, int num, int patch_index)
 /*******************************************************************************
 ** envelope_trigger()
 *******************************************************************************/
-short int envelope_trigger(int voice_index, int num, int note, int volume)
+short int envelope_trigger(int voice_index, int num, int note)
 {
   envelope* e;
+
+  int keycode;
 
   /* make sure that the voice index is valid */
   if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
@@ -398,32 +384,31 @@ short int envelope_trigger(int voice_index, int num, int note, int volume)
   /* obtain envelope pointer */
   e = &G_envelope_bank[4 * voice_index + num];
 
-  /* make sure the note is valid */
-  if ((note < 0) || (note >= 10 * 12))
-    return 0;
-
   /* the keycode is based on the current  */
   /* note (bound to the range C0 to C8)   */
-  e->keycode = note;
+  keycode = note;
 
-  if (e->keycode < 0)
-    e->keycode = 0;
-  else if (e->keycode > 96)
-    e->keycode = 96;
+  if (keycode < TUNING_NOTE_C0)
+    keycode = TUNING_NOTE_C0;
+  else if (keycode > TUNING_NOTE_C8)
+    keycode = TUNING_NOTE_C8;
+
+  keycode -= TUNING_NOTE_C0;
 
   /* compute rate & level adjustments based on keycode */
-  e->rate_adjustment = (e->rate_ks * e->keycode) / 8;
-  e->level_adjustment = (16 * e->level_ks * (e->keycode - 31)) / 12;
 
-  /* set volume adjustment */
-  if ((volume >= 0) && (volume <= 16))
-    e->volume_adjustment = S_envelope_volume_table[volume];
-  else
-    e->volume_adjustment = S_envelope_volume_table[8];
+  /* note that adding 64 to the base level is   */
+  /* the same as multiplying it by 1/2 (once    */
+  /* converted back to linear instead of log).  */
+
+  /* additional tweak to the level scaling:     */
+  /* the adjustment is shifted so that 0 occurs */
+  /* at G2 (which is at keycode 31)             */
+  e->rate_adjustment = (e->rate_ks * keycode) / 8;
+  e->level_adjustment = (16 * e->level_ks * (keycode - 31)) / 12;
 
   /* set level */
-  e->level =  e->attenuation + e->volume_adjustment + 
-              e->ampl_adjustment + e->level_adjustment;
+  e->level =  e->attenuation + e->ampl_adjustment + e->level_adjustment;
 
   /* bound level */
   if (e->level < 0)
@@ -553,8 +538,7 @@ short int envelope_update_all()
         }
 
         /* update level */
-        e->level =  e->attenuation + e->volume_adjustment + 
-                    e->ampl_adjustment + e->level_adjustment;
+        e->level =  e->attenuation + e->ampl_adjustment + e->level_adjustment;
 
         if (e->level >= 1023)
           e->level = 1023;

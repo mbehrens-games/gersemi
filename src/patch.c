@@ -58,10 +58,6 @@ short int patch_reset(int patch_index)
   p->highpass_cutoff = PATCH_HIGHPASS_CUTOFF_LOWER_BOUND;
   p->lowpass_cutoff = PATCH_LOWPASS_CUTOFF_UPPER_BOUND;
 
-  /* noise */
-  p->noise_period = PATCH_NOISE_PERIOD_LOWER_BOUND;
-  p->noise_mix = PATCH_NOISE_MIX_LOWER_BOUND;
-
   /* oscillators and envelopes */
   for (m = 0; m < VOICE_NUM_OSCS_AND_ENVS; m++)
   {
@@ -69,8 +65,8 @@ short int patch_reset(int patch_index)
     p->osc_feedback[m] = 0;
     p->osc_freq_mode[m] = 0;
     p->osc_multiple[m] = 1;
-    p->osc_divisor[m] = 1;
-    p->osc_detune[m] = 0;
+    p->osc_detune_coarse[m] = 0;
+    p->osc_detune_fine[m] = 0;
 
     p->env_attack[m] = 32;
     p->env_decay_1[m] = 32;
@@ -82,6 +78,26 @@ short int patch_reset(int patch_index)
     p->env_level_ks[m] = 1;
     p->env_special_mode[m] = 0;
   }
+
+  /* lfo */
+  p->lfo_waveform = 0;
+  p->lfo_octave = 0;
+  p->lfo_note = 0;
+  p->lfo_delay = 0;
+  p->lfo_sync = 1;
+  p->lfo_vibrato = 0;
+  p->lfo_tremolo = 0;
+  p->lfo_wobble = 0;
+
+  /* mod wheel sensitivity */
+  p->mod_wheel_vibrato = 0;
+  p->mod_wheel_tremolo = 0;
+  p->mod_wheel_wobble = 0;
+
+  /* aftertouch sensitivity */
+  p->aftertouch_vibrato = 0;
+  p->aftertouch_tremolo = 0;
+  p->aftertouch_wobble = 0;
 
   return 0;
 }
@@ -130,21 +146,6 @@ short int patch_adjust_parameter( int patch_index, int param, int num,
                           PATCH_LOWPASS_CUTOFF_LOWER_BOUND, 
                           PATCH_LOWPASS_CUTOFF_UPPER_BOUND)
   }
-  /* noise */
-  else if (param == PATCH_PARAM_NOISE_PERIOD)
-  {
-    PATCH_SET_PARAMETER(p->noise_period)
-    PATCH_BOUND_PARAMETER(p->noise_period, 
-                          PATCH_NOISE_PERIOD_LOWER_BOUND, 
-                          PATCH_NOISE_PERIOD_UPPER_BOUND)
-  }
-  else if (param == PATCH_PARAM_NOISE_MIX)
-  {
-    PATCH_SET_PARAMETER(p->noise_mix)
-    PATCH_BOUND_PARAMETER(p->noise_mix, 
-                          PATCH_NOISE_MIX_LOWER_BOUND, 
-                          PATCH_NOISE_MIX_UPPER_BOUND)
-  }
   /* oscillator */
   else if (param == PATCH_PARAM_OSC_WAVEFORM)
   {
@@ -174,19 +175,19 @@ short int patch_adjust_parameter( int patch_index, int param, int num,
                           PATCH_OSC_MULTIPLE_LOWER_BOUND, 
                           PATCH_OSC_MULTIPLE_UPPER_BOUND)
   }
-  else if (param == PATCH_PARAM_OSC_DIVISOR)
+  else if (param == PATCH_PARAM_OSC_DETUNE_COARSE)
   {
-    PATCH_SET_PARAMETER(p->osc_divisor[num])
-    PATCH_BOUND_PARAMETER(p->osc_divisor[num], 
-                          PATCH_OSC_DIVISOR_LOWER_BOUND, 
-                          PATCH_OSC_DIVISOR_UPPER_BOUND)
+    PATCH_SET_PARAMETER(p->osc_detune_coarse[num])
+    PATCH_BOUND_PARAMETER(p->osc_detune_coarse[num], 
+                          PATCH_OSC_DETUNE_COARSE_LOWER_BOUND, 
+                          PATCH_OSC_DETUNE_COARSE_UPPER_BOUND)
   }
-  else if (param == PATCH_PARAM_OSC_DETUNE)
+  else if (param == PATCH_PARAM_OSC_DETUNE_FINE)
   {
-    PATCH_SET_PARAMETER(p->osc_detune[num])
-    PATCH_BOUND_PARAMETER(p->osc_detune[num], 
-                          PATCH_OSC_DETUNE_LOWER_BOUND, 
-                          PATCH_OSC_DETUNE_UPPER_BOUND)
+    PATCH_SET_PARAMETER(p->osc_detune_fine[num])
+    PATCH_BOUND_PARAMETER(p->osc_detune_fine[num], 
+                          PATCH_OSC_DETUNE_FINE_LOWER_BOUND, 
+                          PATCH_OSC_DETUNE_FINE_UPPER_BOUND)
   }
   /* envelope */
   else if (param == PATCH_PARAM_ENV_ATTACK)
@@ -251,6 +252,107 @@ short int patch_adjust_parameter( int patch_index, int param, int num,
     PATCH_BOUND_PARAMETER(p->env_special_mode[num], 
                           PATCH_ENV_SPECIAL_MODE_LOWER_BOUND, 
                           PATCH_ENV_SPECIAL_MODE_UPPER_BOUND)
+  }
+  /* lfo */
+  else if (param == PATCH_PARAM_LFO_WAVEFORM)
+  {
+    PATCH_SET_PARAMETER(p->lfo_waveform)
+    PATCH_BOUND_PARAMETER(p->lfo_waveform, 
+                          PATCH_LFO_WAVEFORM_LOWER_BOUND, 
+                          PATCH_LFO_WAVEFORM_UPPER_BOUND)
+  }
+  else if (param == PATCH_PARAM_LFO_OCTAVE)
+  {
+    PATCH_SET_PARAMETER(p->lfo_octave)
+    PATCH_BOUND_PARAMETER(p->lfo_octave, 
+                          PATCH_LFO_OCTAVE_LOWER_BOUND, 
+                          PATCH_LFO_OCTAVE_UPPER_BOUND)
+  }
+  else if (param == PATCH_PARAM_LFO_NOTE)
+  {
+    PATCH_SET_PARAMETER(p->lfo_note)
+    PATCH_BOUND_PARAMETER(p->lfo_note, 
+                          PATCH_LFO_NOTE_LOWER_BOUND, 
+                          PATCH_LFO_NOTE_UPPER_BOUND)
+  }
+  else if (param == PATCH_PARAM_LFO_DELAY)
+  {
+    PATCH_SET_PARAMETER(p->lfo_delay)
+    PATCH_BOUND_PARAMETER(p->lfo_delay, 
+                          PATCH_LFO_DELAY_LOWER_BOUND, 
+                          PATCH_LFO_DELAY_UPPER_BOUND)
+  }
+  else if (param == PATCH_PARAM_LFO_SYNC)
+  {
+    PATCH_SET_PARAMETER(p->lfo_sync)
+    PATCH_BOUND_PARAMETER(p->lfo_sync, 
+                          PATCH_LFO_SYNC_LOWER_BOUND, 
+                          PATCH_LFO_SYNC_UPPER_BOUND)
+  }
+  else if (param == PATCH_PARAM_LFO_VIBRATO)
+  {
+    PATCH_SET_PARAMETER(p->lfo_vibrato)
+    PATCH_BOUND_PARAMETER(p->lfo_vibrato, 
+                          PATCH_VIBRATO_LOWER_BOUND, 
+                          PATCH_VIBRATO_UPPER_BOUND)
+  }
+  else if (param == PATCH_PARAM_LFO_TREMOLO)
+  {
+    PATCH_SET_PARAMETER(p->lfo_tremolo)
+    PATCH_BOUND_PARAMETER(p->lfo_tremolo, 
+                          PATCH_TREMOLO_LOWER_BOUND, 
+                          PATCH_TREMOLO_UPPER_BOUND)
+  }
+  else if (param == PATCH_PARAM_LFO_WOBBLE)
+  {
+    PATCH_SET_PARAMETER(p->lfo_wobble)
+    PATCH_BOUND_PARAMETER(p->lfo_wobble, 
+                          PATCH_WOBBLE_LOWER_BOUND, 
+                          PATCH_WOBBLE_UPPER_BOUND)
+  }
+  /* mod wheel sensitivity */
+  else if (param == PATCH_PARAM_MOD_WHEEL_VIBRATO)
+  {
+    PATCH_SET_PARAMETER(p->mod_wheel_vibrato)
+    PATCH_BOUND_PARAMETER(p->mod_wheel_vibrato, 
+                          PATCH_VIBRATO_LOWER_BOUND, 
+                          PATCH_VIBRATO_UPPER_BOUND)
+  }
+  else if (param == PATCH_PARAM_MOD_WHEEL_TREMOLO)
+  {
+    PATCH_SET_PARAMETER(p->mod_wheel_tremolo)
+    PATCH_BOUND_PARAMETER(p->mod_wheel_tremolo, 
+                          PATCH_TREMOLO_LOWER_BOUND, 
+                          PATCH_TREMOLO_UPPER_BOUND)
+  }
+  else if (param == PATCH_PARAM_MOD_WHEEL_WOBBLE)
+  {
+    PATCH_SET_PARAMETER(p->mod_wheel_wobble)
+    PATCH_BOUND_PARAMETER(p->mod_wheel_wobble, 
+                          PATCH_WOBBLE_LOWER_BOUND, 
+                          PATCH_WOBBLE_UPPER_BOUND)
+  }
+  /* aftertouch sensitivity */
+  else if (param == PATCH_PARAM_AFTERTOUCH_VIBRATO)
+  {
+    PATCH_SET_PARAMETER(p->aftertouch_vibrato)
+    PATCH_BOUND_PARAMETER(p->aftertouch_vibrato, 
+                          PATCH_VIBRATO_LOWER_BOUND, 
+                          PATCH_VIBRATO_UPPER_BOUND)
+  }
+  else if (param == PATCH_PARAM_AFTERTOUCH_TREMOLO)
+  {
+    PATCH_SET_PARAMETER(p->aftertouch_tremolo)
+    PATCH_BOUND_PARAMETER(p->aftertouch_tremolo, 
+                          PATCH_TREMOLO_LOWER_BOUND, 
+                          PATCH_TREMOLO_UPPER_BOUND)
+  }
+  else if (param == PATCH_PARAM_AFTERTOUCH_WOBBLE)
+  {
+    PATCH_SET_PARAMETER(p->aftertouch_wobble)
+    PATCH_BOUND_PARAMETER(p->aftertouch_wobble, 
+                          PATCH_WOBBLE_LOWER_BOUND, 
+                          PATCH_WOBBLE_UPPER_BOUND)
   }
 
   return 0;

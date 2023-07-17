@@ -27,10 +27,19 @@ enum
   TUNING_NUM_FORKS
 };
 
+/* 14 octaves total (4 sub-audible octaves, and 10 audible):  */
+/* -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9               */
+#define TUNING_NUM_OCTAVES  14
+#define TUNING_NUM_NOTES    (TUNING_NUM_OCTAVES * 12)
+
 #define TUNING_NUM_SEMITONE_STEPS 64
 
-#define TUNING_NUM_OCTAVES  10
-#define TUNING_NUM_NOTES    (TUNING_NUM_OCTAVES * 12)
+#define TUNING_MIDDLE_OCTAVE  8
+
+#define TUNING_NOTE_C0  (12 * (TUNING_MIDDLE_OCTAVE - 4))
+#define TUNING_NOTE_A0  (12 * (TUNING_MIDDLE_OCTAVE - 4) + 9)
+#define TUNING_NOTE_C4  (12 * (TUNING_MIDDLE_OCTAVE + 0))
+#define TUNING_NOTE_C8  (12 * (TUNING_MIDDLE_OCTAVE + 4))
 
 #define TUNING_TABLE_SIZE (TUNING_NUM_NOTES * TUNING_NUM_SEMITONE_STEPS)
 
