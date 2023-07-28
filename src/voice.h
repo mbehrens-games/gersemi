@@ -14,8 +14,6 @@ typedef struct voice
   /* algorithm */
   short int algorithm;
 
-  short int num_modulators;
-
   /* currently playing notes, pitch indices */
   int base_note;
   int osc_note[VOICE_NUM_OSCS_AND_ENVS];
@@ -30,19 +28,24 @@ typedef struct voice
   /* voice parameters */
   short int osc_waveform[VOICE_NUM_OSCS_AND_ENVS];
   short int osc_feedback_multiplier[VOICE_NUM_OSCS_AND_ENVS];
+  short int osc_sync[VOICE_NUM_OSCS_AND_ENVS];
 
-  short int osc_multiple[VOICE_NUM_OSCS_AND_ENVS];
+  short int osc_freq_mode[VOICE_NUM_OSCS_AND_ENVS];
   short int osc_detune_coarse[VOICE_NUM_OSCS_AND_ENVS];
   short int osc_detune_fine[VOICE_NUM_OSCS_AND_ENVS];
 
-#if 0
+  short int vibrato_enable[VOICE_NUM_OSCS_AND_ENVS];
+  short int tremolo_enable[VOICE_NUM_OSCS_AND_ENVS];
+  short int boost_enable[VOICE_NUM_OSCS_AND_ENVS];
+
   /* noise */
-  int       noise_pitch_index;
-  short int noise_mode;
+  short int noise_mix_adjustment;
+  short int wave_mix_adjustment;
+
+  int noise_pitch_index;
 
   unsigned int noise_phase;
   unsigned int noise_lfsr;
-#endif
 
   /* envelope levels */
   short int env_input[VOICE_NUM_OSCS_AND_ENVS];
@@ -50,7 +53,9 @@ typedef struct voice
   /* lfo levels */
   short int vibrato_input;
   short int tremolo_input;
-  short int wobble_input;
+
+  /* sweep level */
+  short int sweep_input;
 
   /* output level */
   int level;

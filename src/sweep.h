@@ -7,40 +7,20 @@
 
 #include "bank.h"
 
-enum
-{
-  SWEEP_MODE_OFF = 0, 
-  SWEEP_MODE_PORTAMENTO_UP, 
-  SWEEP_MODE_HALF_STEP_GLISSANDO_UP, 
-  SWEEP_MODE_WHOLE_STEP_GLISSANDO_UP, 
-  SWEEP_MODE_PORTAMENTO_DOWN, 
-  SWEEP_MODE_HALF_STEP_GLISSANDO_DOWN, 
-  SWEEP_MODE_WHOLE_STEP_GLISSANDO_DOWN, 
-  SWEEP_MODE_PORTAMENTO_TO_NOTE, 
-  SWEEP_MODE_HALF_STEP_GLISSANDO_TO_NOTE, 
-  SWEEP_MODE_WHOLE_STEP_GLISSANDO_TO_NOTE, 
-  SWEEP_NUM_MODES
-};
-
 typedef struct sweep
 {
-  /* mode, speed */
-  int mode;
-  int speed;
+  /* sweep parameters */
+  short int portamento_mode;
+  short int portamento_speed;
+  short int portamento_switch;
 
-  /* phase increment */
+  /* phase, phase increment */
+  unsigned int phase;
   unsigned int increment;
 
-  /* phase */
-  unsigned int phase;
-
-  /* start position, target position */
-  short int start;
-  short int target;
-
-  /* steps */
-  short int step_coarse;
-  short int step_fine;
+  /* note, offset */
+  short int note;
+  short int offset;
 
   /* level */
   short int level;
@@ -53,8 +33,12 @@ extern sweep G_sweep_bank[BANK_NUM_SWEEPS];
 short int sweep_setup_all();
 short int sweep_reset(int voice_index);
 
-short int sweep_trigger(int voice_index, int old_note, int new_note);
+short int sweep_load_patch(int voice_index, int patch_index);
+
+short int sweep_trigger(int voice_index, int new_note);
 
 short int sweep_update_all();
+
+short int sweep_generate_tables();
 
 #endif

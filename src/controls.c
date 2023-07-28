@@ -59,6 +59,12 @@ enum
   CONTROLS_MOUSE_BUTTON_STATE_RELEASED
 };
 
+enum
+{
+  CONTROLS_PATCH_ADJUST_MODE_DIRECT = 0, 
+  CONTROLS_PATCH_ADJUST_MODE_RELATIVE
+};
+
 #define CONTROLS_KEY_IS_PRESSED(index)                                         \
   (S_key_states[index] == CONTROLS_KEY_STATE_PRESSED)
 
@@ -125,15 +131,27 @@ enum
     (S_mouse_remapped_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (LAYOUT_SCROLLBAR_Y - (LAYOUT_SCROLLBAR_HEIGHT - 1) + 1)) &&  \
     (S_mouse_remapped_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (LAYOUT_SCROLLBAR_Y + (LAYOUT_SCROLLBAR_HEIGHT - 1) - 1)))
 
+#define CONTROLS_MOUSE_LAST_CLICK_WAS_OVER_VERTICAL_SCROLLBAR_TRACK()                                                               \
+  ( (S_mouse_last_click_pos_x >= (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (LAYOUT_SCROLLBAR_X - 1))                                  &&  \
+    (S_mouse_last_click_pos_x <  (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (LAYOUT_SCROLLBAR_X + 1))                                  &&  \
+    (S_mouse_last_click_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (LAYOUT_SCROLLBAR_Y - (LAYOUT_SCROLLBAR_HEIGHT - 1) + 1)) &&  \
+    (S_mouse_last_click_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (LAYOUT_SCROLLBAR_Y + (LAYOUT_SCROLLBAR_HEIGHT - 1) - 1)))
+
 #define CONTROLS_VERTICAL_SCROLLBAR_POS_Y_LOWER_BOUND                          \
   ((GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (LAYOUT_SCROLLBAR_Y - (LAYOUT_SCROLLBAR_HEIGHT - 3) + 1))
 
 /* patch edit parameter silders and adjustment arrows */
-#define CONTROLS_MOUSE_CURSOR_IS_OVER_PATCH_PARAM_SLIDER()                                                                                                            \
-  ( (S_mouse_remapped_pos_x >= (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_PATCH_EDIT_PARAM_SLIDER_TRACK_X - LAYOUT_PATCH_EDIT_PARAM_SLIDER_WIDTH)) && \
-    (S_mouse_remapped_pos_x <  (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_PATCH_EDIT_PARAM_SLIDER_TRACK_X + LAYOUT_PATCH_EDIT_PARAM_SLIDER_WIDTH)) && \
-    (S_mouse_remapped_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (pr->center_y - G_current_scroll_amount - 1))                                                  && \
+#define CONTROLS_MOUSE_CURSOR_IS_OVER_PATCH_PARAM_SLIDER()                                                                                                              \
+  ( (S_mouse_remapped_pos_x >= (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_PATCH_EDIT_PARAM_SLIDER_TRACK_X - LAYOUT_PATCH_EDIT_PARAM_SLIDER_WIDTH))  &&  \
+    (S_mouse_remapped_pos_x <  (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_PATCH_EDIT_PARAM_SLIDER_TRACK_X + LAYOUT_PATCH_EDIT_PARAM_SLIDER_WIDTH))  &&  \
+    (S_mouse_remapped_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (pr->center_y - G_current_scroll_amount - 1))                                                   &&  \
     (S_mouse_remapped_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (pr->center_y - G_current_scroll_amount + 1)))
+
+#define CONTROLS_MOUSE_LAST_CLICK_WAS_OVER_PATCH_PARAM_SLIDER()                                                                                                           \
+  ( (S_mouse_last_click_pos_x >= (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_PATCH_EDIT_PARAM_SLIDER_TRACK_X - LAYOUT_PATCH_EDIT_PARAM_SLIDER_WIDTH))  &&  \
+    (S_mouse_last_click_pos_x <  (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_PATCH_EDIT_PARAM_SLIDER_TRACK_X + LAYOUT_PATCH_EDIT_PARAM_SLIDER_WIDTH))  &&  \
+    (S_mouse_last_click_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (pr->center_y - G_current_scroll_amount - 1))                                                   &&  \
+    (S_mouse_last_click_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (pr->center_y - G_current_scroll_amount + 1)))
 
 #define CONTROLS_PATCH_PARAM_SLIDER_POS_X_LOWER_BOUND                          \
   ((GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_PATCH_EDIT_PARAM_SLIDER_TRACK_X - LAYOUT_PATCH_EDIT_PARAM_SLIDER_WIDTH))
@@ -150,11 +168,32 @@ enum
     (S_mouse_remapped_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (pr->center_y - G_current_scroll_amount - 1))               &&  \
     (S_mouse_remapped_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (pr->center_y - G_current_scroll_amount + 1)))
 
+/* patch parameter adjustment */
+#define CONTROLS_SET_PATCH_PARAMETER(param, lower, upper)                      \
+  if ((mode == CONTROLS_PATCH_ADJUST_MODE_DIRECT) && (param != value))         \
+  {                                                                            \
+    param = value;                                                             \
+    param_changed = 1;                                                         \
+  }                                                                            \
+  else if (mode == CONTROLS_PATCH_ADJUST_MODE_RELATIVE)                        \
+  {                                                                            \
+    param += value;                                                            \
+    param_changed = 1;                                                         \
+  }                                                                            \
+                                                                               \
+  if (param < lower)                                                           \
+    param = lower;                                                             \
+  else if (param > upper)                                                      \
+    param = upper;
+
 static int S_key_states[CONTROLS_NUM_KEY_INDICES];
 static int S_mouse_button_states[CONTROLS_NUM_MOUSE_BUTTON_INDICES];
 
 static int S_mouse_remapped_pos_x;
 static int S_mouse_remapped_pos_y;
+
+static int S_mouse_last_click_pos_x;
+static int S_mouse_last_click_pos_y;
 
 static int S_mouse_wheel_movement;
 
@@ -174,6 +213,9 @@ short int controls_setup()
   S_mouse_remapped_pos_x = 0;
   S_mouse_remapped_pos_y = 0;
 
+  S_mouse_last_click_pos_x = 0;
+  S_mouse_last_click_pos_y = 0;
+
   S_mouse_wheel_movement = 0;
 
   return 0;
@@ -182,110 +224,301 @@ short int controls_setup()
 /*******************************************************************************
 ** controls_patch_parameter_adjust()
 *******************************************************************************/
-short int controls_patch_parameter_adjust(int param_index, int amount)
+short int controls_patch_parameter_adjust(int patch_index, int param_index, int amount)
 {
   int value;
   int mode;
-  int param_name;
+  int param_changed;
 
+  patch* pc;
   param* pr;
 
+  /* make sure that the patch index is valid */
+  if (BANK_PATCH_INDEX_IS_NOT_VALID(patch_index))
+    return 1;
+
+  /* make sure that the parameter index is valid */
   if (LAYOUT_PARAM_INDEX_IS_NOT_VALID(param_index))
     return 1;
 
+  /* obtain patch and parameter pointers */
+  pc = &G_patch_bank[patch_index];
   pr = &G_layout_params[param_index];
 
   /* determine value and adjustment mode */
   if (pr->adjust_type == LAYOUT_PARAM_PATCH_EDIT_ADJUST_TYPE_SLIDER)
   {
     value = (amount * (pr->upper_bound - pr->lower_bound)) / (8 * (LAYOUT_PATCH_EDIT_PARAM_SLIDER_WIDTH - 1)) + pr->lower_bound;
-    mode = PATCH_ADJUST_MODE_DIRECT;
+    mode = CONTROLS_PATCH_ADJUST_MODE_DIRECT;
   }
   else if (pr->adjust_type == LAYOUT_PARAM_PATCH_EDIT_ADJUST_TYPE_ARROWS)
   {
     value = amount;
-    mode = PATCH_ADJUST_MODE_RELATIVE;
+    mode = CONTROLS_PATCH_ADJUST_MODE_RELATIVE;
   }
   else
     return 0;
 
+  /* initialize change flag */
+  param_changed = 0;
+
   /* algorithm */
   if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ALGORITHM)
-    param_name = PATCH_PARAM_ALGORITHM;
-  /* filters */
-  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_HIGHPASS_CUTOFF)
-    param_name = PATCH_PARAM_HIGHPASS_CUTOFF;
-  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LOWPASS_CUTOFF)
-    param_name = PATCH_PARAM_LOWPASS_CUTOFF;
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->algorithm, 
+                                  PATCH_ALGORITHM_LOWER_BOUND, 
+                                  PATCH_ALGORITHM_UPPER_BOUND)
+  }
   /* oscillator */
   else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_WAVEFORM)
-    param_name = PATCH_PARAM_OSC_WAVEFORM;
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->osc_waveform[pr->num], 
+                                  PATCH_OSC_WAVEFORM_LOWER_BOUND, 
+                                  PATCH_OSC_WAVEFORM_UPPER_BOUND) 
+  }
   else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_FEEDBACK)
-    param_name = PATCH_PARAM_OSC_FEEDBACK;
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->osc_feedback[pr->num], 
+                                  PATCH_OSC_FEEDBACK_LOWER_BOUND, 
+                                  PATCH_OSC_FEEDBACK_UPPER_BOUND) 
+  }
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_SYNC)
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->osc_sync[pr->num], 
+                                  PATCH_OSC_SYNC_LOWER_BOUND, 
+                                  PATCH_OSC_SYNC_UPPER_BOUND) 
+  }
   else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_FREQ_MODE)
-    param_name = PATCH_PARAM_OSC_FREQ_MODE;
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->osc_freq_mode[pr->num], 
+                                  PATCH_OSC_FREQ_MODE_LOWER_BOUND, 
+                                  PATCH_OSC_FREQ_MODE_UPPER_BOUND)
+  }
   else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_MULTIPLE)
-    param_name = PATCH_PARAM_OSC_MULTIPLE;
-  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_DETUNE_COARSE)
-    param_name = PATCH_PARAM_OSC_DETUNE_COARSE;
-  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_DETUNE_FINE)
-    param_name = PATCH_PARAM_OSC_DETUNE_FINE;
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->osc_multiple[pr->num], 
+                                  PATCH_OSC_MULTIPLE_LOWER_BOUND, 
+                                  PATCH_OSC_MULTIPLE_UPPER_BOUND)
+  }
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_DIVISOR)
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->osc_divisor[pr->num], 
+                                  PATCH_OSC_DIVISOR_LOWER_BOUND, 
+                                  PATCH_OSC_DIVISOR_UPPER_BOUND)
+  }
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_DETUNE)
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->osc_detune[pr->num], 
+                                  PATCH_OSC_DETUNE_LOWER_BOUND, 
+                                  PATCH_OSC_DETUNE_UPPER_BOUND)
+  }
   /* envelope */
   else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_ATTACK)
-    param_name = PATCH_PARAM_ENV_ATTACK;
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->env_attack[pr->num], 
+                                  PATCH_ENV_RATE_LOWER_BOUND, 
+                                  PATCH_ENV_RATE_UPPER_BOUND)
+  }
   else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_DECAY_1)
-    param_name = PATCH_PARAM_ENV_DECAY_1;
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->env_decay_1[pr->num], 
+                                  PATCH_ENV_RATE_LOWER_BOUND, 
+                                  PATCH_ENV_RATE_UPPER_BOUND)
+  }
   else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_DECAY_2)
-    param_name = PATCH_PARAM_ENV_DECAY_2;
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->env_decay_2[pr->num], 
+                                  PATCH_ENV_RATE_LOWER_BOUND, 
+                                  PATCH_ENV_RATE_UPPER_BOUND)
+  }
   else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_RELEASE)
-    param_name = PATCH_PARAM_ENV_RELEASE;
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->env_release[pr->num], 
+                                  PATCH_ENV_RATE_LOWER_BOUND, 
+                                  PATCH_ENV_RATE_UPPER_BOUND)
+  }
   else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_AMPLITUDE)
-    param_name = PATCH_PARAM_ENV_AMPLITUDE;
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->env_amplitude[pr->num], 
+                                  PATCH_ENV_AMPLITUDE_LOWER_BOUND, 
+                                  PATCH_ENV_AMPLITUDE_UPPER_BOUND)
+  }
   else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_SUSTAIN)
-    param_name = PATCH_PARAM_ENV_SUSTAIN;
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->env_sustain[pr->num], 
+                                  PATCH_ENV_SUSTAIN_LOWER_BOUND, 
+                                  PATCH_ENV_SUSTAIN_UPPER_BOUND)
+  }
   else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_RATE_KS)
-    param_name = PATCH_PARAM_ENV_RATE_KS;
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->env_rate_ks[pr->num], 
+                                  PATCH_ENV_KEYSCALE_LOWER_BOUND, 
+                                  PATCH_ENV_KEYSCALE_UPPER_BOUND)
+  }
   else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_LEVEL_KS)
-    param_name = PATCH_PARAM_ENV_LEVEL_KS;
-  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_SPECIAL_MODE)
-    param_name = PATCH_PARAM_ENV_SPECIAL_MODE;
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->env_level_ks[pr->num], 
+                                  PATCH_ENV_KEYSCALE_LOWER_BOUND, 
+                                  PATCH_ENV_KEYSCALE_UPPER_BOUND)
+  }
+  /* lfo & eg bias enable */
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_VIBRATO_ENABLE)
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->vibrato_enable[pr->num], 
+                                  PATCH_MOD_ENABLE_LOWER_BOUND, 
+                                  PATCH_MOD_ENABLE_UPPER_BOUND)
+  }
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_TREMOLO_ENABLE)
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->tremolo_enable[pr->num], 
+                                  PATCH_MOD_ENABLE_LOWER_BOUND, 
+                                  PATCH_MOD_ENABLE_UPPER_BOUND)
+  }
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_BOOST_ENABLE)
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->boost_enable[pr->num], 
+                                  PATCH_MOD_ENABLE_LOWER_BOUND, 
+                                  PATCH_MOD_ENABLE_UPPER_BOUND)
+  }
   /* lfo */
   else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LFO_WAVEFORM)
-    param_name = PATCH_PARAM_LFO_WAVEFORM;
-  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LFO_OCTAVE)
-    param_name = PATCH_PARAM_LFO_OCTAVE;
-  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LFO_NOTE)
-    param_name = PATCH_PARAM_LFO_NOTE;
-  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LFO_DELAY)
-    param_name = PATCH_PARAM_LFO_DELAY;
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->lfo_waveform, 
+                                  PATCH_LFO_WAVEFORM_LOWER_BOUND, 
+                                  PATCH_LFO_WAVEFORM_UPPER_BOUND)
+  }
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LFO_FREQUENCY)
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->lfo_frequency, 
+                                  PATCH_LFO_FREQUENCY_LOWER_BOUND, 
+                                  PATCH_LFO_FREQUENCY_UPPER_BOUND)
+  }
   else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LFO_SYNC)
-    param_name = PATCH_PARAM_LFO_SYNC;
-  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LFO_VIBRATO)
-    param_name = PATCH_PARAM_LFO_VIBRATO;
-  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LFO_TREMOLO)
-    param_name = PATCH_PARAM_LFO_TREMOLO;
-  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LFO_WOBBLE)
-    param_name = PATCH_PARAM_LFO_WOBBLE;
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->lfo_sync, 
+                                  PATCH_LFO_SYNC_LOWER_BOUND, 
+                                  PATCH_LFO_SYNC_UPPER_BOUND)
+  }
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LFO_DELAY)
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->lfo_delay, 
+                                  PATCH_LFO_DELAY_LOWER_BOUND, 
+                                  PATCH_LFO_DELAY_UPPER_BOUND)
+  }
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LFO_BASE_VIBRATO)
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->lfo_base_vibrato, 
+                                  PATCH_MOD_BASE_LOWER_BOUND, 
+                                  PATCH_MOD_BASE_UPPER_BOUND)
+  }
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LFO_BASE_TREMOLO)
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->lfo_base_tremolo, 
+                                  PATCH_MOD_BASE_LOWER_BOUND, 
+                                  PATCH_MOD_BASE_UPPER_BOUND)
+  }
+  /* sweep */
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_PORTAMENTO_MODE)
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->portamento_mode, 
+                                  PATCH_PORTAMENTO_MODE_LOWER_BOUND, 
+                                  PATCH_PORTAMENTO_MODE_UPPER_BOUND)
+  }
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_PORTAMENTO_SPEED)
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->portamento_speed, 
+                                  PATCH_PORTAMENTO_SPEED_LOWER_BOUND, 
+                                  PATCH_PORTAMENTO_SPEED_UPPER_BOUND)
+  }
+  /* filters */
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_HIGHPASS_CUTOFF)
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->highpass_cutoff, 
+                                  PATCH_HIGHPASS_CUTOFF_LOWER_BOUND, 
+                                  PATCH_HIGHPASS_CUTOFF_UPPER_BOUND) 
+  }
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LOWPASS_CUTOFF)
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->lowpass_cutoff, 
+                                  PATCH_LOWPASS_CUTOFF_LOWER_BOUND, 
+                                  PATCH_LOWPASS_CUTOFF_UPPER_BOUND) 
+  }
+  /* noise */
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_NOISE_MIX)
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->noise_mix, 
+                                  PATCH_NOISE_MIX_LOWER_BOUND, 
+                                  PATCH_NOISE_MIX_UPPER_BOUND) 
+  }
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_NOISE_FREQUENCY)
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->noise_frequency, 
+                                  PATCH_NOISE_FREQUENCY_LOWER_BOUND, 
+                                  PATCH_NOISE_FREQUENCY_UPPER_BOUND) 
+  }
+  /* depths */
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_VIBRATO_DEPTH)
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->vibrato_depth, 
+                                  PATCH_MOD_DEPTH_LOWER_BOUND, 
+                                  PATCH_MOD_DEPTH_UPPER_BOUND)
+  }
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_TREMOLO_DEPTH)
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->tremolo_depth, 
+                                  PATCH_MOD_DEPTH_LOWER_BOUND, 
+                                  PATCH_MOD_DEPTH_UPPER_BOUND) 
+  }
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_BOOST_DEPTH)
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->boost_depth, 
+                                  PATCH_MOD_DEPTH_LOWER_BOUND, 
+                                  PATCH_MOD_DEPTH_UPPER_BOUND)
+  }
+  /* mod wheel */
   else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_MOD_WHEEL_VIBRATO)
-    param_name = PATCH_PARAM_MOD_WHEEL_VIBRATO;
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->mod_wheel_vibrato, 
+                                  PATCH_MOD_CONTROLLER_LOWER_BOUND, 
+                                  PATCH_MOD_CONTROLLER_UPPER_BOUND)
+  }
   else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_MOD_WHEEL_TREMOLO)
-    param_name = PATCH_PARAM_MOD_WHEEL_TREMOLO;
-  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_MOD_WHEEL_WOBBLE)
-    param_name = PATCH_PARAM_MOD_WHEEL_WOBBLE;
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->mod_wheel_tremolo, 
+                                  PATCH_MOD_CONTROLLER_LOWER_BOUND, 
+                                  PATCH_MOD_CONTROLLER_UPPER_BOUND)
+  }
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_MOD_WHEEL_BOOST)
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->mod_wheel_boost, 
+                                  PATCH_MOD_CONTROLLER_LOWER_BOUND, 
+                                  PATCH_MOD_CONTROLLER_UPPER_BOUND)
+  }
+  /* aftertouch */
   else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_AFTERTOUCH_VIBRATO)
-    param_name = PATCH_PARAM_AFTERTOUCH_VIBRATO;
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->aftertouch_vibrato, 
+                                  PATCH_MOD_CONTROLLER_LOWER_BOUND, 
+                                  PATCH_MOD_CONTROLLER_UPPER_BOUND)
+  }
   else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_AFTERTOUCH_TREMOLO)
-    param_name = PATCH_PARAM_AFTERTOUCH_TREMOLO;
-  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_AFTERTOUCH_WOBBLE)
-    param_name = PATCH_PARAM_AFTERTOUCH_WOBBLE;
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->aftertouch_tremolo, 
+                                  PATCH_MOD_CONTROLLER_LOWER_BOUND, 
+                                  PATCH_MOD_CONTROLLER_UPPER_BOUND) 
+  }
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_AFTERTOUCH_BOOST)
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->aftertouch_boost, 
+                                  PATCH_MOD_CONTROLLER_LOWER_BOUND, 
+                                  PATCH_MOD_CONTROLLER_UPPER_BOUND)
+  }
   else
     return 0;
 
-  /* update patch */
-  patch_adjust_parameter(G_patch_edit_patch_index, param_name, pr->num, mode, value);
-
-  /* testing */
-  synth_load_patch(0, G_patch_edit_patch_index);
+  /* reload patch if a parameter was changed */
+  if (param_changed == 1)
+    synth_load_patch(0, G_patch_edit_patch_index);
 
   return 0;
 }
@@ -530,6 +763,9 @@ short int controls_mouse_button_pressed(Uint8 button, Sint32 x, Sint32 y)
       (CONTROLS_MOUSE_BUTTON_IS_OFF_OR_RELEASED(CONTROLS_MOUSE_BUTTON_INDEX_LEFT)))
   {
     S_mouse_button_states[CONTROLS_MOUSE_BUTTON_INDEX_LEFT] = CONTROLS_MOUSE_BUTTON_STATE_PRESSED;
+
+    S_mouse_last_click_pos_x = S_mouse_remapped_pos_x;
+    S_mouse_last_click_pos_y = S_mouse_remapped_pos_y;
   }
 
   /* right mouse button */
@@ -844,7 +1080,7 @@ short int controls_process_user_input_standard()
       if (G_current_scroll_amount > G_max_scroll_amount)
         G_current_scroll_amount = G_max_scroll_amount;
     }
-    else if ( CONTROLS_MOUSE_CURSOR_IS_OVER_VERTICAL_SCROLLBAR_TRACK() && 
+    else if ( CONTROLS_MOUSE_LAST_CLICK_WAS_OVER_VERTICAL_SCROLLBAR_TRACK() && 
               CONTROLS_MOUSE_BUTTON_IS_ON_OR_PRESSED(CONTROLS_MOUSE_BUTTON_INDEX_LEFT))
     {
       G_current_scroll_amount = G_max_scroll_amount;
@@ -890,10 +1126,10 @@ short int controls_process_user_input_standard()
         /* if the cursor is over this parameter's slider, adjust the parameter */
         if (pr->adjust_type == LAYOUT_PARAM_PATCH_EDIT_ADJUST_TYPE_SLIDER)
         {
-          if (CONTROLS_MOUSE_CURSOR_IS_OVER_PATCH_PARAM_SLIDER() && 
+          if (CONTROLS_MOUSE_LAST_CLICK_WAS_OVER_PATCH_PARAM_SLIDER() && 
               CONTROLS_MOUSE_BUTTON_IS_ON_OR_PRESSED(CONTROLS_MOUSE_BUTTON_INDEX_LEFT))
           {
-            controls_patch_parameter_adjust(k, S_mouse_remapped_pos_x - CONTROLS_PATCH_PARAM_SLIDER_POS_X_LOWER_BOUND);
+            controls_patch_parameter_adjust(0, k, S_mouse_remapped_pos_x - CONTROLS_PATCH_PARAM_SLIDER_POS_X_LOWER_BOUND);
           }
         }
         else if (pr->adjust_type == LAYOUT_PARAM_PATCH_EDIT_ADJUST_TYPE_ARROWS)
@@ -901,12 +1137,12 @@ short int controls_process_user_input_standard()
           if (CONTROLS_MOUSE_CURSOR_IS_OVER_PATCH_PARAM_ADJUST_LEFT() && 
               CONTROLS_MOUSE_BUTTON_IS_PRESSED(CONTROLS_MOUSE_BUTTON_INDEX_LEFT))
           {
-            controls_patch_parameter_adjust(k, -1);
+            controls_patch_parameter_adjust(0, k, -1);
           }
           else if ( CONTROLS_MOUSE_CURSOR_IS_OVER_PATCH_PARAM_ADJUST_RIGHT() && 
                     CONTROLS_MOUSE_BUTTON_IS_PRESSED(CONTROLS_MOUSE_BUTTON_INDEX_LEFT))
           {
-            controls_patch_parameter_adjust(k, 1);
+            controls_patch_parameter_adjust(0, k, 1);
           }
         }
       }

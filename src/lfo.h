@@ -11,25 +11,24 @@ typedef struct lfo
 {
   /* lfo parameters */
   short int waveform;
-  short int octave;
-  short int note;
-  short int delay;
+  short int frequency;
   short int sync;
-  short int vibrato_mode;
+  short int delay;
 
   short int base_vibrato;
   short int base_tremolo;
-  short int base_wobble;
 
-  /* mod wheel sensitivity */
+  /* depths */
+  short int vibrato_depth;
+  short int tremolo_depth;
+
+  /* mod wheel */
   short int mod_wheel_vibrato;
   short int mod_wheel_tremolo;
-  short int mod_wheel_wobble;
 
-  /* aftertouch sensitivity */
+  /* aftertouch */
   short int aftertouch_vibrato;
   short int aftertouch_tremolo;
-  short int aftertouch_wobble;
 
   /* phase, phase increment */
   unsigned int phase;
@@ -38,14 +37,13 @@ typedef struct lfo
   /* noise lfsr */
   unsigned int lfsr;
 
-  /* mod wheel and aftertouch inputs */
+  /* controller inputs */
   short int mod_wheel_input;
   short int aftertouch_input;
 
   /* levels */
   short int vibrato_level;
   short int tremolo_level;
-  short int wobble_level;
 } lfo;
 
 /* lfo bank */

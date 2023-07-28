@@ -111,29 +111,6 @@ static short int S_envelope_sustain_table[17] =
          0    /*  1           */
   };
 
-#if 0
-/* volume table */
-static short int S_envelope_volume_table[17] = 
-  {  64,  /*  8/16  */
-     53,  /*  9/16  */
-     44,  /* 10/16  */
-     35,  /* 11/16  */
-     27,  /* 12/16  */
-     19,  /* 13/16  */
-     12,  /* 14/16  */
-      6,  /* 15/16  */
-      0,  /* 16/16  */
-     -6,  /* 17/16  */
-    -11,  /* 18/16  */
-    -16,  /* 19/16  */
-    -21,  /* 20/16  */
-    -25,  /* 21/16  */
-    -30,  /* 22/16  */
-    -34,  /* 23/16  */
-    -38   /* 24/16  */
-  };
-#endif
-
 /* envelope bank */
 envelope G_envelope_bank[BANK_NUM_ENVELOPES];
 

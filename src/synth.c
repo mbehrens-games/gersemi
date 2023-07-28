@@ -7,7 +7,6 @@
 
 #include "bank.h"
 #include "clock.h"
-#include "dblinear.h"
 #include "envelope.h"
 #include "filter.h"
 #include "key.h"
@@ -26,10 +25,11 @@ int G_synth_level_right;
 *******************************************************************************/
 short int synth_generate_tables()
 {
-  db_linear_generate_tables();
   envelope_generate_tables();
+  filter_generate_tables();
   key_generate_tables();
   lfo_generate_tables();
+  sweep_generate_tables();
   voice_generate_tables();
 
   return 0;
@@ -92,8 +92,11 @@ short int synth_load_patch(int voice_index, int patch_index)
   envelope_load_patch(voice_index, 2, patch_index);
   envelope_load_patch(voice_index, 3, patch_index);
 
-  /* lfos */
+  /* lfo */
   lfo_load_patch(voice_index, patch_index);
+
+  /* sweeo */
+  sweep_load_patch(voice_index, patch_index);
 
   /* filters */
   filter_load_patch(voice_index, patch_index);
@@ -128,6 +131,12 @@ short int synth_key_on(int voice_index, int octave, int degree)
   /* trigger envelopes */
   for (m = 0; m < VOICE_NUM_OSCS_AND_ENVS; m++)
     envelope_trigger(voice_index, m, v->osc_note[m]);
+
+  /* trigger lfo */
+  lfo_trigger(voice_index);
+
+  /* trigger sweep */
+  sweep_trigger(voice_index, note);
 
   return 0;
 }
@@ -174,17 +183,14 @@ short int synth_update()
   /* update envelopes */
   envelope_update_all();
 
-  /* copy lfo levels to voice inputs */
+  /* copy lfo, sweep, and envelope levels to voice inputs */
   for (k = 0; k < BANK_NUM_VOICES; k++)
   {
     G_voice_bank[k].vibrato_input = G_lfo_bank[k].vibrato_level;
     G_voice_bank[k].tremolo_input = G_lfo_bank[k].tremolo_level;
-    G_voice_bank[k].wobble_input = G_lfo_bank[k].wobble_level;
-  }
 
-  /* copy envelope levels to voice inputs */
-  for (k = 0; k < BANK_NUM_VOICES; k++)
-  {
+    G_voice_bank[k].sweep_input = G_sweep_bank[k].level;
+
     for (m = 0; m < VOICE_NUM_OSCS_AND_ENVS; m++)
       G_voice_bank[k].env_input[m] = G_envelope_bank[4 * k + m].level;
   }

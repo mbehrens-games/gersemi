@@ -33,4 +33,6 @@ short int filter_load_patch(int voice_index, int patch_index);
 
 short int filter_update_all();
 
+short int filter_generate_tables();
+
 #endif

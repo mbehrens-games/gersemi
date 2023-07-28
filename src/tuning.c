@@ -11,11 +11,7 @@
 #define TWO_PI  6.28318530717958647693f
 
 /* phase increment table */
-unsigned int G_phase_increment_table[TUNING_TABLE_SIZE];
-
-/* filter coefficient tables  */
-int G_lowpass_filter_stage_multiplier_table[4];
-int G_highpass_filter_stage_multiplier_table[4];
+unsigned int G_tuning_phase_increment_table[TUNING_TABLE_SIZE];
 
 /* tuning system & fork */
 static int S_tuning_system;
@@ -82,7 +78,7 @@ static float S_tuning_mult_werckmeister_iii[12] =
           1.87924087309072};    /* 128*2^(1/4):81   B  */
 
 /* frequencies in the middle octave (populated during generation) */
-static float S_freq_table[12 * TUNING_NUM_SEMITONE_STEPS];
+static float S_tuning_freq_table[TUNING_TABLE_SIZE];
 
 /*******************************************************************************
 ** tuning_reset()
@@ -143,8 +139,6 @@ short int tuning_calculate_tables()
 
   float   cents;
 
-  float   omega_0_delta_t_over_2;
-
   /* determine multiplier table */
   if (S_tuning_system == TUNING_SYSTEM_12_EQUAL_TEMPERAMENT)
     mult_table = S_tuning_mult_12_equal_temperament;
@@ -159,31 +153,31 @@ short int tuning_calculate_tables()
 
   /* compute frequency at the tuning fork */
   if (S_tuning_fork == TUNING_FORK_C256)
-    S_freq_table[0 * TUNING_NUM_SEMITONE_STEPS] = 256;
+    S_tuning_freq_table[0 * TUNING_NUM_SEMITONE_STEPS] = 256;
   else if (S_tuning_fork == TUNING_FORK_A432)
-    S_freq_table[9 * TUNING_NUM_SEMITONE_STEPS] = 432;
+    S_tuning_freq_table[9 * TUNING_NUM_SEMITONE_STEPS] = 432;
   else if (S_tuning_fork == TUNING_FORK_A434)
-    S_freq_table[9 * TUNING_NUM_SEMITONE_STEPS] = 434;
+    S_tuning_freq_table[9 * TUNING_NUM_SEMITONE_STEPS] = 434;
   else if (S_tuning_fork == TUNING_FORK_A436)
-    S_freq_table[9 * TUNING_NUM_SEMITONE_STEPS] = 436;
+    S_tuning_freq_table[9 * TUNING_NUM_SEMITONE_STEPS] = 436;
   else if (S_tuning_fork == TUNING_FORK_A438)
-    S_freq_table[9 * TUNING_NUM_SEMITONE_STEPS] = 438;
+    S_tuning_freq_table[9 * TUNING_NUM_SEMITONE_STEPS] = 438;
   else if (S_tuning_fork == TUNING_FORK_A440)
-    S_freq_table[9 * TUNING_NUM_SEMITONE_STEPS] = 440;
+    S_tuning_freq_table[9 * TUNING_NUM_SEMITONE_STEPS] = 440;
   else if (S_tuning_fork == TUNING_FORK_A442)
-    S_freq_table[9 * TUNING_NUM_SEMITONE_STEPS] = 442;
+    S_tuning_freq_table[9 * TUNING_NUM_SEMITONE_STEPS] = 442;
   else if (S_tuning_fork == TUNING_FORK_A444)
-    S_freq_table[9 * TUNING_NUM_SEMITONE_STEPS] = 444;
+    S_tuning_freq_table[9 * TUNING_NUM_SEMITONE_STEPS] = 444;
   else
-    S_freq_table[9 * TUNING_NUM_SEMITONE_STEPS] = 440;
+    S_tuning_freq_table[9 * TUNING_NUM_SEMITONE_STEPS] = 440;
 
   /* compute frequencies for the other notes in the middle octave */
   if (S_tuning_fork == TUNING_FORK_C256)
   {
     for (m = 1; m < 12; m++)
     {
-      S_freq_table[m * TUNING_NUM_SEMITONE_STEPS] = 
-        S_freq_table[0 * TUNING_NUM_SEMITONE_STEPS] * mult_table[m];
+      S_tuning_freq_table[m * TUNING_NUM_SEMITONE_STEPS] = 
+        S_tuning_freq_table[0 * TUNING_NUM_SEMITONE_STEPS] * mult_table[m];
     }
   }
   else
@@ -193,8 +187,8 @@ short int tuning_calculate_tables()
       if (m == 9)
         continue;
 
-      S_freq_table[m * TUNING_NUM_SEMITONE_STEPS] = 
-        S_freq_table[9 * TUNING_NUM_SEMITONE_STEPS] * (mult_table[m] / mult_table[9]);
+      S_tuning_freq_table[m * TUNING_NUM_SEMITONE_STEPS] = 
+        S_tuning_freq_table[9 * TUNING_NUM_SEMITONE_STEPS] * (mult_table[m] / mult_table[9]);
     }
   }
 
@@ -208,242 +202,40 @@ short int tuning_calculate_tables()
 
     for (n = 1; n < TUNING_NUM_SEMITONE_STEPS; n++)
     {
-      S_freq_table[m * TUNING_NUM_SEMITONE_STEPS + n] = 
-        S_freq_table[m * TUNING_NUM_SEMITONE_STEPS] * exp(log(2) * ((cents * n) / 1200.0f));
+      S_tuning_freq_table[m * TUNING_NUM_SEMITONE_STEPS + n] = 
+        S_tuning_freq_table[m * TUNING_NUM_SEMITONE_STEPS] * exp(log(2) * ((cents * n) / 1200.0f));
     }
   }
 
-  /* compute phase increments in all octaves */
-  for (n = 0; n < 12 * TUNING_NUM_SEMITONE_STEPS; n++)
+  /* compute phase increments in the highest octave (octave 9)            */
+  /* (the increments in other octaves can be obtained by right shifting)  */
+  for (n = 0; n < TUNING_TABLE_SIZE; n++)
   {
-    G_phase_increment_table[((TUNING_MIDDLE_OCTAVE - 8) * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
-      (int) (((S_freq_table[n] / 256) * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
-
-    G_phase_increment_table[((TUNING_MIDDLE_OCTAVE - 7) * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
-      (int) (((S_freq_table[n] / 128) * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
-
-    G_phase_increment_table[((TUNING_MIDDLE_OCTAVE - 6) * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
-      (int) (((S_freq_table[n] / 64) * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
-
-    G_phase_increment_table[((TUNING_MIDDLE_OCTAVE - 5) * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
-      (int) (((S_freq_table[n] / 32) * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
-
-    G_phase_increment_table[((TUNING_MIDDLE_OCTAVE - 4) * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
-      (int) (((S_freq_table[n] / 16) * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
-
-    G_phase_increment_table[((TUNING_MIDDLE_OCTAVE - 3) * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
-      (int) (((S_freq_table[n] / 8) * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
-
-    G_phase_increment_table[((TUNING_MIDDLE_OCTAVE - 2) * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
-      (int) (((S_freq_table[n] / 4) * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
-
-    G_phase_increment_table[((TUNING_MIDDLE_OCTAVE - 1) * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
-      (int) (((S_freq_table[n] / 2) * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
-
-    G_phase_increment_table[((TUNING_MIDDLE_OCTAVE + 0) * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
-      (int) ((S_freq_table[n] * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
-
-    G_phase_increment_table[((TUNING_MIDDLE_OCTAVE + 1) * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
-      (int) (((S_freq_table[n] * 2) * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
-
-    G_phase_increment_table[((TUNING_MIDDLE_OCTAVE + 2) * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
-      (int) (((S_freq_table[n] * 4) * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
-
-    G_phase_increment_table[((TUNING_MIDDLE_OCTAVE + 3) * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
-      (int) (((S_freq_table[n] * 8) * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
-
-    G_phase_increment_table[((TUNING_MIDDLE_OCTAVE + 4) * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
-      (int) (((S_freq_table[n] * 16) * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
-
-    G_phase_increment_table[((TUNING_MIDDLE_OCTAVE + 5) * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
-      (int) (((S_freq_table[n] * 32) * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
+    G_tuning_phase_increment_table[n] = 
+      (int) (((S_tuning_freq_table[n] * 32) * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
   }
-
-  /* compute filter coefficients */
-
-  /* see Vadim Zavalishin's "The Art of VA Filter Design" for equations */
-
-  /* pre-warping (section 3.8, p. 62)                               */
-  /* (1/2) * new_omega_0 * delta_T = tan((1/2) * omega_0 * delta_T) */
-
-  /* 1st order stage multiplier calculation (section 3.10, p. 76-77)              */
-  /* multiplier = ((1/2) * omega_0 * delta_T) / [1 + ((1/2) * omega_0 * delta_T)] */
-
-  /* lowpass filter cutoffs */
-
-  /* E7 */
-  omega_0_delta_t_over_2 = 
-    tanf(0.5f * TWO_PI * (S_freq_table[4 * TUNING_NUM_SEMITONE_STEPS] * 8) * CLOCK_DELTA_T_SECONDS);
-
-  G_lowpass_filter_stage_multiplier_table[0] = 
-    (int) (32768 * (omega_0_delta_t_over_2 / (1.0f + omega_0_delta_t_over_2)) + 0.5f);
-
-  /* G7 */
-  omega_0_delta_t_over_2 = 
-    tanf(0.5f * TWO_PI * (S_freq_table[7 * TUNING_NUM_SEMITONE_STEPS] * 8) * CLOCK_DELTA_T_SECONDS);
-
-  G_lowpass_filter_stage_multiplier_table[1] = 
-    (int) (32768 * (omega_0_delta_t_over_2 / (1.0f + omega_0_delta_t_over_2)) + 0.5f);
-
-  /* A7 */
-  omega_0_delta_t_over_2 = 
-    tanf(0.5f * TWO_PI * (S_freq_table[9 * TUNING_NUM_SEMITONE_STEPS] * 8) * CLOCK_DELTA_T_SECONDS);
-
-  G_lowpass_filter_stage_multiplier_table[2] = 
-    (int) (32768 * (omega_0_delta_t_over_2 / (1.0f + omega_0_delta_t_over_2)) + 0.5f);
-
-  /* C8 */
-  omega_0_delta_t_over_2 = 
-    tanf(0.5f * TWO_PI * (S_freq_table[0 * TUNING_NUM_SEMITONE_STEPS] * 16) * CLOCK_DELTA_T_SECONDS);
-
-  G_lowpass_filter_stage_multiplier_table[3] = 
-    (int) (32768 * (omega_0_delta_t_over_2 / (1.0f + omega_0_delta_t_over_2)) + 0.5f);
-
-  /* highpass filter cutoffs */
-
-  /* A0 */
-  omega_0_delta_t_over_2 = 
-    tanf(0.5f * TWO_PI * (S_freq_table[9 * TUNING_NUM_SEMITONE_STEPS] / 16) * CLOCK_DELTA_T_SECONDS);
-
-  G_highpass_filter_stage_multiplier_table[0] = 
-    (int) (32768 * (omega_0_delta_t_over_2 / (1.0f + omega_0_delta_t_over_2)) + 0.5f);
-
-  /* A1 */
-  omega_0_delta_t_over_2 = 
-    tanf(0.5f * TWO_PI * (S_freq_table[9 * TUNING_NUM_SEMITONE_STEPS] / 8) * CLOCK_DELTA_T_SECONDS);
-
-  G_highpass_filter_stage_multiplier_table[1] = 
-    (int) (32768 * (omega_0_delta_t_over_2 / (1.0f + omega_0_delta_t_over_2)) + 0.5f);
-
-  /* A2 */
-  omega_0_delta_t_over_2 = 
-    tanf(0.5f * TWO_PI * (S_freq_table[9 * TUNING_NUM_SEMITONE_STEPS] / 4) * CLOCK_DELTA_T_SECONDS);
-
-  G_highpass_filter_stage_multiplier_table[2] = 
-    (int) (32768 * (omega_0_delta_t_over_2 / (1.0f + omega_0_delta_t_over_2)) + 0.5f);
-
-  /* A3 */
-  omega_0_delta_t_over_2 = 
-    tanf(0.5f * TWO_PI * (S_freq_table[9 * TUNING_NUM_SEMITONE_STEPS] / 2) * CLOCK_DELTA_T_SECONDS);
-
-  G_highpass_filter_stage_multiplier_table[3] = 
-    (int) (32768 * (omega_0_delta_t_over_2 / (1.0f + omega_0_delta_t_over_2)) + 0.5f);
-
-#if 0
-  for (n = 0; n < 12 * TUNING_NUM_SEMITONE_STEPS; n++)
-  {
-    /* see Vadim Zavalishin's "The Art of VA Filter Design" for equations */
-
-    /* pre-warping (section 3.8, p. 62)                               */
-    /* (1/2) * new_omega_0 * delta_T = tan((1/2) * omega_0 * delta_T) */
-    omega_0_delta_t_over_2 = 
-      tanf(0.5f * TWO_PI * S_freq_table[n] * CLOCK_DELTA_T_SECONDS);
-
-    /* 1st order stage multiplier calculation (section 3.10, p. 76-77)              */
-    /* multiplier = ((1/2) * omega_0 * delta_T) / [1 + ((1/2) * omega_0 * delta_T)] */
-    G_filter_stage_multiplier_table[(4 * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
-      (int) (32768 * (omega_0_delta_t_over_2 / (1.0f + omega_0_delta_t_over_2)) + 0.5f);
-
-    /* now, find the filter coefficients for the other octaves! */
-
-    /* octave 0 */
-    omega_0_delta_t_over_2 = 
-      tanf(0.5f * TWO_PI * (S_freq_table[n] / 16) * CLOCK_DELTA_T_SECONDS);
-
-    G_filter_stage_multiplier_table[(0 * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
-      (int) (32768 * (omega_0_delta_t_over_2 / (1.0f + omega_0_delta_t_over_2)) + 0.5f);
-
-    /* octave 1 */
-    omega_0_delta_t_over_2 = 
-      tanf(0.5f * TWO_PI * (S_freq_table[n] / 8) * CLOCK_DELTA_T_SECONDS);
-
-    G_filter_stage_multiplier_table[(1 * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
-      (int) (32768 * (omega_0_delta_t_over_2 / (1.0f + omega_0_delta_t_over_2)) + 0.5f);
-
-    /* octave 2 */
-    omega_0_delta_t_over_2 = 
-      tanf(0.5f * TWO_PI * (S_freq_table[n] / 4) * CLOCK_DELTA_T_SECONDS);
-
-    G_filter_stage_multiplier_table[(2 * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
-      (int) (32768 * (omega_0_delta_t_over_2 / (1.0f + omega_0_delta_t_over_2)) + 0.5f);
-
-    /* octave 3 */
-    omega_0_delta_t_over_2 = 
-      tanf(0.5f * TWO_PI * (S_freq_table[n] / 2) * CLOCK_DELTA_T_SECONDS);
-
-    G_filter_stage_multiplier_table[(3 * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
-      (int) (32768 * (omega_0_delta_t_over_2 / (1.0f + omega_0_delta_t_over_2)) + 0.5f);
-
-    /* octave 5 */
-    omega_0_delta_t_over_2 = 
-      tanf(0.5f * TWO_PI * (S_freq_table[n] * 2) * CLOCK_DELTA_T_SECONDS);
-
-    G_filter_stage_multiplier_table[(5 * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
-      (int) (32768 * (omega_0_delta_t_over_2 / (1.0f + omega_0_delta_t_over_2)) + 0.5f);
-
-    /* octave 6 */
-    omega_0_delta_t_over_2 = 
-      tanf(0.5f * TWO_PI * (S_freq_table[n] * 4) * CLOCK_DELTA_T_SECONDS);
-
-    G_filter_stage_multiplier_table[(6 * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
-      (int) (32768 * (omega_0_delta_t_over_2 / (1.0f + omega_0_delta_t_over_2)) + 0.5f);
-
-    /* octave 7 */
-    omega_0_delta_t_over_2 = 
-      tanf(0.5f * TWO_PI * (S_freq_table[n] * 8) * CLOCK_DELTA_T_SECONDS);
-
-    G_filter_stage_multiplier_table[(7 * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
-      (int) (32768 * (omega_0_delta_t_over_2 / (1.0f + omega_0_delta_t_over_2)) + 0.5f);
-
-    /* octave 8 */
-    omega_0_delta_t_over_2 = 
-      tanf(0.5f * TWO_PI * (S_freq_table[n] * 16) * CLOCK_DELTA_T_SECONDS);
-
-    G_filter_stage_multiplier_table[(8 * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
-      (int) (32768 * (omega_0_delta_t_over_2 / (1.0f + omega_0_delta_t_over_2)) + 0.5f);
-
-    /* octave 9 */
-    omega_0_delta_t_over_2 = 
-      tanf(0.5f * TWO_PI * (S_freq_table[n] * 32) * CLOCK_DELTA_T_SECONDS);
-
-    G_filter_stage_multiplier_table[(9 * 12 * TUNING_NUM_SEMITONE_STEPS) + n] = 
-      (int) (32768 * (omega_0_delta_t_over_2 / (1.0f + omega_0_delta_t_over_2)) + 0.5f);
-  }
-#endif
 
 #if 0
   printf("Frequency Table (Octave 4):\n");
 
-  for (m = 0; m < (12 * TUNING_NUM_SEMITONE_STEPS) / 4; m++)
+  for (m = 0; m < TUNING_TABLE_SIZE / 4; m++)
   {
-    printf("%f %f %f %f\n", S_freq_table[4 * m + 0], 
-                            S_freq_table[4 * m + 1], 
-                            S_freq_table[4 * m + 2], 
-                            S_freq_table[4 * m + 3]);
+    printf("%f %f %f %f\n", S_tuning_freq_table[4 * m + 0], 
+                            S_tuning_freq_table[4 * m + 1], 
+                            S_tuning_freq_table[4 * m + 2], 
+                            S_tuning_freq_table[4 * m + 3]);
   }
 #endif
 
 #if 0
-  printf("Phase Increment Table:\n");
+  printf("Phase Increment Table (Octave 9):\n");
 
   for (m = 0; m < TUNING_TABLE_SIZE / 4; m++)
   {
-    printf("%d %d %d %d\n", G_phase_increment_table[4 * m + 0], 
-                            G_phase_increment_table[4 * m + 1], 
-                            G_phase_increment_table[4 * m + 2], 
-                            G_phase_increment_table[4 * m + 3]);
-  }
-#endif
-
-#if 0
-  printf("Filter Coefficient Table:\n");
-
-  for (m = 0; m < TUNING_TABLE_SIZE / 4; m++)
-  {
-    printf("%d %d %d %d\n", G_filter_stage_multiplier_table[4 * m + 0], 
-                            G_filter_stage_multiplier_table[4 * m + 1], 
-                            G_filter_stage_multiplier_table[4 * m + 2], 
-                            G_filter_stage_multiplier_table[4 * m + 3]);
+    printf("%d %d %d %d\n", G_tuning_phase_increment_table[4 * m + 0], 
+                            G_tuning_phase_increment_table[4 * m + 1], 
+                            G_tuning_phase_increment_table[4 * m + 2], 
+                            G_tuning_phase_increment_table[4 * m + 3]);
   }
 #endif
 
