@@ -337,8 +337,8 @@ short int voice_reset(int voice_index)
     v->osc_sync[m] = 1;
 
     v->osc_freq_mode[m] = 0;
-    v->osc_detune_coarse[m] = 0;
-    v->osc_detune_fine[m] = 0;
+    v->osc_offset[m] = 0;
+    v->osc_detune[m] = 0;
 
     v->vibrato_enable[m] = 1;
     v->tremolo_enable[m] = 1;
@@ -441,43 +441,72 @@ short int voice_load_patch(int voice_index, int patch_index)
     else
       v->osc_freq_mode[m] = PATCH_OSC_FREQ_MODE_LOWER_BOUND;
 
-    /* detune coarse (multiple and divisor) */
-    v->osc_detune_coarse[m] = 0;
+    /* note offset */
 
-    if ((p->osc_multiple[m] >= PATCH_OSC_MULTIPLE_LOWER_BOUND) && 
-        (p->osc_multiple[m] <= PATCH_OSC_MULTIPLE_UPPER_BOUND))
+    /* mode 0: ratio (multiple and divisor) */
+    if (p->osc_freq_mode[m] == 0)
     {
-      v->osc_detune_coarse[m] += S_voice_multiple_table[p->osc_multiple[m] - PATCH_OSC_MULTIPLE_LOWER_BOUND];
-    }
+      v->osc_offset[m] = 0;
 
-    if ((p->osc_divisor[m] >= PATCH_OSC_DIVISOR_LOWER_BOUND) && 
-        (p->osc_divisor[m] <= PATCH_OSC_DIVISOR_UPPER_BOUND))
-    {
-      v->osc_detune_coarse[m] -= S_voice_divisor_table[p->osc_divisor[m] - PATCH_OSC_DIVISOR_LOWER_BOUND];
+      if ((p->osc_multiple_or_octave[m] >= PATCH_OSC_MULTIPLE_LOWER_BOUND) && 
+          (p->osc_multiple_or_octave[m] <= PATCH_OSC_MULTIPLE_UPPER_BOUND))
+      {
+        v->osc_offset[m] += S_voice_multiple_table[p->osc_multiple_or_octave[m] - PATCH_OSC_MULTIPLE_LOWER_BOUND];
+      }
+
+      if ((p->osc_divisor_or_note[m] >= PATCH_OSC_DIVISOR_LOWER_BOUND) && 
+          (p->osc_divisor_or_note[m] <= PATCH_OSC_DIVISOR_UPPER_BOUND))
+      {
+        v->osc_offset[m] -= S_voice_divisor_table[p->osc_divisor_or_note[m] - PATCH_OSC_DIVISOR_LOWER_BOUND];
+      }
     }
+    /* mode 1: fixed (octave and note) */
+    else if (p->osc_freq_mode[m] == 1)
+    {
+      v->osc_offset[m] = 0;
+
+      if ((p->osc_multiple_or_octave[m] >= PATCH_OSC_OCTAVE_LOWER_BOUND) && 
+          (p->osc_multiple_or_octave[m] <= PATCH_OSC_OCTAVE_UPPER_BOUND))
+      {
+        v->osc_offset[m] += 12 * (p->osc_multiple_or_octave[m] - PATCH_OSC_OCTAVE_LOWER_BOUND);
+      }
+
+      if ((p->osc_divisor_or_note[m] >= PATCH_OSC_NOTE_LOWER_BOUND) && 
+          (p->osc_divisor_or_note[m] <= PATCH_OSC_NOTE_UPPER_BOUND))
+      {
+        v->osc_offset[m] += p->osc_divisor_or_note[m] - PATCH_OSC_NOTE_LOWER_BOUND;
+      }
+    }
+    else
+      v->osc_offset[m] = 0;
 
     /* if the waveform is sine (even periods only)  */
     /* or full-rectified sine (even periods only),  */
     /* then add an additional division by 2.        */
     if ((p->osc_waveform[m] == 5) || (p->osc_waveform[m] == 6))
     {
-      v->osc_detune_coarse[m] -= S_voice_divisor_table[1];
+      v->osc_offset[m] -= S_voice_divisor_table[1];
     }
 
-    /* detune fine */
+    /* detune */
     if ((p->osc_detune[m] >= PATCH_OSC_DETUNE_LOWER_BOUND) && 
         (p->osc_detune[m] <= PATCH_OSC_DETUNE_UPPER_BOUND))
     {
-      v->osc_detune_fine[m] = S_voice_detune_table[p->osc_detune[m] - PATCH_OSC_DETUNE_LOWER_BOUND];
+      v->osc_detune[m] = S_voice_detune_table[p->osc_detune[m] - PATCH_OSC_DETUNE_LOWER_BOUND];
     }
     else
-      v->osc_detune_fine[m] = 0;
+      v->osc_detune[m] = 0;
 
     /* determine oscillator note and pitch index */
-    v->osc_note[m] = v->base_note + v->osc_detune_coarse[m];
+    if (v->osc_freq_mode[m] == 0)
+      v->osc_note[m] = v->base_note + v->osc_offset[m];
+    else if (v->osc_freq_mode[m] == 1)
+      v->osc_note[m] = v->osc_offset[m];
+    else
+      v->osc_note[m] = v->base_note;
 
     v->osc_pitch_index[m] = 
-      (v->osc_note[m] * TUNING_NUM_SEMITONE_STEPS) + v->osc_detune_fine[m];
+      (v->osc_note[m] * TUNING_NUM_SEMITONE_STEPS) + v->osc_detune[m];
 
     if (v->osc_pitch_index[m] < 0)
       v->osc_pitch_index[m] = 0;
@@ -564,10 +593,15 @@ short int voice_set_note(int voice_index, int note)
   /* determine notes & pitch indices, reset phases */
   for (m = 0; m < VOICE_NUM_OSCS_AND_ENVS; m++)
   {
-    v->osc_note[m] = v->base_note + v->osc_detune_coarse[m];
+    if (v->osc_freq_mode[m] == 0)
+      v->osc_note[m] = v->base_note + v->osc_offset[m];
+    else if (v->osc_freq_mode[m] == 1)
+      v->osc_note[m] = v->osc_offset[m];
+    else
+      v->osc_note[m] = v->base_note;
 
     v->osc_pitch_index[m] = 
-      (v->osc_note[m] * TUNING_NUM_SEMITONE_STEPS) + v->osc_detune_fine[m];
+      (v->osc_note[m] * TUNING_NUM_SEMITONE_STEPS) + v->osc_detune[m];
 
     if (v->osc_pitch_index[m] < 0)
       v->osc_pitch_index[m] = 0;

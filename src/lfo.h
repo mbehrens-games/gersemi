@@ -11,9 +11,7 @@ typedef struct lfo
 {
   /* lfo parameters */
   short int waveform;
-  short int frequency;
   short int sync;
-  short int delay;
 
   short int base_vibrato;
   short int base_tremolo;
@@ -29,6 +27,10 @@ typedef struct lfo
   /* aftertouch */
   short int aftertouch_vibrato;
   short int aftertouch_tremolo;
+
+  /* delay */
+  int delay_period;
+  int delay_cycles;
 
   /* phase, phase increment */
   unsigned int phase;

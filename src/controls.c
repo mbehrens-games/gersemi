@@ -296,15 +296,39 @@ short int controls_patch_parameter_adjust(int patch_index, int param_index, int 
   }
   else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_MULTIPLE)
   {
-    CONTROLS_SET_PATCH_PARAMETER( pc->osc_multiple[pr->num], 
-                                  PATCH_OSC_MULTIPLE_LOWER_BOUND, 
-                                  PATCH_OSC_MULTIPLE_UPPER_BOUND)
+    if (pc->osc_freq_mode[pr->num] == 0)
+    {
+      CONTROLS_SET_PATCH_PARAMETER( pc->osc_multiple_or_octave[pr->num], 
+                                    PATCH_OSC_MULTIPLE_LOWER_BOUND, 
+                                    PATCH_OSC_MULTIPLE_UPPER_BOUND)
+    }
   }
   else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_DIVISOR)
   {
-    CONTROLS_SET_PATCH_PARAMETER( pc->osc_divisor[pr->num], 
-                                  PATCH_OSC_DIVISOR_LOWER_BOUND, 
-                                  PATCH_OSC_DIVISOR_UPPER_BOUND)
+    if (pc->osc_freq_mode[pr->num] == 0)
+    {
+      CONTROLS_SET_PATCH_PARAMETER( pc->osc_divisor_or_note[pr->num], 
+                                    PATCH_OSC_DIVISOR_LOWER_BOUND, 
+                                    PATCH_OSC_DIVISOR_UPPER_BOUND)
+    }
+  }
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_OCTAVE)
+  {
+    if (pc->osc_freq_mode[pr->num] == 1)
+    {
+      CONTROLS_SET_PATCH_PARAMETER( pc->osc_multiple_or_octave[pr->num], 
+                                    PATCH_OSC_OCTAVE_LOWER_BOUND, 
+                                    PATCH_OSC_OCTAVE_UPPER_BOUND)
+    }
+  }
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_NOTE)
+  {
+    if (pc->osc_freq_mode[pr->num] == 1)
+    {
+      CONTROLS_SET_PATCH_PARAMETER( pc->osc_divisor_or_note[pr->num], 
+                                    PATCH_OSC_NOTE_LOWER_BOUND, 
+                                    PATCH_OSC_NOTE_UPPER_BOUND)
+    }
   }
   else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_DETUNE)
   {
@@ -360,6 +384,12 @@ short int controls_patch_parameter_adjust(int patch_index, int param_index, int 
     CONTROLS_SET_PATCH_PARAMETER( pc->env_level_ks[pr->num], 
                                   PATCH_ENV_KEYSCALE_LOWER_BOUND, 
                                   PATCH_ENV_KEYSCALE_UPPER_BOUND)
+  }
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_TRIGGER)
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->env_trigger[pr->num], 
+                                  PATCH_ENV_TRIGGER_LOWER_BOUND, 
+                                  PATCH_ENV_TRIGGER_UPPER_BOUND)
   }
   /* lfo & eg bias enable */
   else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_VIBRATO_ENABLE)
@@ -518,7 +548,25 @@ short int controls_patch_parameter_adjust(int patch_index, int param_index, int 
 
   /* reload patch if a parameter was changed */
   if (param_changed == 1)
+  {
+    /* reset multiple/divisor or octave/note to the initial */
+    /* values if the oscillator frequency mode was changed  */
+    if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_FREQ_MODE)
+    {
+      if (pc->osc_freq_mode[pr->num] == 0)
+      {
+        pc->osc_multiple_or_octave[pr->num] = 1;
+        pc->osc_divisor_or_note[pr->num] = 1;
+      }
+      else if (pc->osc_freq_mode[pr->num] == 1)
+      {
+        pc->osc_multiple_or_octave[pr->num] = 4;
+        pc->osc_divisor_or_note[pr->num] = 1;
+      }
+    }
+
     synth_load_patch(0, G_patch_edit_patch_index);
+  }
 
   return 0;
 }

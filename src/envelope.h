@@ -12,23 +12,27 @@ enum
   ENVELOPE_STATE_ATTACK = 0,
   ENVELOPE_STATE_DECAY_1,
   ENVELOPE_STATE_DECAY_2,
-  ENVELOPE_STATE_RELEASE
+  ENVELOPE_STATE_RELEASE, 
+  ENVELOPE_STATE_REVERSE_ATTACK, 
+  ENVELOPE_STATE_REVERSE_DECAY_1, 
+  ENVELOPE_STATE_REVERSE_DECAY_2 
 };
 
 typedef struct envelope
 {
-  /* type */
-  int type;
+  /* trigger mode */
+  short int trigger_mode;
 
   /* envelope settings */
-  short int attack;
-  short int decay_1;
-  short int decay_2;
-  short int release;
-  short int amplitude;
-  short int sustain;
   short int rate_ks;
   short int level_ks;
+
+  /* boost depth */
+  short int boost_depth;
+
+  /* mod wheel, aftertouch */
+  short int mod_wheel_boost;
+  short int aftertouch_boost;
 
   /* adjustments */
   short int ampl_adjustment;
@@ -51,6 +55,10 @@ typedef struct envelope
   /* phase increment, phase */
   unsigned int increment;
   unsigned int phase;
+
+  /* controller inputs */
+  short int mod_wheel_input;
+  short int aftertouch_input;
 
   /* attenuation */
   short int attenuation;

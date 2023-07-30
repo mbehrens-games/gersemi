@@ -53,8 +53,11 @@ short int filter_reset(int voice_index)
   hpf = &G_filter_bank[2 * voice_index + 1];
 
   /* set cutoffs */
-  lpf->cutoff = PATCH_LOWPASS_CUTOFF_UPPER_BOUND;
-  hpf->cutoff = PATCH_HIGHPASS_CUTOFF_LOWER_BOUND;
+  lpf->multiplier = 
+    S_lowpass_filter_stage_multiplier_table[PATCH_LOWPASS_CUTOFF_UPPER_BOUND - PATCH_LOWPASS_CUTOFF_LOWER_BOUND];
+
+  hpf->multiplier = 
+    S_highpass_filter_stage_multiplier_table[0];
 
   /* reset state */
   lpf->input = 0;
@@ -105,19 +108,27 @@ short int filter_load_patch(int voice_index, int patch_index)
   if ((p->lowpass_cutoff >= PATCH_LOWPASS_CUTOFF_LOWER_BOUND) && 
       (p->lowpass_cutoff <= PATCH_LOWPASS_CUTOFF_UPPER_BOUND))
   {
-    lpf->cutoff = p->lowpass_cutoff;
+    lpf->multiplier = 
+      S_lowpass_filter_stage_multiplier_table[p->lowpass_cutoff - PATCH_LOWPASS_CUTOFF_LOWER_BOUND];
   }
   else
-    lpf->cutoff = PATCH_LOWPASS_CUTOFF_UPPER_BOUND;
+  {
+    lpf->multiplier = 
+      S_lowpass_filter_stage_multiplier_table[PATCH_LOWPASS_CUTOFF_UPPER_BOUND - PATCH_LOWPASS_CUTOFF_LOWER_BOUND];
+  }
 
   /* set highpass cutoff */
   if ((p->highpass_cutoff >= PATCH_HIGHPASS_CUTOFF_LOWER_BOUND) && 
       (p->highpass_cutoff <= PATCH_HIGHPASS_CUTOFF_UPPER_BOUND))
   {
-    hpf->cutoff = p->highpass_cutoff;
+    hpf->multiplier = 
+      S_highpass_filter_stage_multiplier_table[p->highpass_cutoff - PATCH_HIGHPASS_CUTOFF_LOWER_BOUND];
   }
   else
-    hpf->cutoff = PATCH_HIGHPASS_CUTOFF_LOWER_BOUND;
+  {
+    hpf->multiplier = 
+      S_highpass_filter_stage_multiplier_table[0];
+  }
 
   return 0;
 }
@@ -132,8 +143,6 @@ short int filter_update_all()
   filter* lpf;
   filter* hpf;
 
-  int stage_multiplier;
-
   for (k = 0; k < BANK_NUM_VOICES; k++)
   {
     /* obtain filter pointers */
@@ -144,17 +153,13 @@ short int filter_update_all()
 
     /* lowpass filter */
 
-    /* obtain multiplier from table */
-    stage_multiplier = 
-      S_lowpass_filter_stage_multiplier_table[lpf->cutoff];
-
     /* integrator 1 */
-    lpf->v[0] = ((lpf->input - lpf->s[0]) * stage_multiplier) / 32768;
+    lpf->v[0] = ((lpf->input - lpf->s[0]) * lpf->multiplier) / 32768;
     lpf->y[0] = lpf->v[0] + lpf->s[0];
     lpf->s[0] = lpf->y[0] + lpf->v[0];
 
     /* integrator 2 */
-    lpf->v[1] = ((lpf->y[0] - lpf->s[1]) * stage_multiplier) / 32768;
+    lpf->v[1] = ((lpf->y[0] - lpf->s[1]) * lpf->multiplier) / 32768;
     lpf->y[1] = lpf->v[1] + lpf->s[1];
     lpf->s[1] = lpf->y[1] + lpf->v[1];
 
@@ -164,17 +169,13 @@ short int filter_update_all()
     /* highpass filter */
     hpf->input = lpf->level;
 
-    /* obtain multiplier from table */
-    stage_multiplier = 
-      S_highpass_filter_stage_multiplier_table[hpf->cutoff];
-
     /* integrator 1 */
-    hpf->v[0] = ((hpf->input - hpf->s[0]) * stage_multiplier) / 32768;
+    hpf->v[0] = ((hpf->input - hpf->s[0]) * hpf->multiplier) / 32768;
     hpf->y[0] = hpf->v[0] + hpf->s[0];
     hpf->s[0] = hpf->y[0] + hpf->v[0];
 
     /* integrator 2 */
-    hpf->v[1] = ((hpf->input - hpf->y[0] - hpf->s[1]) * stage_multiplier) / 32768;
+    hpf->v[1] = ((hpf->input - hpf->y[0] - hpf->s[1]) * hpf->multiplier) / 32768;
     hpf->y[1] = hpf->v[1] + hpf->s[1];
     hpf->s[1] = hpf->y[1] + hpf->v[1];
 

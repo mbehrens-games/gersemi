@@ -11,7 +11,7 @@
 
 typedef struct filter
 {
-  int cutoff;
+  int multiplier;
 
   int input;
 

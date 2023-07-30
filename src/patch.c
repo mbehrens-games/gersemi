@@ -49,8 +49,8 @@ short int patch_reset(int patch_index)
     p->osc_feedback[m] = 0;
     p->osc_sync[m] = 1;
     p->osc_freq_mode[m] = 0;
-    p->osc_multiple[m] = 1;
-    p->osc_divisor[m] = 1;
+    p->osc_multiple_or_octave[m] = 1;
+    p->osc_divisor_or_note[m] = 1;
     p->osc_detune[m] = 0;
 
     p->env_attack[m] = 32;
@@ -61,6 +61,7 @@ short int patch_reset(int patch_index)
     p->env_sustain[m] = 0;
     p->env_rate_ks[m] = 1;
     p->env_level_ks[m] = 1;
+    p->env_trigger[m] = 1;
 
     p->vibrato_enable[m] = 1;
     p->tremolo_enable[m] = 1;

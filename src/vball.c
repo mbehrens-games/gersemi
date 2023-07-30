@@ -359,8 +359,8 @@ static char S_patch_edit_header_labels[LAYOUT_HEADER_PATCH_EDIT_NUM_LABELS][12] 
 
 static char S_patch_edit_parameter_labels[LAYOUT_PARAM_PATCH_EDIT_NUM_LABELS][4] = 
   { "Alg", 
-    "Wav", "FBk", "Syn", "Frq", "Mul", "Div", "Det", 
-    "Att", "D1", "D2", "Rel", "Lev", "Sus", "RKS", "LKS", 
+    "Wav", "FBk", "Syn", "Frq", "Mul", "Div", "Oct", "Nte", "Det", 
+    "Att", "D1", "D2", "Rel", "Lev", "Sus", "RKS", "LKS", "Rep", 
     "Vib", "Tre", "Bst", 
     "Wav", "Frq", "Syn", "Dly", "Vib", "Tre", 
     "Mde", "Spd", 
@@ -388,7 +388,7 @@ static char S_patch_edit_algorithm_values[PATCH_ALGORITHM_NUM_VALUES][12] =
 */
 
 static char S_patch_edit_osc_waveform_values[PATCH_OSC_WAVEFORM_NUM_VALUES][8] = 
-  { "Sine", "Half", "Full", "Quar", "Alt", "Camel", "Squa", "L Saw" };
+  { "Sine", "Half", "Full", "Quar", "Alt", "Cam", "Squa", "LSaw" };
 
 static char S_patch_edit_osc_feedback_values[PATCH_OSC_FEEDBACK_NUM_VALUES][4] = 
   { "0", "1", "2", "3", "4", "5", "6", "7" };
@@ -399,6 +399,12 @@ static char S_patch_edit_osc_sync_values[PATCH_OSC_SYNC_NUM_VALUES][8] =
 static char S_patch_edit_osc_freq_mode_values[PATCH_OSC_FREQ_MODE_NUM_VALUES][8] = 
   { "Ratio", "Fixed" };
 
+static char S_patch_edit_osc_octave_values[PATCH_OSC_OCTAVE_NUM_VALUES][4] = 
+  { "0",  "1",  "2",  "3",  "4",  "5",  "6",  "7", "8", "9" };
+
+static char S_patch_edit_osc_note_values[PATCH_OSC_NOTE_NUM_VALUES][4] = 
+  { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+
 static char S_patch_edit_osc_detune_values[PATCH_OSC_DETUNE_NUM_VALUES][4] = 
   { "-16", "-15", "-14", "-13", "-12", "-11", "-10",  "-9", 
      "-8",  "-7",  "-6",  "-5",  "-4",  "-3",  "-2",  "-1", 
@@ -407,16 +413,14 @@ static char S_patch_edit_osc_detune_values[PATCH_OSC_DETUNE_NUM_VALUES][4] =
       "9",  "10",  "11",  "12",  "13",  "14",  "15",  "16" 
   };
 
+static char S_patch_edit_env_trigger_values[PATCH_ENV_TRIGGER_NUM_VALUES][8] = 
+  { "F 1", "B 1", "F R", "B R", "F/B", "B/F", "D/U", "U/D" };
+
 static char S_patch_edit_mod_enable_values[PATCH_MOD_ENABLE_NUM_VALUES][8] = 
   { "Off", "On" };
 
 static char S_patch_edit_lfo_waveform_values[PATCH_LFO_WAVEFORM_NUM_VALUES][8] = 
   { "Tri", "Squa",  "Saw U",  "Saw D", "Noise" };
-
-#if 0
-static char S_patch_edit_lfo_note_values[PATCH_LFO_NOTE_NUM_VALUES][4] = 
-  { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "C'" };
-#endif
 
 static char S_patch_edit_lfo_sync_values[PATCH_LFO_SYNC_NUM_VALUES][4] = 
   { "Off", "On" };
@@ -1359,6 +1363,24 @@ short int vb_all_load_patches_overlay()
     if ((pr->label < 0) || (pr->label >= LAYOUT_PARAM_PATCH_EDIT_NUM_LABELS))
       continue;
 
+    /* skip multiple/divisor or octave/note depending on the frequency mode */
+    if (p->osc_freq_mode[pr->num] == 0)
+    {
+      if ((pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_OCTAVE) || 
+          (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_NOTE))
+      {
+        continue;
+      }
+    }
+    else if (p->osc_freq_mode[pr->num] == 1)
+    {
+      if ((pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_MULTIPLE) || 
+          (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_DIVISOR))
+      {
+        continue;
+      }
+    }
+
     /* determine parameter value and string */
     if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ALGORITHM)
     {
@@ -1387,13 +1409,23 @@ short int vb_all_load_patches_overlay()
     }
     else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_MULTIPLE)
     {
-      value = p->osc_multiple[pr->num];
-      value_string = S_patch_edit_1_to_32_values[p->osc_multiple[pr->num] - PATCH_OSC_MULTIPLE_LOWER_BOUND];
+      value = p->osc_multiple_or_octave[pr->num];
+      value_string = S_patch_edit_1_to_32_values[p->osc_multiple_or_octave[pr->num] - PATCH_OSC_MULTIPLE_LOWER_BOUND];
     }
     else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_DIVISOR)
     {
-      value = p->osc_divisor[pr->num];
-      value_string = S_patch_edit_1_to_32_values[p->osc_divisor[pr->num] - PATCH_OSC_DIVISOR_LOWER_BOUND];
+      value = p->osc_divisor_or_note[pr->num];
+      value_string = S_patch_edit_1_to_32_values[p->osc_divisor_or_note[pr->num] - PATCH_OSC_DIVISOR_LOWER_BOUND];
+    }
+    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_OCTAVE)
+    {
+      value = p->osc_multiple_or_octave[pr->num];
+      value_string = S_patch_edit_osc_octave_values[p->osc_multiple_or_octave[pr->num] - PATCH_OSC_OCTAVE_LOWER_BOUND];
+    }
+    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_NOTE)
+    {
+      value = p->osc_divisor_or_note[pr->num];
+      value_string = S_patch_edit_osc_note_values[p->osc_divisor_or_note[pr->num] - PATCH_OSC_NOTE_LOWER_BOUND];
     }
     else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_DETUNE)
     {
@@ -1439,6 +1471,11 @@ short int vb_all_load_patches_overlay()
     {
       value = p->env_level_ks[pr->num];
       value_string = S_patch_edit_1_to_32_values[p->env_level_ks[pr->num] - PATCH_ENV_KEYSCALE_LOWER_BOUND];
+    }
+    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_TRIGGER)
+    {
+      value = p->env_trigger[pr->num];
+      value_string = S_patch_edit_env_trigger_values[p->env_trigger[pr->num] - PATCH_ENV_TRIGGER_LOWER_BOUND];
     }
     else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_VIBRATO_ENABLE)
     {

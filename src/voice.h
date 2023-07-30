@@ -31,8 +31,8 @@ typedef struct voice
   short int osc_sync[VOICE_NUM_OSCS_AND_ENVS];
 
   short int osc_freq_mode[VOICE_NUM_OSCS_AND_ENVS];
-  short int osc_detune_coarse[VOICE_NUM_OSCS_AND_ENVS];
-  short int osc_detune_fine[VOICE_NUM_OSCS_AND_ENVS];
+  short int osc_offset[VOICE_NUM_OSCS_AND_ENVS];
+  short int osc_detune[VOICE_NUM_OSCS_AND_ENVS];
 
   short int vibrato_enable[VOICE_NUM_OSCS_AND_ENVS];
   short int tremolo_enable[VOICE_NUM_OSCS_AND_ENVS];
