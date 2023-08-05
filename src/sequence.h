@@ -5,6 +5,9 @@
 #ifndef SEQUENCE_H
 #define SEQUENCE_H
 
+#include "bank.h"
+
+#if 0
 enum
 {
   SEQUENCER_TIME_SIGNATURE_4_4 = 0,
@@ -19,68 +22,69 @@ enum
   SEQUENCER_TIME_SIGNATURE_6_4,
   SEQUENCER_NUM_TIME_SIGNATURES
 };
+#endif
 
-#define SEQUENCER_MAX_PATTERNS            16
-#define SEQUENCER_MAX_STEPS_PER_PATTERN   128 /* 4 steps per beat, 4 beats per bar, 8 bars in a pattern */
+#define SEQUENCER_NUM_STEPS_PER_BEAT    4
+#define SEQUENCER_NUM_BEATS_PER_PATTERN 32  /* 4 beats per bar, 8 bars in a pattern */
 
-typedef struct step
+#define SEQUENCER_NUM_STEPS_PER_PATTERN (SEQUENCER_NUM_STEPS_PER_BEAT * SEQUENCER_NUM_BEATS_PER_PATTERN)
+
+#define SEQUENCER_NUM_SFX_VOICES  6
+#define SEQUENCER_NUM_DRUM_VOICES 6
+#define SEQUENCER_NUM_INSTRUMENTS 9 /* 1 poly instrument + 8 mono instruments */
+
+#define SEQUENCER_NUM_SFX_TEMPOS  SEQUENCER_NUM_SFX_VOICES
+#define SEQUENCER_NUM_SFX_SWINGS  SEQUENCER_NUM_SFX_VOICES
+
+#define SEQUENCER_NUM_MUSIC_TEMPOS  1
+#define SEQUENCER_NUM_MUSIC_SWINGS  (SEQUENCER_NUM_DRUM_VOICES + SEQUENCER_NUM_INSTRUMENTS)
+
+typedef struct drum_step
 {
-  char note_1;
-  char note_2;
-  char note_3;
-  char note_4;
+  char note[6];
+} drum_step;
 
+typedef struct instrument_step
+{
+  char note[4];
   char modulation;
-
-  char volume;
-  char brightness;
 
   char arpeggio_mode;
   char arpeggio_speed;
 
-  char pitch_sweep_mode;
-  char pitch_sweep_speed;
+  char volume;
 
-  char vibrato_depth;
-  char vibrato_speed;
+  char portamento_switch;
+  char portamento_speed;
 
-  char tremolo_depth;
-  char tremolo_speed;
-
-  char wobble_depth;
-  char wobble_speed;
-} step;
+  char mod_wheel_amount;
+  char aftertouch_amount;
+} instrument_step;
 
 typedef struct pattern
 {
-  step  steps[SEQUENCER_MAX_STEPS_PER_PATTERN];
-  int   num_steps;
+  char tempo[SEQUENCER_NUM_BEATS_PER_PATTERN];
+  char swings[SEQUENCER_NUM_MUSIC_SWINGS][SEQUENCER_NUM_BEATS_PER_PATTERN];
 
-  int   number_of_bars;
+  drum_step       dr_steps[SEQUENCER_NUM_DRUM_VOICES][SEQUENCER_NUM_STEPS_PER_PATTERN];
+  instrument_step in_steps[SEQUENCER_NUM_INSTRUMENTS][SEQUENCER_NUM_STEPS_PER_PATTERN];
+
+  int   num_bars;
 } pattern;
 
-extern pattern  G_sequencer_patterns[SEQUENCER_MAX_PATTERNS];
-extern int      G_sequencer_num_patterns;
-
-extern int      G_sequencer_time_signature;
-
-extern int      G_sequencer_music_tempo;
-extern int      G_sequencer_music_swing;
+extern pattern G_sequencer_pattern_bank[BANK_NUM_PATTERNS];
 
 /* function declarations */
-short int   sequencer_setup();
+short int sequencer_pattern_setup_all();
+short int sequencer_pattern_reset();
 
-short int   sequencer_reset();
+short int sequencer_setup();
 
-short int   sequencer_set_time_signature(int sig);
+short int sequencer_reset();
 
-short int   sequencer_set_tempo(int tempo);
-short int   sequencer_set_swing(int swing);
+short int sequencer_activate_step();
+short int sequencer_update();
 
-short int   sequencer_activate_step();
-
-short int   sequencer_update();
-
-short int   sequencer_generate_tables();
+short int sequencer_generate_tables();
 
 #endif

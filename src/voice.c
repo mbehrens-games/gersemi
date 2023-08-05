@@ -194,7 +194,7 @@ static int  S_voice_divisor_table[8] =
               3 * 12 + 0    /*  /8  */
             };
 
-/* detune (fine) table */
+/* detune table */
 static int  S_voice_detune_table[33] = 
             { (-16 * TUNING_NUM_SEMITONE_STEPS) / 32, 
               (-15 * TUNING_NUM_SEMITONE_STEPS) / 32, 
@@ -229,51 +229,6 @@ static int  S_voice_detune_table[33] =
               ( 14 * TUNING_NUM_SEMITONE_STEPS) / 32, 
               ( 15 * TUNING_NUM_SEMITONE_STEPS) / 32, 
               ( 16 * TUNING_NUM_SEMITONE_STEPS) / 32
-            };
-
-/* noise mix table */
-
-/* the values are found using the formula:            */
-/*   (10 * (log(1 / val) / log(10)) / DB_STEP_10_BIT, */
-/*   where DB_STEP_10_BIT = 0.046875                  */
-static int  S_voice_noise_mix_table[17] = 
-            {1023,  /*  0/16  */
-              257,  /*  1/16  */
-              193,  /*  2/16  */
-              155,  /*  3/16  */
-              128,  /*  4/16  */
-              108,  /*  5/16  */
-               91,  /*  6/16  */
-               76,  /*  7/16  */
-               64,  /*  8/16  */
-               53,  /*  9/16  */
-               44,  /* 10/16  */
-               35,  /* 11/16  */
-               27,  /* 12/16  */
-               19,  /* 13/16  */
-               12,  /* 14/16  */
-                6,  /* 15/16  */
-                0   /* 16/16  */
-            };
-
-/* noise note table */
-static int  S_voice_noise_note_table[16] = 
-            { 3 * 12 + 9, /* A-3  */
-              4 * 12 + 2, /* D-4  */
-              4 * 12 + 9, /* A-4  */
-              5 * 12 + 2, /* D-5  */
-              5 * 12 + 9, /* A-5  */
-              6 * 12 + 2, /* D-6  */
-              6 * 12 + 9, /* A-6  */
-              7 * 12 + 1, /* C#7  */
-              7 * 12 + 5, /* F-7  */
-              7 * 12 + 9, /* A-7  */
-              8 * 12 + 1, /* C#8  */
-              8 * 12 + 5, /* F-8  */
-              8 * 12 + 9, /* A-8  */
-              9 * 12 + 1, /* C#9  */
-              9 * 12 + 5, /* F-9  */
-              9 * 12 + 9  /* A-9  */
             };
 
 /* db to linear table */
@@ -344,15 +299,6 @@ short int voice_reset(int voice_index)
     v->tremolo_enable[m] = 1;
     v->boost_enable[m] = 1;
   }
-
-  /* noise generator */
-  v->noise_mix_adjustment = 1023;
-  v->wave_mix_adjustment = 0;
-
-  v->noise_pitch_index = 0;
-
-  v->noise_phase = 0;
-  v->noise_lfsr = 0x0001;
 
   /* envelope levels */
   for (m = 0; m < VOICE_NUM_OSCS_AND_ENVS; m++)
@@ -448,16 +394,16 @@ short int voice_load_patch(int voice_index, int patch_index)
     {
       v->osc_offset[m] = 0;
 
-      if ((p->osc_multiple_or_octave[m] >= PATCH_OSC_MULTIPLE_LOWER_BOUND) && 
-          (p->osc_multiple_or_octave[m] <= PATCH_OSC_MULTIPLE_UPPER_BOUND))
+      if ((p->osc_multiple[m] >= PATCH_OSC_MULTIPLE_LOWER_BOUND) && 
+          (p->osc_multiple[m] <= PATCH_OSC_MULTIPLE_UPPER_BOUND))
       {
-        v->osc_offset[m] += S_voice_multiple_table[p->osc_multiple_or_octave[m] - PATCH_OSC_MULTIPLE_LOWER_BOUND];
+        v->osc_offset[m] += S_voice_multiple_table[p->osc_multiple[m] - PATCH_OSC_MULTIPLE_LOWER_BOUND];
       }
 
-      if ((p->osc_divisor_or_note[m] >= PATCH_OSC_DIVISOR_LOWER_BOUND) && 
-          (p->osc_divisor_or_note[m] <= PATCH_OSC_DIVISOR_UPPER_BOUND))
+      if ((p->osc_divisor[m] >= PATCH_OSC_DIVISOR_LOWER_BOUND) && 
+          (p->osc_divisor[m] <= PATCH_OSC_DIVISOR_UPPER_BOUND))
       {
-        v->osc_offset[m] -= S_voice_divisor_table[p->osc_divisor_or_note[m] - PATCH_OSC_DIVISOR_LOWER_BOUND];
+        v->osc_offset[m] -= S_voice_divisor_table[p->osc_divisor[m] - PATCH_OSC_DIVISOR_LOWER_BOUND];
       }
     }
     /* mode 1: fixed (octave and note) */
@@ -465,16 +411,16 @@ short int voice_load_patch(int voice_index, int patch_index)
     {
       v->osc_offset[m] = 0;
 
-      if ((p->osc_multiple_or_octave[m] >= PATCH_OSC_OCTAVE_LOWER_BOUND) && 
-          (p->osc_multiple_or_octave[m] <= PATCH_OSC_OCTAVE_UPPER_BOUND))
+      if ((p->osc_note[m] >= PATCH_OSC_NOTE_LOWER_BOUND) && 
+          (p->osc_note[m] <= PATCH_OSC_NOTE_UPPER_BOUND))
       {
-        v->osc_offset[m] += 12 * (p->osc_multiple_or_octave[m] - PATCH_OSC_OCTAVE_LOWER_BOUND);
+        v->osc_offset[m] += p->osc_note[m] - PATCH_OSC_NOTE_LOWER_BOUND;
       }
 
-      if ((p->osc_divisor_or_note[m] >= PATCH_OSC_NOTE_LOWER_BOUND) && 
-          (p->osc_divisor_or_note[m] <= PATCH_OSC_NOTE_UPPER_BOUND))
+      if ((p->osc_octave[m] >= PATCH_OSC_OCTAVE_LOWER_BOUND) && 
+          (p->osc_octave[m] <= PATCH_OSC_OCTAVE_UPPER_BOUND))
       {
-        v->osc_offset[m] += p->osc_divisor_or_note[m] - PATCH_OSC_NOTE_LOWER_BOUND;
+        v->osc_offset[m] += 12 * (p->osc_octave[m] - PATCH_OSC_OCTAVE_LOWER_BOUND);
       }
     }
     else
@@ -541,29 +487,6 @@ short int voice_load_patch(int voice_index, int patch_index)
       v->boost_enable[m] = PATCH_MOD_ENABLE_LOWER_BOUND;
   }
 
-  /* noise mix */
-  if ((p->noise_mix >= PATCH_NOISE_MIX_LOWER_BOUND) && 
-      (p->noise_mix <= PATCH_NOISE_MIX_UPPER_BOUND))
-  {
-    v->noise_mix_adjustment = S_voice_noise_mix_table[p->noise_mix - PATCH_NOISE_MIX_LOWER_BOUND];
-    v->wave_mix_adjustment = S_voice_noise_mix_table[16 - p->noise_mix + PATCH_NOISE_MIX_LOWER_BOUND];
-  }
-  else
-  {
-    v->noise_mix_adjustment = S_voice_noise_mix_table[0];
-    v->wave_mix_adjustment = S_voice_noise_mix_table[16];
-  }
-
-  /* noise frequency */
-  if ((p->noise_frequency >= PATCH_NOISE_FREQUENCY_LOWER_BOUND) && 
-      (p->noise_frequency <= PATCH_NOISE_FREQUENCY_UPPER_BOUND))
-  {
-    v->noise_pitch_index = 
-      S_voice_noise_note_table[p->noise_frequency - PATCH_NOISE_FREQUENCY_LOWER_BOUND] * TUNING_NUM_SEMITONE_STEPS;
-  }
-  else
-    v->noise_pitch_index = S_voice_noise_note_table[0] * TUNING_NUM_SEMITONE_STEPS;
-
   return 0;
 }
 
@@ -615,10 +538,6 @@ short int voice_set_note(int voice_index, int note)
     }
   }
 
-  /* reset noise generator */
-  v->noise_phase = 0;
-  v->noise_lfsr = 0x0001;
-
   return 0;
 }
 
@@ -628,7 +547,6 @@ short int voice_set_note(int voice_index, int note)
 short int voice_update_all()
 {
   short int osc_env_index[VOICE_NUM_OSCS_AND_ENVS];
-  short int noise_env_index;
 
   int osc_fb_mod[VOICE_NUM_OSCS_AND_ENVS];
   int osc_phase_mod[VOICE_NUM_OSCS_AND_ENVS];
@@ -687,8 +605,8 @@ short int voice_update_all()
       octave = adjusted_pitch_index / TUNING_TABLE_SIZE;
       increment_index = adjusted_pitch_index % TUNING_TABLE_SIZE;
 
-      if (octave < 9)
-        v->osc_phase[m] += G_tuning_phase_increment_table[increment_index] >> (9 - octave);
+      if (octave < TUNING_HIGHEST_OCTAVE)
+        v->osc_phase[m] += G_tuning_phase_increment_table[increment_index] >> (TUNING_HIGHEST_OCTAVE - octave);
       else
         v->osc_phase[m] += G_tuning_phase_increment_table[increment_index];
 
@@ -696,44 +614,6 @@ short int voice_update_all()
       if (v->osc_phase[m] > 0xFFFFFFF)
         v->osc_phase[m] &= 0xFFFFFFF;
     }
-
-    /* update noise phase */
-    octave = v->noise_pitch_index / TUNING_TABLE_SIZE;
-    increment_index = v->noise_pitch_index % TUNING_TABLE_SIZE;
-
-    if (octave < 9)
-      v->noise_phase += G_tuning_phase_increment_table[increment_index] >> (9 - octave);
-    else
-      v->noise_phase += G_tuning_phase_increment_table[increment_index];
-
-    /* if the noise generator has completed a period, update the lfsr */
-    if (v->noise_phase > 0xFFFFFFF)
-    {
-      v->noise_phase &= 0xFFFFFFF;
-
-      /* update noise generator (nes) */
-      /* 15-bit lfsr, taps on 1 and 2 */
-      if ((v->noise_lfsr & 0x0001) ^ ((v->noise_lfsr & 0x0002) >> 1))
-        v->noise_lfsr = ((v->noise_lfsr >> 1) & 0x3FFF) | 0x4000;
-      else
-        v->noise_lfsr = (v->noise_lfsr >> 1) & 0x3FFF;
-    }
-
-    /* add in noise mix adjustments to envelopes */
-    noise_env_index = osc_env_index[3];
-
-    noise_env_index += v->noise_mix_adjustment;
-    osc_env_index[3] += v->wave_mix_adjustment;
-
-    if (noise_env_index < 0)
-      noise_env_index = 0;
-    else if (noise_env_index > 1023)
-      noise_env_index = 1023;
-
-    if (osc_env_index[3] < 0)
-      osc_env_index[3] = 0;
-    else if (osc_env_index[3] > 1023)
-      osc_env_index[3] = 1023;
 
     /* update oscillator feedback */
     VOICE_UPDATE_OSCILLATOR_FEEDBACK(0)
@@ -833,12 +713,6 @@ short int voice_update_all()
     }
     else
       level = 0;
-
-    /* mix in noise */
-    if (v->noise_lfsr & 0x0001)
-      level += S_voice_db_to_linear_table[noise_env_index << 2];
-    else
-      level -= S_voice_db_to_linear_table[noise_env_index << 2];
 
     /* set voice level */
     v->level = level;

@@ -38,15 +38,6 @@ typedef struct voice
   short int tremolo_enable[VOICE_NUM_OSCS_AND_ENVS];
   short int boost_enable[VOICE_NUM_OSCS_AND_ENVS];
 
-  /* noise */
-  short int noise_mix_adjustment;
-  short int wave_mix_adjustment;
-
-  int noise_pitch_index;
-
-  unsigned int noise_phase;
-  unsigned int noise_lfsr;
-
   /* envelope levels */
   short int env_input[VOICE_NUM_OSCS_AND_ENVS];
 

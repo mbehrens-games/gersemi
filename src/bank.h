@@ -63,6 +63,15 @@
 #define BANK_NUM_SWEEPS     (BANK_NUM_VOICES * 1)
 #define BANK_NUM_FILTERS    (BANK_NUM_VOICES * 2)
 
+/* patterns */
+#define BANK_NUM_PATTERNS 32
+
+#define BANK_PATTERN_INDEX_IS_VALID(index)                                     \
+  ((index >= 0) && (index < BANK_NUM_PATTERNS))
+
+#define BANK_PATTERN_INDEX_IS_NOT_VALID(index)                                 \
+  (!(BANK_PATTERN_INDEX_IS_VALID(index)))
+
 /* key signatures, time signatures, etc */
 
 /* the sound effects can have unique time settings, but */

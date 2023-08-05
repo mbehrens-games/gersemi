@@ -53,7 +53,9 @@
             (e->state == ENVELOPE_STATE_REVERSE_DECAY_2))                      \
   {                                                                            \
     e->increment = S_envelope_phase_increment_table[e->row] / 14;              \
-  }
+  }                                                                            \
+  else                                                                         \
+    e->increment = S_envelope_phase_increment_table[e->row];
 
 /* envelope phase increment table */
 static unsigned int S_envelope_phase_increment_table[ENVELOPE_TABLE_SIZE];

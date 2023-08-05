@@ -59,12 +59,6 @@ enum
   CONTROLS_MOUSE_BUTTON_STATE_RELEASED
 };
 
-enum
-{
-  CONTROLS_PATCH_ADJUST_MODE_DIRECT = 0, 
-  CONTROLS_PATCH_ADJUST_MODE_RELATIVE
-};
-
 #define CONTROLS_KEY_IS_PRESSED(index)                                         \
   (S_key_states[index] == CONTROLS_KEY_STATE_PRESSED)
 
@@ -156,28 +150,44 @@ enum
 #define CONTROLS_PATCH_PARAM_SLIDER_POS_X_LOWER_BOUND                          \
   ((GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_PATCH_EDIT_PARAM_SLIDER_TRACK_X - LAYOUT_PATCH_EDIT_PARAM_SLIDER_WIDTH))
 
-#define CONTROLS_MOUSE_CURSOR_IS_OVER_PATCH_PARAM_ADJUST_LEFT()                                                                     \
-  ( (S_mouse_remapped_pos_x >= (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_PATCH_EDIT_PARAM_ADJUST_LEFT_X - 1))  &&  \
-    (S_mouse_remapped_pos_x <  (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_PATCH_EDIT_PARAM_ADJUST_LEFT_X + 1))  &&  \
+#define CONTROLS_MOUSE_CURSOR_IS_OVER_PATCH_PARAM_ARROWS_LEFT()                                                                     \
+  ( (S_mouse_remapped_pos_x >= (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_PATCH_EDIT_PARAM_ARROWS_LEFT_X - 1))  &&  \
+    (S_mouse_remapped_pos_x <  (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_PATCH_EDIT_PARAM_ARROWS_LEFT_X + 1))  &&  \
     (S_mouse_remapped_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (pr->center_y - G_current_scroll_amount - 1))               &&  \
     (S_mouse_remapped_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (pr->center_y - G_current_scroll_amount + 1)))
 
-#define CONTROLS_MOUSE_CURSOR_IS_OVER_PATCH_PARAM_ADJUST_RIGHT()                                                                    \
-  ( (S_mouse_remapped_pos_x >= (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_PATCH_EDIT_PARAM_ADJUST_RIGHT_X - 1)) &&  \
-    (S_mouse_remapped_pos_x <  (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_PATCH_EDIT_PARAM_ADJUST_RIGHT_X + 1)) &&  \
+#define CONTROLS_MOUSE_CURSOR_IS_OVER_PATCH_PARAM_ARROWS_RIGHT()                                                                    \
+  ( (S_mouse_remapped_pos_x >= (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_PATCH_EDIT_PARAM_ARROWS_RIGHT_X - 1)) &&  \
+    (S_mouse_remapped_pos_x <  (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_PATCH_EDIT_PARAM_ARROWS_RIGHT_X + 1)) &&  \
+    (S_mouse_remapped_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (pr->center_y - G_current_scroll_amount - 1))               &&  \
+    (S_mouse_remapped_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (pr->center_y - G_current_scroll_amount + 1)))
+
+#define CONTROLS_MOUSE_CURSOR_IS_OVER_PATCH_PARAM_RADIO_BUTTON()                                                                    \
+  ( (S_mouse_remapped_pos_x >= (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_PATCH_EDIT_PARAM_RADIO_BUTTON_X - 1)) &&  \
+    (S_mouse_remapped_pos_x <  (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_PATCH_EDIT_PARAM_RADIO_BUTTON_X + 1)) &&  \
     (S_mouse_remapped_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (pr->center_y - G_current_scroll_amount - 1))               &&  \
     (S_mouse_remapped_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (pr->center_y - G_current_scroll_amount + 1)))
 
 /* patch parameter adjustment */
 #define CONTROLS_SET_PATCH_PARAMETER(param, lower, upper)                      \
-  if ((mode == CONTROLS_PATCH_ADJUST_MODE_DIRECT) && (param != value))         \
+  if ((pr->adjust_type == LAYOUT_PARAM_PATCH_EDIT_ADJUST_TYPE_SLIDER) &&       \
+      (param != value))                                                        \
   {                                                                            \
     param = value;                                                             \
     param_changed = 1;                                                         \
   }                                                                            \
-  else if (mode == CONTROLS_PATCH_ADJUST_MODE_RELATIVE)                        \
+  else if (pr->adjust_type == LAYOUT_PARAM_PATCH_EDIT_ADJUST_TYPE_ARROWS)      \
   {                                                                            \
     param += value;                                                            \
+    param_changed = 1;                                                         \
+  }                                                                            \
+  else if (pr->adjust_type == LAYOUT_PARAM_PATCH_EDIT_ADJUST_TYPE_RADIO)       \
+  {                                                                            \
+    if (param != lower)                                                        \
+      param = lower;                                                           \
+    else                                                                       \
+      param = upper;                                                           \
+                                                                               \
     param_changed = 1;                                                         \
   }                                                                            \
                                                                                \
@@ -227,7 +237,6 @@ short int controls_setup()
 short int controls_patch_parameter_adjust(int patch_index, int param_index, int amount)
 {
   int value;
-  int mode;
   int param_changed;
 
   patch* pc;
@@ -247,15 +256,11 @@ short int controls_patch_parameter_adjust(int patch_index, int param_index, int 
 
   /* determine value and adjustment mode */
   if (pr->adjust_type == LAYOUT_PARAM_PATCH_EDIT_ADJUST_TYPE_SLIDER)
-  {
     value = (amount * (pr->upper_bound - pr->lower_bound)) / (8 * (LAYOUT_PATCH_EDIT_PARAM_SLIDER_WIDTH - 1)) + pr->lower_bound;
-    mode = CONTROLS_PATCH_ADJUST_MODE_DIRECT;
-  }
   else if (pr->adjust_type == LAYOUT_PARAM_PATCH_EDIT_ADJUST_TYPE_ARROWS)
-  {
     value = amount;
-    mode = CONTROLS_PATCH_ADJUST_MODE_RELATIVE;
-  }
+  else if (pr->adjust_type == LAYOUT_PARAM_PATCH_EDIT_ADJUST_TYPE_RADIO)
+    value = 0;
   else
     return 0;
 
@@ -298,7 +303,7 @@ short int controls_patch_parameter_adjust(int patch_index, int param_index, int 
   {
     if (pc->osc_freq_mode[pr->num] == 0)
     {
-      CONTROLS_SET_PATCH_PARAMETER( pc->osc_multiple_or_octave[pr->num], 
+      CONTROLS_SET_PATCH_PARAMETER( pc->osc_multiple[pr->num], 
                                     PATCH_OSC_MULTIPLE_LOWER_BOUND, 
                                     PATCH_OSC_MULTIPLE_UPPER_BOUND)
     }
@@ -307,27 +312,27 @@ short int controls_patch_parameter_adjust(int patch_index, int param_index, int 
   {
     if (pc->osc_freq_mode[pr->num] == 0)
     {
-      CONTROLS_SET_PATCH_PARAMETER( pc->osc_divisor_or_note[pr->num], 
+      CONTROLS_SET_PATCH_PARAMETER( pc->osc_divisor[pr->num], 
                                     PATCH_OSC_DIVISOR_LOWER_BOUND, 
                                     PATCH_OSC_DIVISOR_UPPER_BOUND)
-    }
-  }
-  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_OCTAVE)
-  {
-    if (pc->osc_freq_mode[pr->num] == 1)
-    {
-      CONTROLS_SET_PATCH_PARAMETER( pc->osc_multiple_or_octave[pr->num], 
-                                    PATCH_OSC_OCTAVE_LOWER_BOUND, 
-                                    PATCH_OSC_OCTAVE_UPPER_BOUND)
     }
   }
   else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_NOTE)
   {
     if (pc->osc_freq_mode[pr->num] == 1)
     {
-      CONTROLS_SET_PATCH_PARAMETER( pc->osc_divisor_or_note[pr->num], 
+      CONTROLS_SET_PATCH_PARAMETER( pc->osc_note[pr->num], 
                                     PATCH_OSC_NOTE_LOWER_BOUND, 
                                     PATCH_OSC_NOTE_UPPER_BOUND)
+    }
+  }
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_OCTAVE)
+  {
+    if (pc->osc_freq_mode[pr->num] == 1)
+    {
+      CONTROLS_SET_PATCH_PARAMETER( pc->osc_octave[pr->num], 
+                                    PATCH_OSC_OCTAVE_LOWER_BOUND, 
+                                    PATCH_OSC_OCTAVE_UPPER_BOUND)
     }
   }
   else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_DETUNE)
@@ -391,7 +396,7 @@ short int controls_patch_parameter_adjust(int patch_index, int param_index, int 
                                   PATCH_ENV_TRIGGER_LOWER_BOUND, 
                                   PATCH_ENV_TRIGGER_UPPER_BOUND)
   }
-  /* lfo & eg bias enable */
+  /* lfo & boost enable */
   else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_VIBRATO_ENABLE)
   {
     CONTROLS_SET_PATCH_PARAMETER( pc->vibrato_enable[pr->num], 
@@ -423,17 +428,29 @@ short int controls_patch_parameter_adjust(int patch_index, int param_index, int 
                                   PATCH_LFO_FREQUENCY_LOWER_BOUND, 
                                   PATCH_LFO_FREQUENCY_UPPER_BOUND)
   }
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LFO_DELAY)
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->lfo_delay, 
+                                  PATCH_LFO_DELAY_LOWER_BOUND, 
+                                  PATCH_LFO_DELAY_UPPER_BOUND)
+  }
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LFO_VIBRATO_MODE)
+  {
+    CONTROLS_SET_PATCH_PARAMETER( pc->lfo_vibrato_mode, 
+                                  PATCH_LFO_VIBRATO_MODE_LOWER_BOUND, 
+                                  PATCH_LFO_VIBRATO_MODE_UPPER_BOUND)
+  }
   else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LFO_SYNC)
   {
     CONTROLS_SET_PATCH_PARAMETER( pc->lfo_sync, 
                                   PATCH_LFO_SYNC_LOWER_BOUND, 
                                   PATCH_LFO_SYNC_UPPER_BOUND)
   }
-  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LFO_DELAY)
+  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LFO_TEMPO)
   {
-    CONTROLS_SET_PATCH_PARAMETER( pc->lfo_delay, 
-                                  PATCH_LFO_DELAY_LOWER_BOUND, 
-                                  PATCH_LFO_DELAY_UPPER_BOUND)
+    CONTROLS_SET_PATCH_PARAMETER( pc->lfo_tempo, 
+                                  PATCH_LFO_TEMPO_LOWER_BOUND, 
+                                  PATCH_LFO_TEMPO_UPPER_BOUND)
   }
   else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LFO_BASE_VIBRATO)
   {
@@ -472,19 +489,6 @@ short int controls_patch_parameter_adjust(int patch_index, int param_index, int 
     CONTROLS_SET_PATCH_PARAMETER( pc->lowpass_cutoff, 
                                   PATCH_LOWPASS_CUTOFF_LOWER_BOUND, 
                                   PATCH_LOWPASS_CUTOFF_UPPER_BOUND) 
-  }
-  /* noise */
-  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_NOISE_MIX)
-  {
-    CONTROLS_SET_PATCH_PARAMETER( pc->noise_mix, 
-                                  PATCH_NOISE_MIX_LOWER_BOUND, 
-                                  PATCH_NOISE_MIX_UPPER_BOUND) 
-  }
-  else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_NOISE_FREQUENCY)
-  {
-    CONTROLS_SET_PATCH_PARAMETER( pc->noise_frequency, 
-                                  PATCH_NOISE_FREQUENCY_LOWER_BOUND, 
-                                  PATCH_NOISE_FREQUENCY_UPPER_BOUND) 
   }
   /* depths */
   else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_VIBRATO_DEPTH)
@@ -549,22 +553,6 @@ short int controls_patch_parameter_adjust(int patch_index, int param_index, int 
   /* reload patch if a parameter was changed */
   if (param_changed == 1)
   {
-    /* reset multiple/divisor or octave/note to the initial */
-    /* values if the oscillator frequency mode was changed  */
-    if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_FREQ_MODE)
-    {
-      if (pc->osc_freq_mode[pr->num] == 0)
-      {
-        pc->osc_multiple_or_octave[pr->num] = 1;
-        pc->osc_divisor_or_note[pr->num] = 1;
-      }
-      else if (pc->osc_freq_mode[pr->num] == 1)
-      {
-        pc->osc_multiple_or_octave[pr->num] = 4;
-        pc->osc_divisor_or_note[pr->num] = 1;
-      }
-    }
-
     synth_load_patch(0, G_patch_edit_patch_index);
   }
 
@@ -1182,15 +1170,23 @@ short int controls_process_user_input_standard()
         }
         else if (pr->adjust_type == LAYOUT_PARAM_PATCH_EDIT_ADJUST_TYPE_ARROWS)
         {
-          if (CONTROLS_MOUSE_CURSOR_IS_OVER_PATCH_PARAM_ADJUST_LEFT() && 
+          if (CONTROLS_MOUSE_CURSOR_IS_OVER_PATCH_PARAM_ARROWS_LEFT() && 
               CONTROLS_MOUSE_BUTTON_IS_PRESSED(CONTROLS_MOUSE_BUTTON_INDEX_LEFT))
           {
             controls_patch_parameter_adjust(0, k, -1);
           }
-          else if ( CONTROLS_MOUSE_CURSOR_IS_OVER_PATCH_PARAM_ADJUST_RIGHT() && 
+          else if ( CONTROLS_MOUSE_CURSOR_IS_OVER_PATCH_PARAM_ARROWS_RIGHT() && 
                     CONTROLS_MOUSE_BUTTON_IS_PRESSED(CONTROLS_MOUSE_BUTTON_INDEX_LEFT))
           {
             controls_patch_parameter_adjust(0, k, 1);
+          }
+        }
+        else if (pr->adjust_type == LAYOUT_PARAM_PATCH_EDIT_ADJUST_TYPE_RADIO)
+        {
+          if (CONTROLS_MOUSE_CURSOR_IS_OVER_PATCH_PARAM_RADIO_BUTTON() && 
+              CONTROLS_MOUSE_BUTTON_IS_PRESSED(CONTROLS_MOUSE_BUTTON_INDEX_LEFT))
+          {
+            controls_patch_parameter_adjust(0, k, 0);
           }
         }
       }

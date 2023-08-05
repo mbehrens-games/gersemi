@@ -11,7 +11,9 @@ typedef struct lfo
 {
   /* lfo parameters */
   short int waveform;
+  short int vibrato_mode;
   short int sync;
+  short int tempo;
 
   short int base_vibrato;
   short int base_tremolo;

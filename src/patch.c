@@ -49,8 +49,10 @@ short int patch_reset(int patch_index)
     p->osc_feedback[m] = 0;
     p->osc_sync[m] = 1;
     p->osc_freq_mode[m] = 0;
-    p->osc_multiple_or_octave[m] = 1;
-    p->osc_divisor_or_note[m] = 1;
+    p->osc_multiple[m] = 1;
+    p->osc_divisor[m] = 1;
+    p->osc_note[m] = 1;
+    p->osc_octave[m] = 4;
     p->osc_detune[m] = 0;
 
     p->env_attack[m] = 32;
@@ -71,8 +73,10 @@ short int patch_reset(int patch_index)
   /* lfo */
   p->lfo_waveform = 1;
   p->lfo_frequency = 1;
-  p->lfo_sync = 1;
   p->lfo_delay = 0;
+  p->lfo_vibrato_mode = 0;
+  p->lfo_sync = 1;
+  p->lfo_tempo = 0;
 
   p->lfo_base_vibrato = 0;
   p->lfo_base_tremolo = 0;
@@ -84,10 +88,6 @@ short int patch_reset(int patch_index)
   /* filters */
   p->highpass_cutoff = PATCH_HIGHPASS_CUTOFF_LOWER_BOUND;
   p->lowpass_cutoff = PATCH_LOWPASS_CUTOFF_UPPER_BOUND;
-
-  /* noise */
-  p->noise_mix = 0;
-  p->noise_frequency = 1;
 
   /* depths */
   p->vibrato_depth = 1;
