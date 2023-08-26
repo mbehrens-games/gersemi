@@ -12,6 +12,8 @@
 #include "key.h"
 #include "lfo.h"
 #include "patch.h"
+#include "pattern.h"
+#include "sequence.h"
 #include "sweep.h"
 #include "synth.h"
 #include "tuning.h"
@@ -29,6 +31,7 @@ short int synth_generate_tables()
   filter_generate_tables();
   key_generate_tables();
   lfo_generate_tables();
+  sequencer_generate_tables();
   sweep_generate_tables();
   voice_generate_tables();
 
@@ -46,6 +49,7 @@ short int synth_reset_banks()
   filter_setup_all();
   lfo_setup_all();
   patch_setup_all();
+  pattern_setup_all();
   sweep_setup_all();
   voice_setup_all();
 

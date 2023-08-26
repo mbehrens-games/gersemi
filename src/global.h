@@ -5,22 +5,26 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
-extern int          G_game_screen;
-extern int          G_last_screen;
+extern int G_game_screen;
+extern int G_last_screen;
 
-extern int          G_flag_window_minimized;
-extern int          G_flag_quit_program;
+extern int G_flag_window_minimized;
+extern int G_flag_quit_program;
 
 extern unsigned int G_timer_count;
 extern unsigned int G_saved_timer_count;
 
-extern int          G_current_scroll_amount;
-extern int          G_max_scroll_amount;
+extern int G_current_scroll_amount;
+extern int G_max_scroll_amount;
 
-extern int          G_patch_edit_patch_index;
-extern int          G_patch_edit_voice_index;
-extern int          G_patch_edit_octave;
-extern int          G_patch_edit_degree;
+extern int G_common_edit_octave;
+extern int G_common_edit_degree;
+
+extern int G_patch_edit_patch_index;
+extern int G_patch_edit_voice_index;
+
+extern int G_pattern_edit_highlight_column;
+extern int G_pattern_edit_highlight_step;
 
 /* function declarations */
 short int globals_init_variables();

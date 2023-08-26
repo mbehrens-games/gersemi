@@ -6,20 +6,17 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "bank.h"
 #include "clock.h"
+#include "pattern.h"
 #include "sequence.h"
 #include "synth.h"
 #include "tempo.h"
-
-/* pattern bank */
-pattern G_sequencer_pattern_bank[BANK_NUM_PATTERNS];
 
 /* tempo phase increment table  */
 static unsigned int S_sequencer_tempo_phase_increment_table[TEMPO_NUM_BPMS];
 
 /* swing intervals phase table */
-static unsigned int S_sequencer_swing_theta_table[TEMPO_NUM_SWINGS][SEQUENCER_NUM_STEPS_PER_BEAT - 1];
+static unsigned int S_sequencer_swing_theta_table[TEMPO_NUM_SWINGS][PATTERN_STEPS_PER_BEAT - 1];
 
 /* the swing ratios are kept in the approx. range of 1:1 to 3:1 (0.5 to 0.75) */
 static float S_sequencer_swing_multiplier_table[TEMPO_NUM_SWINGS] = 
@@ -44,7 +41,7 @@ static int  S_sequencer_music_step_index;
 static unsigned int S_sequencer_music_phase;
 static unsigned int S_sequencer_music_increment;
 
-static instrument_step S_sequencer_music_current_instrument_settings[SEQUENCER_NUM_INSTRUMENTS];
+static instrument_step S_sequencer_music_current_instrument_settings[PATTERN_NUM_INSTRUMENTS];
 
 #define SEQUENCER_SET_MUSIC_TEMPO_PHASE_INCREMENT(tempo)                       \
   S_sequencer_music_increment =                                                \
@@ -56,104 +53,13 @@ static instrument_step S_sequencer_music_current_instrument_settings[SEQUENCER_N
     S_sequencer_music_increment /= 2;
 
 /*******************************************************************************
-** sequencer_pattern_setup_all()
-*******************************************************************************/
-short int sequencer_pattern_setup_all()
-{
-  int k;
-
-  /* setup all patterns */
-  for (k = 0; k < BANK_NUM_PATTERNS; k++)
-    sequencer_pattern_reset(k);
-
-  return 0;
-}
-
-/*******************************************************************************
-** sequencer_pattern_reset()
-*******************************************************************************/
-short int sequencer_pattern_reset(int pattern_index)
-{
-  int m;
-  int n;
-
-  pattern* p;
-
-  drum_step*        dr_st;
-  instrument_step*  in_st;
-
-  /* make sure that the pattern index is valid */
-  if (BANK_PATTERN_INDEX_IS_NOT_VALID(pattern_index))
-    return 1;
-
-  /* obtain pattern pointer */
-  p = &G_sequencer_pattern_bank[pattern_index];
-
-  /* reset tempos */
-  for (n = 0; n < SEQUENCER_NUM_BEATS_PER_PATTERN; n++)
-    p->tempo[n] = 120;
-
-  /* reset swings */
-  for (m = 0; m < SEQUENCER_NUM_MUSIC_SWINGS; m++)
-  {
-    for (n = 0; n < SEQUENCER_NUM_BEATS_PER_PATTERN; n++)
-      p->swings[m][n] = TEMPO_SWING_LOWER_BOUND;
-  }
-
-  /* reset drum steps */
-  for (m = 0; m < SEQUENCER_NUM_DRUM_VOICES; m++)
-  {
-    for (n = 0; n < SEQUENCER_NUM_STEPS_PER_PATTERN; n++)
-    {
-      dr_st = &p->dr_steps[m][n];
-
-      dr_st->note[0] = 0;
-      dr_st->note[1] = 0;
-      dr_st->note[2] = 0;
-      dr_st->note[3] = 0;
-      dr_st->note[4] = 0;
-      dr_st->note[5] = 0;
-    }
-  }
-
-  /* reset instrument steps */
-  for (m = 0; m < SEQUENCER_NUM_INSTRUMENTS; m++)
-  {
-    for (n = 0; n < SEQUENCER_NUM_STEPS_PER_PATTERN; n++)
-    {
-      in_st = &p->in_steps[m][n];
-
-      in_st->note[0] = 0;
-      in_st->note[1] = 0;
-      in_st->note[2] = 0;
-      in_st->note[3] = 0;
-
-      in_st->modulation = 0;
-
-      in_st->arpeggio_mode = 0;
-      in_st->arpeggio_speed = 0;
-
-      in_st->volume = 0;
-
-      in_st->portamento_switch = 0;
-      in_st->portamento_speed = 0;
-
-      in_st->mod_wheel_amount = 0;
-      in_st->aftertouch_amount = 0;
-    }
-  }
-
-  p->num_bars = 0;
-
-  return 0;
-}
-
-/*******************************************************************************
 ** sequencer_setup()
 *******************************************************************************/
 short int sequencer_setup()
 {
-  sequencer_pattern_setup_all();
+  int k;
+
+  instrument_step* in_st;
 
   S_sequencer_music_beats_per_bar = 4;
   S_sequencer_music_beat_size = 4;
@@ -164,6 +70,26 @@ short int sequencer_setup()
 
   S_sequencer_music_phase = 0;
   S_sequencer_music_increment = 0;
+
+  for (k = 0; k < PATTERN_NUM_INSTRUMENTS; k++)
+  {
+    in_st = &S_sequencer_music_current_instrument_settings[k];
+
+    in_st->note[0] = PATTERN_BLANK;
+    in_st->note[1] = PATTERN_BLANK;
+    in_st->note[2] = PATTERN_BLANK;
+    in_st->note[3] = PATTERN_BLANK;
+    in_st->key = PATTERN_BLANK;
+
+    in_st->volume = PATTERN_BLANK;
+
+    in_st->mod_wheel_amount = PATTERN_BLANK;
+    in_st->aftertouch_amount = PATTERN_BLANK;
+
+    in_st->arp_porta_mode = PATTERN_BLANK;
+    in_st->arp_direction_or_porta_switch = PATTERN_BLANK;
+    in_st->arp_speed_or_porta_speed = PATTERN_BLANK;
+  }
 
   return 0;
 }
@@ -196,13 +122,13 @@ short int sequencer_activate_step()
   if (BANK_PATTERN_INDEX_IS_NOT_VALID(S_sequencer_music_pattern_index))
     return 1;
 
-  p = &G_sequencer_pattern_bank[S_sequencer_music_pattern_index];
+  p = &G_pattern_bank[S_sequencer_music_pattern_index];
 
   /* set current step */
-  if ((S_sequencer_music_beat_index >= 0) && (S_sequencer_music_beat_index < SEQUENCER_NUM_BEATS_PER_PATTERN) && 
-      (S_sequencer_music_step_index >= 0) && (S_sequencer_music_step_index < SEQUENCER_NUM_STEPS_PER_BEAT))
+  if ((S_sequencer_music_beat_index >= 0) && (S_sequencer_music_beat_index < PATTERN_NUM_BEATS) && 
+      (S_sequencer_music_step_index >= 0) && (S_sequencer_music_step_index < PATTERN_STEPS_PER_BEAT))
   {
-    in_st = &p->in_steps[0][S_sequencer_music_beat_index * SEQUENCER_NUM_STEPS_PER_BEAT + S_sequencer_music_step_index];
+    in_st = &p->in_steps[0][S_sequencer_music_beat_index * PATTERN_STEPS_PER_BEAT + S_sequencer_music_step_index];
   }
   else
     return 1;

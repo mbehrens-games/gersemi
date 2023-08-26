@@ -13,7 +13,9 @@
 #include "layout.h"
 #include "palette.h"
 #include "patch.h"
+#include "pattern.h"
 #include "screen.h"
+#include "sequence.h"
 #include "texture.h"
 #include "vball.h"
 
@@ -257,6 +259,17 @@ enum
     sprite_index += 1;                                                                            \
   }
 
+#define VB_ALL_ADD_PATTERN_STEP_PIECE_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, lighting, palette) \
+  if (sprite_index < GRAPHICS_OVERLAY_SPRITES_END_INDEX)                                          \
+  {                                                                                               \
+    VB_ALL_ADD_SPRITE_TO_VERTEX_BUFFER(pos_x, pos_y, 1, 2, GRAPHICS_Z_LEVEL_SLIDERS)              \
+    VB_ALL_ADD_SPRITE_TO_TEXTURE_COORD_BUFFER(cell_x, cell_y, 1, 2)                               \
+    VB_ALL_ADD_SPRITE_TO_LIGHTING_AND_PALETTE_BUFFER(lighting, palette)                           \
+    VB_ALL_ADD_SPRITE_TO_ELEMENT_BUFFER()                                                         \
+                                                                                                  \
+    sprite_index += 1;                                                                            \
+  }
+
 #define VB_ALL_ADD_SCROLLBAR_MOVING_PART_TO_BUFFERS(pos_x, pos_y, lighting, palette)  \
   if (sprite_index < GRAPHICS_OVERLAY_SPRITES_END_INDEX)                              \
   {                                                                                   \
@@ -283,7 +296,7 @@ enum
   if (sprite_index < GRAPHICS_OVERLAY_SPRITES_END_INDEX)                              \
   {                                                                                   \
     VB_ALL_ADD_SPRITE_TO_VERTEX_BUFFER(pos_x, pos_y, 1, 1, GRAPHICS_Z_LEVEL_OVERLAY)  \
-    VB_ALL_ADD_SPRITE_TO_TEXTURE_COORD_BUFFER(7, 7, 1, 1)                             \
+    VB_ALL_ADD_SPRITE_TO_TEXTURE_COORD_BUFFER(0, 7, 1, 1)                             \
     VB_ALL_ADD_SPRITE_TO_LIGHTING_AND_PALETTE_BUFFER(lighting, palette)               \
     VB_ALL_ADD_SPRITE_TO_ELEMENT_BUFFER()                                             \
                                                                                       \
@@ -351,7 +364,23 @@ enum
                   G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_OVERLAY] * 6 * sizeof(unsigned short),  \
                   &G_index_buffer_sprites[GRAPHICS_OVERLAY_SPRITES_START_INDEX * 6]);
 
-static char S_patch_edit_header_labels[LAYOUT_HEADER_PATCH_EDIT_NUM_LABELS][12] = 
+/* common edit tables */
+static char S_common_edit_1_to_32_values[32][4] = 
+  { "1",  "2",  "3",  "4",  "5",  "6",  "7", "8", 
+    "9", "10", "11", "12", "13", "14", "15", "16", 
+   "17", "18", "19", "20", "21", "22", "23", "24", 
+   "25", "26", "27", "28", "29", "30", "31", "32" 
+  };
+
+static char S_common_edit_0_to_32_values[33][4] = 
+  { "0",  "1",  "2",  "3",  "4",  "5",  "6",  "7", "8", 
+          "9", "10", "11", "12", "13", "14", "15", "16", 
+         "17", "18", "19", "20", "21", "22", "23", "24", 
+         "25", "26", "27", "28", "29", "30", "31", "32" 
+  };
+
+/* patch edit tables */
+static char S_patch_edit_header_labels[LAYOUT_PATCH_EDIT_HEADER_NUM_LABELS][12] = 
   { "Osc 1", "Osc 2", "Osc 3", "Osc 4", 
     "Env 1", "Env 2", "Env 3", "Env 4", 
     "LFO", 
@@ -359,7 +388,7 @@ static char S_patch_edit_header_labels[LAYOUT_HEADER_PATCH_EDIT_NUM_LABELS][12] 
     "Depths", "Mod Wheel", "Aftertouch" 
   };
 
-static char S_patch_edit_parameter_labels[LAYOUT_PARAM_PATCH_EDIT_NUM_LABELS][4] = 
+static char S_patch_edit_parameter_labels[LAYOUT_PATCH_EDIT_PARAM_NUM_LABELS][4] = 
   { "Alg", 
     "Wav", "FBk", "Syn", "Frq", "Mul", "Div", "Nte", "Oct", "Det", 
     "Att", "D1",  "D2",  "Rel", "Lev", "Sus", "RKS", "LKS", "Rep", 
@@ -442,19 +471,31 @@ static char S_patch_edit_highpass_cutoff_values[PATCH_HIGHPASS_CUTOFF_NUM_VALUES
 static char S_patch_edit_lowpass_cutoff_values[PATCH_LOWPASS_CUTOFF_NUM_VALUES][4] = 
   { "E7", "G7", "A7", "C8" };
 
-static char S_patch_edit_1_to_32_values[32][4] = 
-  { "1",  "2",  "3",  "4",  "5",  "6",  "7", "8", 
-    "9", "10", "11", "12", "13", "14", "15", "16", 
-   "17", "18", "19", "20", "21", "22", "23", "24", 
-   "25", "26", "27", "28", "29", "30", "31", "32" 
+/* pattern edit tables */
+static char S_pattern_edit_header_labels[LAYOUT_PATTERN_EDIT_HEADER_NUM_LABELS][12] = 
+  { "Swing", "Notes", "Key", "Vol", "MW", "AT", "Arp/Port" };
+
+static char S_pattern_edit_swing_values[PATTERN_SWING_NUM_VALUES][6] = 
+  { "1:1", "5:4", "4:3", "3:2", "5:3", "2:1", "5:2", "3:1" };
+
+static char S_pattern_edit_note_values[PATTERN_INSTRUMENT_NOTE_NUM_VALUES][6] = 
+  { "C-1", "D-1", "E-1", "F-1", "G-1", "A-1", "B-1", 
+    "C-2", "D-2", "E-2", "F-2", "G-2", "A-2", "B-2", 
+    "C-3", "D-3", "E-3", "F-3", "G-3", "A-3", "B-3", 
+    "C-4", "D-4", "E-4", "F-4", "G-4", "A-4", "B-4", 
+    "C-5", "D-5", "E-5", "F-5", "G-5", "A-5", "B-5", 
+    "C-6", "D-6", "E-6", "F-6", "G-6", "A-6", "B-6", 
+    "C-7", "D-7", "E-7", "F-7", "G-7", "A-7", "B-7", "C-8" 
   };
 
-static char S_patch_edit_0_to_32_values[33][4] = 
-  { "0",  "1",  "2",  "3",  "4",  "5",  "6",  "7", "8", 
-          "9", "10", "11", "12", "13", "14", "15", "16", 
-         "17", "18", "19", "20", "21", "22", "23", "24", 
-         "25", "26", "27", "28", "29", "30", "31", "32" 
+static char S_pattern_edit_key_values[PATTERN_INSTRUMENT_KEY_NUM_VALUES][6] = 
+  { "I", "V", "IV", "RM", "RV", "RIV", 
+    "PM", "Dor", "Phr", "Lyd", "Mix", "Loc", 
+    "2V", "3V", "HSU", "WSU" 
   };
+
+static char S_pattern_edit_arp_porta_mode_values[PATTERN_INSTRUMENT_ARP_PORTA_MODE_NUM_VALUES][6] = 
+  { "Por", "Arp", "Rol" };
 
 /*******************************************************************************
 ** vb_all_load_background()
@@ -798,26 +839,26 @@ short int vb_all_load_button(int offset_x, int offset_y, int width, int state)
     /* left piece */
     if (m == 0)
     {
-      cell_x = 0;
+      cell_x = 10;
       cell_y = 8;
     }
     /* right piece */
     else if (m == width - 1)
     {
-      cell_x = 3;
+      cell_x = 13;
       cell_y = 8;
     }
     /* middle piece */
     else
     {
-      cell_x = 1;
+      cell_x = 11;
       cell_y = 8;
     }
 
     VB_ALL_ADD_BUTTON_PIECE_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, lighting, palette)
   }
 
-  /* update panels sprite layer count */
+  /* update buttons sprite layer count */
   G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_BUTTONS] = 
     sprite_index - GRAPHICS_BUTTONS_SPRITES_START_INDEX;
 
@@ -1146,19 +1187,19 @@ short int vb_all_load_slider( int offset_x, int offset_y, int width,
     /* left piece */
     if (m == 0)
     {
-      cell_x = 8;
+      cell_x = 1;
       cell_y = 7;
     }
     /* right piece */
     else if (m == width - 1)
     {
-      cell_x = 11;
+      cell_x = 4;
       cell_y = 7;
     }
     /* middle piece */
     else
     {
-      cell_x = 9;
+      cell_x = 2;
       cell_y = 7;
     }
 
@@ -1175,6 +1216,85 @@ short int vb_all_load_slider( int offset_x, int offset_y, int width,
   palette = VB_ALL_PALETTE_1;
 
   VB_ALL_ADD_SLIDER_MOVING_PART_TO_BUFFERS(pos_x, pos_y, lighting, palette)
+
+  /* update overlay sprite layer count */
+  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_OVERLAY] = 
+    sprite_index - GRAPHICS_OVERLAY_SPRITES_START_INDEX;
+
+  return 0;
+}
+
+/*******************************************************************************
+** vb_all_load_pattern_step_space()
+*******************************************************************************/
+short int vb_all_load_pattern_step_space( int offset_x, int offset_y, 
+                                          int width, 
+                                          int lighting, int palette)
+{
+  int m;
+
+  int sprite_index;
+
+  int corner_x;
+  int corner_y;
+
+  int pos_x;
+  int pos_y;
+
+  int cell_x;
+  int cell_y;
+
+  /* make sure the width is valid       */
+  /* the width is in terms of 8x8 cells */
+  if ((width < 2) || (width > GRAPHICS_OVERSCAN_WIDTH / 8))
+    return 1;
+
+  /* determine coordinates of top left corner */
+  corner_x = (GRAPHICS_OVERSCAN_WIDTH - 8 * width) / 2;
+  corner_y = (GRAPHICS_OVERSCAN_HEIGHT - 16 * 1) / 2;
+
+  /* the offsets from the screen center are in 4x4 half-cells */
+  corner_x += 4 * offset_x;
+  corner_y += 4 * offset_y;
+
+  /* bound lighting and palette */
+  if ((lighting < -4) || (lighting > 3))
+    lighting = 0;
+
+  if ((palette < 0) || (palette > 15))
+    palette = 0;
+
+  /* draw the pattern step space */
+  sprite_index =  GRAPHICS_OVERLAY_SPRITES_START_INDEX + 
+                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_OVERLAY];
+
+  for (m = 0; m < width; m++)
+  {
+    /* determine center of this piece */
+    pos_x = corner_x + (8 * m) + 4;
+    pos_y = corner_y + (16 * 0) + 8;
+
+    /* left piece */
+    if (m == 0)
+    {
+      cell_x = 10;
+      cell_y = 6;
+    }
+    /* right piece */
+    else if (m == width - 1)
+    {
+      cell_x = 13;
+      cell_y = 6;
+    }
+    /* middle piece */
+    else
+    {
+      cell_x = 11;
+      cell_y = 6;
+    }
+
+    VB_ALL_ADD_PATTERN_STEP_PIECE_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, lighting, palette)
+  }
 
   /* update overlay sprite layer count */
   G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_OVERLAY] = 
@@ -1258,12 +1378,12 @@ short int vb_all_load_common_overlay()
   {
     hd = &G_layout_headers[k];
 
-    if (hd->label == LAYOUT_HEADER_TOP_PANEL_LABEL_NAME)
+    if (hd->label == LAYOUT_TOP_PANEL_HEADER_LABEL_NAME)
     {
       vb_all_load_text( hd->center_x, hd->center_y, 
                         VB_ALL_ALIGN_CENTER, 0, 6, 32, "Gersemi");
     }
-    else if (hd->label == LAYOUT_HEADER_TOP_PANEL_LABEL_VERSION)
+    else if (hd->label == LAYOUT_TOP_PANEL_HEADER_LABEL_VERSION)
     {
       vb_all_load_text( hd->center_x, hd->center_y, 
                         VB_ALL_ALIGN_CENTER, 0, 6, 32, "v0.9");
@@ -1277,12 +1397,12 @@ short int vb_all_load_common_overlay()
   {
     hd = &G_layout_headers[k];
 
-    if (hd->label == LAYOUT_HEADER_BOTTOM_PANEL_LABEL_OCTAVE)
+    if (hd->label == LAYOUT_BOTTOM_PANEL_HEADER_LABEL_OCTAVE)
     {
       vb_all_load_text( hd->center_x, hd->center_y, 
                         VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_1, 32, "Octave");
     }
-    else if (hd->label == LAYOUT_HEADER_BOTTOM_PANEL_LABEL_KEY)
+    else if (hd->label == LAYOUT_BOTTOM_PANEL_HEADER_LABEL_KEY)
     {
       vb_all_load_text( hd->center_x, hd->center_y, 
                         VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_1, 32, "Key");
@@ -1290,7 +1410,7 @@ short int vb_all_load_common_overlay()
   }
 
   /* bottom panel text (extra) */
-  /*vb_all_load_value(-31, 25, 0, 6, G_patch_edit_octave);*/
+  /*vb_all_load_value(-31, 25, 0, 6, G_common_edit_octave);*/
 
   vb_all_load_text(9, 25, VB_ALL_ALIGN_LEFT, 0, 6, 32, "C  D  E  F  G  A  Bb");
 
@@ -1361,7 +1481,7 @@ short int vb_all_load_patches_overlay()
       continue;
 
     /* make sure the label is valid */
-    if ((hd->label < 0) || (hd->label >= LAYOUT_HEADER_PATCH_EDIT_NUM_LABELS))
+    if ((hd->label < 0) || (hd->label >= LAYOUT_PATCH_EDIT_HEADER_NUM_LABELS))
       continue;
 
     /* load the header! */
@@ -1382,251 +1502,191 @@ short int vb_all_load_patches_overlay()
       continue;
 
     /* make sure the label is valid */
-    if ((pr->label < 0) || (pr->label >= LAYOUT_PARAM_PATCH_EDIT_NUM_LABELS))
+    if ((pr->label < 0) || (pr->label >= LAYOUT_PATCH_EDIT_PARAM_NUM_LABELS))
       continue;
 
     /* skip multiple/divisor or octave/note depending on the frequency mode */
     if (p->osc_freq_mode[pr->num] == 0)
     {
-      if ((pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_OCTAVE) || 
-          (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_NOTE))
+      if ((pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_OSC_OCTAVE) || 
+          (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_OSC_NOTE))
       {
         continue;
       }
     }
     else if (p->osc_freq_mode[pr->num] == 1)
     {
-      if ((pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_MULTIPLE) || 
-          (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_DIVISOR))
+      if ((pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_OSC_MULTIPLE) || 
+          (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_OSC_DIVISOR))
       {
         continue;
       }
     }
 
-    /* determine parameter value and string */
-    if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ALGORITHM)
-    {
+    /* determine parameter value */
+    if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_ALGORITHM)
       value = p->algorithm;
-      value_string = S_patch_edit_algorithm_values[p->algorithm - PATCH_ALGORITHM_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_WAVEFORM)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_OSC_WAVEFORM)
       value = p->osc_waveform[pr->num];
-      value_string = S_patch_edit_osc_waveform_values[p->osc_waveform[pr->num] - PATCH_OSC_WAVEFORM_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_FEEDBACK)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_OSC_FEEDBACK)
       value = p->osc_feedback[pr->num];
-      value_string = S_patch_edit_osc_feedback_values[p->osc_feedback[pr->num] - PATCH_OSC_FEEDBACK_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_SYNC)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_OSC_SYNC)
       value = p->osc_sync[pr->num];
-      value_string = S_patch_edit_osc_sync_values[p->osc_sync[pr->num] - PATCH_OSC_SYNC_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_FREQ_MODE)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_OSC_FREQ_MODE)
       value = p->osc_freq_mode[pr->num];
-      value_string = S_patch_edit_osc_freq_mode_values[p->osc_freq_mode[pr->num] - PATCH_OSC_FREQ_MODE_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_MULTIPLE)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_OSC_MULTIPLE)
       value = p->osc_multiple[pr->num];
-      value_string = S_patch_edit_1_to_32_values[p->osc_multiple[pr->num] - PATCH_OSC_MULTIPLE_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_DIVISOR)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_OSC_DIVISOR)
       value = p->osc_divisor[pr->num];
-      value_string = S_patch_edit_1_to_32_values[p->osc_divisor[pr->num] - PATCH_OSC_DIVISOR_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_NOTE)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_OSC_NOTE)
       value = p->osc_note[pr->num];
-      value_string = S_patch_edit_osc_note_values[p->osc_note[pr->num] - PATCH_OSC_NOTE_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_OCTAVE)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_OSC_OCTAVE)
       value = p->osc_octave[pr->num];
-      value_string = S_patch_edit_osc_octave_values[p->osc_octave[pr->num] - PATCH_OSC_OCTAVE_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_OSC_DETUNE)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_OSC_DETUNE)
       value = p->osc_detune[pr->num];
-      value_string = S_patch_edit_osc_detune_values[p->osc_detune[pr->num] - PATCH_OSC_DETUNE_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_ATTACK)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_ENV_ATTACK)
       value = p->env_attack[pr->num];
-      value_string = S_patch_edit_1_to_32_values[p->env_attack[pr->num] - PATCH_ENV_RATE_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_DECAY_1)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_ENV_DECAY_1)
       value = p->env_decay_1[pr->num];
-      value_string = S_patch_edit_1_to_32_values[p->env_decay_1[pr->num] - PATCH_ENV_RATE_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_DECAY_2)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_ENV_DECAY_2)
       value = p->env_decay_2[pr->num];
-      value_string = S_patch_edit_1_to_32_values[p->env_decay_2[pr->num] - PATCH_ENV_RATE_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_RELEASE)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_ENV_RELEASE)
       value = p->env_release[pr->num];
-      value_string = S_patch_edit_1_to_32_values[p->env_release[pr->num] - PATCH_ENV_RATE_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_AMPLITUDE)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_ENV_AMPLITUDE)
       value = p->env_amplitude[pr->num];
-      value_string = S_patch_edit_0_to_32_values[p->env_amplitude[pr->num] - PATCH_ENV_AMPLITUDE_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_SUSTAIN)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_ENV_SUSTAIN)
       value = p->env_sustain[pr->num];
-      value_string = S_patch_edit_0_to_32_values[p->env_sustain[pr->num] - PATCH_ENV_SUSTAIN_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_RATE_KS)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_ENV_RATE_KS)
       value = p->env_rate_ks[pr->num];
-      value_string = S_patch_edit_1_to_32_values[p->env_rate_ks[pr->num] - PATCH_ENV_KEYSCALE_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_LEVEL_KS)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_ENV_LEVEL_KS)
       value = p->env_level_ks[pr->num];
-      value_string = S_patch_edit_1_to_32_values[p->env_level_ks[pr->num] - PATCH_ENV_KEYSCALE_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_ENV_TRIGGER)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_ENV_TRIGGER)
       value = p->env_trigger[pr->num];
-      value_string = S_patch_edit_env_trigger_values[p->env_trigger[pr->num] - PATCH_ENV_TRIGGER_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_VIBRATO_ENABLE)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_VIBRATO_ENABLE)
       value = p->vibrato_enable[pr->num];
-      value_string = S_patch_edit_mod_enable_values[p->vibrato_enable[pr->num] - PATCH_MOD_ENABLE_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_TREMOLO_ENABLE)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_TREMOLO_ENABLE)
       value = p->tremolo_enable[pr->num];
-      value_string = S_patch_edit_mod_enable_values[p->tremolo_enable[pr->num] - PATCH_MOD_ENABLE_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_BOOST_ENABLE)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_BOOST_ENABLE)
       value = p->boost_enable[pr->num];
-      value_string = S_patch_edit_mod_enable_values[p->boost_enable[pr->num] - PATCH_MOD_ENABLE_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LFO_WAVEFORM)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_LFO_WAVEFORM)
       value = p->lfo_waveform;
-      value_string = S_patch_edit_lfo_waveform_values[p->lfo_waveform - PATCH_LFO_WAVEFORM_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LFO_FREQUENCY)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_LFO_FREQUENCY)
       value = p->lfo_frequency;
-      value_string = S_patch_edit_1_to_32_values[p->lfo_frequency - PATCH_LFO_FREQUENCY_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LFO_DELAY)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_LFO_DELAY)
       value = p->lfo_delay;
-      value_string = S_patch_edit_0_to_32_values[p->lfo_delay - PATCH_LFO_DELAY_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LFO_VIBRATO_MODE)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_LFO_VIBRATO_MODE)
       value = p->lfo_vibrato_mode;
-      value_string = S_patch_edit_lfo_vibrato_mode_values[p->lfo_vibrato_mode - PATCH_LFO_VIBRATO_MODE_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LFO_SYNC)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_LFO_SYNC)
       value = p->lfo_sync;
-      value_string = S_patch_edit_lfo_sync_values[p->lfo_sync - PATCH_LFO_SYNC_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LFO_TEMPO)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_LFO_TEMPO)
       value = p->lfo_tempo;
-      value_string = S_patch_edit_lfo_tempo_values[p->lfo_tempo - PATCH_LFO_TEMPO_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LFO_BASE_VIBRATO)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_LFO_BASE_VIBRATO)
       value = p->lfo_base_vibrato;
-      value_string = S_patch_edit_0_to_32_values[p->lfo_base_vibrato - PATCH_MOD_BASE_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LFO_BASE_TREMOLO)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_LFO_BASE_TREMOLO)
       value = p->lfo_base_tremolo;
-      value_string = S_patch_edit_0_to_32_values[p->lfo_base_tremolo - PATCH_MOD_BASE_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_PORTAMENTO_MODE)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_PORTAMENTO_MODE)
       value = p->portamento_mode;
-      value_string = S_patch_edit_portamento_mode_values[p->portamento_mode - PATCH_PORTAMENTO_MODE_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_PORTAMENTO_SPEED)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_PORTAMENTO_SPEED)
       value = p->portamento_speed;
-      value_string = S_patch_edit_1_to_32_values[p->portamento_speed - PATCH_PORTAMENTO_SPEED_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_HIGHPASS_CUTOFF)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_HIGHPASS_CUTOFF)
       value = p->highpass_cutoff;
-      value_string = S_patch_edit_highpass_cutoff_values[p->highpass_cutoff - PATCH_HIGHPASS_CUTOFF_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_LOWPASS_CUTOFF)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_LOWPASS_CUTOFF)
       value = p->lowpass_cutoff;
-      value_string = S_patch_edit_lowpass_cutoff_values[p->lowpass_cutoff - PATCH_LOWPASS_CUTOFF_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_VIBRATO_DEPTH)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_VIBRATO_DEPTH)
       value = p->vibrato_depth;
-      value_string = S_patch_edit_1_to_32_values[p->vibrato_depth - PATCH_MOD_DEPTH_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_TREMOLO_DEPTH)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_TREMOLO_DEPTH)
       value = p->tremolo_depth;
-      value_string = S_patch_edit_1_to_32_values[p->tremolo_depth - PATCH_MOD_DEPTH_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_BOOST_DEPTH)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_BOOST_DEPTH)
       value = p->boost_depth;
-      value_string = S_patch_edit_1_to_32_values[p->boost_depth - PATCH_MOD_DEPTH_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_MOD_WHEEL_VIBRATO)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_MOD_WHEEL_VIBRATO)
       value = p->mod_wheel_vibrato;
-      value_string = S_patch_edit_0_to_32_values[p->mod_wheel_vibrato - PATCH_MOD_CONTROLLER_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_MOD_WHEEL_TREMOLO)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_MOD_WHEEL_TREMOLO)
       value = p->mod_wheel_tremolo;
-      value_string = S_patch_edit_0_to_32_values[p->mod_wheel_tremolo - PATCH_MOD_CONTROLLER_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_MOD_WHEEL_BOOST)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_MOD_WHEEL_BOOST)
       value = p->mod_wheel_boost;
-      value_string = S_patch_edit_0_to_32_values[p->mod_wheel_boost - PATCH_MOD_CONTROLLER_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_AFTERTOUCH_VIBRATO)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AFTERTOUCH_VIBRATO)
       value = p->aftertouch_vibrato;
-      value_string = S_patch_edit_0_to_32_values[p->aftertouch_vibrato - PATCH_MOD_CONTROLLER_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_AFTERTOUCH_TREMOLO)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AFTERTOUCH_TREMOLO)
       value = p->aftertouch_tremolo;
-      value_string = S_patch_edit_0_to_32_values[p->aftertouch_tremolo - PATCH_MOD_CONTROLLER_LOWER_BOUND];
-    }
-    else if (pr->label == LAYOUT_PARAM_PATCH_EDIT_LABEL_AFTERTOUCH_BOOST)
-    {
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AFTERTOUCH_BOOST)
       value = p->aftertouch_boost;
-      value_string = S_patch_edit_0_to_32_values[p->aftertouch_boost - PATCH_MOD_CONTROLLER_LOWER_BOUND];
-    }
     else
-    {
       value = 0;
-      value_string = NULL;
+
+    /* determine parameter string */
+    if ((pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_OSC_MULTIPLE)     || 
+        (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_OSC_DIVISOR)      || 
+        (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_ENV_ATTACK)       || 
+        (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_ENV_DECAY_1)      || 
+        (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_ENV_DECAY_2)      || 
+        (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_ENV_RELEASE)      || 
+        (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_ENV_RATE_KS)      || 
+        (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_ENV_LEVEL_KS)     || 
+        (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_LFO_FREQUENCY)    || 
+        (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_PORTAMENTO_SPEED) || 
+        (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_VIBRATO_DEPTH)    || 
+        (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_TREMOLO_DEPTH)    || 
+        (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_BOOST_DEPTH))
+    {
+      value_string = S_common_edit_1_to_32_values[value - pr->lower_bound];
     }
+    else if ( (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_ENV_AMPLITUDE)      || 
+              (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_ENV_SUSTAIN)        || 
+              (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_LFO_DELAY)          || 
+              (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_LFO_BASE_VIBRATO)   || 
+              (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_LFO_BASE_TREMOLO)   || 
+              (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_MOD_WHEEL_VIBRATO)  || 
+              (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_MOD_WHEEL_TREMOLO)  || 
+              (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_MOD_WHEEL_BOOST)    || 
+              (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AFTERTOUCH_VIBRATO) || 
+              (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AFTERTOUCH_TREMOLO) || 
+              (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AFTERTOUCH_BOOST))
+    {
+      value_string = S_common_edit_0_to_32_values[value - pr->lower_bound];
+    }
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_ALGORITHM)
+      value_string = S_patch_edit_algorithm_values[value - pr->lower_bound];
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_OSC_WAVEFORM)
+      value_string = S_patch_edit_osc_waveform_values[value - pr->lower_bound];
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_OSC_FEEDBACK)
+      value_string = S_patch_edit_osc_feedback_values[value - pr->lower_bound];
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_OSC_SYNC)
+      value_string = S_patch_edit_osc_sync_values[value - pr->lower_bound];
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_OSC_FREQ_MODE)
+      value_string = S_patch_edit_osc_freq_mode_values[value - pr->lower_bound];
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_OSC_NOTE)
+      value_string = S_patch_edit_osc_note_values[value - pr->lower_bound];
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_OSC_OCTAVE)
+      value_string = S_patch_edit_osc_octave_values[value - pr->lower_bound];
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_OSC_DETUNE)
+      value_string = S_patch_edit_osc_detune_values[value - pr->lower_bound];
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_ENV_TRIGGER)
+      value_string = S_patch_edit_env_trigger_values[value - pr->lower_bound];
+    else if ( (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_VIBRATO_ENABLE) || 
+              (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_TREMOLO_ENABLE) || 
+              (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_BOOST_ENABLE))
+    {
+      value_string = S_patch_edit_mod_enable_values[value - pr->lower_bound];
+    }
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_LFO_WAVEFORM)
+      value_string = S_patch_edit_lfo_waveform_values[value - pr->lower_bound];
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_LFO_VIBRATO_MODE)
+      value_string = S_patch_edit_lfo_vibrato_mode_values[value - pr->lower_bound];
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_LFO_SYNC)
+      value_string = S_patch_edit_lfo_sync_values[value - pr->lower_bound];
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_LFO_TEMPO)
+      value_string = S_patch_edit_lfo_tempo_values[value - pr->lower_bound];
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_PORTAMENTO_MODE)
+      value_string = S_patch_edit_portamento_mode_values[value - pr->lower_bound];
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_HIGHPASS_CUTOFF)
+      value_string = S_patch_edit_highpass_cutoff_values[value - pr->lower_bound];
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_LOWPASS_CUTOFF)
+      value_string = S_patch_edit_lowpass_cutoff_values[value - pr->lower_bound];
+    else
+      value_string = NULL;
 
     /* load the parameter name, value, and slider, arrows, or radio button */
-    if (pr->adjust_type == LAYOUT_PARAM_PATCH_EDIT_ADJUST_TYPE_SLIDER)
+    if (pr->type == LAYOUT_PATCH_EDIT_PARAM_TYPE_SLIDER)
     {
       vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_NAME_X, 
                         pr->center_y - G_current_scroll_amount, 
@@ -1643,7 +1703,7 @@ short int vb_all_load_patches_overlay()
                           LAYOUT_PATCH_EDIT_PARAM_SLIDER_WIDTH, 
                           value, pr->lower_bound, pr->upper_bound);
     }
-    else if (pr->adjust_type == LAYOUT_PARAM_PATCH_EDIT_ADJUST_TYPE_ARROWS)
+    else if (pr->type == LAYOUT_PATCH_EDIT_PARAM_TYPE_ARROWS)
     {
       vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_NAME_X, 
                         pr->center_y - G_current_scroll_amount, 
@@ -1671,7 +1731,7 @@ short int vb_all_load_patches_overlay()
                                   0, VB_ALL_PALETTE_1);
       }
     }
-    else if (pr->adjust_type == LAYOUT_PARAM_PATCH_EDIT_ADJUST_TYPE_RADIO)
+    else if (pr->type == LAYOUT_PATCH_EDIT_PARAM_TYPE_RADIO)
     {
       vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_NAME_X, 
                         pr->center_y - G_current_scroll_amount, 
@@ -1711,6 +1771,184 @@ short int vb_all_load_patches_overlay()
 *******************************************************************************/
 short int vb_all_load_patterns_overlay()
 {
+  int k;
+
+  int step;
+
+  pattern* p;
+
+  header* hd;
+  param*  pr;
+
+  short int value;
+  char*     value_string;
+
+  int pos_y;
+
+  int column;
+  int width;
+  int lighting;
+  int palette;
+
+  /* make sure that the pattern index is valid */
+  if (BANK_PATTERN_INDEX_IS_NOT_VALID(0))
+    return 1;
+
+  /* obtain pattern pointer */
+  p = &G_pattern_bank[0];
+
+  /* headers */
+  for ( k = LAYOUT_PATTERN_EDIT_HEADERS_START_INDEX; 
+        k < LAYOUT_PATTERN_EDIT_HEADERS_END_INDEX; 
+        k++)
+  {
+    hd = &G_layout_headers[k];
+
+#if 0
+    /* make sure this header is within the viewable area */
+    if (LAYOUT_PATTERN_HEADER_IS_NOT_IN_MAIN_AREA(hd))
+      continue;
+#endif
+
+    /* make sure the label is valid */
+    if ((hd->label < 0) || (hd->label >= LAYOUT_PATTERN_EDIT_HEADER_NUM_LABELS))
+      continue;
+
+    /* load the header! */
+    vb_all_load_text( hd->center_x, hd->center_y, 
+                      VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_3, 16, 
+                      S_pattern_edit_header_labels[hd->label]);
+  }
+
+  /* steps */
+  for (step = 0; step < 4; step++)
+  {
+    /* determine the palette for the spaces in this step */
+    if (step % 4 == 0)
+      palette = VB_ALL_PALETTE_2;
+    else
+      palette = 6;
+
+    /* ADD: if the step is not in the viewable area, continue... */
+
+    /* determine the y position of this step */
+    pos_y = LAYOUT_PATTERN_EDIT_INSTRUMENT_STEP_BASE_Y + 3 * step - G_current_scroll_amount;
+
+    /* load the beat number */
+    if (step % 4 == 0)
+    {
+      vb_all_load_text( LAYOUT_PATTERN_EDIT_INSTRUMENT_STEP_BEAT_NUMBER_X, pos_y, 
+                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, 
+                        "1");
+    }
+
+    /* parameters */
+    for ( k = LAYOUT_PATTERN_EDIT_PARAMS_START_INDEX; 
+          k < LAYOUT_PATTERN_EDIT_PARAMS_END_INDEX; 
+          k++)
+    {
+      pr = &G_layout_params[k];
+
+      /* make sure this parameter is within the viewable area */
+      if (LAYOUT_PATCH_PARAM_IS_NOT_IN_MAIN_AREA(pr))
+        continue;
+
+      /* make sure the label is valid */
+      if ((pr->label < 0) || (pr->label >= LAYOUT_PATTERN_EDIT_PARAM_NUM_LABELS))
+        continue;
+
+      /* only draw the swing if this step is a beat */
+      if ((pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_SWING) && (step % 4 != 0))
+        continue;
+
+      /* determine step space column */
+      column = pr->num;
+
+      /* determine step space width */
+      if (pr->type == LAYOUT_PATTERN_EDIT_PARAM_TYPE_STEP_SPACE_WIDE)
+        width = 4;
+      else
+        width = 3;
+
+      /* determine step space lighting */
+      if ((G_pattern_edit_highlight_column == column) && 
+          (G_pattern_edit_highlight_step == step))
+      {
+        lighting = 1;
+      }
+      else
+        lighting = 0;
+
+      /* determine parameter value */
+      if (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_SWING)
+        value = p->swings[0][step / 4];
+      else if (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_NOTE_1)
+        value = p->in_steps[0][step].note[0];
+      else if (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_NOTE_2)
+        value = p->in_steps[0][step].note[1];
+      else if (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_NOTE_3)
+        value = p->in_steps[0][step].note[2];
+      else if (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_NOTE_4)
+        value = p->in_steps[0][step].note[3];
+      else if (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_KEY)
+        value = p->in_steps[0][step].key;
+      else if (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_VOLUME)
+        value = p->in_steps[0][step].volume;
+      else if (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_MOD_WHEEL)
+        value = p->in_steps[0][step].mod_wheel_amount;
+      else if (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_AFTERTOUCH)
+        value = p->in_steps[0][step].aftertouch_amount;
+      else if (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_ARP_PORTA_MODE)
+        value = p->in_steps[0][step].arp_porta_mode;
+      else
+        value = 0;
+
+      /* determine parameter string */
+      if ((value < pr->lower_bound) || (value > pr->upper_bound))
+        value_string = NULL;
+      else if (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_SWING)
+        value_string = S_pattern_edit_swing_values[value - pr->lower_bound];
+      else if ( (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_NOTE_1) || 
+                (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_NOTE_2) || 
+                (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_NOTE_3) || 
+                (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_NOTE_4))
+      {
+        value_string = S_pattern_edit_note_values[value - pr->lower_bound];
+      }
+      else if (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_KEY)
+        value_string = S_pattern_edit_key_values[value - pr->lower_bound];
+      else if ( (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_VOLUME)     || 
+                (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_MOD_WHEEL)  || 
+                (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_AFTERTOUCH))
+      {
+        value_string = S_common_edit_0_to_32_values[value - pr->lower_bound];
+      }
+      else if (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_ARP_PORTA_MODE)
+        value_string = S_pattern_edit_arp_porta_mode_values[value - pr->lower_bound];
+      else
+        value_string = NULL;
+
+      /* load the parameter! */
+      if ((pr->type == LAYOUT_PATTERN_EDIT_PARAM_TYPE_STEP_SPACE_STANDARD) || 
+          (pr->type == LAYOUT_PATTERN_EDIT_PARAM_TYPE_STEP_SPACE_WIDE))
+      {
+        vb_all_load_pattern_step_space( pr->center_x, pos_y, 
+                                        width, 
+                                        lighting, palette);
+
+        vb_all_load_text( pr->center_x, pos_y, 
+                          VB_ALL_ALIGN_CENTER, 0, 6, 16, 
+                          value_string);
+      }
+      else if (pr->type == LAYOUT_PATTERN_EDIT_PARAM_TYPE_ARROWS)
+      {
+        vb_all_load_text( pr->center_x, pos_y, 
+                          VB_ALL_ALIGN_CENTER, 0, 6, 16, 
+                          value_string);
+      }
+    }
+  }
+
   /* update vbos */
   VB_ALL_UPDATE_OVERLAY_SPRITES_IN_VBOS()
 
