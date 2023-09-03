@@ -10,10 +10,10 @@
 #include "controls.h"
 #include "global.h"
 #include "graphics.h"
+#include "key.h"
 #include "layout.h"
 #include "palette.h"
 #include "patch.h"
-#include "pattern.h"
 #include "screen.h"
 #include "sequence.h"
 #include "texture.h"
@@ -110,26 +110,15 @@ enum
     tile_index += 1;                                                                            \
   }
 
-#define VB_ALL_ADD_PANEL_PIECE_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, lighting, palette)  \
-  if (tile_index < GRAPHICS_PANELS_TILES_END_INDEX)                                         \
-  {                                                                                         \
-    VB_ALL_ADD_TILE_TO_VERTEX_BUFFER(pos_x, pos_y, 1, 1, GRAPHICS_Z_LEVEL_PANELS)           \
-    VB_ALL_ADD_TILE_TO_TEXTURE_COORD_BUFFER(cell_x, cell_y, 1, 1)                           \
-    VB_ALL_ADD_TILE_TO_LIGHTING_AND_PALETTE_BUFFER(lighting, palette)                       \
-    VB_ALL_ADD_TILE_TO_ELEMENT_BUFFER()                                                     \
-                                                                                            \
-    tile_index += 1;                                                                        \
-  }
-
-#define VB_ALL_ADD_SCROLLBAR_TRACK_PIECE_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, lighting, palette)  \
-  if (tile_index < GRAPHICS_PANELS_TILES_END_INDEX)                                                   \
-  {                                                                                                   \
-    VB_ALL_ADD_TILE_TO_VERTEX_BUFFER(pos_x, pos_y, 1, 1, GRAPHICS_Z_LEVEL_PANELS)                     \
-    VB_ALL_ADD_TILE_TO_TEXTURE_COORD_BUFFER(cell_x, cell_y, 1, 1)                                     \
-    VB_ALL_ADD_TILE_TO_LIGHTING_AND_PALETTE_BUFFER(lighting, palette)                                 \
-    VB_ALL_ADD_TILE_TO_ELEMENT_BUFFER()                                                               \
-                                                                                                      \
-    tile_index += 1;                                                                                  \
+#define VB_ALL_ADD_TOP_PANEL_PIECE_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, lighting, palette)  \
+  if (tile_index < GRAPHICS_TOP_PANEL_TILES_END_INDEX)                                          \
+  {                                                                                             \
+    VB_ALL_ADD_TILE_TO_VERTEX_BUFFER(pos_x, pos_y, 1, 1, GRAPHICS_Z_LEVEL_TOP_PANEL)            \
+    VB_ALL_ADD_TILE_TO_TEXTURE_COORD_BUFFER(cell_x, cell_y, 1, 1)                               \
+    VB_ALL_ADD_TILE_TO_LIGHTING_AND_PALETTE_BUFFER(lighting, palette)                           \
+    VB_ALL_ADD_TILE_TO_ELEMENT_BUFFER()                                                         \
+                                                                                                \
+    tile_index += 1;                                                                            \
   }
 
 #define VB_ALL_UPDATE_BACKGROUND_TILES_IN_VBOS()                                                    \
@@ -157,30 +146,30 @@ enum
                   G_tile_layer_counts[GRAPHICS_TILE_LAYER_BACKGROUND] * 6 * sizeof(unsigned short), \
                   &G_index_buffer_tiles[GRAPHICS_BACKGROUND_TILES_START_INDEX * 6]);
 
-#define VB_ALL_UPDATE_PANELS_TILES_IN_VBOS()                                                        \
+#define VB_ALL_UPDATE_TOP_PANEL_TILES_IN_VBOS()                                                     \
   glBindBuffer(GL_ARRAY_BUFFER, G_vertex_buffer_id_tiles);                                          \
   glBufferSubData(GL_ARRAY_BUFFER,                                                                  \
-                  GRAPHICS_PANELS_TILES_START_INDEX * 12 * sizeof(GLfloat),                         \
-                  G_tile_layer_counts[GRAPHICS_TILE_LAYER_PANELS] * 12 * sizeof(GLfloat),           \
-                  &G_vertex_buffer_tiles[GRAPHICS_PANELS_TILES_START_INDEX * 12]);                  \
+                  GRAPHICS_TOP_PANEL_TILES_START_INDEX * 12 * sizeof(GLfloat),                      \
+                  G_tile_layer_counts[GRAPHICS_TILE_LAYER_TOP_PANEL] * 12 * sizeof(GLfloat),        \
+                  &G_vertex_buffer_tiles[GRAPHICS_TOP_PANEL_TILES_START_INDEX * 12]);               \
                                                                                                     \
   glBindBuffer(GL_ARRAY_BUFFER, G_texture_coord_buffer_id_tiles);                                   \
   glBufferSubData(GL_ARRAY_BUFFER,                                                                  \
-                  GRAPHICS_PANELS_TILES_START_INDEX * 8 * sizeof(GLfloat),                          \
-                  G_tile_layer_counts[GRAPHICS_TILE_LAYER_PANELS] * 8 * sizeof(GLfloat),            \
-                  &G_texture_coord_buffer_tiles[GRAPHICS_PANELS_TILES_START_INDEX * 8]);            \
+                  GRAPHICS_TOP_PANEL_TILES_START_INDEX * 8 * sizeof(GLfloat),                       \
+                  G_tile_layer_counts[GRAPHICS_TILE_LAYER_TOP_PANEL] * 8 * sizeof(GLfloat),         \
+                  &G_texture_coord_buffer_tiles[GRAPHICS_TOP_PANEL_TILES_START_INDEX * 8]);         \
                                                                                                     \
   glBindBuffer(GL_ARRAY_BUFFER, G_lighting_and_palette_buffer_id_tiles);                            \
   glBufferSubData(GL_ARRAY_BUFFER,                                                                  \
-                  GRAPHICS_PANELS_TILES_START_INDEX * 8 * sizeof(GLfloat),                          \
-                  G_tile_layer_counts[GRAPHICS_TILE_LAYER_PANELS] * 8 * sizeof(GLfloat),            \
-                  &G_lighting_and_palette_buffer_tiles[GRAPHICS_PANELS_TILES_START_INDEX * 8]);     \
+                  GRAPHICS_TOP_PANEL_TILES_START_INDEX * 8 * sizeof(GLfloat),                       \
+                  G_tile_layer_counts[GRAPHICS_TILE_LAYER_TOP_PANEL] * 8 * sizeof(GLfloat),         \
+                  &G_lighting_and_palette_buffer_tiles[GRAPHICS_TOP_PANEL_TILES_START_INDEX * 8]);  \
                                                                                                     \
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, G_index_buffer_id_tiles);                                   \
   glBufferSubData(GL_ELEMENT_ARRAY_BUFFER,                                                          \
-                  GRAPHICS_PANELS_TILES_START_INDEX * 6 * sizeof(unsigned short),                   \
-                  G_tile_layer_counts[GRAPHICS_TILE_LAYER_PANELS] * 6 * sizeof(unsigned short),     \
-                  &G_index_buffer_tiles[GRAPHICS_PANELS_TILES_START_INDEX * 6]);
+                  GRAPHICS_TOP_PANEL_TILES_START_INDEX * 6 * sizeof(unsigned short),                \
+                  G_tile_layer_counts[GRAPHICS_TILE_LAYER_TOP_PANEL] * 6 * sizeof(unsigned short),  \
+                  &G_index_buffer_tiles[GRAPHICS_TOP_PANEL_TILES_START_INDEX * 6]);
 
 /* sprites */
 /* position is the center, width & height are in 8x8 cells */
@@ -238,9 +227,9 @@ enum
   G_index_buffer_sprites[6 * sprite_index + 5] = 4 * sprite_index + 3;
 
 #define VB_ALL_ADD_BUTTON_PIECE_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, lighting, palette) \
-  if (sprite_index < GRAPHICS_BUTTONS_SPRITES_END_INDEX)                                    \
+  if (sprite_index < GRAPHICS_UNDERLAY_SPRITES_END_INDEX)                                   \
   {                                                                                         \
-    VB_ALL_ADD_SPRITE_TO_VERTEX_BUFFER(pos_x, pos_y, 1, 2, GRAPHICS_Z_LEVEL_BUTTONS)        \
+    VB_ALL_ADD_SPRITE_TO_VERTEX_BUFFER(pos_x, pos_y, 1, 2, GRAPHICS_Z_LEVEL_UNDERLAY)       \
     VB_ALL_ADD_SPRITE_TO_TEXTURE_COORD_BUFFER(cell_x, cell_y, 1, 2)                         \
     VB_ALL_ADD_SPRITE_TO_LIGHTING_AND_PALETTE_BUFFER(lighting, palette)                     \
     VB_ALL_ADD_SPRITE_TO_ELEMENT_BUFFER()                                                   \
@@ -248,32 +237,21 @@ enum
     sprite_index += 1;                                                                      \
   }
 
-#define VB_ALL_ADD_SLIDER_TRACK_PIECE_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, lighting, palette) \
-  if (sprite_index < GRAPHICS_OVERLAY_SPRITES_END_INDEX)                                          \
-  {                                                                                               \
-    VB_ALL_ADD_SPRITE_TO_VERTEX_BUFFER(pos_x, pos_y, 1, 1, GRAPHICS_Z_LEVEL_SLIDERS)              \
-    VB_ALL_ADD_SPRITE_TO_TEXTURE_COORD_BUFFER(cell_x, cell_y, 1, 1)                               \
-    VB_ALL_ADD_SPRITE_TO_LIGHTING_AND_PALETTE_BUFFER(lighting, palette)                           \
-    VB_ALL_ADD_SPRITE_TO_ELEMENT_BUFFER()                                                         \
-                                                                                                  \
-    sprite_index += 1;                                                                            \
-  }
-
-#define VB_ALL_ADD_PATTERN_STEP_PIECE_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, lighting, palette) \
-  if (sprite_index < GRAPHICS_OVERLAY_SPRITES_END_INDEX)                                          \
-  {                                                                                               \
-    VB_ALL_ADD_SPRITE_TO_VERTEX_BUFFER(pos_x, pos_y, 1, 2, GRAPHICS_Z_LEVEL_SLIDERS)              \
-    VB_ALL_ADD_SPRITE_TO_TEXTURE_COORD_BUFFER(cell_x, cell_y, 1, 2)                               \
-    VB_ALL_ADD_SPRITE_TO_LIGHTING_AND_PALETTE_BUFFER(lighting, palette)                           \
-    VB_ALL_ADD_SPRITE_TO_ELEMENT_BUFFER()                                                         \
-                                                                                                  \
-    sprite_index += 1;                                                                            \
+#define VB_ALL_ADD_SCROLLBAR_TRACK_PIECE_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, lighting, palette)  \
+  if (sprite_index < GRAPHICS_UNDERLAY_SPRITES_END_INDEX)                                             \
+  {                                                                                                   \
+    VB_ALL_ADD_SPRITE_TO_VERTEX_BUFFER(pos_x, pos_y, 1, 1, GRAPHICS_Z_LEVEL_UNDERLAY)                 \
+    VB_ALL_ADD_SPRITE_TO_TEXTURE_COORD_BUFFER(cell_x, cell_y, 1, 1)                                   \
+    VB_ALL_ADD_SPRITE_TO_LIGHTING_AND_PALETTE_BUFFER(lighting, palette)                               \
+    VB_ALL_ADD_SPRITE_TO_ELEMENT_BUFFER()                                                             \
+                                                                                                      \
+    sprite_index += 1;                                                                                \
   }
 
 #define VB_ALL_ADD_SCROLLBAR_MOVING_PART_TO_BUFFERS(pos_x, pos_y, lighting, palette)  \
-  if (sprite_index < GRAPHICS_OVERLAY_SPRITES_END_INDEX)                              \
+  if (sprite_index < GRAPHICS_TEXT_SPRITES_END_INDEX)                                 \
   {                                                                                   \
-    VB_ALL_ADD_SPRITE_TO_VERTEX_BUFFER(pos_x, pos_y, 1, 2, GRAPHICS_Z_LEVEL_OVERLAY)  \
+    VB_ALL_ADD_SPRITE_TO_VERTEX_BUFFER(pos_x, pos_y, 1, 2, GRAPHICS_Z_LEVEL_TEXT)     \
     VB_ALL_ADD_SPRITE_TO_TEXTURE_COORD_BUFFER(14, 8, 1, 2)                            \
     VB_ALL_ADD_SPRITE_TO_LIGHTING_AND_PALETTE_BUFFER(lighting, palette)               \
     VB_ALL_ADD_SPRITE_TO_ELEMENT_BUFFER()                                             \
@@ -281,10 +259,10 @@ enum
     sprite_index += 1;                                                                \
   }
 
-#define VB_ALL_ADD_FONT_CHARACTER_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, lighting, palette) \
-  if (sprite_index < GRAPHICS_OVERLAY_SPRITES_END_INDEX)                                      \
+#define VB_ALL_ADD_DIVIDER_PIECE_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, lighting, palette)  \
+  if (sprite_index < GRAPHICS_UNDERLAY_SPRITES_END_INDEX)                                     \
   {                                                                                           \
-    VB_ALL_ADD_SPRITE_TO_VERTEX_BUFFER(pos_x, pos_y, 1, 1, GRAPHICS_Z_LEVEL_OVERLAY)          \
+    VB_ALL_ADD_SPRITE_TO_VERTEX_BUFFER(pos_x, pos_y, 1, 1, GRAPHICS_Z_LEVEL_UNDERLAY)         \
     VB_ALL_ADD_SPRITE_TO_TEXTURE_COORD_BUFFER(cell_x, cell_y, 1, 1)                           \
     VB_ALL_ADD_SPRITE_TO_LIGHTING_AND_PALETTE_BUFFER(lighting, palette)                       \
     VB_ALL_ADD_SPRITE_TO_ELEMENT_BUFFER()                                                     \
@@ -292,10 +270,32 @@ enum
     sprite_index += 1;                                                                        \
   }
 
+#define VB_ALL_ADD_FONT_CHARACTER_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, lighting, palette) \
+  if (sprite_index < GRAPHICS_TEXT_SPRITES_END_INDEX)                                         \
+  {                                                                                           \
+    VB_ALL_ADD_SPRITE_TO_VERTEX_BUFFER(pos_x, pos_y, 1, 1, GRAPHICS_Z_LEVEL_TEXT)             \
+    VB_ALL_ADD_SPRITE_TO_TEXTURE_COORD_BUFFER(cell_x, cell_y, 1, 1)                           \
+    VB_ALL_ADD_SPRITE_TO_LIGHTING_AND_PALETTE_BUFFER(lighting, palette)                       \
+    VB_ALL_ADD_SPRITE_TO_ELEMENT_BUFFER()                                                     \
+                                                                                              \
+    sprite_index += 1;                                                                        \
+  }
+
+#define VB_ALL_ADD_SLIDER_TRACK_PIECE_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, lighting, palette) \
+  if (sprite_index < GRAPHICS_UNDERLAY_SPRITES_END_INDEX)                                         \
+  {                                                                                               \
+    VB_ALL_ADD_SPRITE_TO_VERTEX_BUFFER(pos_x, pos_y, 1, 1, GRAPHICS_Z_LEVEL_UNDERLAY)             \
+    VB_ALL_ADD_SPRITE_TO_TEXTURE_COORD_BUFFER(cell_x, cell_y, 1, 1)                               \
+    VB_ALL_ADD_SPRITE_TO_LIGHTING_AND_PALETTE_BUFFER(lighting, palette)                           \
+    VB_ALL_ADD_SPRITE_TO_ELEMENT_BUFFER()                                                         \
+                                                                                                  \
+    sprite_index += 1;                                                                            \
+  }
+
 #define VB_ALL_ADD_SLIDER_MOVING_PART_TO_BUFFERS(pos_x, pos_y, lighting, palette)     \
-  if (sprite_index < GRAPHICS_OVERLAY_SPRITES_END_INDEX)                              \
+  if (sprite_index < GRAPHICS_TEXT_SPRITES_END_INDEX)                                 \
   {                                                                                   \
-    VB_ALL_ADD_SPRITE_TO_VERTEX_BUFFER(pos_x, pos_y, 1, 1, GRAPHICS_Z_LEVEL_OVERLAY)  \
+    VB_ALL_ADD_SPRITE_TO_VERTEX_BUFFER(pos_x, pos_y, 1, 1, GRAPHICS_Z_LEVEL_TEXT)     \
     VB_ALL_ADD_SPRITE_TO_TEXTURE_COORD_BUFFER(0, 7, 1, 1)                             \
     VB_ALL_ADD_SPRITE_TO_LIGHTING_AND_PALETTE_BUFFER(lighting, palette)               \
     VB_ALL_ADD_SPRITE_TO_ELEMENT_BUFFER()                                             \
@@ -304,9 +304,9 @@ enum
   }
 
 #define VB_ALL_ADD_NAMED_SPRITE_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, width, height, lighting, palette)  \
-  if (sprite_index < GRAPHICS_OVERLAY_SPRITES_END_INDEX)                                                    \
+  if (sprite_index < GRAPHICS_TEXT_SPRITES_END_INDEX)                                                       \
   {                                                                                                         \
-    VB_ALL_ADD_SPRITE_TO_VERTEX_BUFFER(pos_x, pos_y, width, height, GRAPHICS_Z_LEVEL_OVERLAY)               \
+    VB_ALL_ADD_SPRITE_TO_VERTEX_BUFFER(pos_x, pos_y, width, height, GRAPHICS_Z_LEVEL_TEXT)                  \
     VB_ALL_ADD_SPRITE_TO_TEXTURE_COORD_BUFFER(cell_x, cell_y, width, height)                                \
     VB_ALL_ADD_SPRITE_TO_LIGHTING_AND_PALETTE_BUFFER(lighting, palette)                                     \
     VB_ALL_ADD_SPRITE_TO_ELEMENT_BUFFER()                                                                   \
@@ -314,30 +314,80 @@ enum
     sprite_index += 1;                                                                                      \
   }
 
-#define VB_ALL_UPDATE_BUTTONS_SPRITES_IN_VBOS()                                                       \
+#define VB_ALL_UPDATE_UNDERLAY_SPRITES_IN_VBOS()                                                      \
   glBindBuffer(GL_ARRAY_BUFFER, G_vertex_buffer_id_sprites);                                          \
   glBufferSubData(GL_ARRAY_BUFFER,                                                                    \
-                  GRAPHICS_BUTTONS_SPRITES_START_INDEX * 12 * sizeof(GLfloat),                        \
-                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_BUTTONS] * 12 * sizeof(GLfloat),        \
-                  &G_vertex_buffer_sprites[GRAPHICS_BUTTONS_SPRITES_START_INDEX * 12]);               \
+                  GRAPHICS_UNDERLAY_SPRITES_START_INDEX * 12 * sizeof(GLfloat),                       \
+                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_UNDERLAY] * 12 * sizeof(GLfloat),       \
+                  &G_vertex_buffer_sprites[GRAPHICS_UNDERLAY_SPRITES_START_INDEX * 12]);              \
                                                                                                       \
   glBindBuffer(GL_ARRAY_BUFFER, G_texture_coord_buffer_id_sprites);                                   \
   glBufferSubData(GL_ARRAY_BUFFER,                                                                    \
-                  GRAPHICS_BUTTONS_SPRITES_START_INDEX * 8 * sizeof(GLfloat),                         \
-                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_BUTTONS] * 8 * sizeof(GLfloat),         \
-                  &G_texture_coord_buffer_sprites[GRAPHICS_BUTTONS_SPRITES_START_INDEX * 8]);         \
+                  GRAPHICS_UNDERLAY_SPRITES_START_INDEX * 8 * sizeof(GLfloat),                        \
+                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_UNDERLAY] * 8 * sizeof(GLfloat),        \
+                  &G_texture_coord_buffer_sprites[GRAPHICS_UNDERLAY_SPRITES_START_INDEX * 8]);        \
                                                                                                       \
   glBindBuffer(GL_ARRAY_BUFFER, G_lighting_and_palette_buffer_id_sprites);                            \
   glBufferSubData(GL_ARRAY_BUFFER,                                                                    \
-                  GRAPHICS_BUTTONS_SPRITES_START_INDEX * 8 * sizeof(GLfloat),                         \
-                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_BUTTONS] * 8 * sizeof(GLfloat),         \
-                  &G_lighting_and_palette_buffer_sprites[GRAPHICS_BUTTONS_SPRITES_START_INDEX * 8]);  \
+                  GRAPHICS_UNDERLAY_SPRITES_START_INDEX * 8 * sizeof(GLfloat),                        \
+                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_UNDERLAY] * 8 * sizeof(GLfloat),        \
+                  &G_lighting_and_palette_buffer_sprites[GRAPHICS_UNDERLAY_SPRITES_START_INDEX * 8]); \
                                                                                                       \
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, G_index_buffer_id_sprites);                                   \
   glBufferSubData(GL_ELEMENT_ARRAY_BUFFER,                                                            \
-                  GRAPHICS_BUTTONS_SPRITES_START_INDEX * 6 * sizeof(unsigned short),                  \
-                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_BUTTONS] * 6 * sizeof(unsigned short),  \
-                  &G_index_buffer_sprites[GRAPHICS_BUTTONS_SPRITES_START_INDEX * 6]);
+                  GRAPHICS_UNDERLAY_SPRITES_START_INDEX * 6 * sizeof(unsigned short),                 \
+                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_UNDERLAY] * 6 * sizeof(unsigned short), \
+                  &G_index_buffer_sprites[GRAPHICS_UNDERLAY_SPRITES_START_INDEX * 6]);
+
+#define VB_ALL_UPDATE_TEXT_SPRITES_IN_VBOS()                                                        \
+  glBindBuffer(GL_ARRAY_BUFFER, G_vertex_buffer_id_sprites);                                        \
+  glBufferSubData(GL_ARRAY_BUFFER,                                                                  \
+                  GRAPHICS_TEXT_SPRITES_START_INDEX * 12 * sizeof(GLfloat),                         \
+                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_TEXT] * 12 * sizeof(GLfloat),         \
+                  &G_vertex_buffer_sprites[GRAPHICS_TEXT_SPRITES_START_INDEX * 12]);                \
+                                                                                                    \
+  glBindBuffer(GL_ARRAY_BUFFER, G_texture_coord_buffer_id_sprites);                                 \
+  glBufferSubData(GL_ARRAY_BUFFER,                                                                  \
+                  GRAPHICS_TEXT_SPRITES_START_INDEX * 8 * sizeof(GLfloat),                          \
+                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_TEXT] * 8 * sizeof(GLfloat),          \
+                  &G_texture_coord_buffer_sprites[GRAPHICS_TEXT_SPRITES_START_INDEX * 8]);          \
+                                                                                                    \
+  glBindBuffer(GL_ARRAY_BUFFER, G_lighting_and_palette_buffer_id_sprites);                          \
+  glBufferSubData(GL_ARRAY_BUFFER,                                                                  \
+                  GRAPHICS_TEXT_SPRITES_START_INDEX * 8 * sizeof(GLfloat),                          \
+                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_TEXT] * 8 * sizeof(GLfloat),          \
+                  &G_lighting_and_palette_buffer_sprites[GRAPHICS_TEXT_SPRITES_START_INDEX * 8]);   \
+                                                                                                    \
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, G_index_buffer_id_sprites);                                 \
+  glBufferSubData(GL_ELEMENT_ARRAY_BUFFER,                                                          \
+                  GRAPHICS_TEXT_SPRITES_START_INDEX * 6 * sizeof(unsigned short),                   \
+                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_TEXT] * 6 * sizeof(unsigned short),   \
+                  &G_index_buffer_sprites[GRAPHICS_TEXT_SPRITES_START_INDEX * 6]);
+
+#define VB_ALL_UPDATE_POPUP_SPRITES_IN_VBOS()                                                       \
+  glBindBuffer(GL_ARRAY_BUFFER, G_vertex_buffer_id_sprites);                                        \
+  glBufferSubData(GL_ARRAY_BUFFER,                                                                  \
+                  GRAPHICS_POPUP_SPRITES_START_INDEX * 12 * sizeof(GLfloat),                        \
+                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_POPUP] * 12 * sizeof(GLfloat),        \
+                  &G_vertex_buffer_sprites[GRAPHICS_POPUP_SPRITES_START_INDEX * 12]);               \
+                                                                                                    \
+  glBindBuffer(GL_ARRAY_BUFFER, G_texture_coord_buffer_id_sprites);                                 \
+  glBufferSubData(GL_ARRAY_BUFFER,                                                                  \
+                  GRAPHICS_POPUP_SPRITES_START_INDEX * 8 * sizeof(GLfloat),                         \
+                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_POPUP] * 8 * sizeof(GLfloat),         \
+                  &G_texture_coord_buffer_sprites[GRAPHICS_POPUP_SPRITES_START_INDEX * 8]);         \
+                                                                                                    \
+  glBindBuffer(GL_ARRAY_BUFFER, G_lighting_and_palette_buffer_id_sprites);                          \
+  glBufferSubData(GL_ARRAY_BUFFER,                                                                  \
+                  GRAPHICS_POPUP_SPRITES_START_INDEX * 8 * sizeof(GLfloat),                         \
+                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_POPUP] * 8 * sizeof(GLfloat),         \
+                  &G_lighting_and_palette_buffer_sprites[GRAPHICS_POPUP_SPRITES_START_INDEX * 8]);  \
+                                                                                                    \
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, G_index_buffer_id_sprites);                                 \
+  glBufferSubData(GL_ELEMENT_ARRAY_BUFFER,                                                          \
+                  GRAPHICS_POPUP_SPRITES_START_INDEX * 6 * sizeof(unsigned short),                  \
+                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_POPUP] * 6 * sizeof(unsigned short),  \
+                  &G_index_buffer_sprites[GRAPHICS_POPUP_SPRITES_START_INDEX * 6]);
 
 #define VB_ALL_UPDATE_OVERLAY_SPRITES_IN_VBOS()                                                       \
   glBindBuffer(GL_ARRAY_BUFFER, G_vertex_buffer_id_sprites);                                          \
@@ -385,7 +435,8 @@ static char S_patch_edit_header_labels[LAYOUT_PATCH_EDIT_HEADER_NUM_LABELS][12] 
     "Env 1", "Env 2", "Env 3", "Env 4", 
     "LFO", 
     "Bases", "Portamento", "Filters", 
-    "Depths", "Mod Wheel", "Aftertouch" 
+    "Depths", "Mod Wheel", "Aftertouch", 
+    "Audition" 
   };
 
 static char S_patch_edit_parameter_labels[LAYOUT_PATCH_EDIT_PARAM_NUM_LABELS][4] = 
@@ -399,7 +450,8 @@ static char S_patch_edit_parameter_labels[LAYOUT_PATCH_EDIT_PARAM_NUM_LABELS][4]
     "HP",  "LP", 
     "Vib", "Tre", "Bst", 
     "Vib", "Tre", "Bst", 
-    "Vib", "Tre", "Bst" 
+    "Vib", "Tre", "Bst", 
+    "Oct", "Key", "Mde" 
   };
 
 static char S_patch_edit_algorithm_values[PATCH_ALGORITHM_NUM_VALUES][4] = 
@@ -471,31 +523,14 @@ static char S_patch_edit_highpass_cutoff_values[PATCH_HIGHPASS_CUTOFF_NUM_VALUES
 static char S_patch_edit_lowpass_cutoff_values[PATCH_LOWPASS_CUTOFF_NUM_VALUES][4] = 
   { "E7", "G7", "A7", "C8" };
 
-/* pattern edit tables */
-static char S_pattern_edit_header_labels[LAYOUT_PATTERN_EDIT_HEADER_NUM_LABELS][12] = 
-  { "Swing", "Notes", "Key", "Vol", "MW", "AT", "Arp/Port" };
+static char S_patch_edit_major_key_values[KEY_NUM_SIGS][6] = 
+  { "Cb", "Gb", "Db", "Ab", "Eb", "Bb", "F", "C", "G", "D", "A", "E", "B", "F#", "C#" };
 
-static char S_pattern_edit_swing_values[PATTERN_SWING_NUM_VALUES][6] = 
-  { "1:1", "5:4", "4:3", "3:2", "5:3", "2:1", "5:2", "3:1" };
+static char S_patch_edit_minor_key_values[KEY_NUM_SIGS][6] = 
+  { "Ab", "Eb", "Bb", "F", "C", "G", "D", "A", "E", "B", "F#", "C#", "G#", "D#", "A#" };
 
-static char S_pattern_edit_note_values[PATTERN_INSTRUMENT_NOTE_NUM_VALUES][6] = 
-  { "C-1", "D-1", "E-1", "F-1", "G-1", "A-1", "B-1", 
-    "C-2", "D-2", "E-2", "F-2", "G-2", "A-2", "B-2", 
-    "C-3", "D-3", "E-3", "F-3", "G-3", "A-3", "B-3", 
-    "C-4", "D-4", "E-4", "F-4", "G-4", "A-4", "B-4", 
-    "C-5", "D-5", "E-5", "F-5", "G-5", "A-5", "B-5", 
-    "C-6", "D-6", "E-6", "F-6", "G-6", "A-6", "B-6", 
-    "C-7", "D-7", "E-7", "F-7", "G-7", "A-7", "B-7", "C-8" 
-  };
-
-static char S_pattern_edit_key_values[PATTERN_INSTRUMENT_KEY_NUM_VALUES][6] = 
-  { "I", "V", "IV", "RM", "RV", "RIV", 
-    "PM", "Dor", "Phr", "Lyd", "Mix", "Loc", 
-    "2V", "3V", "HSU", "WSU" 
-  };
-
-static char S_pattern_edit_arp_porta_mode_values[PATTERN_INSTRUMENT_ARP_PORTA_MODE_NUM_VALUES][6] = 
-  { "Por", "Arp", "Rol" };
+static char S_patch_edit_mode_values[2][6] = 
+  { "Major", "Minor" };
 
 /*******************************************************************************
 ** vb_all_load_background()
@@ -560,7 +595,7 @@ short int vb_all_load_background()
 ** vb_all_load_panel()
 *******************************************************************************/
 short int vb_all_load_panel(int offset_x, int offset_y, 
-                            int width, int height, int type)
+                            int width, int height)
 {
   int m;
   int n;
@@ -600,8 +635,8 @@ short int vb_all_load_panel(int offset_x, int offset_y,
   palette = VB_ALL_PALETTE_1;
 
   /* draw the panel */
-  tile_index =  GRAPHICS_PANELS_TILES_START_INDEX + 
-                G_tile_layer_counts[GRAPHICS_TILE_LAYER_PANELS];
+  tile_index =  GRAPHICS_TOP_PANEL_TILES_START_INDEX + 
+                G_tile_layer_counts[GRAPHICS_TILE_LAYER_TOP_PANEL];
 
   for (n = 0; n < height; n++)
   {
@@ -666,111 +701,13 @@ short int vb_all_load_panel(int offset_x, int offset_y,
         cell_y = 13;
       }
 
-      /* select panel type */
-      if (type == LAYOUT_PANEL_TYPE_NORMAL)
-        cell_x += 0;
-      else if (type == LAYOUT_PANEL_TYPE_THIN)
-        cell_x += 4;
-      else
-        cell_x += 0;
-
-      VB_ALL_ADD_PANEL_PIECE_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, lighting, palette)
+      VB_ALL_ADD_TOP_PANEL_PIECE_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, lighting, palette)
     }
   }
 
   /* update panels tile layer count */
-  G_tile_layer_counts[GRAPHICS_TILE_LAYER_PANELS] = 
-    tile_index - GRAPHICS_PANELS_TILES_START_INDEX;
-
-  return 0;
-}
-
-/*******************************************************************************
-** vb_all_load_vertical_scrollbar_track()
-*******************************************************************************/
-short int vb_all_load_vertical_scrollbar_track( int offset_x, int offset_y, 
-                                                int height)
-{
-  int n;
-
-  int tile_index;
-
-  int corner_x;
-  int corner_y;
-
-  int pos_x;
-  int pos_y;
-
-  int cell_x;
-  int cell_y;
-
-  int lighting;
-  int palette;
-
-  /* make sure the width and height are valid     */
-  /* the width & height are in terms of 8x8 cells */
-  if ((height < 4) || (height > GRAPHICS_OVERSCAN_HEIGHT / 8))
-    return 1;
-
-  /* determine coordinates of top left corner */
-  corner_x = (GRAPHICS_OVERSCAN_WIDTH - 8 * 1) / 2;
-  corner_y = (GRAPHICS_OVERSCAN_HEIGHT - 8 * height) / 2;
-
-  /* the offsets from the screen center are in 4x4 half-cells */
-  corner_x += 4 * offset_x;
-  corner_y += 4 * offset_y;
-
-  /* set lighting and palette */
-  lighting = 0;
-  palette = VB_ALL_PALETTE_1;
-
-  /* draw the scrollbar track */
-  tile_index =  GRAPHICS_PANELS_TILES_START_INDEX + 
-                G_tile_layer_counts[GRAPHICS_TILE_LAYER_PANELS];
-
-  for (n = 0; n < height; n++)
-  {
-    /* determine center of this piece */
-    pos_x = corner_x + (8 * 0) + 4;
-    pos_y = corner_y + (8 * n) + 4;
-
-    /* up arrow piece */
-    if (n == 0)
-    {
-      cell_x = 14;
-      cell_y = 6;
-    }
-    /* bar top piece */
-    else if (n == 1)
-    {
-      cell_x = 15;
-      cell_y = 6;
-    }
-    /* bar bottom piece */
-    else if (n == height - 2)
-    {
-      cell_x = 15;
-      cell_y = 9;
-    }
-    /* bottom arrow piece */
-    else if (n == height - 1)
-    {
-      cell_x = 14;
-      cell_y = 7;
-    }
-    /* bar middle piece */
-    else
-    {
-      cell_x = 15;
-      cell_y = 7;
-    }
-
-    VB_ALL_ADD_SCROLLBAR_TRACK_PIECE_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, lighting, palette)
-  }
-
-  /* update panels tile layer count */
-  G_tile_layer_counts[GRAPHICS_TILE_LAYER_PANELS] = 
-    tile_index - GRAPHICS_PANELS_TILES_START_INDEX;
+  G_tile_layer_counts[GRAPHICS_TILE_LAYER_TOP_PANEL] = 
+    tile_index - GRAPHICS_TOP_PANEL_TILES_START_INDEX;
 
   return 0;
 }
@@ -827,8 +764,8 @@ short int vb_all_load_button(int offset_x, int offset_y, int width, int state)
   }
 
   /* draw the button */
-  sprite_index =  GRAPHICS_BUTTONS_SPRITES_START_INDEX + 
-                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_BUTTONS];
+  sprite_index =  GRAPHICS_UNDERLAY_SPRITES_START_INDEX + 
+                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_UNDERLAY];
 
   for (m = 0; m < width; m++)
   {
@@ -840,27 +777,117 @@ short int vb_all_load_button(int offset_x, int offset_y, int width, int state)
     if (m == 0)
     {
       cell_x = 10;
-      cell_y = 8;
+      cell_y = 6;
     }
     /* right piece */
     else if (m == width - 1)
     {
       cell_x = 13;
-      cell_y = 8;
+      cell_y = 6;
     }
     /* middle piece */
     else
     {
       cell_x = 11;
-      cell_y = 8;
+      cell_y = 6;
     }
 
     VB_ALL_ADD_BUTTON_PIECE_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, lighting, palette)
   }
 
   /* update buttons sprite layer count */
-  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_BUTTONS] = 
-    sprite_index - GRAPHICS_BUTTONS_SPRITES_START_INDEX;
+  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_UNDERLAY] = 
+    sprite_index - GRAPHICS_UNDERLAY_SPRITES_START_INDEX;
+
+  return 0;
+}
+
+/*******************************************************************************
+** vb_all_load_vertical_scrollbar_track()
+*******************************************************************************/
+short int vb_all_load_vertical_scrollbar_track( int offset_x, int offset_y, 
+                                                int height)
+{
+  int n;
+
+  int sprite_index;
+
+  int corner_x;
+  int corner_y;
+
+  int pos_x;
+  int pos_y;
+
+  int cell_x;
+  int cell_y;
+
+  int lighting;
+  int palette;
+
+  /* make sure the width and height are valid     */
+  /* the width & height are in terms of 8x8 cells */
+  if ((height < 4) || (height > GRAPHICS_OVERSCAN_HEIGHT / 8))
+    return 1;
+
+  /* determine coordinates of top left corner */
+  corner_x = (GRAPHICS_OVERSCAN_WIDTH - 8 * 1) / 2;
+  corner_y = (GRAPHICS_OVERSCAN_HEIGHT - 8 * height) / 2;
+
+  /* the offsets from the screen center are in 4x4 half-cells */
+  corner_x += 4 * offset_x;
+  corner_y += 4 * offset_y;
+
+  /* set lighting and palette */
+  lighting = 0;
+  palette = VB_ALL_PALETTE_1;
+
+  /* draw the scrollbar track */
+  sprite_index =  GRAPHICS_UNDERLAY_SPRITES_START_INDEX + 
+                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_UNDERLAY];
+
+  for (n = 0; n < height; n++)
+  {
+    /* determine center of this piece */
+    pos_x = corner_x + (8 * 0) + 4;
+    pos_y = corner_y + (8 * n) + 4;
+
+    /* up arrow piece */
+    if (n == 0)
+    {
+      cell_x = 14;
+      cell_y = 6;
+    }
+    /* bar top piece */
+    else if (n == 1)
+    {
+      cell_x = 15;
+      cell_y = 6;
+    }
+    /* bar bottom piece */
+    else if (n == height - 2)
+    {
+      cell_x = 15;
+      cell_y = 9;
+    }
+    /* bottom arrow piece */
+    else if (n == height - 1)
+    {
+      cell_x = 14;
+      cell_y = 7;
+    }
+    /* bar middle piece */
+    else
+    {
+      cell_x = 15;
+      cell_y = 7;
+    }
+
+    VB_ALL_ADD_SCROLLBAR_TRACK_PIECE_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, lighting, palette)
+  }
+
+  /* update panels tile layer count */
+  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_UNDERLAY] = 
+    sprite_index - GRAPHICS_UNDERLAY_SPRITES_START_INDEX;
 
   return 0;
 }
@@ -906,8 +933,8 @@ short int vb_all_load_vertical_scrollbar_moving_part( int offset_x, int offset_y
   palette = VB_ALL_PALETTE_1;
 
   /* draw the scrollbar's slider */
-  sprite_index =  GRAPHICS_OVERLAY_SPRITES_START_INDEX + 
-                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_OVERLAY];
+  sprite_index =  GRAPHICS_TEXT_SPRITES_START_INDEX + 
+                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_TEXT];
 
   /* determine vertical position */
   pos_x = corner_x + (8 * 0) + 4;
@@ -924,8 +951,86 @@ short int vb_all_load_vertical_scrollbar_moving_part( int offset_x, int offset_y
   VB_ALL_ADD_SCROLLBAR_MOVING_PART_TO_BUFFERS(pos_x, pos_y, lighting, palette)
 
   /* update overlay sprite layer count */
-  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_OVERLAY] = 
-    sprite_index - GRAPHICS_OVERLAY_SPRITES_START_INDEX;
+  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_TEXT] = 
+    sprite_index - GRAPHICS_TEXT_SPRITES_START_INDEX;
+
+  return 0;
+}
+
+/*******************************************************************************
+** vb_all_load_horizontal_divider()
+*******************************************************************************/
+short int vb_all_load_horizontal_divider( int offset_x, int offset_y, 
+                                          int width)
+{
+  int m;
+
+  int sprite_index;
+
+  int corner_x;
+  int corner_y;
+
+  int pos_x;
+  int pos_y;
+
+  int cell_x;
+  int cell_y;
+
+  int lighting;
+  int palette;
+
+  /* make sure the width and height are valid     */
+  /* the width & height are in terms of 8x8 cells */
+  if ((width < 3) || (width > GRAPHICS_OVERSCAN_WIDTH / 8))
+    return 1;
+
+  /* determine coordinates of top left corner */
+  corner_x = (GRAPHICS_OVERSCAN_WIDTH - 8 * width) / 2;
+  corner_y = (GRAPHICS_OVERSCAN_HEIGHT - 8 * 1) / 2;
+
+  /* the offsets from the screen center are in 4x4 half-cells */
+  corner_x += 4 * offset_x;
+  corner_y += 4 * offset_y;
+
+  /* set lighting and palette */
+  lighting = 0;
+  palette = VB_ALL_PALETTE_1;
+
+  /* draw the divider */
+  sprite_index =  GRAPHICS_UNDERLAY_SPRITES_START_INDEX + 
+                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_UNDERLAY];
+
+  for (m = 0; m < width; m++)
+  {
+    /* determine center of this piece */
+    pos_x = corner_x + (8 * m) + 4;
+    pos_y = corner_y + (8 * 0) + 4;
+
+    /* 1st piece */
+    if (m % 3 == 0)
+    {
+      cell_x = 7;
+      cell_y = 7;
+    }
+    /* 2nd piece */
+    else if (m % 3 == 1)
+    {
+      cell_x = 8;
+      cell_y = 7;
+    }
+    /* 3rd piece */
+    else
+    {
+      cell_x = 9;
+      cell_y = 7;
+    }
+
+    VB_ALL_ADD_DIVIDER_PIECE_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, lighting, palette)
+  }
+
+  /* update panels tile layer count */
+  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_UNDERLAY] = 
+    sprite_index - GRAPHICS_UNDERLAY_SPRITES_START_INDEX;
 
   return 0;
 }
@@ -996,8 +1101,8 @@ short int vb_all_load_text( int offset_x, int offset_y, int align,
     palette = 0;
 
   /* draw the string */
-  sprite_index =  GRAPHICS_OVERLAY_SPRITES_START_INDEX + 
-                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_OVERLAY];
+  sprite_index =  GRAPHICS_TEXT_SPRITES_START_INDEX + 
+                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_TEXT];
 
   for (k = 0; k < length; k++)
   {
@@ -1043,8 +1148,8 @@ short int vb_all_load_text( int offset_x, int offset_y, int align,
   }
 
   /* update overlay sprite layer count */
-  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_OVERLAY] = 
-    sprite_index - GRAPHICS_OVERLAY_SPRITES_START_INDEX;
+  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_TEXT] = 
+    sprite_index - GRAPHICS_TEXT_SPRITES_START_INDEX;
 
   return 0;
 }
@@ -1115,14 +1220,14 @@ short int vb_all_load_named_sprite( int name,
     palette = 0;
 
   /* draw the sprite */
-  sprite_index =  GRAPHICS_OVERLAY_SPRITES_START_INDEX + 
-                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_OVERLAY];
+  sprite_index =  GRAPHICS_TEXT_SPRITES_START_INDEX + 
+                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_TEXT];
 
   VB_ALL_ADD_NAMED_SPRITE_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, width, height, lighting, palette)
 
   /* update overlay sprite layer count */
-  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_OVERLAY] = 
-    sprite_index - GRAPHICS_OVERLAY_SPRITES_START_INDEX;
+  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_TEXT] = 
+    sprite_index - GRAPHICS_TEXT_SPRITES_START_INDEX;
 
   return 0;
 }
@@ -1175,8 +1280,8 @@ short int vb_all_load_slider( int offset_x, int offset_y, int width,
   palette = VB_ALL_PALETTE_1;
 
   /* draw the slider track */
-  sprite_index =  GRAPHICS_OVERLAY_SPRITES_START_INDEX + 
-                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_OVERLAY];
+  sprite_index =  GRAPHICS_UNDERLAY_SPRITES_START_INDEX + 
+                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_UNDERLAY];
 
   for (m = 0; m < width; m++)
   {
@@ -1193,7 +1298,7 @@ short int vb_all_load_slider( int offset_x, int offset_y, int width,
     /* right piece */
     else if (m == width - 1)
     {
-      cell_x = 4;
+      cell_x = 3;
       cell_y = 7;
     }
     /* middle piece */
@@ -1206,7 +1311,14 @@ short int vb_all_load_slider( int offset_x, int offset_y, int width,
     VB_ALL_ADD_SLIDER_TRACK_PIECE_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, lighting, palette)
   }
 
+  /* update underlay sprite layer count */
+  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_UNDERLAY] = 
+    sprite_index - GRAPHICS_UNDERLAY_SPRITES_START_INDEX;
+
   /* draw the slider itself */
+  sprite_index =  GRAPHICS_TEXT_SPRITES_START_INDEX + 
+                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_TEXT];
+
   pos_x = corner_x + (8 * 0) + 4;
   pos_y = corner_y + (8 * 0) + 4;
 
@@ -1217,157 +1329,53 @@ short int vb_all_load_slider( int offset_x, int offset_y, int width,
 
   VB_ALL_ADD_SLIDER_MOVING_PART_TO_BUFFERS(pos_x, pos_y, lighting, palette)
 
-  /* update overlay sprite layer count */
-  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_OVERLAY] = 
-    sprite_index - GRAPHICS_OVERLAY_SPRITES_START_INDEX;
+  /* update text sprite layer count */
+  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_TEXT] = 
+    sprite_index - GRAPHICS_TEXT_SPRITES_START_INDEX;
 
   return 0;
 }
 
 /*******************************************************************************
-** vb_all_load_pattern_step_space()
+** vb_all_load_top_panel()
 *******************************************************************************/
-short int vb_all_load_pattern_step_space( int offset_x, int offset_y, 
-                                          int width, 
-                                          int lighting, int palette)
+short int vb_all_load_top_panel()
 {
-  int m;
-
-  int sprite_index;
-
-  int corner_x;
-  int corner_y;
-
-  int pos_x;
-  int pos_y;
-
-  int cell_x;
-  int cell_y;
-
-  /* make sure the width is valid       */
-  /* the width is in terms of 8x8 cells */
-  if ((width < 2) || (width > GRAPHICS_OVERSCAN_WIDTH / 8))
-    return 1;
-
-  /* determine coordinates of top left corner */
-  corner_x = (GRAPHICS_OVERSCAN_WIDTH - 8 * width) / 2;
-  corner_y = (GRAPHICS_OVERSCAN_HEIGHT - 16 * 1) / 2;
-
-  /* the offsets from the screen center are in 4x4 half-cells */
-  corner_x += 4 * offset_x;
-  corner_y += 4 * offset_y;
-
-  /* bound lighting and palette */
-  if ((lighting < -4) || (lighting > 3))
-    lighting = 0;
-
-  if ((palette < 0) || (palette > 15))
-    palette = 0;
-
-  /* draw the pattern step space */
-  sprite_index =  GRAPHICS_OVERLAY_SPRITES_START_INDEX + 
-                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_OVERLAY];
-
-  for (m = 0; m < width; m++)
-  {
-    /* determine center of this piece */
-    pos_x = corner_x + (8 * m) + 4;
-    pos_y = corner_y + (16 * 0) + 8;
-
-    /* left piece */
-    if (m == 0)
-    {
-      cell_x = 10;
-      cell_y = 6;
-    }
-    /* right piece */
-    else if (m == width - 1)
-    {
-      cell_x = 13;
-      cell_y = 6;
-    }
-    /* middle piece */
-    else
-    {
-      cell_x = 11;
-      cell_y = 6;
-    }
-
-    VB_ALL_ADD_PATTERN_STEP_PIECE_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, lighting, palette)
-  }
-
-  /* update overlay sprite layer count */
-  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_OVERLAY] = 
-    sprite_index - GRAPHICS_OVERLAY_SPRITES_START_INDEX;
-
-  return 0;
-}
-
-/*******************************************************************************
-** vb_all_load_common_panels_and_buttons()
-*******************************************************************************/
-short int vb_all_load_common_panels_and_buttons()
-{
-  int k;
-
-  button* b;
-
   /* reset panels tile vbo count */
-  G_tile_layer_counts[GRAPHICS_TILE_LAYER_PANELS] = 0;
+  G_tile_layer_counts[GRAPHICS_TILE_LAYER_TOP_PANEL] = 0;
 
-  /* reset sprite vbo counts */
-  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_BUTTONS] = 0;
-  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_OVERLAY] = 0;
-
-  /* panels */
-  vb_all_load_panel(LAYOUT_PANEL_TOP_X, LAYOUT_PANEL_TOP_Y, 
-                    LAYOUT_PANEL_TOP_WIDTH, LAYOUT_PANEL_TOP_HEIGHT, 
-                    LAYOUT_PANEL_TYPE_NORMAL);
-
-  vb_all_load_panel(LAYOUT_PANEL_BOTTOM_X, LAYOUT_PANEL_BOTTOM_Y, 
-                    LAYOUT_PANEL_BOTTOM_WIDTH, LAYOUT_PANEL_BOTTOM_HEIGHT, 
-                    LAYOUT_PANEL_TYPE_THIN);
-
-  /* vertical scrollbar track */
-  vb_all_load_vertical_scrollbar_track( LAYOUT_SCROLLBAR_X, 
-                                        LAYOUT_SCROLLBAR_Y, 
-                                        LAYOUT_SCROLLBAR_HEIGHT);
-
-  /* top panel buttons */
-  for ( k = LAYOUT_TOP_PANEL_BUTTONS_START_INDEX; 
-        k < LAYOUT_TOP_PANEL_BUTTONS_END_INDEX; 
-        k++)
-  {
-    b = &G_layout_buttons[k];
-
-    vb_all_load_button( b->center_x, b->center_y, 
-                        b->width, b->state);
-  }
+  /* top panel */
+  vb_all_load_panel(LAYOUT_TOP_PANEL_AREA_X, LAYOUT_TOP_PANEL_AREA_Y, 
+                    LAYOUT_TOP_PANEL_AREA_WIDTH, LAYOUT_TOP_PANEL_AREA_HEIGHT);
 
   /* update vbos */
-  VB_ALL_UPDATE_PANELS_TILES_IN_VBOS()
-  VB_ALL_UPDATE_BUTTONS_SPRITES_IN_VBOS()
+  VB_ALL_UPDATE_TOP_PANEL_TILES_IN_VBOS()
 
   return 0;
 }
 
 /*******************************************************************************
-** vb_all_load_common_overlay()
+** vb_all_load_top_panel_underlay_and_text()
 *******************************************************************************/
-short int vb_all_load_common_overlay()
+short int vb_all_load_top_panel_underlay_and_text()
 {
   int k;
 
   button* b;
   header* hd;
 
-  /* reset overlay sprite vbo count */
-  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_OVERLAY] = 0;
+  /* reset sprite vbo counts */
+  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_UNDERLAY] = 0;
+  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_TEXT] = 0;
 
-  /* vertical scrollbar slider */
-  vb_all_load_vertical_scrollbar_moving_part( LAYOUT_SCROLLBAR_X, 
-                                              LAYOUT_SCROLLBAR_Y, 
-                                              LAYOUT_SCROLLBAR_HEIGHT, 
+  /* vertical scrollbar track & slider */
+  vb_all_load_vertical_scrollbar_track( LAYOUT_SCROLLBAR_AREA_X, 
+                                        LAYOUT_SCROLLBAR_AREA_Y, 
+                                        LAYOUT_SCROLLBAR_AREA_HEIGHT);
+
+  vb_all_load_vertical_scrollbar_moving_part( LAYOUT_SCROLLBAR_AREA_X, 
+                                              LAYOUT_SCROLLBAR_AREA_Y, 
+                                              LAYOUT_SCROLLBAR_AREA_HEIGHT, 
                                               G_current_scroll_amount, 
                                               G_max_scroll_amount);
 
@@ -1390,36 +1398,15 @@ short int vb_all_load_common_overlay()
     }
   }
 
-  /* bottom panel headers */
-  for ( k = LAYOUT_BOTTOM_PANEL_HEADERS_START_INDEX; 
-        k < LAYOUT_BOTTOM_PANEL_HEADERS_END_INDEX; 
-        k++)
-  {
-    hd = &G_layout_headers[k];
-
-    if (hd->label == LAYOUT_BOTTOM_PANEL_HEADER_LABEL_OCTAVE)
-    {
-      vb_all_load_text( hd->center_x, hd->center_y, 
-                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_1, 32, "Octave");
-    }
-    else if (hd->label == LAYOUT_BOTTOM_PANEL_HEADER_LABEL_KEY)
-    {
-      vb_all_load_text( hd->center_x, hd->center_y, 
-                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_1, 32, "Key");
-    }
-  }
-
-  /* bottom panel text (extra) */
-  /*vb_all_load_value(-31, 25, 0, 6, G_common_edit_octave);*/
-
-  vb_all_load_text(9, 25, VB_ALL_ALIGN_LEFT, 0, 6, 32, "C  D  E  F  G  A  Bb");
-
   /* top panel buttons */
   for ( k = LAYOUT_TOP_PANEL_BUTTONS_START_INDEX; 
         k < LAYOUT_TOP_PANEL_BUTTONS_END_INDEX; 
         k++)
   {
     b = &G_layout_buttons[k];
+
+    vb_all_load_button( b->center_x, b->center_y, 
+                        b->width, b->state);
 
     if (b->label == LAYOUT_BUTTON_LABEL_PATCHES)
     {
@@ -1434,15 +1421,16 @@ short int vb_all_load_common_overlay()
   }
 
   /* update vbos */
-  VB_ALL_UPDATE_OVERLAY_SPRITES_IN_VBOS()
+  VB_ALL_UPDATE_UNDERLAY_SPRITES_IN_VBOS()
+  VB_ALL_UPDATE_TEXT_SPRITES_IN_VBOS()
 
   return 0;
 }
 
 /*******************************************************************************
-** vb_all_load_patches_overlay()
+** vb_all_load_patches_underlay_and_text()
 *******************************************************************************/
-short int vb_all_load_patches_overlay()
+short int vb_all_load_patches_underlay_and_text()
 {
   int k;
 
@@ -1453,6 +1441,8 @@ short int vb_all_load_patches_overlay()
 
   short int value;
   char*     value_string;
+
+  int pos_y;
 
   /* make sure that the patch index is valid */
   if (BANK_PATCH_INDEX_IS_NOT_VALID(0))
@@ -1476,16 +1466,26 @@ short int vb_all_load_patches_overlay()
   {
     hd = &G_layout_headers[k];
 
-    /* make sure this header is within the viewable area */
-    if (LAYOUT_PATCH_HEADER_IS_NOT_IN_MAIN_AREA(hd))
-      continue;
-
     /* make sure the label is valid */
     if ((hd->label < 0) || (hd->label >= LAYOUT_PATCH_EDIT_HEADER_NUM_LABELS))
       continue;
 
+    /* determine vertical position for audition bar headers (remain stationary) */
+    if (hd->label == LAYOUT_PATCH_EDIT_HEADER_LABEL_AUDITION)
+    {
+      pos_y = hd->center_y;
+    }
+    /* determine vertical position for other headers (can be scrolled up/down) */
+    else
+    {
+      pos_y = hd->center_y - G_current_scroll_amount;
+
+      if (LAYOUT_PATCH_HEADER_OR_PARAM_IS_NOT_IN_PATCH_EDIT_MAIN_AREA(pos_y))
+        continue;
+    }
+
     /* load the header! */
-    vb_all_load_text( hd->center_x, hd->center_y - G_current_scroll_amount, 
+    vb_all_load_text( hd->center_x, pos_y, 
                       VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_3, 16, 
                       S_patch_edit_header_labels[hd->label]);
   }
@@ -1497,13 +1497,25 @@ short int vb_all_load_patches_overlay()
   {
     pr = &G_layout_params[k];
 
-    /* make sure this parameter is within the viewable area */
-    if (LAYOUT_PATCH_PARAM_IS_NOT_IN_MAIN_AREA(pr))
-      continue;
-
     /* make sure the label is valid */
     if ((pr->label < 0) || (pr->label >= LAYOUT_PATCH_EDIT_PARAM_NUM_LABELS))
       continue;
+
+    /* determine vertical position for audition bar params (remain stationary) */
+    if ((pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_OCTAVE)  || 
+        (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_KEY)     || 
+        (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_MODE))
+    {
+      pos_y = pr->center_y;
+    }
+    /* determine vertical position for other params (can be scrolled up/down) */
+    else
+    {
+      pos_y = pr->center_y - G_current_scroll_amount;
+
+      if (LAYOUT_PATCH_HEADER_OR_PARAM_IS_NOT_IN_PATCH_EDIT_MAIN_AREA(pos_y))
+        continue;
+    }
 
     /* skip multiple/divisor or octave/note depending on the frequency mode */
     if (p->osc_freq_mode[pr->num] == 0)
@@ -1610,6 +1622,12 @@ short int vb_all_load_patches_overlay()
       value = p->aftertouch_tremolo;
     else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AFTERTOUCH_BOOST)
       value = p->aftertouch_boost;
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_OCTAVE)
+      value = G_patch_edit_octave;
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_KEY)
+      value = G_patch_edit_signature;
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_MODE)
+      value = G_patch_edit_mode;
     else
       value = 0;
 
@@ -1626,7 +1644,8 @@ short int vb_all_load_patches_overlay()
         (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_PORTAMENTO_SPEED) || 
         (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_VIBRATO_DEPTH)    || 
         (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_TREMOLO_DEPTH)    || 
-        (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_BOOST_DEPTH))
+        (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_BOOST_DEPTH)      || 
+        (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_OCTAVE))
     {
       value_string = S_common_edit_1_to_32_values[value - pr->lower_bound];
     }
@@ -1682,290 +1701,108 @@ short int vb_all_load_patches_overlay()
       value_string = S_patch_edit_highpass_cutoff_values[value - pr->lower_bound];
     else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_LOWPASS_CUTOFF)
       value_string = S_patch_edit_lowpass_cutoff_values[value - pr->lower_bound];
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_KEY)
+    {
+      if (G_patch_edit_mode == KEY_MODE_MAJOR)
+        value_string = S_patch_edit_major_key_values[value - pr->lower_bound];
+      else
+        value_string = S_patch_edit_minor_key_values[value - pr->lower_bound];
+    }
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_MODE)
+    {
+      if (G_patch_edit_mode == KEY_MODE_MAJOR)
+        value_string = S_patch_edit_mode_values[0];
+      else
+        value_string = S_patch_edit_mode_values[1];
+    }
     else
       value_string = NULL;
 
     /* load the parameter name, value, and slider, arrows, or radio button */
     if (pr->type == LAYOUT_PATCH_EDIT_PARAM_TYPE_SLIDER)
     {
-      vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_NAME_X, 
-                        pr->center_y - G_current_scroll_amount, 
+      vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_NAME_X, pos_y, 
                         VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, 
                         S_patch_edit_parameter_labels[pr->label]);
 
-      vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_SLIDER_VALUE_X, 
-                        pr->center_y - G_current_scroll_amount, 
+      vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_SLIDER_VALUE_X, pos_y, 
                         VB_ALL_ALIGN_CENTER, 0, 6, 16, 
                         value_string);
 
-      vb_all_load_slider( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_SLIDER_TRACK_X, 
-                          pr->center_y - G_current_scroll_amount, 
+      vb_all_load_slider( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_SLIDER_TRACK_X, pos_y, 
                           LAYOUT_PATCH_EDIT_PARAM_SLIDER_WIDTH, 
                           value, pr->lower_bound, pr->upper_bound);
     }
     else if (pr->type == LAYOUT_PATCH_EDIT_PARAM_TYPE_ARROWS)
     {
-      vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_NAME_X, 
-                        pr->center_y - G_current_scroll_amount, 
+      vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_NAME_X, pos_y, 
                         VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, 
                         S_patch_edit_parameter_labels[pr->label]);
 
-      vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_ARROWS_VALUE_X, 
-                        pr->center_y - G_current_scroll_amount, 
+      vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_ARROWS_VALUE_X, pos_y, 
                         VB_ALL_ALIGN_CENTER, 0, 6, 16, 
                         value_string);
 
       if (value > pr->lower_bound)
       {
         vb_all_load_named_sprite( VB_ALL_SPRITE_NAME_PARAM_ARROWS_LEFT, 
-                                  pr->center_x + LAYOUT_PATCH_EDIT_PARAM_ARROWS_LEFT_X, 
-                                  pr->center_y - G_current_scroll_amount, 
+                                  pr->center_x + LAYOUT_PATCH_EDIT_PARAM_ARROWS_LEFT_X, pos_y, 
                                   0, VB_ALL_PALETTE_1);
       }
 
       if (value < pr->upper_bound)
       {
         vb_all_load_named_sprite( VB_ALL_SPRITE_NAME_PARAM_ARROWS_RIGHT, 
-                                  pr->center_x + LAYOUT_PATCH_EDIT_PARAM_ARROWS_RIGHT_X, 
-                                  pr->center_y - G_current_scroll_amount, 
+                                  pr->center_x + LAYOUT_PATCH_EDIT_PARAM_ARROWS_RIGHT_X, pos_y, 
                                   0, VB_ALL_PALETTE_1);
       }
     }
     else if (pr->type == LAYOUT_PATCH_EDIT_PARAM_TYPE_RADIO)
     {
-      vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_NAME_X, 
-                        pr->center_y - G_current_scroll_amount, 
+      vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_NAME_X, pos_y, 
                         VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, 
                         S_patch_edit_parameter_labels[pr->label]);
 
-      vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_RADIO_VALUE_X, 
-                        pr->center_y - G_current_scroll_amount, 
+      vb_all_load_text( pr->center_x + LAYOUT_PATCH_EDIT_PARAM_RADIO_VALUE_X, pos_y, 
                         VB_ALL_ALIGN_CENTER, 0, 6, 16, 
                         value_string);
 
       if (value == pr->lower_bound)
       {
         vb_all_load_named_sprite( VB_ALL_SPRITE_NAME_PARAM_RADIO_BUTTON_OFF, 
-                                  pr->center_x + LAYOUT_PATCH_EDIT_PARAM_RADIO_BUTTON_X, 
-                                  pr->center_y - G_current_scroll_amount, 
+                                  pr->center_x + LAYOUT_PATCH_EDIT_PARAM_RADIO_BUTTON_X, pos_y, 
                                   0, VB_ALL_PALETTE_1);
       }
       else
       {
         vb_all_load_named_sprite( VB_ALL_SPRITE_NAME_PARAM_RADIO_BUTTON_ON, 
-                                  pr->center_x + LAYOUT_PATCH_EDIT_PARAM_RADIO_BUTTON_X, 
-                                  pr->center_y - G_current_scroll_amount, 
+                                  pr->center_x + LAYOUT_PATCH_EDIT_PARAM_RADIO_BUTTON_X, pos_y, 
                                   0, VB_ALL_PALETTE_1);
       }
     }
   }
 
+  /* horizontal divider */
+  vb_all_load_horizontal_divider( LAYOUT_PATCH_DIVIDER_X, 
+                                  LAYOUT_PATCH_DIVIDER_Y, 
+                                  LAYOUT_PATCH_DIVIDER_WIDTH);
+
   /* update vbos */
-  VB_ALL_UPDATE_OVERLAY_SPRITES_IN_VBOS()
+  VB_ALL_UPDATE_UNDERLAY_SPRITES_IN_VBOS()
+  VB_ALL_UPDATE_TEXT_SPRITES_IN_VBOS()
 
   return 0;
 }
 
 /*******************************************************************************
-** vb_all_load_patterns_overlay()
+** vb_all_load_patterns_underlay_and_text()
 *******************************************************************************/
-short int vb_all_load_patterns_overlay()
+short int vb_all_load_patterns_underlay_and_text()
 {
-  int k;
-
-  int step;
-
-  pattern* p;
-
-  header* hd;
-  param*  pr;
-
-  short int value;
-  char*     value_string;
-
-  int pos_y;
-
-  int column;
-  int width;
-  int lighting;
-  int palette;
-
-  /* make sure that the pattern index is valid */
-  if (BANK_PATTERN_INDEX_IS_NOT_VALID(0))
-    return 1;
-
-  /* obtain pattern pointer */
-  p = &G_pattern_bank[0];
-
-  /* headers */
-  for ( k = LAYOUT_PATTERN_EDIT_HEADERS_START_INDEX; 
-        k < LAYOUT_PATTERN_EDIT_HEADERS_END_INDEX; 
-        k++)
-  {
-    hd = &G_layout_headers[k];
-
-#if 0
-    /* make sure this header is within the viewable area */
-    if (LAYOUT_PATTERN_HEADER_IS_NOT_IN_MAIN_AREA(hd))
-      continue;
-#endif
-
-    /* make sure the label is valid */
-    if ((hd->label < 0) || (hd->label >= LAYOUT_PATTERN_EDIT_HEADER_NUM_LABELS))
-      continue;
-
-    /* load the header! */
-    vb_all_load_text( hd->center_x, hd->center_y, 
-                      VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_3, 16, 
-                      S_pattern_edit_header_labels[hd->label]);
-  }
-
-  /* steps */
-  for (step = 0; step < 4; step++)
-  {
-    /* determine the palette for the spaces in this step */
-    if (step % 4 == 0)
-      palette = VB_ALL_PALETTE_2;
-    else
-      palette = 6;
-
-    /* ADD: if the step is not in the viewable area, continue... */
-
-    /* determine the y position of this step */
-    pos_y = LAYOUT_PATTERN_EDIT_INSTRUMENT_STEP_BASE_Y + 3 * step - G_current_scroll_amount;
-
-    /* load the beat number */
-    if (step % 4 == 0)
-    {
-      vb_all_load_text( LAYOUT_PATTERN_EDIT_INSTRUMENT_STEP_BEAT_NUMBER_X, pos_y, 
-                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, 16, 
-                        "1");
-    }
-
-    /* parameters */
-    for ( k = LAYOUT_PATTERN_EDIT_PARAMS_START_INDEX; 
-          k < LAYOUT_PATTERN_EDIT_PARAMS_END_INDEX; 
-          k++)
-    {
-      pr = &G_layout_params[k];
-
-      /* make sure this parameter is within the viewable area */
-      if (LAYOUT_PATCH_PARAM_IS_NOT_IN_MAIN_AREA(pr))
-        continue;
-
-      /* make sure the label is valid */
-      if ((pr->label < 0) || (pr->label >= LAYOUT_PATTERN_EDIT_PARAM_NUM_LABELS))
-        continue;
-
-      /* only draw the swing if this step is a beat */
-      if ((pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_SWING) && (step % 4 != 0))
-        continue;
-
-      /* determine step space column */
-      column = pr->num;
-
-      /* determine step space width */
-      if (pr->type == LAYOUT_PATTERN_EDIT_PARAM_TYPE_STEP_SPACE_WIDE)
-        width = 4;
-      else
-        width = 3;
-
-      /* determine step space lighting */
-      if ((G_pattern_edit_highlight_column == column) && 
-          (G_pattern_edit_highlight_step == step))
-      {
-        lighting = 1;
-      }
-      else
-        lighting = 0;
-
-      /* determine parameter value */
-      if (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_SWING)
-        value = p->swings[0][step / 4];
-      else if (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_NOTE_1)
-        value = p->in_steps[0][step].note[0];
-      else if (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_NOTE_2)
-        value = p->in_steps[0][step].note[1];
-      else if (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_NOTE_3)
-        value = p->in_steps[0][step].note[2];
-      else if (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_NOTE_4)
-        value = p->in_steps[0][step].note[3];
-      else if (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_KEY)
-        value = p->in_steps[0][step].key;
-      else if (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_VOLUME)
-        value = p->in_steps[0][step].volume;
-      else if (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_MOD_WHEEL)
-        value = p->in_steps[0][step].mod_wheel_amount;
-      else if (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_AFTERTOUCH)
-        value = p->in_steps[0][step].aftertouch_amount;
-      else if (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_ARP_PORTA_MODE)
-        value = p->in_steps[0][step].arp_porta_mode;
-      else
-        value = 0;
-
-      /* determine parameter string */
-      if ((value < pr->lower_bound) || (value > pr->upper_bound))
-        value_string = NULL;
-      else if (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_SWING)
-        value_string = S_pattern_edit_swing_values[value - pr->lower_bound];
-      else if ( (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_NOTE_1) || 
-                (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_NOTE_2) || 
-                (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_NOTE_3) || 
-                (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_NOTE_4))
-      {
-        value_string = S_pattern_edit_note_values[value - pr->lower_bound];
-      }
-      else if (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_KEY)
-        value_string = S_pattern_edit_key_values[value - pr->lower_bound];
-      else if ( (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_VOLUME)     || 
-                (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_MOD_WHEEL)  || 
-                (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_AFTERTOUCH))
-      {
-        value_string = S_common_edit_0_to_32_values[value - pr->lower_bound];
-      }
-      else if (pr->label == LAYOUT_PATTERN_EDIT_PARAM_LABEL_ARP_PORTA_MODE)
-        value_string = S_pattern_edit_arp_porta_mode_values[value - pr->lower_bound];
-      else
-        value_string = NULL;
-
-      /* load the parameter! */
-      if ((pr->type == LAYOUT_PATTERN_EDIT_PARAM_TYPE_STEP_SPACE_STANDARD) || 
-          (pr->type == LAYOUT_PATTERN_EDIT_PARAM_TYPE_STEP_SPACE_WIDE))
-      {
-        vb_all_load_pattern_step_space( pr->center_x, pos_y, 
-                                        width, 
-                                        lighting, palette);
-
-        vb_all_load_text( pr->center_x, pos_y, 
-                          VB_ALL_ALIGN_CENTER, 0, 6, 16, 
-                          value_string);
-      }
-      else if (pr->type == LAYOUT_PATTERN_EDIT_PARAM_TYPE_ARROWS)
-      {
-        vb_all_load_text( pr->center_x, pos_y, 
-                          VB_ALL_ALIGN_CENTER, 0, 6, 16, 
-                          value_string);
-      }
-    }
-  }
 
   /* update vbos */
-  VB_ALL_UPDATE_OVERLAY_SPRITES_IN_VBOS()
-
-  return 0;
-}
-
-/*******************************************************************************
-** vb_all_clear_panels_buttons_and_overlay()
-*******************************************************************************/
-short int vb_all_clear_panels_buttons_and_overlay()
-{
-  /* reset panels tile vbo count */
-  G_tile_layer_counts[GRAPHICS_TILE_LAYER_PANELS] = 0;
-
-  /* reset sprite vbo counts */
-  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_BUTTONS] = 0;
-  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_OVERLAY] = 0;
+  VB_ALL_UPDATE_UNDERLAY_SPRITES_IN_VBOS()
+  VB_ALL_UPDATE_TEXT_SPRITES_IN_VBOS()
 
   return 0;
 }

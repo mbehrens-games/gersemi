@@ -9,10 +9,8 @@
 #include "clock.h"
 #include "envelope.h"
 #include "filter.h"
-#include "key.h"
 #include "lfo.h"
 #include "patch.h"
-#include "pattern.h"
 #include "sequence.h"
 #include "sweep.h"
 #include "synth.h"
@@ -29,9 +27,7 @@ short int synth_generate_tables()
 {
   envelope_generate_tables();
   filter_generate_tables();
-  key_generate_tables();
   lfo_generate_tables();
-  sequencer_generate_tables();
   sweep_generate_tables();
   voice_generate_tables();
 
@@ -45,11 +41,9 @@ short int synth_reset_banks()
 {
   /* reset all banks */
   envelope_setup_all();
-  key_setup_all();
   filter_setup_all();
   lfo_setup_all();
   patch_setup_all();
-  pattern_setup_all();
   sweep_setup_all();
   voice_setup_all();
 
@@ -111,11 +105,9 @@ short int synth_load_patch(int voice_index, int patch_index)
 /*******************************************************************************
 ** synth_key_on()
 *******************************************************************************/
-short int synth_key_on(int voice_index, int octave, int degree)
+short int synth_key_on(int voice_index, int note)
 {
   int m;
-
-  int note;
 
   voice* v;
 
@@ -125,9 +117,6 @@ short int synth_key_on(int voice_index, int octave, int degree)
 
   /* obtain voice pointer */
   v = &G_voice_bank[voice_index];
-
-  /* lookup this note */
-  note = key_note_lookup(voice_index, octave, degree);
 
   /* set voice note */
   voice_set_note(voice_index, note);

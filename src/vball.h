@@ -7,14 +7,12 @@
 
 /* function declarations */
 short int vb_all_load_background();
+short int vb_all_load_top_panel();
 
-short int vb_all_load_common_panels_and_buttons();
-short int vb_all_load_common_overlay();
+short int vb_all_load_top_panel_underlay_and_text();
 
-short int vb_all_load_patches_overlay();
-short int vb_all_load_patterns_overlay();
-
-short int vb_all_clear_panels_buttons_and_overlay();
+short int vb_all_load_patches_underlay_and_text();
+short int vb_all_load_patterns_underlay_and_text();
 
 #endif
 

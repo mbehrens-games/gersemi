@@ -122,12 +122,12 @@
                   GL_UNSIGNED_SHORT,                                           \
                   (void *) (sizeof(unsigned short) * 6 * GRAPHICS_BACKGROUND_TILES_START_INDEX));
 
-#define RENDER_DRAW_PANELS()                                                   \
+#define RENDER_DRAW_TOP_PANEL()                                                \
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, G_index_buffer_id_tiles);              \
   glDrawElements( GL_TRIANGLES,                                                \
-                  6 * G_tile_layer_counts[GRAPHICS_TILE_LAYER_PANELS],         \
+                  6 * G_tile_layer_counts[GRAPHICS_TILE_LAYER_TOP_PANEL],      \
                   GL_UNSIGNED_SHORT,                                           \
-                  (void *) (sizeof(unsigned short) * 6 * GRAPHICS_PANELS_TILES_START_INDEX));
+                  (void *) (sizeof(unsigned short) * 6 * GRAPHICS_TOP_PANEL_TILES_START_INDEX));
 
 /* sprites */
 #define RENDER_BEGIN_SPRITE_RENDERING()                                        \
@@ -148,12 +148,26 @@
   glDisableVertexAttribArray(1);                                               \
   glDisableVertexAttribArray(2);
 
-#define RENDER_DRAW_BUTTONS()                                                  \
+#define RENDER_DRAW_UNDERLAY()                                                 \
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, G_index_buffer_id_sprites);            \
   glDrawElements( GL_TRIANGLES,                                                \
-                  6 * G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_BUTTONS],    \
+                  6 * G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_UNDERLAY],   \
                   GL_UNSIGNED_SHORT,                                           \
-                  (void *) (sizeof(unsigned short) * 6 * GRAPHICS_BUTTONS_SPRITES_START_INDEX));
+                  (void *) (sizeof(unsigned short) * 6 * GRAPHICS_UNDERLAY_SPRITES_START_INDEX));
+
+#define RENDER_DRAW_TEXT()                                                     \
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, G_index_buffer_id_sprites);            \
+  glDrawElements( GL_TRIANGLES,                                                \
+                  6 * G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_TEXT],       \
+                  GL_UNSIGNED_SHORT,                                           \
+                  (void *) (sizeof(unsigned short) * 6 * GRAPHICS_TEXT_SPRITES_START_INDEX));
+
+#define RENDER_DRAW_POPUP()                                                    \
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, G_index_buffer_id_sprites);            \
+  glDrawElements( GL_TRIANGLES,                                                \
+                  6 * G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_POPUP],      \
+                  GL_UNSIGNED_SHORT,                                           \
+                  (void *) (sizeof(unsigned short) * 6 * GRAPHICS_POPUP_SPRITES_START_INDEX));
 
 #define RENDER_DRAW_OVERLAY()                                                  \
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, G_index_buffer_id_sprites);            \
@@ -267,9 +281,9 @@ short int render_all()
     RENDER_DRAW_BACKGROUND()
   }
 
-  if (G_tile_layer_counts[GRAPHICS_TILE_LAYER_PANELS] > 0)
+  if (G_tile_layer_counts[GRAPHICS_TILE_LAYER_TOP_PANEL] > 0)
   {
-    RENDER_DRAW_PANELS()
+    RENDER_DRAW_TOP_PANEL()
   }
 
   RENDER_END_TILE_RENDERING()
@@ -280,9 +294,19 @@ short int render_all()
   RENDER_SET_SHADER_B()
   RENDER_BEGIN_SPRITE_RENDERING()
 
-  if (G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_BUTTONS] > 0)
+  if (G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_UNDERLAY] > 0)
   {
-    RENDER_DRAW_BUTTONS()
+    RENDER_DRAW_UNDERLAY()
+  }
+
+  if (G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_TEXT] > 0)
+  {
+    RENDER_DRAW_TEXT()
+  }
+
+  if (G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_POPUP] > 0)
+  {
+    RENDER_DRAW_POPUP()
   }
 
   if (G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_OVERLAY] > 0)
