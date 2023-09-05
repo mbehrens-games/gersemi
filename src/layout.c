@@ -8,6 +8,7 @@
 #include "key.h"
 #include "layout.h"
 #include "patch.h"
+#include "tuning.h"
 
 button G_layout_buttons[LAYOUT_NUM_BUTTONS];
 header G_layout_headers[LAYOUT_NUM_HEADERS];
@@ -618,8 +619,8 @@ short int layout_setup_params()
       pr->center_x = LAYOUT_PATCH_EDIT_COLUMN_2_CENTER_X;
       pr->center_y = LAYOUT_PATCH_EDIT_AUDITION_OCTAVE_Y;
 
-      pr->lower_bound = 0;
-      pr->upper_bound = KEY_NUM_OCTAVES - 1;
+      pr->lower_bound = (TUNING_MIDDLE_OCTAVE - 3);
+      pr->upper_bound = (TUNING_MIDDLE_OCTAVE + 3);
     }
     else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_KEY)
     {

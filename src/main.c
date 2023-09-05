@@ -17,6 +17,7 @@
 #include "global.h"
 #include "graphics.h"
 #include "hola.h"
+#include "instrument.h"
 #include "layout.h"
 #include "palette.h"
 #include "path.h"
@@ -140,7 +141,7 @@ int main(int argc, char *argv[])
   synth_reset_banks();
 
   /* testing */
-  synth_load_patch(0, 0);
+  instrument_load_patch(G_patch_edit_instrument_index, G_patch_edit_patch_index);
 
   /* initialize game screen */
   program_loop_change_screen(PROGRAM_SCREEN_PATCHES);

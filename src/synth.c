@@ -1,5 +1,5 @@
 /*******************************************************************************
-** synth.c (individual synth)
+** synth.c (the synth!)
 *******************************************************************************/
 
 #include <stdlib.h>
@@ -9,6 +9,7 @@
 #include "clock.h"
 #include "envelope.h"
 #include "filter.h"
+#include "instrument.h"
 #include "lfo.h"
 #include "patch.h"
 #include "sequence.h"
@@ -47,112 +48,17 @@ short int synth_reset_banks()
   sweep_setup_all();
   voice_setup_all();
 
+  instrument_setup_all();
+
   /* reset tuning tables */
   tuning_reset();
+
+  /* reset instrument mapping */
+  instrument_set_layout(INSTRUMENT_LAYOUT_1_POLY_8_MONO);
 
   /* reset output levels */
   G_synth_level_left = 0;
   G_synth_level_right = 0;
-
-  return 0;
-}
-
-/*******************************************************************************
-** synth_load_patch()
-*******************************************************************************/
-short int synth_load_patch(int voice_index, int patch_index)
-{
-#if 0
-  voice* v;
-  patch* p;
-#endif
-
-  /* make sure that the voice index is valid */
-  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
-    return 1;
-
-  /* make sure that the patch index is valid */
-  if (BANK_PATCH_INDEX_IS_NOT_VALID(patch_index))
-    return 1;
-
-#if 0
-  /* obtain voice and patch pointers */
-  v = &G_voice_bank[voice_index];
-  p = &G_patch_bank[patch_index];
-#endif
-
-  /* voice */
-  voice_load_patch(voice_index, patch_index);
-
-  /* envelopes */
-  envelope_load_patch(voice_index, 0, patch_index);
-  envelope_load_patch(voice_index, 1, patch_index);
-  envelope_load_patch(voice_index, 2, patch_index);
-  envelope_load_patch(voice_index, 3, patch_index);
-
-  /* lfo */
-  lfo_load_patch(voice_index, patch_index);
-
-  /* sweeo */
-  sweep_load_patch(voice_index, patch_index);
-
-  /* filters */
-  filter_load_patch(voice_index, patch_index);
-
-  return 0;
-}
-
-/*******************************************************************************
-** synth_key_on()
-*******************************************************************************/
-short int synth_key_on(int voice_index, int note)
-{
-  int m;
-
-  voice* v;
-
-  /* make sure that the voice index is valid */
-  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
-    return 1;
-
-  /* obtain voice pointer */
-  v = &G_voice_bank[voice_index];
-
-  /* set voice note */
-  voice_set_note(voice_index, note);
-
-  /* trigger envelopes */
-  for (m = 0; m < VOICE_NUM_OSCS_AND_ENVS; m++)
-    envelope_trigger(voice_index, m, v->osc_note[m]);
-
-  /* trigger lfo */
-  lfo_trigger(voice_index);
-
-  /* trigger sweep */
-  sweep_trigger(voice_index, note);
-
-  return 0;
-}
-
-/*******************************************************************************
-** synth_key_off()
-*******************************************************************************/
-short int synth_key_off(int voice_index)
-{
-  int m;
-
-  voice* v;
-
-  /* make sure that the voice index is valid */
-  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
-    return 1;
-
-  /* obtain voice pointer */
-  v = &G_voice_bank[voice_index];
-
-  /* release envelopes */
-  for (m = 0; m < VOICE_NUM_OSCS_AND_ENVS; m++)
-    envelope_release(voice_index, m);
 
   return 0;
 }
