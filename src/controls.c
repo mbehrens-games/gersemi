@@ -11,13 +11,13 @@
 #include "global.h"
 #include "graphics.h"
 #include "instrument.h"
-#include "key.h"
 #include "layout.h"
 #include "patch.h"
 #include "progloop.h"
 #include "screen.h"
 #include "synth.h"
 #include "tuning.h"
+#include "wheel.h"
 
 enum
 {
@@ -594,17 +594,23 @@ short int controls_patch_parameter_adjust(int patch_index, int param_index, int 
                                   (TUNING_MIDDLE_OCTAVE - 3), 
                                   (TUNING_MIDDLE_OCTAVE + 3))
   }
-  else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_KEY)
+  else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_MOD_WHEEL)
   {
-    CONTROLS_SET_PATCH_PARAMETER( G_patch_edit_signature, 
-                                  0, 
-                                  (KEY_NUM_SIGS - 1))
+    CONTROLS_SET_PATCH_PARAMETER( G_patch_edit_mod_wheel_amount, 
+                                  WHEEL_MOD_WHEEL_LOWER_BOUND, 
+                                  WHEEL_MOD_WHEEL_UPPER_BOUND)
   }
-  else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_MODE)
+  else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_AFTERTOUCH)
   {
-    CONTROLS_SET_PATCH_PARAMETER( G_patch_edit_mode, 
-                                  KEY_MODE_MAJOR, 
-                                  KEY_MODE_MINOR)
+    CONTROLS_SET_PATCH_PARAMETER( G_patch_edit_aftertouch_amount, 
+                                  WHEEL_AFTERTOUCH_LOWER_BOUND, 
+                                  WHEEL_AFTERTOUCH_UPPER_BOUND)
+  }
+  else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_PITCH_WHEEL)
+  {
+    CONTROLS_SET_PATCH_PARAMETER( G_patch_edit_pitch_wheel_amount, 
+                                  WHEEL_PITCH_WHEEL_LOWER_BOUND, 
+                                  WHEEL_PITCH_WHEEL_UPPER_BOUND)
   }
   else
     return 0;
@@ -612,7 +618,12 @@ short int controls_patch_parameter_adjust(int patch_index, int param_index, int 
   /* reload patch if a parameter was changed */
   if (param_changed == 1)
   {
-    instrument_load_patch(G_patch_edit_instrument_index, G_patch_edit_patch_index);
+    if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_MOD_WHEEL)
+      instrument_set_mod_wheel_amount(G_patch_edit_instrument_index, G_patch_edit_mod_wheel_amount);
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_AFTERTOUCH)
+      instrument_set_aftertouch_amount(G_patch_edit_instrument_index, G_patch_edit_aftertouch_amount);
+    else
+      instrument_load_patch(G_patch_edit_instrument_index, G_patch_edit_patch_index);
   }
 
   return 0;
@@ -1157,9 +1168,10 @@ short int controls_process_user_input_standard()
         pr = &G_layout_params[k];
 
         /* determine vertical position for audition bar params (remain stationary) */
-        if ((pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_OCTAVE)  || 
-            (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_KEY)     || 
-            (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_MODE))
+        if ((pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_OCTAVE)      || 
+            (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_MOD_WHEEL)   || 
+            (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_AFTERTOUCH)  || 
+            (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_PITCH_WHEEL))
         {
           pos_y = pr->center_y;
         }

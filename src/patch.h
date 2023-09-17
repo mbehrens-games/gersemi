@@ -6,7 +6,6 @@
 #define PATCH_H
 
 #include "bank.h"
-#include "voice.h"
 
 /* algorithm */
 #define PATCH_ALGORITHM_LOWER_BOUND 1
@@ -137,31 +136,31 @@ typedef struct patch
   short int algorithm;
 
   /* oscillators */
-  short int osc_waveform[VOICE_NUM_OSCS_AND_ENVS];
-  short int osc_feedback[VOICE_NUM_OSCS_AND_ENVS];
-  short int osc_sync[VOICE_NUM_OSCS_AND_ENVS];
-  short int osc_freq_mode[VOICE_NUM_OSCS_AND_ENVS];
-  short int osc_multiple[VOICE_NUM_OSCS_AND_ENVS];
-  short int osc_divisor[VOICE_NUM_OSCS_AND_ENVS];
-  short int osc_note[VOICE_NUM_OSCS_AND_ENVS];
-  short int osc_octave[VOICE_NUM_OSCS_AND_ENVS];
-  short int osc_detune[VOICE_NUM_OSCS_AND_ENVS];
+  short int osc_waveform[BANK_OSCS_AND_ENVS_PER_VOICE];
+  short int osc_feedback[BANK_OSCS_AND_ENVS_PER_VOICE];
+  short int osc_sync[BANK_OSCS_AND_ENVS_PER_VOICE];
+  short int osc_freq_mode[BANK_OSCS_AND_ENVS_PER_VOICE];
+  short int osc_multiple[BANK_OSCS_AND_ENVS_PER_VOICE];
+  short int osc_divisor[BANK_OSCS_AND_ENVS_PER_VOICE];
+  short int osc_note[BANK_OSCS_AND_ENVS_PER_VOICE];
+  short int osc_octave[BANK_OSCS_AND_ENVS_PER_VOICE];
+  short int osc_detune[BANK_OSCS_AND_ENVS_PER_VOICE];
 
   /* envelopes */
-  short int env_attack[VOICE_NUM_OSCS_AND_ENVS];
-  short int env_decay_1[VOICE_NUM_OSCS_AND_ENVS];
-  short int env_decay_2[VOICE_NUM_OSCS_AND_ENVS];
-  short int env_release[VOICE_NUM_OSCS_AND_ENVS];
-  short int env_amplitude[VOICE_NUM_OSCS_AND_ENVS];
-  short int env_sustain[VOICE_NUM_OSCS_AND_ENVS];
-  short int env_rate_ks[VOICE_NUM_OSCS_AND_ENVS];
-  short int env_level_ks[VOICE_NUM_OSCS_AND_ENVS];
-  short int env_trigger[VOICE_NUM_OSCS_AND_ENVS];
+  short int env_attack[BANK_OSCS_AND_ENVS_PER_VOICE];
+  short int env_decay_1[BANK_OSCS_AND_ENVS_PER_VOICE];
+  short int env_decay_2[BANK_OSCS_AND_ENVS_PER_VOICE];
+  short int env_release[BANK_OSCS_AND_ENVS_PER_VOICE];
+  short int env_amplitude[BANK_OSCS_AND_ENVS_PER_VOICE];
+  short int env_sustain[BANK_OSCS_AND_ENVS_PER_VOICE];
+  short int env_rate_ks[BANK_OSCS_AND_ENVS_PER_VOICE];
+  short int env_level_ks[BANK_OSCS_AND_ENVS_PER_VOICE];
+  short int env_trigger[BANK_OSCS_AND_ENVS_PER_VOICE];
 
   /* lfo & eg bias enable */
-  short int vibrato_enable[VOICE_NUM_OSCS_AND_ENVS];
-  short int tremolo_enable[VOICE_NUM_OSCS_AND_ENVS];
-  short int boost_enable[VOICE_NUM_OSCS_AND_ENVS];
+  short int vibrato_enable[BANK_OSCS_AND_ENVS_PER_VOICE];
+  short int tremolo_enable[BANK_OSCS_AND_ENVS_PER_VOICE];
+  short int boost_enable[BANK_OSCS_AND_ENVS_PER_VOICE];
 
   /* lfo */
   short int lfo_waveform;

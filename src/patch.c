@@ -43,7 +43,7 @@ short int patch_reset(int patch_index)
   p->algorithm = PATCH_ALGORITHM_LOWER_BOUND;
 
   /* oscillators and envelopes */
-  for (m = 0; m < VOICE_NUM_OSCS_AND_ENVS; m++)
+  for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
   {
     p->osc_waveform[m] = 1;
     p->osc_feedback[m] = 0;

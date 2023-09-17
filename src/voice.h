@@ -7,8 +7,6 @@
 
 #include "bank.h"
 
-#define VOICE_NUM_OSCS_AND_ENVS 4
-
 typedef struct voice
 {
   /* algorithm */
@@ -16,30 +14,30 @@ typedef struct voice
 
   /* currently playing notes, pitch indices */
   int base_note;
-  int osc_note[VOICE_NUM_OSCS_AND_ENVS];
-  int osc_pitch_index[VOICE_NUM_OSCS_AND_ENVS];
+  int osc_note[BANK_OSCS_AND_ENVS_PER_VOICE];
+  int osc_pitch_index[BANK_OSCS_AND_ENVS_PER_VOICE];
 
   /* phases */
-  unsigned int osc_phase[VOICE_NUM_OSCS_AND_ENVS];
+  unsigned int osc_phase[BANK_OSCS_AND_ENVS_PER_VOICE];
 
   /* feedback levels */
-  int feed_in[2 * VOICE_NUM_OSCS_AND_ENVS];
+  int feed_in[2 * BANK_OSCS_AND_ENVS_PER_VOICE];
 
   /* voice parameters */
-  short int osc_waveform[VOICE_NUM_OSCS_AND_ENVS];
-  short int osc_feedback_multiplier[VOICE_NUM_OSCS_AND_ENVS];
-  short int osc_sync[VOICE_NUM_OSCS_AND_ENVS];
+  short int osc_waveform[BANK_OSCS_AND_ENVS_PER_VOICE];
+  short int osc_feedback_multiplier[BANK_OSCS_AND_ENVS_PER_VOICE];
+  short int osc_sync[BANK_OSCS_AND_ENVS_PER_VOICE];
 
-  short int osc_freq_mode[VOICE_NUM_OSCS_AND_ENVS];
-  short int osc_offset[VOICE_NUM_OSCS_AND_ENVS];
-  short int osc_detune[VOICE_NUM_OSCS_AND_ENVS];
+  short int osc_freq_mode[BANK_OSCS_AND_ENVS_PER_VOICE];
+  short int osc_offset[BANK_OSCS_AND_ENVS_PER_VOICE];
+  short int osc_detune[BANK_OSCS_AND_ENVS_PER_VOICE];
 
-  short int vibrato_enable[VOICE_NUM_OSCS_AND_ENVS];
-  short int tremolo_enable[VOICE_NUM_OSCS_AND_ENVS];
-  short int boost_enable[VOICE_NUM_OSCS_AND_ENVS];
+  short int vibrato_enable[BANK_OSCS_AND_ENVS_PER_VOICE];
+  short int tremolo_enable[BANK_OSCS_AND_ENVS_PER_VOICE];
+  short int boost_enable[BANK_OSCS_AND_ENVS_PER_VOICE];
 
   /* envelope levels */
-  short int env_input[VOICE_NUM_OSCS_AND_ENVS];
+  short int env_input[BANK_OSCS_AND_ENVS_PER_VOICE];
 
   /* lfo levels */
   short int vibrato_input;

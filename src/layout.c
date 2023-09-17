@@ -5,10 +5,10 @@
 #include <stdio.h>  /* testing */
 #include <stdlib.h>
 
-#include "key.h"
 #include "layout.h"
 #include "patch.h"
 #include "tuning.h"
+#include "wheel.h"
 
 button G_layout_buttons[LAYOUT_NUM_BUTTONS];
 header G_layout_headers[LAYOUT_NUM_HEADERS];
@@ -186,11 +186,6 @@ short int layout_setup_headers()
       hd->center_x = LAYOUT_PATCH_EDIT_COLUMN_4_CENTER_X;
       hd->center_y = LAYOUT_PATCH_EDIT_HEADER_AFTERTOUCH_Y;
     }
-    else if (hd->label == LAYOUT_PATCH_EDIT_HEADER_LABEL_AUDITION)
-    {
-      hd->center_x = LAYOUT_PATCH_EDIT_COLUMN_1_CENTER_X;
-      hd->center_y = LAYOUT_PATCH_EDIT_HEADER_AUDITION_Y;
-    }
     else
     {
       hd->center_x = 0;
@@ -257,8 +252,7 @@ short int layout_setup_params()
               (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_TREMOLO_ENABLE)   || 
               (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_BOOST_ENABLE)     || 
               (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_LFO_VIBRATO_MODE) || 
-              (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_LFO_SYNC)         || 
-              (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_MODE))
+              (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_LFO_SYNC))
     {
       pr->type = LAYOUT_PATCH_EDIT_PARAM_TYPE_RADIO;
     }
@@ -616,27 +610,35 @@ short int layout_setup_params()
     }
     else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_OCTAVE)
     {
-      pr->center_x = LAYOUT_PATCH_EDIT_COLUMN_2_CENTER_X;
+      pr->center_x = LAYOUT_PATCH_EDIT_COLUMN_1_CENTER_X;
       pr->center_y = LAYOUT_PATCH_EDIT_AUDITION_OCTAVE_Y;
 
       pr->lower_bound = (TUNING_MIDDLE_OCTAVE - 3);
       pr->upper_bound = (TUNING_MIDDLE_OCTAVE + 3);
     }
-    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_KEY)
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_MOD_WHEEL)
+    {
+      pr->center_x = LAYOUT_PATCH_EDIT_COLUMN_2_CENTER_X;
+      pr->center_y = LAYOUT_PATCH_EDIT_AUDITION_MOD_WHEEL_Y;
+
+      pr->lower_bound = WHEEL_MOD_WHEEL_LOWER_BOUND;
+      pr->upper_bound = WHEEL_MOD_WHEEL_UPPER_BOUND;
+    }
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_AFTERTOUCH)
     {
       pr->center_x = LAYOUT_PATCH_EDIT_COLUMN_3_CENTER_X;
-      pr->center_y = LAYOUT_PATCH_EDIT_AUDITION_KEY_Y;
+      pr->center_y = LAYOUT_PATCH_EDIT_AUDITION_AFTERTOUCH_Y;
 
-      pr->lower_bound = 0;
-      pr->upper_bound = KEY_NUM_SIGS - 1;
+      pr->lower_bound = WHEEL_AFTERTOUCH_LOWER_BOUND;
+      pr->upper_bound = WHEEL_AFTERTOUCH_UPPER_BOUND;
     }
-    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_MODE)
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_PITCH_WHEEL)
     {
       pr->center_x = LAYOUT_PATCH_EDIT_COLUMN_4_CENTER_X;
-      pr->center_y = LAYOUT_PATCH_EDIT_AUDITION_MODE_Y;
+      pr->center_y = LAYOUT_PATCH_EDIT_AUDITION_PITCH_WHEEL_Y;
 
-      pr->lower_bound = KEY_MODE_MAJOR;
-      pr->upper_bound = KEY_MODE_MINOR;
+      pr->lower_bound = WHEEL_PITCH_WHEEL_LOWER_BOUND;
+      pr->upper_bound = WHEEL_PITCH_WHEEL_UPPER_BOUND;
     }
     else
     {

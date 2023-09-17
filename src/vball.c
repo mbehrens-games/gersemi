@@ -10,7 +10,6 @@
 #include "controls.h"
 #include "global.h"
 #include "graphics.h"
-#include "key.h"
 #include "layout.h"
 #include "palette.h"
 #include "patch.h"
@@ -18,6 +17,7 @@
 #include "sequence.h"
 #include "texture.h"
 #include "vball.h"
+#include "wheel.h"
 
 #define VB_ALL_BACKGROUND_TILE_SIZE       16
 #define VB_ALL_BACKGROUND_TILE_SIZE_HALF  (VB_ALL_BACKGROUND_TILE_SIZE / 2)
@@ -435,8 +435,7 @@ static char S_patch_edit_header_labels[LAYOUT_PATCH_EDIT_HEADER_NUM_LABELS][12] 
     "Env 1", "Env 2", "Env 3", "Env 4", 
     "LFO", 
     "Bases", "Portamento", "Filters", 
-    "Depths", "Mod Wheel", "Aftertouch", 
-    "Audition" 
+    "Depths", "Mod Wheel", "Aftertouch" 
   };
 
 static char S_patch_edit_parameter_labels[LAYOUT_PATCH_EDIT_PARAM_NUM_LABELS][4] = 
@@ -451,7 +450,7 @@ static char S_patch_edit_parameter_labels[LAYOUT_PATCH_EDIT_PARAM_NUM_LABELS][4]
     "Vib", "Tre", "Bst", 
     "Vib", "Tre", "Bst", 
     "Vib", "Tre", "Bst", 
-    "Oct", "Key", "Mde" 
+    "Oct", "MW", "AT", "PW" 
   };
 
 static char S_patch_edit_algorithm_values[PATCH_ALGORITHM_NUM_VALUES][4] = 
@@ -522,15 +521,6 @@ static char S_patch_edit_highpass_cutoff_values[PATCH_HIGHPASS_CUTOFF_NUM_VALUES
 
 static char S_patch_edit_lowpass_cutoff_values[PATCH_LOWPASS_CUTOFF_NUM_VALUES][4] = 
   { "E7", "G7", "A7", "C8" };
-
-static char S_patch_edit_major_key_values[KEY_NUM_SIGS][6] = 
-  { "Cb", "Gb", "Db", "Ab", "Eb", "Bb", "F", "C", "G", "D", "A", "E", "B", "F#", "C#" };
-
-static char S_patch_edit_minor_key_values[KEY_NUM_SIGS][6] = 
-  { "Ab", "Eb", "Bb", "F", "C", "G", "D", "A", "E", "B", "F#", "C#", "G#", "D#", "A#" };
-
-static char S_patch_edit_mode_values[2][6] = 
-  { "Major", "Minor" };
 
 /*******************************************************************************
 ** vb_all_load_background()
@@ -1470,19 +1460,11 @@ short int vb_all_load_patches_underlay_and_text()
     if ((hd->label < 0) || (hd->label >= LAYOUT_PATCH_EDIT_HEADER_NUM_LABELS))
       continue;
 
-    /* determine vertical position for audition bar headers (remain stationary) */
-    if (hd->label == LAYOUT_PATCH_EDIT_HEADER_LABEL_AUDITION)
-    {
-      pos_y = hd->center_y;
-    }
-    /* determine vertical position for other headers (can be scrolled up/down) */
-    else
-    {
-      pos_y = hd->center_y - G_current_scroll_amount;
+    /* determine vertical position for headers (can be scrolled up/down) */
+    pos_y = hd->center_y - G_current_scroll_amount;
 
-      if (LAYOUT_PATCH_HEADER_OR_PARAM_IS_NOT_IN_PATCH_EDIT_MAIN_AREA(pos_y))
-        continue;
-    }
+    if (LAYOUT_PATCH_HEADER_OR_PARAM_IS_NOT_IN_PATCH_EDIT_MAIN_AREA(pos_y))
+      continue;
 
     /* load the header! */
     vb_all_load_text( hd->center_x, pos_y, 
@@ -1502,9 +1484,10 @@ short int vb_all_load_patches_underlay_and_text()
       continue;
 
     /* determine vertical position for audition bar params (remain stationary) */
-    if ((pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_OCTAVE)  || 
-        (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_KEY)     || 
-        (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_MODE))
+    if ((pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_OCTAVE)      || 
+        (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_MOD_WHEEL)   || 
+        (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_AFTERTOUCH)  || 
+        (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_PITCH_WHEEL))
     {
       pos_y = pr->center_y;
     }
@@ -1624,10 +1607,12 @@ short int vb_all_load_patches_underlay_and_text()
       value = p->aftertouch_boost;
     else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_OCTAVE)
       value = G_patch_edit_octave;
-    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_KEY)
-      value = G_patch_edit_signature;
-    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_MODE)
-      value = G_patch_edit_mode;
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_MOD_WHEEL)
+      value = G_patch_edit_mod_wheel_amount;
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_AFTERTOUCH)
+      value = G_patch_edit_aftertouch_amount;
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_PITCH_WHEEL)
+      value = G_patch_edit_pitch_wheel_amount;
     else
       value = 0;
 
@@ -1659,7 +1644,9 @@ short int vb_all_load_patches_underlay_and_text()
               (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_MOD_WHEEL_BOOST)    || 
               (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AFTERTOUCH_VIBRATO) || 
               (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AFTERTOUCH_TREMOLO) || 
-              (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AFTERTOUCH_BOOST))
+              (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AFTERTOUCH_BOOST)   || 
+              (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_MOD_WHEEL) || 
+              (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_AFTERTOUCH))
     {
       value_string = S_common_edit_0_to_32_values[value - pr->lower_bound];
     }
@@ -1701,20 +1688,8 @@ short int vb_all_load_patches_underlay_and_text()
       value_string = S_patch_edit_highpass_cutoff_values[value - pr->lower_bound];
     else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_LOWPASS_CUTOFF)
       value_string = S_patch_edit_lowpass_cutoff_values[value - pr->lower_bound];
-    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_KEY)
-    {
-      if (G_patch_edit_mode == KEY_MODE_MAJOR)
-        value_string = S_patch_edit_major_key_values[value - pr->lower_bound];
-      else
-        value_string = S_patch_edit_minor_key_values[value - pr->lower_bound];
-    }
-    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_MODE)
-    {
-      if (G_patch_edit_mode == KEY_MODE_MAJOR)
-        value_string = S_patch_edit_mode_values[0];
-      else
-        value_string = S_patch_edit_mode_values[1];
-    }
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_PITCH_WHEEL)
+      value_string = S_patch_edit_osc_detune_values[value - pr->lower_bound];
     else
       value_string = NULL;
 

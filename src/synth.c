@@ -90,7 +90,7 @@ short int synth_update()
 
     G_voice_bank[k].sweep_input = G_sweep_bank[k].level;
 
-    for (m = 0; m < VOICE_NUM_OSCS_AND_ENVS; m++)
+    for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
       G_voice_bank[k].env_input[m] = G_envelope_bank[4 * k + m].level;
   }
 
@@ -99,16 +99,23 @@ short int synth_update()
 
   /* copy voice levels to lowpass filter inputs */
   for (k = 0; k < BANK_NUM_VOICES; k++)
-    G_filter_bank[2 * k + 0].input = G_voice_bank[k].level;
+    G_lowpass_filter_bank[k].input = G_voice_bank[k].level;
 
-  /* update filters */
-  filter_update_all();
+  /* update lowpass filters */
+  filter_update_lowpass();
+
+  /* copy lowpass filter outputs to highpass filter inputs */
+  for (k = 0; k < BANK_NUM_VOICES; k++)
+    G_highpass_filter_bank[k].input = G_lowpass_filter_bank[k].level;
+
+  /* update highpass filters */
+  filter_update_highpass();
 
   /* compute overall level */
   level = 0;
 
   for (k = 0; k < BANK_NUM_VOICES; k++)
-    level += G_filter_bank[2 * k + 1].level;
+    level += G_highpass_filter_bank[k].level;
 
   /* clipping */
   if (level > 32767)

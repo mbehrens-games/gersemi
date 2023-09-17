@@ -64,30 +64,34 @@ short int sweep_setup_all()
 *******************************************************************************/
 short int sweep_reset(int voice_index)
 {
+  int m;
+
   sweep* sw;
 
   /* make sure that the voice index is valid */
   if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
     return 1;
 
-  /* obtain sweep pointer */
-  sw = &G_sweep_bank[voice_index];
+  for (m = 0; m < BANK_SWEEPS_PER_VOICE; m++)
+  {
+    /* obtain sweep pointer */
+    sw = &G_sweep_bank[BANK_SWEEPS_PER_VOICE * voice_index + m];
 
-  /* sweep parameters */
-  sw->portamento_mode = 0;
-  sw->portamento_speed = 1;
-  sw->portamento_switch = 0;
+    /* initialize sweep variables */
+    sw->portamento_mode = 0;
+    sw->portamento_speed = 1;
+    sw->portamento_switch = 0;
 
-  /* phase, phase increment */
-  sw->phase = 0;
-  sw->increment = 0;
+    sw->phase = 0;
+    sw->increment = 0;
 
-  /* note, offset */
-  sw->note = 0;
-  sw->offset = 0;
+    sw->note = 0;
+    sw->offset = 0;
 
-  /* level */
-  sw->level = 0;
+    sw->note_input = 0;
+
+    sw->level = 0;
+  }
 
   return 0;
 }
@@ -97,6 +101,8 @@ short int sweep_reset(int voice_index)
 *******************************************************************************/
 short int sweep_load_patch(int voice_index, int patch_index)
 {
+  int m;
+
   sweep* sw;
   patch* p;
 
@@ -108,30 +114,35 @@ short int sweep_load_patch(int voice_index, int patch_index)
   if (BANK_PATCH_INDEX_IS_NOT_VALID(patch_index))
     return 1;
 
-  /* obtain sweep and patch pointers */
-  sw = &G_sweep_bank[voice_index];
+  /* obtain patch pointer */
   p = &G_patch_bank[patch_index];
 
-  /* portamento mode */
-  if ((p->portamento_mode >= PATCH_PORTAMENTO_MODE_LOWER_BOUND) && 
-      (p->portamento_mode <= PATCH_PORTAMENTO_MODE_UPPER_BOUND))
+  for (m = 0; m < BANK_SWEEPS_PER_VOICE; m++)
   {
-    sw->portamento_mode = p->portamento_mode;
-  }
-  else
-    sw->portamento_mode = PATCH_PORTAMENTO_MODE_LOWER_BOUND;
+    /* obtain sweep pointer */
+    sw = &G_sweep_bank[BANK_SWEEPS_PER_VOICE * voice_index + m];
 
-  /* portamento speed */
-  if ((p->portamento_speed >= PATCH_PORTAMENTO_SPEED_LOWER_BOUND) && 
-      (p->portamento_speed <= PATCH_PORTAMENTO_SPEED_UPPER_BOUND))
-  {
-    sw->portamento_speed = p->portamento_speed;
-    sw->increment = S_sweep_phase_increment_table[p->portamento_speed - PATCH_PORTAMENTO_SPEED_LOWER_BOUND];
-  }
-  else
-  {
-    sw->portamento_speed = PATCH_PORTAMENTO_SPEED_LOWER_BOUND;
-    sw->increment = S_sweep_phase_increment_table[0];
+    /* portamento mode */
+    if ((p->portamento_mode >= PATCH_PORTAMENTO_MODE_LOWER_BOUND) && 
+        (p->portamento_mode <= PATCH_PORTAMENTO_MODE_UPPER_BOUND))
+    {
+      sw->portamento_mode = p->portamento_mode;
+    }
+    else
+      sw->portamento_mode = PATCH_PORTAMENTO_MODE_LOWER_BOUND;
+
+    /* portamento speed */
+    if ((p->portamento_speed >= PATCH_PORTAMENTO_SPEED_LOWER_BOUND) && 
+        (p->portamento_speed <= PATCH_PORTAMENTO_SPEED_UPPER_BOUND))
+    {
+      sw->portamento_speed = p->portamento_speed;
+      sw->increment = S_sweep_phase_increment_table[p->portamento_speed - PATCH_PORTAMENTO_SPEED_LOWER_BOUND];
+    }
+    else
+    {
+      sw->portamento_speed = PATCH_PORTAMENTO_SPEED_LOWER_BOUND;
+      sw->increment = S_sweep_phase_increment_table[0];
+    }
   }
 
   return 0;
@@ -140,52 +151,57 @@ short int sweep_load_patch(int voice_index, int patch_index)
 /*******************************************************************************
 ** sweep_trigger()
 *******************************************************************************/
-short int sweep_trigger(int voice_index, int new_note)
+short int sweep_trigger(int voice_index)
 {
+  int m;
+
   sweep* sw;
 
   /* make sure that the voice index is valid */
   if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
     return 1;
 
-  /* obtain sweep pointer */
-  sw = &G_sweep_bank[voice_index];
-
-  /* determine if the new note is valid */
-  if ((new_note < TUNING_NOTE_A0) || (new_note > TUNING_NOTE_C8))
-    return 1;
-
-  /* check if the portamento is on */
-  if (sw->portamento_switch == 0)
+  for (m = 0; m < BANK_SWEEPS_PER_VOICE; m++)
   {
-    sw->offset = 0;
-    sw->note = new_note;
-  }
-  /* if the old note was 0 (default), we don't have any portamento! */
-  else if ((sw->note < TUNING_NOTE_A0) || (sw->note > TUNING_NOTE_C8))
-  {
-    sw->offset = 0;
-    sw->note = new_note;
-  }
-  /* otherwise, determine the starting offset */
-  else
-  {
-    sw->offset = (sw->note - new_note) * TUNING_NUM_SEMITONE_STEPS - sw->offset;
-    sw->note = new_note;
-  }
+    /* obtain sweep pointer */
+    sw = &G_sweep_bank[BANK_SWEEPS_PER_VOICE * voice_index + m];
 
-  /* reset phase */
-  sw->phase = 0;
+    /* determine if the new note is valid */
+    if ((sw->note_input < TUNING_NOTE_A0) || (sw->note_input > TUNING_NOTE_C8))
+      return 1;
 
-  /* set level */
-  if (sw->portamento_mode == 0)
-    sw->level = sw->offset;
-  else if (sw->portamento_mode == 1)
-  {
-    if (sw->offset >= 0)
-      sw->level = (sw->offset / TUNING_NUM_SEMITONE_STEPS) * TUNING_NUM_SEMITONE_STEPS;
+    /* check if the portamento is on */
+    if (sw->portamento_switch == 0)
+    {
+      sw->offset = 0;
+      sw->note = sw->note_input;
+    }
+    /* if the old note was 0 (default), we don't have any portamento! */
+    else if ((sw->note < TUNING_NOTE_A0) || (sw->note > TUNING_NOTE_C8))
+    {
+      sw->offset = 0;
+      sw->note = sw->note_input;
+    }
+    /* otherwise, determine the starting offset */
     else
-      sw->level = -((-sw->offset / TUNING_NUM_SEMITONE_STEPS) * TUNING_NUM_SEMITONE_STEPS);
+    {
+      sw->offset = (sw->note - sw->note_input) * TUNING_NUM_SEMITONE_STEPS - sw->offset;
+      sw->note = sw->note_input;
+    }
+
+    /* reset phase */
+    sw->phase = 0;
+
+    /* set level */
+    if (sw->portamento_mode == 0)
+      sw->level = sw->offset;
+    else if (sw->portamento_mode == 1)
+    {
+      if (sw->offset >= 0)
+        sw->level = (sw->offset / TUNING_NUM_SEMITONE_STEPS) * TUNING_NUM_SEMITONE_STEPS;
+      else
+        sw->level = -((-sw->offset / TUNING_NUM_SEMITONE_STEPS) * TUNING_NUM_SEMITONE_STEPS);
+    }
   }
 
   return 0;
@@ -197,44 +213,49 @@ short int sweep_trigger(int voice_index, int new_note)
 short int sweep_update_all()
 {
   int k;
+  int m;
 
   sweep* sw;
 
   /* update all sweeps */
   for (k = 0; k < BANK_NUM_VOICES; k++)
   {
-    sw = &G_sweep_bank[k];
-
-    /* update phase */
-    sw->phase += sw->increment;
-
-    /* check if a period was completed */
-
-    /* wraparound phase register (28 bits) */
-    if (sw->phase > 0xFFFFFFF)
+    for (m = 0; m < BANK_SWEEPS_PER_VOICE; m++)
     {
-      if (sw->offset < 0)
-        sw->offset += 1;
-      else if (sw->offset > 0)
-        sw->offset -= 1;
+      /* obtain sweep pointer */
+      sw = &G_sweep_bank[BANK_SWEEPS_PER_VOICE * k + m];
 
-      sw->phase &= 0xFFFFFFF;
-    }
+      /* update phase */
+      sw->phase += sw->increment;
 
-    /* set level */
+      /* check if a period was completed */
 
-    /* mode 0: portamento (continuous) */
-    if (sw->portamento_mode == 0)
-    {
-      sw->level = sw->offset;
-    }
-    /* mode 1: glissando (chromatic) */
-    else if (sw->portamento_mode == 1)
-    {
-      if (sw->offset >= 0)
-        sw->level = (sw->offset / TUNING_NUM_SEMITONE_STEPS) * TUNING_NUM_SEMITONE_STEPS;
-      else
-        sw->level = -((-sw->offset / TUNING_NUM_SEMITONE_STEPS) * TUNING_NUM_SEMITONE_STEPS);
+      /* wraparound phase register (28 bits) */
+      if (sw->phase > 0xFFFFFFF)
+      {
+        if (sw->offset < 0)
+          sw->offset += 1;
+        else if (sw->offset > 0)
+          sw->offset -= 1;
+
+        sw->phase &= 0xFFFFFFF;
+      }
+
+      /* set level */
+
+      /* mode 0: portamento (continuous) */
+      if (sw->portamento_mode == 0)
+      {
+        sw->level = sw->offset;
+      }
+      /* mode 1: glissando (chromatic) */
+      else if (sw->portamento_mode == 1)
+      {
+        if (sw->offset >= 0)
+          sw->level = (sw->offset / TUNING_NUM_SEMITONE_STEPS) * TUNING_NUM_SEMITONE_STEPS;
+        else
+          sw->level = -((-sw->offset / TUNING_NUM_SEMITONE_STEPS) * TUNING_NUM_SEMITONE_STEPS);
+      }
     }
   }
 

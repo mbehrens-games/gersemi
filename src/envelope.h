@@ -56,6 +56,9 @@ typedef struct envelope
   unsigned int increment;
   unsigned int phase;
 
+  /* note input (from oscillator) */
+  short int note_input;
+
   /* controller inputs */
   short int mod_wheel_input;
   short int aftertouch_input;
@@ -72,12 +75,12 @@ extern envelope G_envelope_bank[BANK_NUM_ENVELOPES];
 
 /* function declarations */
 short int envelope_setup_all();
-short int envelope_reset(int voice_index, int num);
+short int envelope_reset(int voice_index);
 
-short int envelope_load_patch(int voice_index, int num, int patch_index);
+short int envelope_load_patch(int voice_index, int patch_index);
 
-short int envelope_trigger(int voice_index, int num, int note);
-short int envelope_release(int voice_index, int num);
+short int envelope_trigger(int voice_index);
+short int envelope_release(int voice_index);
 
 short int envelope_update_all();
 

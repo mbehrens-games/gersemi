@@ -14,6 +14,7 @@
 #include "sweep.h"
 #include "tuning.h"
 #include "voice.h"
+#include "wheel.h"
 
 /* instrument bank */
 instrument G_instrument_bank[BANK_NUM_INSTRUMENTS];
@@ -65,13 +66,17 @@ short int instrument_reset(int instrument_index)
   ins->volume = 0;
   ins->panning = 0;
 
+  /* note velocity */
+  ins->velocity = 0;
+
+   /* mod wheel, aftertouch, pitch wheel */
+  ins->mod_wheel_amount = 0;
+  ins->aftertouch_amount = 0;
+  ins->pitch_wheel_amount = 0;
+
   /* portamento */
   ins->porta_switch = 0;
   ins->porta_speed = 0;
-
-  /* mod wheel & aftertouch */
-  ins->mod_wheel_amount = 0;
-  ins->aftertouch_amount = 0;
 
   return 0;
 }
@@ -211,16 +216,9 @@ short int instrument_load_patch(int instrument_index, int patch_index)
   for (k = 0; k < bound; k++)
   {
     voice_load_patch(voice_index + k, patch_index);
-
-    envelope_load_patch(voice_index + k, 0, patch_index);
-    envelope_load_patch(voice_index + k, 1, patch_index);
-    envelope_load_patch(voice_index + k, 2, patch_index);
-    envelope_load_patch(voice_index + k, 3, patch_index);
-
+    envelope_load_patch(voice_index + k, patch_index);
     lfo_load_patch(voice_index + k, patch_index);
-
     sweep_load_patch(voice_index + k, patch_index);
-
     filter_load_patch(voice_index + k, patch_index);
   }
 
@@ -236,7 +234,10 @@ short int instrument_key_on(int instrument_index, int note)
   int m;
 
   instrument* ins;
+
   voice* v;
+  envelope* e;
+  sweep* sw;
 
   int base_voice_index;
   int selected_voice_index;
@@ -377,21 +378,28 @@ short int instrument_key_on(int instrument_index, int note)
   if (selected_voice_index == -1)
     return 0;
 
-  printf("Key-On: Note %d on Voice %d...\n", note, selected_voice_index);
-
   /* send key on to the selected voice associated with this instrument */
-  v = &G_voice_bank[selected_voice_index];
-
   voice_set_note(selected_voice_index, note);
 
-  envelope_trigger(selected_voice_index, 0, v->osc_note[0]);
-  envelope_trigger(selected_voice_index, 1, v->osc_note[1]);
-  envelope_trigger(selected_voice_index, 2, v->osc_note[2]);
-  envelope_trigger(selected_voice_index, 3, v->osc_note[3]);
+  v = &G_voice_bank[selected_voice_index];
 
+  for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
+  {
+    e = &G_envelope_bank[BANK_OSCS_AND_ENVS_PER_VOICE * selected_voice_index + m];
+
+    e->note_input = v->osc_note[m];
+  }
+
+  for (m = 0; m < BANK_SWEEPS_PER_VOICE; m++)
+  {
+    sw = &G_sweep_bank[BANK_SWEEPS_PER_VOICE * selected_voice_index + m];
+
+    sw->note_input = note;
+  }
+
+  envelope_trigger(selected_voice_index);
   lfo_trigger(selected_voice_index);
-
-  sweep_trigger(selected_voice_index, note);
+  sweep_trigger(selected_voice_index);
 
   return 0;
 }
@@ -506,22 +514,156 @@ short int instrument_key_off(int instrument_index, int note)
     return 0;
 #endif
 
-  printf("Key-Off: Note %d on Voice %d...\n", note, selected_voice_index);
-
   /* send key off to the selected voice associated with this instrument */
-  envelope_release(selected_voice_index, 0);
-  envelope_release(selected_voice_index, 1);
-  envelope_release(selected_voice_index, 2);
-  envelope_release(selected_voice_index, 3);
+  envelope_release(selected_voice_index);
 
   return 0;
 }
 
 /*******************************************************************************
-** instrument_update_all()
+** instrument_set_mod_wheel_amount()
 *******************************************************************************/
-short int instrument_update_all()
+short int instrument_set_mod_wheel_amount(int instrument_index, short int amount)
 {
+  int k;
+  int m;
+
+  instrument* ins;
+  envelope* e;
+  lfo* l;
+
+  /* make sure that the instrument index is valid */
+  if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
+    return 1;
+
+  /* obtain instrument pointer */
+  ins = &G_instrument_bank[instrument_index];
+
+  /* if instrument is inactive, return */
+  if (ins->type == INSTRUMENT_TYPE_INACTIVE)
+    return 0;
+
+  /* make sure the mod wheel amount is valid */
+  if ((amount < WHEEL_MOD_WHEEL_LOWER_BOUND) || (amount > WHEEL_MOD_WHEEL_UPPER_BOUND))
+    return 0;
+
+  /* if this new amount is the same as the current amount, return */
+  if (amount == ins->mod_wheel_amount)
+    return 0;
+
+  /* set the new mod wheel amount */
+  ins->mod_wheel_amount = amount;
+
+  /* set the mod wheel input for each voice associated with this instrument */
+  if (ins->type == INSTRUMENT_TYPE_POLY)
+  {
+    for (k = 0; k < 4; k++)
+    {
+      for (m = 0; m < BANK_LFOS_PER_VOICE; m++)
+      {
+        l = &G_lfo_bank[BANK_LFOS_PER_VOICE * (ins->voice_index + k) + m];
+
+        l->mod_wheel_input = amount;
+      }
+
+      for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
+      {
+        e = &G_envelope_bank[BANK_OSCS_AND_ENVS_PER_VOICE * (ins->voice_index + k) + m];
+
+        e->mod_wheel_input = amount;
+      }
+    }
+  }
+  else if (ins->type == INSTRUMENT_TYPE_MONO)
+  {
+    for (m = 0; m < BANK_LFOS_PER_VOICE; m++)
+    {
+      l = &G_lfo_bank[BANK_LFOS_PER_VOICE * ins->voice_index + m];
+
+      l->mod_wheel_input = amount;
+    }
+
+    for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
+    {
+      e = &G_envelope_bank[BANK_OSCS_AND_ENVS_PER_VOICE * ins->voice_index + m];
+
+      e->mod_wheel_input = amount;
+    }
+  }
+
+  return 0;
+}
+
+/*******************************************************************************
+** instrument_set_aftertouch_amount()
+*******************************************************************************/
+short int instrument_set_aftertouch_amount(int instrument_index, short int amount)
+{
+  int k;
+  int m;
+
+  instrument* ins;
+  envelope* e;
+  lfo* l;
+
+  /* make sure that the instrument index is valid */
+  if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
+    return 1;
+
+  /* obtain instrument pointer */
+  ins = &G_instrument_bank[instrument_index];
+
+  /* if instrument is inactive, return */
+  if (ins->type == INSTRUMENT_TYPE_INACTIVE)
+    return 0;
+
+  /* make sure the aftertouch amount is valid */
+  if ((amount < WHEEL_AFTERTOUCH_LOWER_BOUND) || (amount > WHEEL_AFTERTOUCH_UPPER_BOUND))
+    return 0;
+
+  /* if this new amount is the same as the current amount, return */
+  if (amount == ins->aftertouch_amount)
+    return 0;
+
+  /* set the new aftertouch amount */
+  ins->aftertouch_amount = amount;
+
+  /* set the aftertouch input for each voice associated with this instrument */
+  if (ins->type == INSTRUMENT_TYPE_POLY)
+  {
+    for (k = 0; k < 4; k++)
+    {
+      for (m = 0; m < BANK_LFOS_PER_VOICE; m++)
+      {
+        l = &G_lfo_bank[BANK_LFOS_PER_VOICE * (ins->voice_index + k) + m];
+
+        l->aftertouch_input = amount;
+      }
+
+      for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
+      {
+        e = &G_envelope_bank[BANK_OSCS_AND_ENVS_PER_VOICE * (ins->voice_index + k) + m];
+
+        e->aftertouch_input = amount;
+      }
+    }
+  }
+  else if (ins->type == INSTRUMENT_TYPE_MONO)
+  {
+    for (m = 0; m < BANK_LFOS_PER_VOICE; m++)
+    {
+      l = &G_lfo_bank[BANK_LFOS_PER_VOICE * ins->voice_index + m];
+
+      l->aftertouch_input = amount;
+    }
+
+    for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
+    {
+      e = &G_envelope_bank[BANK_OSCS_AND_ENVS_PER_VOICE * ins->voice_index + m];
+
+      e->aftertouch_input = amount;
+    }
+  }
 
   return 0;
 }

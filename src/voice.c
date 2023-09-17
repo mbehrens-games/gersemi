@@ -277,7 +277,7 @@ short int voice_reset(int voice_index)
   v->base_note = 0;
 
   /* currently playing notes, pitch table indices, phase, feedback levels, voice parameters */
-  for (m = 0; m < VOICE_NUM_OSCS_AND_ENVS; m++)
+  for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
   {
     v->osc_note[m] = 0;
     v->osc_pitch_index[m] = 0;
@@ -301,7 +301,7 @@ short int voice_reset(int voice_index)
   }
 
   /* envelope levels */
-  for (m = 0; m < VOICE_NUM_OSCS_AND_ENVS; m++)
+  for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
     v->env_input[m] = 0;
 
   /* lfo levels */
@@ -349,7 +349,7 @@ short int voice_load_patch(int voice_index, int patch_index)
     v->algorithm = PATCH_ALGORITHM_LOWER_BOUND;
 
   /* voice parameters, pitch index */
-  for (m = 0; m < VOICE_NUM_OSCS_AND_ENVS; m++)
+  for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
   {
     /* waveform */
     if ((p->osc_waveform[m] >= PATCH_OSC_WAVEFORM_LOWER_BOUND) && 
@@ -514,7 +514,7 @@ short int voice_set_note(int voice_index, int note)
   v->base_note = note;
 
   /* determine notes & pitch indices, reset phases */
-  for (m = 0; m < VOICE_NUM_OSCS_AND_ENVS; m++)
+  for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
   {
     if (v->osc_freq_mode[m] == 0)
       v->osc_note[m] = v->base_note + v->osc_offset[m];
@@ -546,12 +546,12 @@ short int voice_set_note(int voice_index, int note)
 *******************************************************************************/
 short int voice_update_all()
 {
-  short int osc_env_index[VOICE_NUM_OSCS_AND_ENVS];
+  short int osc_env_index[BANK_OSCS_AND_ENVS_PER_VOICE];
 
-  int osc_fb_mod[VOICE_NUM_OSCS_AND_ENVS];
-  int osc_phase_mod[VOICE_NUM_OSCS_AND_ENVS];
+  int osc_fb_mod[BANK_OSCS_AND_ENVS_PER_VOICE];
+  int osc_phase_mod[BANK_OSCS_AND_ENVS_PER_VOICE];
 
-  int osc_level[VOICE_NUM_OSCS_AND_ENVS];
+  int osc_level[BANK_OSCS_AND_ENVS_PER_VOICE];
 
   int adjusted_pitch_index;
 
@@ -574,7 +574,7 @@ short int voice_update_all()
     v = &G_voice_bank[k];
 
     /* update envelopes */
-    for (m = 0; m < VOICE_NUM_OSCS_AND_ENVS; m++)
+    for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
     {
       osc_env_index[m] = v->env_input[m];
 
@@ -588,7 +588,7 @@ short int voice_update_all()
     }
 
     /* update pitches & phases */
-    for (m = 0; m < VOICE_NUM_OSCS_AND_ENVS; m++)
+    for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
     {
       adjusted_pitch_index = v->osc_pitch_index[m];
 

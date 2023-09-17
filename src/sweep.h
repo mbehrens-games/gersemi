@@ -22,6 +22,9 @@ typedef struct sweep
   short int note;
   short int offset;
 
+  /* note input (from oscillator) */
+  short int note_input;
+
   /* level */
   short int level;
 } sweep;
@@ -35,7 +38,7 @@ short int sweep_reset(int voice_index);
 
 short int sweep_load_patch(int voice_index, int patch_index);
 
-short int sweep_trigger(int voice_index, int new_note);
+short int sweep_trigger(int voice_index);
 
 short int sweep_update_all();
 
