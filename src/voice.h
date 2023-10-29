@@ -32,19 +32,25 @@ typedef struct voice
   short int osc_offset[BANK_OSCS_AND_ENVS_PER_VOICE];
   short int osc_detune[BANK_OSCS_AND_ENVS_PER_VOICE];
 
-  short int vibrato_enable[BANK_OSCS_AND_ENVS_PER_VOICE];
-  short int tremolo_enable[BANK_OSCS_AND_ENVS_PER_VOICE];
-  short int boost_enable[BANK_OSCS_AND_ENVS_PER_VOICE];
+  /* effect modes */
+  short int tremolo_mode;
+  short int boost_mode;
 
   /* envelope levels */
   short int env_input[BANK_OSCS_AND_ENVS_PER_VOICE];
 
   /* lfo levels */
-  short int vibrato_input;
-  short int tremolo_input;
+  short int lfo_input_vibrato;
+  short int lfo_input_tremolo;
+
+  /* boost level */
+  short int boost_input;
 
   /* sweep level */
   short int sweep_input;
+
+  /* bender level */
+  short int bender_input;
 
   /* output level */
   int level;

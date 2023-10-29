@@ -14,6 +14,7 @@
 
 #include "audio.h"
 #include "controls.h"
+#include "fileio.h"
 #include "global.h"
 #include "graphics.h"
 #include "hola.h"
@@ -67,6 +68,12 @@ int main(int argc, char *argv[])
   if (path_obtain_preferences_path())
   {
     fprintf(stdout, "Failed to obtain Preferences path. Exiting...\n");
+    goto cleanup_paths;
+  }
+
+  if (path_set_documents_path())
+  {
+    fprintf(stdout, "Failed to obtain Documents path. Exiting...\n");
     goto cleanup_paths;
   }
 
@@ -139,6 +146,9 @@ int main(int argc, char *argv[])
 
   /* reset synth */
   synth_reset_banks();
+
+  /* testing: load test patch set file */
+  fileio_patch_set_load(G_path_patch_set_test_1, 0);
 
   /* testing */
   instrument_load_patch(G_patch_edit_instrument_index, G_patch_edit_patch_index);
@@ -274,6 +284,9 @@ int main(int argc, char *argv[])
 
   /* cleanup window and quit */
 cleanup_all:
+  /* testing: save test patch set file */
+  fileio_patch_set_save(G_path_patch_set_test_1, 0);
+
   audio_deinit();
 cleanup_textures:
   palette_deinit();

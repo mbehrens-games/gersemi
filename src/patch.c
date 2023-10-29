@@ -6,6 +6,15 @@
 
 #include "patch.h"
 
+#define PATCH_RESET_PARAMETER(param, name)                                     \
+  param = PATCH_##name##_DEFAULT;
+
+#define PATCH_BOUND_PARAMETER(param, name)                                     \
+  if (param < PATCH_##name##_LOWER_BOUND)                                      \
+    param = PATCH_##name##_LOWER_BOUND;                                        \
+  else if (param > PATCH_##name##_UPPER_BOUND)                                 \
+    param = PATCH_##name##_UPPER_BOUND;
+
 /* patch bank */
 patch G_patch_bank[BANK_NUM_PATCHES];
 
@@ -40,69 +49,155 @@ short int patch_reset(int patch_index)
   p = &G_patch_bank[patch_index];
 
   /* algorithm */
-  p->algorithm = PATCH_ALGORITHM_LOWER_BOUND;
+  PATCH_RESET_PARAMETER(p->algorithm, ALGORITHM)
+
+  /* filters */
+  PATCH_RESET_PARAMETER(p->highpass_cutoff, HIGHPASS_CUTOFF)
+  PATCH_RESET_PARAMETER(p->lowpass_cutoff,  LOWPASS_CUTOFF)
+
+  /* pedal */
+  PATCH_RESET_PARAMETER(p->pedal_shift, PEDAL_SHIFT)
 
   /* oscillators and envelopes */
   for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
   {
-    p->osc_waveform[m] = 1;
-    p->osc_feedback[m] = 0;
-    p->osc_sync[m] = 1;
-    p->osc_freq_mode[m] = 0;
-    p->osc_multiple[m] = 1;
-    p->osc_divisor[m] = 1;
-    p->osc_note[m] = 1;
-    p->osc_octave[m] = 4;
-    p->osc_detune[m] = 0;
+    PATCH_RESET_PARAMETER(p->osc_waveform[m],   OSC_WAVEFORM)
+    PATCH_RESET_PARAMETER(p->osc_feedback[m],   OSC_FEEDBACK)
+    PATCH_RESET_PARAMETER(p->osc_sync[m],       OSC_SYNC)
+    PATCH_RESET_PARAMETER(p->osc_freq_mode[m],  OSC_FREQ_MODE)
+    PATCH_RESET_PARAMETER(p->osc_multiple[m],   OSC_MULTIPLE)
+    PATCH_RESET_PARAMETER(p->osc_divisor[m],    OSC_DIVISOR)
+    PATCH_RESET_PARAMETER(p->osc_note[m],       OSC_NOTE)
+    PATCH_RESET_PARAMETER(p->osc_octave[m],     OSC_OCTAVE)
+    PATCH_RESET_PARAMETER(p->osc_detune[m],     OSC_DETUNE)
 
-    p->env_attack[m] = 32;
-    p->env_decay_1[m] = 32;
-    p->env_decay_2[m] = 32;
-    p->env_release[m] = 32;
-    p->env_amplitude[m] = 0;
-    p->env_sustain[m] = 0;
-    p->env_rate_ks[m] = 1;
-    p->env_level_ks[m] = 1;
-    p->env_trigger[m] = 1;
-
-    p->vibrato_enable[m] = 1;
-    p->tremolo_enable[m] = 1;
-    p->boost_enable[m] = 1;
+    PATCH_RESET_PARAMETER(p->env_attack[m],     ENV_RATE)
+    PATCH_RESET_PARAMETER(p->env_decay_1[m],    ENV_RATE)
+    PATCH_RESET_PARAMETER(p->env_decay_2[m],    ENV_RATE)
+    PATCH_RESET_PARAMETER(p->env_release[m],    ENV_RATE)
+    PATCH_RESET_PARAMETER(p->env_amplitude[m],  ENV_AMPLITUDE)
+    PATCH_RESET_PARAMETER(p->env_sustain[m],    ENV_SUSTAIN)
+    PATCH_RESET_PARAMETER(p->env_rate_ks[m],    ENV_KEYSCALE)
+    PATCH_RESET_PARAMETER(p->env_level_ks[m],   ENV_KEYSCALE)
   }
 
   /* lfo */
-  p->lfo_waveform = 1;
-  p->lfo_frequency = 1;
-  p->lfo_delay = 0;
-  p->lfo_vibrato_mode = 0;
-  p->lfo_sync = 1;
-  p->lfo_tempo = 0;
+  PATCH_RESET_PARAMETER(p->lfo_waveform,  LFO_WAVEFORM)
+  PATCH_RESET_PARAMETER(p->lfo_frequency, LFO_FREQUENCY)
+  PATCH_RESET_PARAMETER(p->lfo_delay,     LFO_DELAY)
+  PATCH_RESET_PARAMETER(p->lfo_sync,      LFO_SYNC)
+  PATCH_RESET_PARAMETER(p->lfo_quantize,  LFO_QUANTIZE)
+  PATCH_RESET_PARAMETER(p->lfo_sah_noise, LFO_SAH_NOISE)
 
-  p->lfo_base_vibrato = 0;
-  p->lfo_base_tremolo = 0;
+  /* vibrato / tremolo / boost */
+  PATCH_RESET_PARAMETER(p->vibrato_depth, EFFECT_DEPTH)
+  PATCH_RESET_PARAMETER(p->vibrato_base,  EFFECT_BASE)
+  PATCH_RESET_PARAMETER(p->vibrato_mode,  VIBRATO_MODE)
 
-  /* sweep */
-  p->portamento_mode = 0;
-  p->portamento_speed = 1;
+  PATCH_RESET_PARAMETER(p->tremolo_depth, EFFECT_DEPTH)
+  PATCH_RESET_PARAMETER(p->tremolo_base,  EFFECT_BASE)
+  PATCH_RESET_PARAMETER(p->tremolo_mode,  TREMOLO_MODE)
+
+  PATCH_RESET_PARAMETER(p->boost_depth,   EFFECT_DEPTH)
+  PATCH_RESET_PARAMETER(p->boost_mode,    BOOST_MODE)
+
+  /* mod wheel / aftertouch */
+  PATCH_RESET_PARAMETER(p->mod_wheel_effect,  CONTROLLER_EFFECT)
+  PATCH_RESET_PARAMETER(p->aftertouch_effect, CONTROLLER_EFFECT)
+
+  /* portamento / arpeggio */
+  PATCH_RESET_PARAMETER(p->port_arp_mode,       PORT_ARP_MODE)
+  PATCH_RESET_PARAMETER(p->port_arp_direction,  PORT_ARP_DIRECTION)
+  PATCH_RESET_PARAMETER(p->port_arp_speed,      PORT_ARP_SPEED)
+
+  /* pitch wheel */
+  PATCH_RESET_PARAMETER(p->pitch_wheel_mode,  PITCH_WHEEL_MODE)
+  PATCH_RESET_PARAMETER(p->pitch_wheel_range, PITCH_WHEEL_RANGE)
+
+  return 0;
+}
+
+/*******************************************************************************
+** patch_validate()
+*******************************************************************************/
+short int patch_validate(int patch_index)
+{
+  int m;
+
+  patch* p;
+
+  /* make sure that the patch index is valid */
+  if (BANK_PATCH_INDEX_IS_NOT_VALID(patch_index))
+    return 1;
+
+  /* obtain patch pointer */
+  p = &G_patch_bank[patch_index];
+
+  /* algorithm */
+  PATCH_BOUND_PARAMETER(p->algorithm, ALGORITHM)
 
   /* filters */
-  p->highpass_cutoff = PATCH_HIGHPASS_CUTOFF_LOWER_BOUND;
-  p->lowpass_cutoff = PATCH_LOWPASS_CUTOFF_UPPER_BOUND;
+  PATCH_BOUND_PARAMETER(p->highpass_cutoff, HIGHPASS_CUTOFF)
+  PATCH_BOUND_PARAMETER(p->lowpass_cutoff,  LOWPASS_CUTOFF)
 
-  /* depths */
-  p->vibrato_depth = 1;
-  p->tremolo_depth = 1;
-  p->boost_depth = 1;
+  /* pedal */
+  PATCH_BOUND_PARAMETER(p->pedal_shift, PEDAL_SHIFT)
 
-  /* mod wheel */
-  p->mod_wheel_vibrato = 0;
-  p->mod_wheel_tremolo = 0;
-  p->mod_wheel_boost = 0;
+  /* oscillators and envelopes */
+  for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
+  {
+    PATCH_BOUND_PARAMETER(p->osc_waveform[m],   OSC_WAVEFORM)
+    PATCH_BOUND_PARAMETER(p->osc_feedback[m],   OSC_FEEDBACK)
+    PATCH_BOUND_PARAMETER(p->osc_sync[m],       OSC_SYNC)
+    PATCH_BOUND_PARAMETER(p->osc_freq_mode[m],  OSC_FREQ_MODE)
+    PATCH_BOUND_PARAMETER(p->osc_multiple[m],   OSC_MULTIPLE)
+    PATCH_BOUND_PARAMETER(p->osc_divisor[m],    OSC_DIVISOR)
+    PATCH_BOUND_PARAMETER(p->osc_note[m],       OSC_NOTE)
+    PATCH_BOUND_PARAMETER(p->osc_octave[m],     OSC_OCTAVE)
+    PATCH_BOUND_PARAMETER(p->osc_detune[m],     OSC_DETUNE)
 
-  /* aftertouch */
-  p->aftertouch_vibrato = 0;
-  p->aftertouch_tremolo = 0;
-  p->aftertouch_boost = 0;
+    PATCH_BOUND_PARAMETER(p->env_attack[m],     ENV_RATE)
+    PATCH_BOUND_PARAMETER(p->env_decay_1[m],    ENV_RATE)
+    PATCH_BOUND_PARAMETER(p->env_decay_2[m],    ENV_RATE)
+    PATCH_BOUND_PARAMETER(p->env_release[m],    ENV_RATE)
+    PATCH_BOUND_PARAMETER(p->env_amplitude[m],  ENV_AMPLITUDE)
+    PATCH_BOUND_PARAMETER(p->env_sustain[m],    ENV_SUSTAIN)
+    PATCH_BOUND_PARAMETER(p->env_rate_ks[m],    ENV_KEYSCALE)
+    PATCH_BOUND_PARAMETER(p->env_level_ks[m],   ENV_KEYSCALE)
+  }
+
+  /* lfo */
+  PATCH_BOUND_PARAMETER(p->lfo_waveform,  LFO_WAVEFORM)
+  PATCH_BOUND_PARAMETER(p->lfo_frequency, LFO_FREQUENCY)
+  PATCH_BOUND_PARAMETER(p->lfo_delay,     LFO_DELAY)
+  PATCH_BOUND_PARAMETER(p->lfo_sync,      LFO_SYNC)
+  PATCH_BOUND_PARAMETER(p->lfo_quantize,  LFO_QUANTIZE)
+  PATCH_BOUND_PARAMETER(p->lfo_sah_noise, LFO_SAH_NOISE)
+
+  /* vibrato / tremolo / boost */
+  PATCH_BOUND_PARAMETER(p->vibrato_depth, EFFECT_DEPTH)
+  PATCH_BOUND_PARAMETER(p->vibrato_base,  EFFECT_BASE)
+  PATCH_BOUND_PARAMETER(p->vibrato_mode,  VIBRATO_MODE)
+
+  PATCH_BOUND_PARAMETER(p->tremolo_depth, EFFECT_DEPTH)
+  PATCH_BOUND_PARAMETER(p->tremolo_base,  EFFECT_BASE)
+  PATCH_BOUND_PARAMETER(p->tremolo_mode,  TREMOLO_MODE)
+
+  PATCH_BOUND_PARAMETER(p->boost_depth,   EFFECT_DEPTH)
+  PATCH_BOUND_PARAMETER(p->boost_mode,    BOOST_MODE)
+
+  /* mod wheel / aftertouch */
+  PATCH_BOUND_PARAMETER(p->mod_wheel_effect,  CONTROLLER_EFFECT)
+  PATCH_BOUND_PARAMETER(p->aftertouch_effect, CONTROLLER_EFFECT)
+
+  /* portamento / arpeggio */
+  PATCH_BOUND_PARAMETER(p->port_arp_mode,       PORT_ARP_MODE)
+  PATCH_BOUND_PARAMETER(p->port_arp_direction,  PORT_ARP_DIRECTION)
+  PATCH_BOUND_PARAMETER(p->port_arp_speed,      PORT_ARP_SPEED)
+
+  /* pitch wheel */
+  PATCH_BOUND_PARAMETER(p->pitch_wheel_mode,  PITCH_WHEEL_MODE)
+  PATCH_BOUND_PARAMETER(p->pitch_wheel_range, PITCH_WHEEL_RANGE)
 
   return 0;
 }

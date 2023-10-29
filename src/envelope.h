@@ -9,30 +9,19 @@
 
 enum
 {
-  ENVELOPE_STATE_ATTACK = 0,
-  ENVELOPE_STATE_DECAY_1,
-  ENVELOPE_STATE_DECAY_2,
+  ENVELOPE_STATE_ATTACK = 0, 
+  ENVELOPE_STATE_DECAY_1, 
+  ENVELOPE_STATE_DECAY_2, 
   ENVELOPE_STATE_RELEASE, 
-  ENVELOPE_STATE_REVERSE_ATTACK, 
-  ENVELOPE_STATE_REVERSE_DECAY_1, 
-  ENVELOPE_STATE_REVERSE_DECAY_2 
+  ENVELOPE_STATE_ALTERNATE_DECAY_2, 
+  ENVELOPE_STATE_ALTERNATE_RELEASE 
 };
 
 typedef struct envelope
 {
-  /* trigger mode */
-  short int trigger_mode;
-
   /* envelope settings */
   short int rate_ks;
   short int level_ks;
-
-  /* boost depth */
-  short int boost_depth;
-
-  /* mod wheel, aftertouch */
-  short int mod_wheel_boost;
-  short int aftertouch_boost;
 
   /* adjustments */
   short int ampl_adjustment;
@@ -48,6 +37,10 @@ typedef struct envelope
   int d2_row;
   int r_row;
 
+  /* alternate rows (with sustain pedal) */
+  int alt_d2_row;
+  int alt_r_row;
+
   /* current state, row */
   int state;
   int row;
@@ -59,9 +52,8 @@ typedef struct envelope
   /* note input (from oscillator) */
   short int note_input;
 
-  /* controller inputs */
-  short int mod_wheel_input;
-  short int aftertouch_input;
+  /* sustain pedal input (from instrument) */
+  short int pedal_input;
 
   /* attenuation */
   short int attenuation;

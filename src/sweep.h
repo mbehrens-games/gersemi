@@ -10,9 +10,9 @@
 typedef struct sweep
 {
   /* sweep parameters */
-  short int portamento_mode;
-  short int portamento_speed;
-  short int portamento_switch;
+  short int port_arp_mode;
+  short int port_arp_direction;
+  short int port_arp_speed;
 
   /* phase, phase increment */
   unsigned int phase;
@@ -24,6 +24,9 @@ typedef struct sweep
 
   /* note input (from oscillator) */
   short int note_input;
+
+  /* switch input (from instrument) */
+  short int switch_input;
 
   /* level */
   short int level;

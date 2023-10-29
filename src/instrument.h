@@ -40,12 +40,12 @@ typedef struct instrument
 
   short int velocity;
 
-  short int mod_wheel_amount;
-  short int aftertouch_amount;
-  short int pitch_wheel_amount;
+  short int mod_wheel_pos;
+  short int aftertouch_pos;
+  short int pitch_wheel_pos;
 
-  short int porta_switch;
-  short int porta_speed;
+  short int port_arp_switch;
+  short int sustain_pedal;
 } instrument;
 
 /* instrument bank */
@@ -62,8 +62,11 @@ short int instrument_load_patch(int instrument_index, int patch_index);
 short int instrument_key_on(int instrument_index, int note);
 short int instrument_key_off(int instrument_index, int note);
 
-short int instrument_set_mod_wheel_amount(int instrument_index, short int amount);
-short int instrument_set_aftertouch_amount(int instrument_index, short int amount);
-short int instrument_set_pitch_wheel_amount(int instrument_index, short int amount);
+short int instrument_set_mod_wheel_position(int instrument_index, short int pos);
+short int instrument_set_aftertouch_position(int instrument_index, short int pos);
+short int instrument_set_pitch_wheel_position(int instrument_index, short int pos);
+
+short int instrument_set_port_arp_switch(int instrument_index, short int state);
+short int instrument_set_sustain_pedal(int instrument_index, short int state);
 
 #endif

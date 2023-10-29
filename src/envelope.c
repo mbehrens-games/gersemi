@@ -7,18 +7,34 @@
 #include "bank.h"
 #include "clock.h"
 #include "envelope.h"
+#include "midicont.h"
 #include "patch.h"
 #include "tuning.h"
-#include "wheel.h"
 
 #define ENVELOPE_TABLE_NUM_ROWS       16
 #define ENVELOPE_TABLE_RATES_PER_ROW  12
 
 #define ENVELOPE_TABLE_SIZE (ENVELOPE_TABLE_NUM_ROWS * ENVELOPE_TABLE_RATES_PER_ROW)
 
-#define ENVELOPE_SET_STATE(name, abbrev)                                       \
+#define ENVELOPE_MAX_RATE_ROW (12 * ((PATCH_ENV_RATE_UPPER_BOUND - PATCH_ENV_RATE_LOWER_BOUND) / 2) + 7)
+
+#define ENVELOPE_SET_STATE(name)                                               \
   e->state = ENVELOPE_STATE_##name;                                            \
-  e->row = e->abbrev##_row;                                                    \
+                                                                               \
+  if (e->state == ENVELOPE_STATE_ATTACK)                                       \
+    e->row = e->a_row;                                                         \
+  else if (e->state == ENVELOPE_STATE_DECAY_1)                                 \
+    e->row = e->d1_row;                                                        \
+  else if (e->state == ENVELOPE_STATE_DECAY_2)                                 \
+    e->row = e->d2_row;                                                        \
+  else if (e->state == ENVELOPE_STATE_RELEASE)                                 \
+    e->row = e->r_row;                                                         \
+  else if (e->state == ENVELOPE_STATE_ALTERNATE_DECAY_2)                       \
+    e->row = e->alt_d2_row;                                                    \
+  else if (e->state == ENVELOPE_STATE_ALTERNATE_RELEASE)                       \
+    e->row = e->alt_r_row;                                                     \
+  else                                                                         \
+    e->row = ENVELOPE_MAX_RATE_ROW;                                            \
                                                                                \
   /* apply rate keyscaling */                                                  \
   e->row += e->rate_adjustment;                                                \
@@ -30,30 +46,7 @@
     e->row = ENVELOPE_TABLE_SIZE - 1;                                          \
                                                                                \
   /* set the phase increment */                                                \
-                                                                               \
-  /* note that for the forward states, it takes 73 periods to finish the  */   \
-  /* attack phase (from max attenuation) and 1023 periods to finish the   */   \
-  /* decay phases. this gives a scaling factor of 1023/73 ~ 14.           */   \
-  /* this scaling factor is used on the increment for the reverse states  */   \
-  /* so that the rise/fall times are approximately the same for each.     */   \
-  if ((e->state == ENVELOPE_STATE_ATTACK)   ||                                 \
-      (e->state == ENVELOPE_STATE_DECAY_1)  ||                                 \
-      (e->state == ENVELOPE_STATE_DECAY_2)  ||                                 \
-      (e->state == ENVELOPE_STATE_RELEASE))                                    \
-  {                                                                            \
-    e->increment = S_envelope_phase_increment_table[e->row];                   \
-  }                                                                            \
-  else if (e->state == ENVELOPE_STATE_REVERSE_ATTACK)                          \
-  {                                                                            \
-    e->increment = S_envelope_phase_increment_table[e->row] * 14;              \
-  }                                                                            \
-  else if ( (e->state == ENVELOPE_STATE_REVERSE_DECAY_1) ||                    \
-            (e->state == ENVELOPE_STATE_REVERSE_DECAY_2))                      \
-  {                                                                            \
-    e->increment = S_envelope_phase_increment_table[e->row] / 14;              \
-  }                                                                            \
-  else                                                                         \
-    e->increment = S_envelope_phase_increment_table[e->row];
+  e->increment = S_envelope_phase_increment_table[e->row];
 
 /* envelope phase increment table */
 static unsigned int S_envelope_phase_increment_table[ENVELOPE_TABLE_SIZE];
@@ -136,25 +129,14 @@ static short int S_envelope_sustain_table[PATCH_ENV_SUSTAIN_NUM_VALUES] =
          0    /*  1           */
   };
 
-/* boost depth table */
-static short int  S_envelope_boost_depth_table[PATCH_MOD_DEPTH_NUM_VALUES] = 
-                  { 12 * 1, 
-                    12 * 2, 
-                    12 * 3, 
-                    12 * 4, 
-                    12 * 5, 
-                    12 * 6, 
-                    12 * 7, 
-                    12 * 8, 
-                    12 * 9, 
-                    12 * 10, 
-                    12 * 11, 
-                    12 * 12, 
-                    12 * 13, 
-                    12 * 14, 
-                    12 * 15, 
-                    12 * 16 
-                  };
+/* keyscaling table */
+static short int  S_envelope_keyscale_table[PATCH_ENV_KEYSCALE_NUM_VALUES] = 
+                  { 1, 2, 4, 8 };
+
+/* sustain pedal shift table */
+static short int  S_envelope_pedal_shift_table[PATCH_PEDAL_SHIFT_NUM_VALUES] = 
+                  { -8, -7, -6, -5, -4, -3, -2, -1, 
+                     1,  2,  3,  4,  5,  6,  7,  8 };
 
 /* envelope bank */
 envelope G_envelope_bank[BANK_NUM_ENVELOPES];
@@ -192,15 +174,8 @@ short int envelope_reset(int voice_index)
     e = &G_envelope_bank[BANK_OSCS_AND_ENVS_PER_VOICE * voice_index + m];
 
     /* initialize envelope variables */
-    e->trigger_mode = 1;
-
     e->rate_ks = 1;
     e->level_ks = 1;
-
-    e->boost_depth = S_envelope_boost_depth_table[0];
-
-    e->mod_wheel_boost = 0;
-    e->aftertouch_boost = 0;
 
     e->ampl_adjustment = S_envelope_amplitude_table[0];
     e->rate_adjustment = 0;
@@ -213,6 +188,9 @@ short int envelope_reset(int voice_index)
     e->d2_row = 0;
     e->r_row = 0;
 
+    e->alt_d2_row = 0;
+    e->alt_r_row = 0;
+
     e->state = ENVELOPE_STATE_RELEASE;
     e->row = 0;
 
@@ -221,8 +199,7 @@ short int envelope_reset(int voice_index)
 
     e->note_input = 0;
 
-    e->mod_wheel_input = 0;
-    e->aftertouch_input = 0;
+    e->pedal_input = 0;
 
     e->attenuation = 1023;
 
@@ -241,6 +218,8 @@ short int envelope_load_patch(int voice_index, int patch_index)
 
   envelope* e;
   patch* p;
+
+  int shifted_rate;
 
   /* make sure that the voice index is valid */
   if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
@@ -306,6 +285,44 @@ short int envelope_load_patch(int voice_index, int patch_index)
     else
       e->r_row = 0;
 
+    /* sustain pedal shift */
+    if ((p->pedal_shift >= PATCH_PEDAL_SHIFT_LOWER_BOUND) && 
+        (p->pedal_shift <= PATCH_PEDAL_SHIFT_UPPER_BOUND))
+    {
+      /* set alternate decay 2 rate */
+      shifted_rate = p->env_decay_2[m] - PATCH_ENV_RATE_LOWER_BOUND;
+      shifted_rate += S_envelope_pedal_shift_table[p->pedal_shift - PATCH_PEDAL_SHIFT_LOWER_BOUND];
+
+      if (shifted_rate < PATCH_ENV_RATE_LOWER_BOUND)
+        shifted_rate = PATCH_ENV_RATE_LOWER_BOUND;
+      else if (shifted_rate > PATCH_ENV_RATE_UPPER_BOUND)
+        shifted_rate = PATCH_ENV_RATE_UPPER_BOUND;
+
+      e->alt_d2_row = 12 * (shifted_rate / 2);
+
+      if ((shifted_rate % 2) == 1)
+        e->alt_d2_row += 7;
+
+      /* set alternate release rate */
+      shifted_rate = p->env_release[m] - PATCH_ENV_RATE_LOWER_BOUND;
+      shifted_rate += S_envelope_pedal_shift_table[p->pedal_shift - PATCH_PEDAL_SHIFT_LOWER_BOUND];
+
+      if (shifted_rate < PATCH_ENV_RATE_LOWER_BOUND)
+        shifted_rate = PATCH_ENV_RATE_LOWER_BOUND;
+      else if (shifted_rate > PATCH_ENV_RATE_UPPER_BOUND)
+        shifted_rate = PATCH_ENV_RATE_UPPER_BOUND;
+
+      e->alt_r_row = 12 * (shifted_rate / 2);
+
+      if ((shifted_rate % 2) == 1)
+        e->alt_r_row += 7;
+    }
+    else
+    {
+      e->alt_d2_row = e->d2_row;
+      e->alt_r_row = e->r_row;
+    }
+
     /* amplitude adjustment */
     if ((p->env_amplitude[m] >= PATCH_ENV_AMPLITUDE_LOWER_BOUND) && 
         (p->env_amplitude[m] <= PATCH_ENV_AMPLITUDE_UPPER_BOUND))
@@ -338,10 +355,10 @@ short int envelope_load_patch(int voice_index, int patch_index)
     if ((p->env_rate_ks[m] >= PATCH_ENV_KEYSCALE_LOWER_BOUND) && 
         (p->env_rate_ks[m] <= PATCH_ENV_KEYSCALE_UPPER_BOUND))
     {
-      e->rate_ks = p->env_rate_ks[m];
+      e->rate_ks = S_envelope_keyscale_table[p->env_rate_ks[m] - PATCH_ENV_KEYSCALE_LOWER_BOUND];
     }
     else
-      e->rate_ks = PATCH_ENV_KEYSCALE_LOWER_BOUND;
+      e->rate_ks = S_envelope_keyscale_table[0];
 
     /* level keyscaling */
 
@@ -357,46 +374,10 @@ short int envelope_load_patch(int voice_index, int patch_index)
     if ((p->env_level_ks[m] >= PATCH_ENV_KEYSCALE_LOWER_BOUND) && 
         (p->env_level_ks[m] <= PATCH_ENV_KEYSCALE_UPPER_BOUND))
     {
-      e->level_ks = p->env_level_ks[m];
+      e->level_ks = S_envelope_keyscale_table[p->env_level_ks[m] - PATCH_ENV_KEYSCALE_LOWER_BOUND];
     }
     else
-      e->level_ks = PATCH_ENV_KEYSCALE_LOWER_BOUND;
-
-    /* trigger mode */
-    if ((p->env_trigger[m] >= PATCH_ENV_TRIGGER_LOWER_BOUND) && 
-        (p->env_trigger[m] <= PATCH_ENV_TRIGGER_UPPER_BOUND))
-    {
-      e->trigger_mode = p->env_trigger[m];
-    }
-    else
-      e->trigger_mode = PATCH_ENV_TRIGGER_LOWER_BOUND;
-
-    /* boost depth */
-    if ((p->boost_depth >= PATCH_MOD_DEPTH_LOWER_BOUND) && 
-        (p->boost_depth <= PATCH_MOD_DEPTH_UPPER_BOUND))
-    {
-      e->boost_depth = S_envelope_boost_depth_table[p->boost_depth - PATCH_MOD_DEPTH_LOWER_BOUND];
-    }
-    else
-      e->boost_depth = S_envelope_boost_depth_table[0];
-
-    /* mod wheel boost */
-    if ((p->mod_wheel_boost >= PATCH_MOD_CONTROLLER_LOWER_BOUND) && 
-        (p->mod_wheel_boost <= PATCH_MOD_CONTROLLER_UPPER_BOUND))
-    {
-      e->mod_wheel_boost = p->mod_wheel_boost;
-    }
-    else
-      e->mod_wheel_boost = PATCH_MOD_CONTROLLER_LOWER_BOUND;
-
-    /* aftertouch boost */
-    if ((p->aftertouch_boost >= PATCH_MOD_CONTROLLER_LOWER_BOUND) && 
-        (p->aftertouch_boost <= PATCH_MOD_CONTROLLER_UPPER_BOUND))
-    {
-      e->aftertouch_boost = p->aftertouch_boost;
-    }
-    else
-      e->aftertouch_boost = PATCH_MOD_CONTROLLER_LOWER_BOUND;
+      e->level_ks = S_envelope_keyscale_table[0];
   }
 
   return 0;
@@ -446,7 +427,7 @@ short int envelope_trigger(int voice_index)
     e->level_adjustment = (16 * e->level_ks * (keycode - 31)) / 12;
 
     /* set level */
-    e->level =  e->attenuation + e->ampl_adjustment + e->level_adjustment;
+    e->level = e->attenuation + e->ampl_adjustment + e->level_adjustment;
 
     /* bound level */
     if (e->level < 0)
@@ -455,30 +436,7 @@ short int envelope_trigger(int voice_index)
       e->level = 1023;
 
     /* set the envelope to its initial state */
-    /* mode 1: forward (once), 3: forward (repeat), 5: forward <-> backward */
-    if ((e->trigger_mode == 1) || (e->trigger_mode == 3) || (e->trigger_mode == 5))
-    {
-      ENVELOPE_SET_STATE(ATTACK, a)
-    }
-    /* mode 2: backward (once), 4: backward (repeat), 6: backward <-> forward */
-    else if ((e->trigger_mode == 2) || (e->trigger_mode == 4) || (e->trigger_mode == 6))
-    {
-      ENVELOPE_SET_STATE(REVERSE_DECAY_2, d2)
-    }
-    /* mode 7: attack, then down/up along decay 1 and decay 2 */
-    else if (e->trigger_mode == 7)
-    {
-      ENVELOPE_SET_STATE(ATTACK, a)
-    }
-    /* mode 8: reverse attack, then up/down along decay 1 and decay 2 */
-    else if (e->trigger_mode == 8)
-    {
-      ENVELOPE_SET_STATE(REVERSE_ATTACK, a)
-    }
-    else
-    {
-      ENVELOPE_SET_STATE(ATTACK, a)
-    }
+    ENVELOPE_SET_STATE(ATTACK)
 
     /* reset phase */
     e->phase = 0;
@@ -510,7 +468,7 @@ short int envelope_release(int voice_index)
       continue;
 
     /* set the envelope to release state */
-    ENVELOPE_SET_STATE(RELEASE, r)
+    ENVELOPE_SET_STATE(RELEASE)
   }
 
   return 0;
@@ -528,8 +486,6 @@ short int envelope_update_all()
 
   short int periods;
 
-  int boost_amount;
-
   /* update all envelopes */
   for (k = 0; k < BANK_NUM_VOICES; k++)
   {
@@ -537,6 +493,30 @@ short int envelope_update_all()
     {
       /* obtain envelope pointer */
       e = &G_envelope_bank[BANK_OSCS_AND_ENVS_PER_VOICE * k + m];
+
+      /* check if the sustain pedal should change the envelope state */
+      if (e->pedal_input == 1)
+      {
+        if (e->state == ENVELOPE_STATE_DECAY_2)
+        {
+          ENVELOPE_SET_STATE(ALTERNATE_DECAY_2)
+        }
+        else if (e->state == ENVELOPE_STATE_RELEASE)
+        {
+          ENVELOPE_SET_STATE(ALTERNATE_RELEASE)
+        }
+      }
+      else
+      {
+        if (e->state == ENVELOPE_STATE_ALTERNATE_DECAY_2)
+        {
+          ENVELOPE_SET_STATE(DECAY_2)
+        }
+        else if (e->state == ENVELOPE_STATE_ALTERNATE_RELEASE)
+        {
+          ENVELOPE_SET_STATE(RELEASE)
+        }
+      }
 
       /* update phase */
       e->phase += e->increment;
@@ -555,17 +535,16 @@ short int envelope_update_all()
       if (periods > 0)
       {
         /* rising states */
-        if ((e->state == ENVELOPE_STATE_ATTACK)           || 
-            (e->state == ENVELOPE_STATE_REVERSE_DECAY_1)  || 
-            (e->state == ENVELOPE_STATE_REVERSE_DECAY_2))
+        if (e->state == ENVELOPE_STATE_ATTACK)
         {
           e->attenuation += (~e->attenuation * periods) >> 4;
         }
         /* falling states */
-        else if ( (e->state == ENVELOPE_STATE_DECAY_1)  || 
-                  (e->state == ENVELOPE_STATE_DECAY_2)  || 
-                  (e->state == ENVELOPE_STATE_RELEASE)  || 
-                  (e->state == ENVELOPE_STATE_REVERSE_ATTACK))
+        else if ( (e->state == ENVELOPE_STATE_DECAY_1)            || 
+                  (e->state == ENVELOPE_STATE_DECAY_2)            || 
+                  (e->state == ENVELOPE_STATE_RELEASE)            || 
+                  (e->state == ENVELOPE_STATE_ALTERNATE_DECAY_2)  || 
+                  (e->state == ENVELOPE_STATE_ALTERNATE_RELEASE))
         {
           e->attenuation += periods;
         }
@@ -582,80 +561,34 @@ short int envelope_update_all()
         if ((e->state == ENVELOPE_STATE_ATTACK) && 
             (e->attenuation == 0))
         {
-          ENVELOPE_SET_STATE(DECAY_1, d1)
+          ENVELOPE_SET_STATE(DECAY_1)
         }
         else if ( (e->state == ENVELOPE_STATE_DECAY_1) && 
                   (e->attenuation >= e->transition_level))
         {
-          ENVELOPE_SET_STATE(DECAY_2, d2)
+          if (e->pedal_input == 1)
+          {
+            ENVELOPE_SET_STATE(ALTERNATE_DECAY_2)
+          }
+          else
+          {
+            ENVELOPE_SET_STATE(DECAY_2)
+          }
         }
         else if ( (e->state == ENVELOPE_STATE_DECAY_2) && 
                   (e->attenuation == 1023))
         {
-          if (e->trigger_mode == 3)
-          {
-            ENVELOPE_SET_STATE(ATTACK, a)
-          }
-          else if ( (e->trigger_mode == 5) || (e->trigger_mode == 6) || 
-                    (e->trigger_mode == 7) || (e->trigger_mode == 8))
-          {
-            ENVELOPE_SET_STATE(REVERSE_DECAY_2, d2)
-          }
-          else
-          {
-            ENVELOPE_SET_STATE(RELEASE, r)
-          }
+          ENVELOPE_SET_STATE(RELEASE)
         }
-        else if ( (e->state == ENVELOPE_STATE_REVERSE_ATTACK) && 
+        else if ( (e->state == ENVELOPE_STATE_ALTERNATE_DECAY_2) && 
                   (e->attenuation == 1023))
         {
-          if ((e->trigger_mode == 4) || (e->trigger_mode == 8))
-          {
-            ENVELOPE_SET_STATE(REVERSE_DECAY_2, d2)
-          }
-          else if ((e->trigger_mode == 5) || (e->trigger_mode == 6))
-          {
-            ENVELOPE_SET_STATE(ATTACK, a)
-          }
-          else
-          {
-            ENVELOPE_SET_STATE(RELEASE, r)
-          }
-        }
-        else if ( (e->state == ENVELOPE_STATE_REVERSE_DECAY_1) && 
-                  (e->attenuation == 0))
-        {
-          if ((e->trigger_mode == 7) || (e->trigger_mode == 8))
-          {
-            ENVELOPE_SET_STATE(DECAY_1, d1)
-          }
-          else
-          {
-            ENVELOPE_SET_STATE(REVERSE_ATTACK, a)
-          }
-        }
-        else if ( (e->state == ENVELOPE_STATE_REVERSE_DECAY_2) && 
-                  (e->attenuation <= e->transition_level))
-        {
-          ENVELOPE_SET_STATE(REVERSE_DECAY_1, d1)
+          ENVELOPE_SET_STATE(ALTERNATE_RELEASE)
         }
       }
 
       /* update level */
       e->level = e->attenuation + e->ampl_adjustment + e->level_adjustment;
-
-      /* apply boost */
-      boost_amount = 0;
-
-      boost_amount += 
-        (e->boost_depth * e->mod_wheel_boost * e->mod_wheel_input) / (PATCH_MOD_CONTROLLER_NUM_VALUES * WHEEL_MOD_WHEEL_NUM_STEPS);
-      boost_amount += 
-        (e->boost_depth * e->aftertouch_boost * e->aftertouch_input) / (PATCH_MOD_CONTROLLER_NUM_VALUES * WHEEL_AFTERTOUCH_NUM_STEPS);
-
-      if (boost_amount > e->boost_depth)
-        boost_amount = e->boost_depth;
-
-      e->level -= boost_amount;
 
       /* bound level */
       if (e->level < 0)

@@ -6,9 +6,9 @@
 #include <stdlib.h>
 
 #include "global.h"
+#include "midicont.h"
 #include "screen.h"
 #include "tuning.h"
-#include "wheel.h"
 
 int G_game_screen;
 int G_last_screen;
@@ -26,9 +26,9 @@ int G_patch_edit_patch_index;
 int G_patch_edit_instrument_index;
 
 int G_patch_edit_octave;
-int G_patch_edit_mod_wheel_amount;
-int G_patch_edit_aftertouch_amount;
-int G_patch_edit_pitch_wheel_amount;
+int G_patch_edit_mod_wheel_pos;
+int G_patch_edit_aftertouch_pos;
+int G_patch_edit_pitch_wheel_pos;
 
 /*******************************************************************************
 ** globals_init_variables()
@@ -51,11 +51,11 @@ short int globals_init_variables()
   G_patch_edit_patch_index = 0;
   G_patch_edit_instrument_index = 0;
 
-  G_patch_edit_octave = TUNING_MIDDLE_OCTAVE;
+  G_patch_edit_octave = TUNING_AUDITION_OCTAVE_DEFAULT;
 
-  G_patch_edit_mod_wheel_amount = WHEEL_MOD_WHEEL_LOWER_BOUND;
-  G_patch_edit_aftertouch_amount = WHEEL_AFTERTOUCH_LOWER_BOUND;
-  G_patch_edit_pitch_wheel_amount = WHEEL_PITCH_WHEEL_CENTER_VALUE;
+  G_patch_edit_mod_wheel_pos = MIDI_CONT_MOD_WHEEL_DEFAULT;
+  G_patch_edit_aftertouch_pos = MIDI_CONT_AFTERTOUCH_DEFAULT;
+  G_patch_edit_pitch_wheel_pos = MIDI_CONT_PITCH_WHEEL_DEFAULT;
 
   /* generate non-synth (gui related) tables */
   /*key_generate_tables();*/

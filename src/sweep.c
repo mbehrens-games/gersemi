@@ -78,9 +78,9 @@ short int sweep_reset(int voice_index)
     sw = &G_sweep_bank[BANK_SWEEPS_PER_VOICE * voice_index + m];
 
     /* initialize sweep variables */
-    sw->portamento_mode = 0;
-    sw->portamento_speed = 1;
-    sw->portamento_switch = 0;
+    sw->port_arp_mode = 0;
+    sw->port_arp_direction = 0;
+    sw->port_arp_speed = 1;
 
     sw->phase = 0;
     sw->increment = 0;
@@ -89,6 +89,8 @@ short int sweep_reset(int voice_index)
     sw->offset = 0;
 
     sw->note_input = 0;
+
+    sw->switch_input = 0;
 
     sw->level = 0;
   }
@@ -123,24 +125,24 @@ short int sweep_load_patch(int voice_index, int patch_index)
     sw = &G_sweep_bank[BANK_SWEEPS_PER_VOICE * voice_index + m];
 
     /* portamento mode */
-    if ((p->portamento_mode >= PATCH_PORTAMENTO_MODE_LOWER_BOUND) && 
-        (p->portamento_mode <= PATCH_PORTAMENTO_MODE_UPPER_BOUND))
+    if ((p->port_arp_mode >= PATCH_PORT_ARP_MODE_LOWER_BOUND) && 
+        (p->port_arp_mode <= PATCH_PORT_ARP_MODE_UPPER_BOUND))
     {
-      sw->portamento_mode = p->portamento_mode;
+      sw->port_arp_mode = p->port_arp_mode;
     }
     else
-      sw->portamento_mode = PATCH_PORTAMENTO_MODE_LOWER_BOUND;
+      sw->port_arp_mode = PATCH_PORT_ARP_MODE_LOWER_BOUND;
 
     /* portamento speed */
-    if ((p->portamento_speed >= PATCH_PORTAMENTO_SPEED_LOWER_BOUND) && 
-        (p->portamento_speed <= PATCH_PORTAMENTO_SPEED_UPPER_BOUND))
+    if ((p->port_arp_speed >= PATCH_PORT_ARP_SPEED_LOWER_BOUND) && 
+        (p->port_arp_speed <= PATCH_PORT_ARP_SPEED_UPPER_BOUND))
     {
-      sw->portamento_speed = p->portamento_speed;
-      sw->increment = S_sweep_phase_increment_table[p->portamento_speed - PATCH_PORTAMENTO_SPEED_LOWER_BOUND];
+      sw->port_arp_speed = p->port_arp_speed;
+      sw->increment = S_sweep_phase_increment_table[p->port_arp_speed - PATCH_PORT_ARP_SPEED_LOWER_BOUND];
     }
     else
     {
-      sw->portamento_speed = PATCH_PORTAMENTO_SPEED_LOWER_BOUND;
+      sw->port_arp_speed = PATCH_PORT_ARP_SPEED_LOWER_BOUND;
       sw->increment = S_sweep_phase_increment_table[0];
     }
   }
@@ -171,7 +173,7 @@ short int sweep_trigger(int voice_index)
       return 1;
 
     /* check if the portamento is on */
-    if (sw->portamento_switch == 0)
+    if (sw->switch_input == 0)
     {
       sw->offset = 0;
       sw->note = sw->note_input;
@@ -193,9 +195,9 @@ short int sweep_trigger(int voice_index)
     sw->phase = 0;
 
     /* set level */
-    if (sw->portamento_mode == 0)
+    if (sw->port_arp_mode == 0)
       sw->level = sw->offset;
-    else if (sw->portamento_mode == 1)
+    else if (sw->port_arp_mode == 1)
     {
       if (sw->offset >= 0)
         sw->level = (sw->offset / TUNING_NUM_SEMITONE_STEPS) * TUNING_NUM_SEMITONE_STEPS;
@@ -244,12 +246,12 @@ short int sweep_update_all()
       /* set level */
 
       /* mode 0: portamento (continuous) */
-      if (sw->portamento_mode == 0)
+      if (sw->port_arp_mode == 0)
       {
         sw->level = sw->offset;
       }
       /* mode 1: glissando (chromatic) */
-      else if (sw->portamento_mode == 1)
+      else if (sw->port_arp_mode == 1)
       {
         if (sw->offset >= 0)
           sw->level = (sw->offset / TUNING_NUM_SEMITONE_STEPS) * TUNING_NUM_SEMITONE_STEPS;

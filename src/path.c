@@ -9,10 +9,22 @@
 
 #include "path.h"
 
+#define PATH_FREE_PATH(name)                                                   \
+  if (name != NULL)                                                            \
+  {                                                                            \
+    SDL_free(name);                                                            \
+    name = NULL;                                                               \
+  }
+
 char* G_path_base;
 char* G_path_gfx_data;
 char* G_path_shader_data;
+
 char* G_path_pref;
+
+char* G_path_patch_sets;
+char* G_path_patch_set_test_1;
+char* G_path_songs;
 
 /*******************************************************************************
 ** path_init_paths()
@@ -22,7 +34,12 @@ short int path_init_paths()
   G_path_base = NULL;
   G_path_gfx_data = NULL;
   G_path_shader_data = NULL;
+
   G_path_pref = NULL;
+
+  G_path_patch_sets = NULL;
+  G_path_patch_set_test_1 = NULL;
+  G_path_songs = NULL;
 
   return 0;
 }
@@ -66,33 +83,37 @@ short int path_obtain_preferences_path()
 }
 
 /*******************************************************************************
+** path_set_documents_path()
+*******************************************************************************/
+short int path_set_documents_path()
+{
+  G_path_patch_sets = malloc(sizeof(char) * (255 + 1));
+  strcpy(G_path_patch_sets, "/Users/mike/Documents/Gersemi/Banks/");
+
+  G_path_songs = malloc(sizeof(char) * (255 + 1));
+  strcpy(G_path_songs, "/Users/mike/Documents/Gersemi/Songs/");
+
+  G_path_patch_set_test_1 = malloc(sizeof(char) * (255 + 1));
+  strcpy(G_path_patch_set_test_1, G_path_patch_sets);
+  strcpy(G_path_patch_set_test_1 + strlen(G_path_patch_sets), "bank01.gpb");
+
+  return 0;
+}
+
+/*******************************************************************************
 ** path_free_paths()
 *******************************************************************************/
 short int path_free_paths()
 {
-  if (G_path_base != NULL)
-  {
-    SDL_free(G_path_base);
-    G_path_base = NULL;
-  }
+  PATH_FREE_PATH(G_path_base)
+  PATH_FREE_PATH(G_path_gfx_data)
+  PATH_FREE_PATH(G_path_shader_data)
 
-  if (G_path_gfx_data != NULL)
-  {
-    free(G_path_gfx_data);
-    G_path_gfx_data = NULL;
-  }
+  PATH_FREE_PATH(G_path_pref)
 
-  if (G_path_shader_data != NULL)
-  {
-    free(G_path_shader_data);
-    G_path_shader_data = NULL;
-  }
-
-  if (G_path_pref != NULL)
-  {
-    SDL_free(G_path_pref);
-    G_path_pref = NULL;
-  }
+  PATH_FREE_PATH(G_path_patch_sets)
+  PATH_FREE_PATH(G_path_patch_set_test_1)
+  PATH_FREE_PATH(G_path_songs)
 
   return 0;
 }

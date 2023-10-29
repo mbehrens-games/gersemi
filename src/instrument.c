@@ -6,15 +6,17 @@
 #include <math.h>
 
 #include "bank.h"
+#include "bender.h"
+#include "boost.h"
 #include "envelope.h"
 #include "filter.h"
 #include "instrument.h"
 #include "lfo.h"
+#include "midicont.h"
 #include "patch.h"
 #include "sweep.h"
 #include "tuning.h"
 #include "voice.h"
-#include "wheel.h"
 
 /* instrument bank */
 instrument G_instrument_bank[BANK_NUM_INSTRUMENTS];
@@ -70,13 +72,13 @@ short int instrument_reset(int instrument_index)
   ins->velocity = 0;
 
    /* mod wheel, aftertouch, pitch wheel */
-  ins->mod_wheel_amount = 0;
-  ins->aftertouch_amount = 0;
-  ins->pitch_wheel_amount = 0;
+  ins->mod_wheel_pos = MIDI_CONT_MOD_WHEEL_DEFAULT;
+  ins->aftertouch_pos = MIDI_CONT_AFTERTOUCH_DEFAULT;
+  ins->pitch_wheel_pos = MIDI_CONT_PITCH_WHEEL_DEFAULT;
 
-  /* portamento */
-  ins->porta_switch = 0;
-  ins->porta_speed = 0;
+  /* port/arp switch & pedal */
+  ins->port_arp_switch = MIDI_CONT_PORT_ARP_SWITCH_DEFAULT;
+  ins->sustain_pedal = MIDI_CONT_SUSTAIN_PEDAL_DEFAULT;
 
   return 0;
 }
@@ -218,7 +220,9 @@ short int instrument_load_patch(int instrument_index, int patch_index)
     voice_load_patch(voice_index + k, patch_index);
     envelope_load_patch(voice_index + k, patch_index);
     lfo_load_patch(voice_index + k, patch_index);
+    boost_load_patch(voice_index + k, patch_index);
     sweep_load_patch(voice_index + k, patch_index);
+    bender_load_patch(voice_index + k, patch_index);
     filter_load_patch(voice_index + k, patch_index);
   }
 
@@ -521,16 +525,15 @@ short int instrument_key_off(int instrument_index, int note)
 }
 
 /*******************************************************************************
-** instrument_set_mod_wheel_amount()
+** instrument_set_mod_wheel_position()
 *******************************************************************************/
-short int instrument_set_mod_wheel_amount(int instrument_index, short int amount)
+short int instrument_set_mod_wheel_position(int instrument_index, short int pos)
 {
   int k;
-  int m;
 
   instrument* ins;
-  envelope* e;
   lfo* l;
+  boost* b;
 
   /* make sure that the instrument index is valid */
   if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
@@ -543,68 +546,54 @@ short int instrument_set_mod_wheel_amount(int instrument_index, short int amount
   if (ins->type == INSTRUMENT_TYPE_INACTIVE)
     return 0;
 
-  /* make sure the mod wheel amount is valid */
-  if ((amount < WHEEL_MOD_WHEEL_LOWER_BOUND) || (amount > WHEEL_MOD_WHEEL_UPPER_BOUND))
+  /* make sure the mod wheel position is valid */
+  if ((pos < MIDI_CONT_MOD_WHEEL_LOWER_BOUND) || 
+      (pos > MIDI_CONT_MOD_WHEEL_UPPER_BOUND))
+  {
+    return 0;
+  }
+
+  /* if this new position is the same as the current position, return */
+  if (pos == ins->mod_wheel_pos)
     return 0;
 
-  /* if this new amount is the same as the current amount, return */
-  if (amount == ins->mod_wheel_amount)
-    return 0;
-
-  /* set the new mod wheel amount */
-  ins->mod_wheel_amount = amount;
+  /* set the new mod wheel position */
+  ins->mod_wheel_pos = pos;
 
   /* set the mod wheel input for each voice associated with this instrument */
   if (ins->type == INSTRUMENT_TYPE_POLY)
   {
     for (k = 0; k < 4; k++)
     {
-      for (m = 0; m < BANK_LFOS_PER_VOICE; m++)
-      {
-        l = &G_lfo_bank[BANK_LFOS_PER_VOICE * (ins->voice_index + k) + m];
+      l = &G_lfo_bank[ins->voice_index + k];
+      l->mod_wheel_input = pos;
 
-        l->mod_wheel_input = amount;
-      }
-
-      for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
-      {
-        e = &G_envelope_bank[BANK_OSCS_AND_ENVS_PER_VOICE * (ins->voice_index + k) + m];
-
-        e->mod_wheel_input = amount;
-      }
+      b = &G_boost_bank[ins->voice_index + k];
+      b->mod_wheel_input = pos;
     }
   }
   else if (ins->type == INSTRUMENT_TYPE_MONO)
   {
-    for (m = 0; m < BANK_LFOS_PER_VOICE; m++)
-    {
-      l = &G_lfo_bank[BANK_LFOS_PER_VOICE * ins->voice_index + m];
+    l = &G_lfo_bank[ins->voice_index];
+    l->mod_wheel_input = pos;
 
-      l->mod_wheel_input = amount;
-    }
-
-    for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
-    {
-      e = &G_envelope_bank[BANK_OSCS_AND_ENVS_PER_VOICE * ins->voice_index + m];
-
-      e->mod_wheel_input = amount;
-    }
+    b = &G_boost_bank[ins->voice_index];
+    b->mod_wheel_input = pos;
   }
 
   return 0;
 }
 
 /*******************************************************************************
-** instrument_set_aftertouch_amount()
+** instrument_set_aftertouch_position()
 *******************************************************************************/
-short int instrument_set_aftertouch_amount(int instrument_index, short int amount)
+short int instrument_set_aftertouch_position(int instrument_index, short int pos)
 {
   int k;
-  int m;
 
   instrument* ins;
-  envelope* e;
   lfo* l;
+  boost* b;
 
   /* make sure that the instrument index is valid */
   if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
@@ -617,51 +606,205 @@ short int instrument_set_aftertouch_amount(int instrument_index, short int amoun
   if (ins->type == INSTRUMENT_TYPE_INACTIVE)
     return 0;
 
-  /* make sure the aftertouch amount is valid */
-  if ((amount < WHEEL_AFTERTOUCH_LOWER_BOUND) || (amount > WHEEL_AFTERTOUCH_UPPER_BOUND))
+  /* make sure the aftertouch position is valid */
+  if ((pos < MIDI_CONT_AFTERTOUCH_LOWER_BOUND) || 
+      (pos > MIDI_CONT_AFTERTOUCH_UPPER_BOUND))
+  {
+    return 0;
+  }
+
+  /* if this new position is the same as the current position, return */
+  if (pos == ins->aftertouch_pos)
     return 0;
 
-  /* if this new amount is the same as the current amount, return */
-  if (amount == ins->aftertouch_amount)
-    return 0;
-
-  /* set the new aftertouch amount */
-  ins->aftertouch_amount = amount;
+  /* set the new aftertouch position */
+  ins->aftertouch_pos = pos;
 
   /* set the aftertouch input for each voice associated with this instrument */
   if (ins->type == INSTRUMENT_TYPE_POLY)
   {
     for (k = 0; k < 4; k++)
     {
-      for (m = 0; m < BANK_LFOS_PER_VOICE; m++)
-      {
-        l = &G_lfo_bank[BANK_LFOS_PER_VOICE * (ins->voice_index + k) + m];
+      l = &G_lfo_bank[ins->voice_index + k];
+      l->aftertouch_input = pos;
 
-        l->aftertouch_input = amount;
-      }
+      b = &G_boost_bank[ins->voice_index + k];
+      b->aftertouch_input = pos;
 
+    }
+  }
+  else if (ins->type == INSTRUMENT_TYPE_MONO)
+  {
+    l = &G_lfo_bank[ins->voice_index];
+    l->aftertouch_input = pos;
+
+    b = &G_boost_bank[ins->voice_index];
+    b->aftertouch_input = pos;
+  }
+
+  return 0;
+}
+
+/*******************************************************************************
+** instrument_set_pitch_wheel_position()
+*******************************************************************************/
+short int instrument_set_pitch_wheel_position(int instrument_index, short int pos)
+{
+  int k;
+
+  instrument* ins;
+  bender* b;
+
+  /* make sure that the instrument index is valid */
+  if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
+    return 1;
+
+  /* obtain instrument pointer */
+  ins = &G_instrument_bank[instrument_index];
+
+  /* if instrument is inactive, return */
+  if (ins->type == INSTRUMENT_TYPE_INACTIVE)
+    return 0;
+
+  /* make sure the pitch_wheel position is valid */
+  if ((pos < MIDI_CONT_PITCH_WHEEL_LOWER_BOUND) || 
+      (pos > MIDI_CONT_PITCH_WHEEL_UPPER_BOUND))
+  {
+    return 0;
+  }
+
+  /* if this new position is the same as the current position, return */
+  if (pos == ins->pitch_wheel_pos)
+    return 0;
+
+  /* set the new pitch wheel position */
+  ins->pitch_wheel_pos = pos;
+
+  /* set the pitch wheel input for each voice associated with this instrument */
+  if (ins->type == INSTRUMENT_TYPE_POLY)
+  {
+    for (k = 0; k < 4; k++)
+    {
+      b = &G_bender_bank[ins->voice_index + k];
+      b->pitch_wheel_input = pos;
+    }
+  }
+  else if (ins->type == INSTRUMENT_TYPE_MONO)
+  {
+    b = &G_bender_bank[ins->voice_index];
+    b->pitch_wheel_input = pos;
+  }
+
+  return 0;
+}
+
+/*******************************************************************************
+** instrument_set_port_arp_switch()
+*******************************************************************************/
+short int instrument_set_port_arp_switch(int instrument_index, short int state)
+{
+  int k;
+
+  instrument* ins;
+  sweep* sw;
+
+  /* make sure that the instrument index is valid */
+  if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
+    return 1;
+
+  /* obtain instrument pointer */
+  ins = &G_instrument_bank[instrument_index];
+
+  /* if instrument is inactive, return */
+  if (ins->type == INSTRUMENT_TYPE_INACTIVE)
+    return 0;
+
+  /* make sure the port/arp switch state is valid */
+  if ((state < MIDI_CONT_PORT_ARP_SWITCH_LOWER_BOUND) || 
+      (state > MIDI_CONT_PORT_ARP_SWITCH_UPPER_BOUND))
+  {
+    return 0;
+  }
+
+  /* if this new state is the same as the current state, return */
+  if (state == ins->port_arp_switch)
+    return 0;
+
+  /* set the new port/arp switch state */
+  ins->port_arp_switch = state;
+
+  /* set the port/arp switch input for each voice associated with this instrument */
+  if (ins->type == INSTRUMENT_TYPE_POLY)
+  {
+    for (k = 0; k < 4; k++)
+    {
+      sw = &G_sweep_bank[ins->voice_index + k];
+      sw->switch_input = state;
+    }
+  }
+  else if (ins->type == INSTRUMENT_TYPE_MONO)
+  {
+    sw = &G_sweep_bank[ins->voice_index];
+    sw->switch_input = state;
+  }
+
+  return 0;
+}
+
+/*******************************************************************************
+** instrument_set_sustain_pedal()
+*******************************************************************************/
+short int instrument_set_sustain_pedal(int instrument_index, short int state)
+{
+  int k;
+  int m;
+
+  instrument* ins;
+  envelope* e;
+
+  /* make sure that the instrument index is valid */
+  if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
+    return 1;
+
+  /* obtain instrument pointer */
+  ins = &G_instrument_bank[instrument_index];
+
+  /* if instrument is inactive, return */
+  if (ins->type == INSTRUMENT_TYPE_INACTIVE)
+    return 0;
+
+  /* make sure the sustain pedal state is valid */
+  if ((state < MIDI_CONT_SUSTAIN_PEDAL_LOWER_BOUND) || 
+      (state > MIDI_CONT_SUSTAIN_PEDAL_UPPER_BOUND))
+  {
+    return 0;
+  }
+
+  /* if this new state is the same as the current state, return */
+  if (state == ins->sustain_pedal)
+    return 0;
+
+  /* set the new sustain pedal state */
+  ins->sustain_pedal = state;
+
+  /* set the sustain pedal input for each voice associated with this instrument */
+  if (ins->type == INSTRUMENT_TYPE_POLY)
+  {
+    for (k = 0; k < 4; k++)
+    {
       for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
       {
         e = &G_envelope_bank[BANK_OSCS_AND_ENVS_PER_VOICE * (ins->voice_index + k) + m];
-
-        e->aftertouch_input = amount;
+        e->pedal_input = state;
       }
     }
   }
   else if (ins->type == INSTRUMENT_TYPE_MONO)
   {
-    for (m = 0; m < BANK_LFOS_PER_VOICE; m++)
-    {
-      l = &G_lfo_bank[BANK_LFOS_PER_VOICE * ins->voice_index + m];
-
-      l->aftertouch_input = amount;
-    }
-
     for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
     {
       e = &G_envelope_bank[BANK_OSCS_AND_ENVS_PER_VOICE * ins->voice_index + m];
-
-      e->aftertouch_input = amount;
+      e->pedal_input = state;
     }
   }
 

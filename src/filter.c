@@ -57,7 +57,7 @@ short int filter_reset(int voice_index)
 
     /* set cutoff */
     f->multiplier = 
-      S_lowpass_filter_stage_multiplier_table[PATCH_LOWPASS_CUTOFF_UPPER_BOUND - PATCH_LOWPASS_CUTOFF_LOWER_BOUND];
+      S_lowpass_filter_stage_multiplier_table[PATCH_LOWPASS_CUTOFF_DEFAULT - PATCH_LOWPASS_CUTOFF_LOWER_BOUND];
 
     /* reset state */
     f->input = 0;
@@ -80,7 +80,7 @@ short int filter_reset(int voice_index)
 
     /* set cutoff */
     f->multiplier = 
-      S_highpass_filter_stage_multiplier_table[0];
+      S_highpass_filter_stage_multiplier_table[PATCH_HIGHPASS_CUTOFF_DEFAULT - PATCH_HIGHPASS_CUTOFF_LOWER_BOUND];
 
     /* reset state */
     f->input = 0;
@@ -135,7 +135,7 @@ short int filter_load_patch(int voice_index, int patch_index)
     else
     {
       f->multiplier = 
-        S_lowpass_filter_stage_multiplier_table[PATCH_LOWPASS_CUTOFF_UPPER_BOUND - PATCH_LOWPASS_CUTOFF_LOWER_BOUND];
+        S_lowpass_filter_stage_multiplier_table[PATCH_LOWPASS_CUTOFF_DEFAULT - PATCH_LOWPASS_CUTOFF_LOWER_BOUND];
     }
   }
 
@@ -155,7 +155,7 @@ short int filter_load_patch(int voice_index, int patch_index)
     else
     {
       f->multiplier = 
-        S_highpass_filter_stage_multiplier_table[0];
+        S_highpass_filter_stage_multiplier_table[PATCH_HIGHPASS_CUTOFF_DEFAULT - PATCH_HIGHPASS_CUTOFF_LOWER_BOUND];
     }
   }
 

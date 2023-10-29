@@ -11,24 +11,7 @@ typedef struct lfo
 {
   /* lfo parameters */
   short int waveform;
-  short int vibrato_mode;
   short int sync;
-  short int tempo;
-
-  short int base_vibrato;
-  short int base_tremolo;
-
-  /* depths */
-  short int vibrato_depth;
-  short int tremolo_depth;
-
-  /* mod wheel */
-  short int mod_wheel_vibrato;
-  short int mod_wheel_tremolo;
-
-  /* aftertouch */
-  short int aftertouch_vibrato;
-  short int aftertouch_tremolo;
 
   /* delay */
   int delay_period;
@@ -40,6 +23,19 @@ typedef struct lfo
 
   /* noise lfsr */
   unsigned int lfsr;
+
+  /* vibrato */
+  short int vibrato_depth;
+  short int vibrato_base;
+  short int vibrato_mode;
+
+  /* tremolo */
+  short int tremolo_depth;
+  short int tremolo_base;
+
+  /* controller effects */
+  short int mod_wheel_effect;
+  short int aftertouch_effect;
 
   /* controller inputs */
   short int mod_wheel_input;

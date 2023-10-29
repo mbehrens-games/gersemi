@@ -21,9 +21,9 @@ extern int G_patch_edit_patch_index;
 extern int G_patch_edit_instrument_index;
 
 extern int G_patch_edit_octave;
-extern int G_patch_edit_mod_wheel_amount;
-extern int G_patch_edit_aftertouch_amount;
-extern int G_patch_edit_pitch_wheel_amount;
+extern int G_patch_edit_mod_wheel_pos;
+extern int G_patch_edit_aftertouch_pos;
+extern int G_patch_edit_pitch_wheel_pos;
 
 /* function declarations */
 short int globals_init_variables();

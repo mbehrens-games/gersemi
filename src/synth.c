@@ -6,6 +6,8 @@
 #include <math.h>
 
 #include "bank.h"
+#include "bender.h"
+#include "boost.h"
 #include "clock.h"
 #include "envelope.h"
 #include "filter.h"
@@ -41,6 +43,8 @@ short int synth_generate_tables()
 short int synth_reset_banks()
 {
   /* reset all banks */
+  boost_setup_all();
+  bender_setup_all();
   envelope_setup_all();
   filter_setup_all();
   lfo_setup_all();
@@ -76,19 +80,27 @@ short int synth_update()
   /* update lfos */
   lfo_update_all();
 
+  /* update boosts */
+  boost_update_all();
+
   /* update sweeps */
   sweep_update_all();
+
+  /* update benders */
+  bender_update_all();
 
   /* update envelopes */
   envelope_update_all();
 
-  /* copy lfo, sweep, and envelope levels to voice inputs */
+  /* copy lfo, boost, sweep, bender, and envelope levels to voice inputs */
   for (k = 0; k < BANK_NUM_VOICES; k++)
   {
-    G_voice_bank[k].vibrato_input = G_lfo_bank[k].vibrato_level;
-    G_voice_bank[k].tremolo_input = G_lfo_bank[k].tremolo_level;
+    G_voice_bank[k].lfo_input_vibrato = G_lfo_bank[k].vibrato_level;
+    G_voice_bank[k].lfo_input_tremolo = G_lfo_bank[k].tremolo_level;
 
+    G_voice_bank[k].boost_input = G_boost_bank[k].level;
     G_voice_bank[k].sweep_input = G_sweep_bank[k].level;
+    G_voice_bank[k].bender_input = G_bender_bank[k].level;
 
     for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
       G_voice_bank[k].env_input[m] = G_envelope_bank[4 * k + m].level;

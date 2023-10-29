@@ -8,6 +8,7 @@
 
 #include "clock.h"
 #include "lfo.h"
+#include "midicont.h"
 #include "patch.h"
 #include "sweep.h"
 #include "tuning.h"
@@ -21,24 +22,23 @@
 #define VOICE_WAVETABLE_LOOKUP(num, phase)                                     \
   masked_phase = ((phase) & 0x3FF);                                            \
                                                                                \
-  /* waveforms 1, 3: sine, full-rectified sine */                              \
-  if ((v->osc_waveform[num] == 1) || (v->osc_waveform[num] == 3))              \
+  /* determine waveform level (db) */                                          \
+  if ((v->osc_waveform[num] == PATCH_OSC_WAVEFORM_SINE) ||                     \
+      (v->osc_waveform[num] == PATCH_OSC_WAVEFORM_FULL))                       \
   {                                                                            \
     if (masked_phase < 512)                                                    \
       final_index = S_voice_wavetable_sine[masked_phase];                      \
     else                                                                       \
       final_index = S_voice_wavetable_sine[masked_phase - 512];                \
   }                                                                            \
-  /* waveform 2: half-rectified sine */                                        \
-  else if (v->osc_waveform[num] == 2)                                          \
+  else if (v->osc_waveform[num] == PATCH_OSC_WAVEFORM_HALF)                    \
   {                                                                            \
     if (masked_phase < 512)                                                    \
       final_index = S_voice_wavetable_sine[masked_phase];                      \
     else                                                                       \
       final_index = 4095;                                                      \
   }                                                                            \
-  /* waveform 4: quarter sine */                                               \
-  else if (v->osc_waveform[num] == 4)                                          \
+  else if (v->osc_waveform[num] == PATCH_OSC_WAVEFORM_QUARTER)                 \
   {                                                                            \
     if (masked_phase < 256)                                                    \
       final_index = S_voice_wavetable_sine[masked_phase];                      \
@@ -49,8 +49,8 @@
     else                                                                       \
       final_index = 4095;                                                      \
   }                                                                            \
-  /* waveforms 5, 6: sine, full-rectified sine (even periods only) */          \
-  else if ((v->osc_waveform[num] == 5) || (v->osc_waveform[num] == 6))         \
+  else if ( (v->osc_waveform[num] == PATCH_OSC_WAVEFORM_ALTERNATING) ||        \
+            (v->osc_waveform[num] == PATCH_OSC_WAVEFORM_CAMEL))                \
   {                                                                            \
     if (masked_phase < 256)                                                    \
       final_index = S_voice_wavetable_sine[2 * masked_phase];                  \
@@ -59,11 +59,9 @@
     else                                                                       \
       final_index = 4095;                                                      \
   }                                                                            \
-  /* waveform 7: square */                                                     \
-  else if (v->osc_waveform[num] == 7)                                          \
+  else if (v->osc_waveform[num] == PATCH_OSC_WAVEFORM_SQUARE)                  \
     final_index = 0;                                                           \
-  /* waveform 8: logarithmic sawtooth */                                       \
-  else if (v->osc_waveform[num] == 8)                                          \
+  else if (v->osc_waveform[num] == PATCH_OSC_WAVEFORM_LOG_SAW)                 \
   {                                                                            \
     if (masked_phase < 512)                                                    \
       final_index = ((511 - masked_phase) * 4095) / 512;                       \
@@ -80,26 +78,24 @@
   else if (final_index > 4095)                                                 \
     final_index = 4095;                                                        \
                                                                                \
-  /* waveforms 1, 7, 8: sine, square, logarithmic sawtooth */                  \
-  if ((v->osc_waveform[num] == 1) ||                                           \
-      (v->osc_waveform[num] == 7) ||                                           \
-      (v->osc_waveform[num] == 8))                                             \
+  /* determine waveform level (linear) */                                      \
+  if ((v->osc_waveform[num] == PATCH_OSC_WAVEFORM_SINE)   ||                   \
+      (v->osc_waveform[num] == PATCH_OSC_WAVEFORM_SQUARE) ||                   \
+      (v->osc_waveform[num] == PATCH_OSC_WAVEFORM_LOG_SAW))                    \
   {                                                                            \
     if (masked_phase < 512)                                                    \
       osc_level[num] = S_voice_db_to_linear_table[final_index];                \
     else                                                                       \
       osc_level[num] = -S_voice_db_to_linear_table[final_index];               \
   }                                                                            \
-  /* waveforms 2, 3, 4, 6: rectified sine waves */                             \
-  else if ( (v->osc_waveform[num] == 2) ||                                     \
-            (v->osc_waveform[num] == 3) ||                                     \
-            (v->osc_waveform[num] == 4) ||                                     \
-            (v->osc_waveform[num] == 6))                                       \
+  else if ( (v->osc_waveform[num] == PATCH_OSC_WAVEFORM_HALF)     ||           \
+            (v->osc_waveform[num] == PATCH_OSC_WAVEFORM_FULL)     ||           \
+            (v->osc_waveform[num] == PATCH_OSC_WAVEFORM_QUARTER)  ||           \
+            (v->osc_waveform[num] == PATCH_OSC_WAVEFORM_CAMEL))                \
   {                                                                            \
     osc_level[num] = S_voice_db_to_linear_table[final_index];                  \
   }                                                                            \
-  /* waveform 5: sine (even periods only) */                                   \
-  else if (v->osc_waveform[num] == 5)                                          \
+  else if (v->osc_waveform[num] == PATCH_OSC_WAVEFORM_ALTERNATING)             \
   {                                                                            \
     if (masked_phase < 256)                                                    \
       osc_level[num] = S_voice_db_to_linear_table[final_index];                \
@@ -271,7 +267,7 @@ short int voice_reset(int voice_index)
   v = &G_voice_bank[voice_index];
 
   /* algorithm */
-  v->algorithm = PATCH_ALGORITHM_LOWER_BOUND;
+  v->algorithm = PATCH_ALGORITHM_1C_CHAIN;
 
   /* base note */
   v->base_note = 0;
@@ -287,29 +283,35 @@ short int voice_reset(int voice_index)
     v->feed_in[2 * m + 0] = 0;
     v->feed_in[2 * m + 1] = 0;
 
-    v->osc_waveform[m] = 1;
+    v->osc_waveform[m] = PATCH_OSC_WAVEFORM_SINE;
     v->osc_feedback_multiplier[m] = 0;
-    v->osc_sync[m] = 1;
+    v->osc_sync[m] = PATCH_OSC_SYNC_0;
 
-    v->osc_freq_mode[m] = 0;
+    v->osc_freq_mode[m] = PATCH_OSC_FREQ_MODE_RATIO;
     v->osc_offset[m] = 0;
     v->osc_detune[m] = 0;
-
-    v->vibrato_enable[m] = 1;
-    v->tremolo_enable[m] = 1;
-    v->boost_enable[m] = 1;
   }
+
+  /* effect modes */
+  v->tremolo_mode = 0;
+  v->boost_mode = 0;
 
   /* envelope levels */
   for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
     v->env_input[m] = 0;
 
   /* lfo levels */
-  v->vibrato_input = 0;
-  v->tremolo_input = 0;
+  v->lfo_input_vibrato = 0;
+  v->lfo_input_tremolo = 0;
+
+  /* boost level */
+  v->boost_input = 0;
 
   /* sweep level */
   v->sweep_input = 0;
+
+  /* bender level */
+  v->bender_input = 0;
 
   /* output level */
   v->level = 0;
@@ -388,9 +390,7 @@ short int voice_load_patch(int voice_index, int patch_index)
       v->osc_freq_mode[m] = PATCH_OSC_FREQ_MODE_LOWER_BOUND;
 
     /* note offset */
-
-    /* mode 0: ratio (multiple and divisor) */
-    if (p->osc_freq_mode[m] == 0)
+    if (p->osc_freq_mode[m] == PATCH_OSC_FREQ_MODE_RATIO)
     {
       v->osc_offset[m] = 0;
 
@@ -406,8 +406,7 @@ short int voice_load_patch(int voice_index, int patch_index)
         v->osc_offset[m] -= S_voice_divisor_table[p->osc_divisor[m] - PATCH_OSC_DIVISOR_LOWER_BOUND];
       }
     }
-    /* mode 1: fixed (octave and note) */
-    else if (p->osc_freq_mode[m] == 1)
+    else if (p->osc_freq_mode[m] == PATCH_OSC_FREQ_MODE_FIXED)
     {
       v->osc_offset[m] = 0;
 
@@ -429,7 +428,8 @@ short int voice_load_patch(int voice_index, int patch_index)
     /* if the waveform is sine (even periods only)  */
     /* or full-rectified sine (even periods only),  */
     /* then add an additional division by 2.        */
-    if ((p->osc_waveform[m] == 5) || (p->osc_waveform[m] == 6))
+    if ((p->osc_waveform[m] == PATCH_OSC_WAVEFORM_ALTERNATING) || 
+        (p->osc_waveform[m] == PATCH_OSC_WAVEFORM_CAMEL))
     {
       v->osc_offset[m] -= S_voice_divisor_table[1];
     }
@@ -443,10 +443,28 @@ short int voice_load_patch(int voice_index, int patch_index)
     else
       v->osc_detune[m] = 0;
 
+    /* tremolo mode */
+    if ((p->tremolo_mode >= PATCH_TREMOLO_MODE_LOWER_BOUND) && 
+        (p->tremolo_mode <= PATCH_TREMOLO_MODE_UPPER_BOUND))
+    {
+      v->tremolo_mode = p->tremolo_mode;
+    }
+    else
+      v->tremolo_mode = PATCH_TREMOLO_MODE_LOWER_BOUND;
+
+    /* boost mode */
+    if ((p->boost_mode >= PATCH_BOOST_MODE_LOWER_BOUND) && 
+        (p->boost_mode <= PATCH_BOOST_MODE_UPPER_BOUND))
+    {
+      v->boost_mode = p->boost_mode;
+    }
+    else
+      v->boost_mode = PATCH_BOOST_MODE_LOWER_BOUND;
+
     /* determine oscillator note and pitch index */
-    if (v->osc_freq_mode[m] == 0)
+    if (v->osc_freq_mode[m] == PATCH_OSC_FREQ_MODE_RATIO)
       v->osc_note[m] = v->base_note + v->osc_offset[m];
-    else if (v->osc_freq_mode[m] == 1)
+    else if (v->osc_freq_mode[m] == PATCH_OSC_FREQ_MODE_FIXED)
       v->osc_note[m] = v->osc_offset[m];
     else
       v->osc_note[m] = v->base_note;
@@ -458,33 +476,6 @@ short int voice_load_patch(int voice_index, int patch_index)
       v->osc_pitch_index[m] = 0;
     else if (v->osc_pitch_index[m] >= TUNING_NUM_INDICES)
       v->osc_pitch_index[m] = TUNING_NUM_INDICES - 1;
-
-    /* vibrato enable */
-    if ((p->vibrato_enable[m] >= PATCH_MOD_ENABLE_LOWER_BOUND) && 
-        (p->vibrato_enable[m] <= PATCH_MOD_ENABLE_UPPER_BOUND))
-    {
-      v->vibrato_enable[m] = p->vibrato_enable[m];
-    }
-    else
-      v->vibrato_enable[m] = PATCH_MOD_ENABLE_LOWER_BOUND;
-
-    /* tremolo enable */
-    if ((p->tremolo_enable[m] >= PATCH_MOD_ENABLE_LOWER_BOUND) && 
-        (p->tremolo_enable[m] <= PATCH_MOD_ENABLE_UPPER_BOUND))
-    {
-      v->tremolo_enable[m] = p->tremolo_enable[m];
-    }
-    else
-      v->tremolo_enable[m] = PATCH_MOD_ENABLE_LOWER_BOUND;
-
-    /* boost enable */
-    if ((p->boost_enable[m] >= PATCH_MOD_ENABLE_LOWER_BOUND) && 
-        (p->boost_enable[m] <= PATCH_MOD_ENABLE_UPPER_BOUND))
-    {
-      v->boost_enable[m] = p->boost_enable[m];
-    }
-    else
-      v->boost_enable[m] = PATCH_MOD_ENABLE_LOWER_BOUND;
   }
 
   return 0;
@@ -516,9 +507,9 @@ short int voice_set_note(int voice_index, int note)
   /* determine notes & pitch indices, reset phases */
   for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
   {
-    if (v->osc_freq_mode[m] == 0)
+    if (v->osc_freq_mode[m] == PATCH_OSC_FREQ_MODE_RATIO)
       v->osc_note[m] = v->base_note + v->osc_offset[m];
-    else if (v->osc_freq_mode[m] == 1)
+    else if (v->osc_freq_mode[m] == PATCH_OSC_FREQ_MODE_FIXED)
       v->osc_note[m] = v->osc_offset[m];
     else
       v->osc_note[m] = v->base_note;
@@ -531,10 +522,10 @@ short int voice_set_note(int voice_index, int note)
     else if (v->osc_pitch_index[m] >= TUNING_NUM_INDICES)
       v->osc_pitch_index[m] = TUNING_NUM_INDICES - 1;
 
-    if ((v->osc_sync[m] >  PATCH_OSC_SYNC_LOWER_BOUND) && 
-        (v->osc_sync[m] <= PATCH_OSC_SYNC_UPPER_BOUND))
+    if ((v->osc_sync[m] >= PATCH_OSC_SYNC_0) && 
+        (v->osc_sync[m] <= PATCH_OSC_SYNC_270))
     {
-      v->osc_phase[m] = S_voice_phase_shift_table[v->osc_sync[m] - PATCH_OSC_SYNC_LOWER_BOUND - 1];
+      v->osc_phase[m] = S_voice_phase_shift_table[v->osc_sync[m] - PATCH_OSC_SYNC_0];
     }
   }
 
@@ -552,6 +543,10 @@ short int voice_update_all()
   int osc_phase_mod[BANK_OSCS_AND_ENVS_PER_VOICE];
 
   int osc_level[BANK_OSCS_AND_ENVS_PER_VOICE];
+
+  int pitch_adjustment;
+  int amplitude_adjustment_carriers;
+  int amplitude_adjustment_modulators;
 
   int adjusted_pitch_index;
 
@@ -573,14 +568,86 @@ short int voice_update_all()
   {
     v = &G_voice_bank[k];
 
+    /* update adjustments */
+    pitch_adjustment = 0;
+    amplitude_adjustment_carriers = 0;
+    amplitude_adjustment_modulators = 0;
+
+    pitch_adjustment += v->lfo_input_vibrato;
+    pitch_adjustment += v->sweep_input;
+    pitch_adjustment += v->bender_input;
+
+    if (v->tremolo_mode == PATCH_TREMOLO_MODE_CARRIERS)
+      amplitude_adjustment_carriers += v->lfo_input_tremolo;
+    else if (v->tremolo_mode == PATCH_TREMOLO_MODE_MODULATORS)
+      amplitude_adjustment_modulators += v->lfo_input_tremolo;
+
+    if (v->boost_mode == PATCH_BOOST_MODE_CARRIERS)
+      amplitude_adjustment_carriers -= v->boost_input;
+    else if (v->boost_mode == PATCH_BOOST_MODE_MODULATORS)
+      amplitude_adjustment_modulators -= v->boost_input;
+
     /* update envelopes */
     for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
     {
       osc_env_index[m] = v->env_input[m];
+    }
 
-      if (v->tremolo_enable[m] == 1)
-        osc_env_index[m] += v->tremolo_input;
+    /* apply tremolo & boost */
+    if (v->algorithm == PATCH_ALGORITHM_1C_CHAIN)
+    {
+      osc_env_index[2] += amplitude_adjustment_modulators;
+      osc_env_index[3] += amplitude_adjustment_carriers;
+    }
+    else if (v->algorithm == PATCH_ALGORITHM_1C_THE_Y)
+    {
+      osc_env_index[2] += amplitude_adjustment_modulators;
+      osc_env_index[3] += amplitude_adjustment_carriers;
+    }
+    else if (v->algorithm == PATCH_ALGORITHM_1C_CRAB)
+    {
+      osc_env_index[1] += amplitude_adjustment_modulators;
+      osc_env_index[2] += amplitude_adjustment_modulators;
+      osc_env_index[3] += amplitude_adjustment_carriers;
+    }
+    else if (v->algorithm == PATCH_ALGORITHM_2C_TWIN)
+    {
+      osc_env_index[0] += amplitude_adjustment_modulators;
+      osc_env_index[1] += amplitude_adjustment_modulators;
+      osc_env_index[2] += amplitude_adjustment_carriers;
+      osc_env_index[3] += amplitude_adjustment_carriers;
+    }
+    else if (v->algorithm == PATCH_ALGORITHM_2C_STACKED)
+    {
+      osc_env_index[1] += amplitude_adjustment_modulators;
+      osc_env_index[2] += amplitude_adjustment_carriers;
+      osc_env_index[3] += amplitude_adjustment_carriers;
+    }
+    else if (v->algorithm == PATCH_ALGORITHM_3C_1_TO_3)
+    {
+      osc_env_index[0] += amplitude_adjustment_modulators;
+      osc_env_index[1] += amplitude_adjustment_carriers;
+      osc_env_index[2] += amplitude_adjustment_carriers;
+      osc_env_index[3] += amplitude_adjustment_carriers;
+    }
+    else if (v->algorithm == PATCH_ALGORITHM_3C_1_TO_1)
+    {
+      osc_env_index[0] += amplitude_adjustment_modulators;
+      osc_env_index[1] += amplitude_adjustment_carriers;
+      osc_env_index[2] += amplitude_adjustment_carriers;
+      osc_env_index[3] += amplitude_adjustment_carriers;
+    }
+    else if (v->algorithm == PATCH_ALGORITHM_4C_PIPES)
+    {
+      osc_env_index[0] += amplitude_adjustment_carriers;
+      osc_env_index[1] += amplitude_adjustment_carriers;
+      osc_env_index[2] += amplitude_adjustment_carriers;
+      osc_env_index[3] += amplitude_adjustment_carriers;
+    }
 
+    /* bound envelopes */
+    for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
+    {
       if (osc_env_index[m] < 0)
         osc_env_index[m] = 0;
       else if (osc_env_index[m] > 1023)
@@ -590,12 +657,7 @@ short int voice_update_all()
     /* update pitches & phases */
     for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
     {
-      adjusted_pitch_index = v->osc_pitch_index[m];
-
-      if (v->vibrato_enable[m] == 1)
-        adjusted_pitch_index += v->vibrato_input;
-
-      adjusted_pitch_index += v->sweep_input;
+      adjusted_pitch_index = v->osc_pitch_index[m] + pitch_adjustment;
 
       if (adjusted_pitch_index < 0)
         adjusted_pitch_index = 0;
@@ -625,7 +687,7 @@ short int voice_update_all()
 
     /* 1 carrier - chain  */
     /*   1 -> 2 -> 3 -> 4 */
-    if (v->algorithm == 1)
+    if (v->algorithm == PATCH_ALGORITHM_1C_CHAIN)
     {
       VOICE_UPDATE_OSCILLATOR_NO_MOD(0)
       VOICE_UPDATE_OSCILLATOR_MOD_X1(1, 0)
@@ -636,7 +698,7 @@ short int voice_update_all()
     }
     /* 1 carrier - Y        */
     /*   (1 + 2) -> 3 -> 4  */
-    else if (v->algorithm == 2)
+    else if (v->algorithm == PATCH_ALGORITHM_1C_THE_Y)
     {
       VOICE_UPDATE_OSCILLATOR_NO_MOD(0)
       VOICE_UPDATE_OSCILLATOR_NO_MOD(1)
@@ -647,7 +709,7 @@ short int voice_update_all()
     }
     /* 1 carrier - crab claw  */
     /*   1 -> 2, (2 + 3) -> 4 */
-    else if (v->algorithm == 3)
+    else if (v->algorithm == PATCH_ALGORITHM_1C_CRAB)
     {
       VOICE_UPDATE_OSCILLATOR_NO_MOD(0)
       VOICE_UPDATE_OSCILLATOR_MOD_X1(1, 0)
@@ -658,7 +720,7 @@ short int voice_update_all()
     }
     /* 2 carriers - twin                  */
     /*   1 -> 3, 2 -> 4, output is 3 + 4  */
-    else if (v->algorithm == 4)
+    else if (v->algorithm == PATCH_ALGORITHM_2C_TWIN)
     {
       VOICE_UPDATE_OSCILLATOR_NO_MOD(0)
       VOICE_UPDATE_OSCILLATOR_NO_MOD(1)
@@ -669,7 +731,7 @@ short int voice_update_all()
     }
     /* 2 carriers - stacked           */
     /*   1 -> 2 -> 3, output is 3 + 4 */
-    else if (v->algorithm == 5)
+    else if (v->algorithm == PATCH_ALGORITHM_2C_STACKED)
     {
       VOICE_UPDATE_OSCILLATOR_NO_MOD(0)
       VOICE_UPDATE_OSCILLATOR_MOD_X1(1, 0)
@@ -680,7 +742,7 @@ short int voice_update_all()
     }
     /* 3 carriers - one to three                      */
     /*   1 -> 2, 1 -> 3, 1 -> 4, output is 2 + 3 + 4  */
-    else if (v->algorithm == 6)
+    else if (v->algorithm == PATCH_ALGORITHM_3C_1_TO_3)
     {
       VOICE_UPDATE_OSCILLATOR_NO_MOD(0)
       VOICE_UPDATE_OSCILLATOR_MOD_X1(1, 0)
@@ -691,7 +753,7 @@ short int voice_update_all()
     }
     /* 3 carriers - one to one        */
     /*   1 -> 2, output is 2 + 3 + 4  */
-    else if (v->algorithm == 7)
+    else if (v->algorithm == PATCH_ALGORITHM_3C_1_TO_1)
     {
       VOICE_UPDATE_OSCILLATOR_NO_MOD(0)
       VOICE_UPDATE_OSCILLATOR_MOD_X1(1, 0)
@@ -702,7 +764,7 @@ short int voice_update_all()
     }
     /* 4 carriers - pipes         */
     /*   output is 1 + 2 + 3 + 4  */
-    else if (v->algorithm == 8)
+    else if (v->algorithm == PATCH_ALGORITHM_4C_PIPES)
     {
       VOICE_UPDATE_OSCILLATOR_NO_MOD(0)
       VOICE_UPDATE_OSCILLATOR_NO_MOD(1)
