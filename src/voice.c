@@ -157,8 +157,8 @@ static int  S_voice_phase_shift_table[4] =
 
 /* multiple table */
 
-/* the values are relative to the note played; they are   */
-/* chosen to be approximately multiples of the base pitch */
+/* the values are in semitones    */
+/* they form the harmonic series! */
 static int  S_voice_multiple_table[16] = 
             { 0 * 12 + 0,   /*  1x  */
               1 * 12 + 0,   /*  2x  */
@@ -176,18 +176,6 @@ static int  S_voice_multiple_table[16] =
               3 * 12 + 10,  /* 14x  */
               3 * 12 + 11,  /* 15x  */
               4 * 12 + 0    /* 16x  */
-            };
-
-/* divisor table */
-static int  S_voice_divisor_table[8] = 
-            { 0 * 12 + 0,   /*  /1  */
-              1 * 12 + 0,   /*  /2  */
-              1 * 12 + 7,   /*  /3  */
-              2 * 12 + 0,   /*  /4  */
-              2 * 12 + 4,   /*  /5  */
-              2 * 12 + 7,   /*  /6  */
-              2 * 12 + 10,  /*  /7  */
-              3 * 12 + 0    /*  /8  */
             };
 
 /* detune table */
@@ -270,7 +258,7 @@ short int voice_reset(int voice_index)
   v->algorithm = PATCH_ALGORITHM_1C_CHAIN;
 
   /* base note */
-  v->base_note = 0;
+  v->base_note = TUNING_NOTE_BLANK;
 
   /* currently playing notes, pitch table indices, phase, feedback levels, voice parameters */
   for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
@@ -403,7 +391,7 @@ short int voice_load_patch(int voice_index, int patch_index)
       if ((p->osc_divisor[m] >= PATCH_OSC_DIVISOR_LOWER_BOUND) && 
           (p->osc_divisor[m] <= PATCH_OSC_DIVISOR_UPPER_BOUND))
       {
-        v->osc_offset[m] -= S_voice_divisor_table[p->osc_divisor[m] - PATCH_OSC_DIVISOR_LOWER_BOUND];
+        v->osc_offset[m] -= S_voice_multiple_table[p->osc_divisor[m] - PATCH_OSC_DIVISOR_LOWER_BOUND];
       }
     }
     else if (p->osc_freq_mode[m] == PATCH_OSC_FREQ_MODE_FIXED)
@@ -431,7 +419,7 @@ short int voice_load_patch(int voice_index, int patch_index)
     if ((p->osc_waveform[m] == PATCH_OSC_WAVEFORM_ALTERNATING) || 
         (p->osc_waveform[m] == PATCH_OSC_WAVEFORM_CAMEL))
     {
-      v->osc_offset[m] -= S_voice_divisor_table[1];
+      v->osc_offset[m] -= S_voice_multiple_table[1];
     }
 
     /* detune */

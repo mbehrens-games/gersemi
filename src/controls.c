@@ -56,7 +56,7 @@ enum
   CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_C_PRIME, 
   CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_C_SHARP_PRIME, 
   CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_D_PRIME, 
-  CONTROLS_KEY_INDEX_PATCH_EDIT_PORT_ARP_SWITCH, 
+  CONTROLS_KEY_INDEX_PATCH_EDIT_PORTAMENTO_SWITCH, 
   CONTROLS_KEY_INDEX_PATCH_EDIT_SUSTAIN_PEDAL, 
   CONTROLS_NUM_KEY_INDICES
 };
@@ -390,13 +390,22 @@ short int controls_patch_parameter_adjust(int patch_index, int param_index, int 
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->env_sustain[pr->num], PATCH_ENV_SUSTAIN)
   }
-  else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_ENV_RATE_KS)
+  /* keyscaling */
+  else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_KS_MODE)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->env_rate_ks[pr->num], PATCH_ENV_KEYSCALE)
+    CONTROLS_SET_PATCH_PARAMETER(pc->ks_mode[pr->num], PATCH_KEYSCALING_MODE)
   }
-  else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_ENV_LEVEL_KS)
+  else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_KS_RATE_DEPTH)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->env_level_ks[pr->num], PATCH_ENV_KEYSCALE)
+    CONTROLS_SET_PATCH_PARAMETER(pc->ks_rate_depth[pr->num], PATCH_KEYSCALING_DEPTH)
+  }
+  else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_KS_LEVEL_DEPTH)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->ks_level_depth[pr->num], PATCH_KEYSCALING_DEPTH)
+  }
+  else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_KS_BREAK_POINT)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->ks_break_point[pr->num], PATCH_KEYSCALING_BREAK_POINT)
   }
   /* lfo */
   else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_LFO_WAVEFORM)
@@ -418,10 +427,6 @@ short int controls_patch_parameter_adjust(int patch_index, int param_index, int 
   else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_LFO_QUANTIZE)
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->lfo_quantize, PATCH_LFO_QUANTIZE)
-  }
-  else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_LFO_SAH_NOISE)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->lfo_sah_noise, PATCH_LFO_SAH_NOISE)
   }
   /* vibrato */
   else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_VIBRATO_DEPTH)
@@ -449,18 +454,18 @@ short int controls_patch_parameter_adjust(int patch_index, int param_index, int 
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->tremolo_mode, PATCH_TREMOLO_MODE)
   }
-  /* portamento / arpeggio */
-  else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_PORT_ARP_MODE)
+  /* portamento */
+  else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_PORTAMENTO_MODE)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->port_arp_mode, PATCH_PORT_ARP_MODE)
+    CONTROLS_SET_PATCH_PARAMETER(pc->portamento_mode, PATCH_PORTAMENTO_MODE)
   }
-  else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_PORT_ARP_DIRECTION)
+  else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_PORTAMENTO_LEGATO)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->port_arp_direction, PATCH_PORT_ARP_DIRECTION)
+    CONTROLS_SET_PATCH_PARAMETER(pc->portamento_legato, PATCH_PORTAMENTO_LEGATO)
   }
-  else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_PORT_ARP_SPEED)
+  else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_PORTAMENTO_SPEED)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->port_arp_speed, PATCH_PORT_ARP_SPEED)
+    CONTROLS_SET_PATCH_PARAMETER(pc->portamento_speed, PATCH_PORTAMENTO_SPEED)
   }
   /* boost */
   else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_BOOST_DEPTH)
@@ -642,7 +647,7 @@ short int controls_keyboard_key_pressed(SDL_Scancode code)
 
   /* port/arp switch, sustain pedal */
   CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_LSHIFT, 
-                                            CONTROLS_KEY_INDEX_PATCH_EDIT_PORT_ARP_SWITCH)
+                                            CONTROLS_KEY_INDEX_PATCH_EDIT_PORTAMENTO_SWITCH)
 
   CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_SPACE, 
                                             CONTROLS_KEY_INDEX_PATCH_EDIT_SUSTAIN_PEDAL)
@@ -767,7 +772,7 @@ short int controls_keyboard_key_released(SDL_Scancode code)
 
   /* port/arp switch, sustain pedal */
   CONTROLS_KEYBOARD_RELEASE_UPDATE_KEY_STATES(SDL_SCANCODE_LSHIFT, 
-                                              CONTROLS_KEY_INDEX_PATCH_EDIT_PORT_ARP_SWITCH)
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_PORTAMENTO_SWITCH)
 
   CONTROLS_KEYBOARD_RELEASE_UPDATE_KEY_STATES(SDL_SCANCODE_SPACE, 
                                               CONTROLS_KEY_INDEX_PATCH_EDIT_SUSTAIN_PEDAL)
@@ -958,17 +963,17 @@ short int controls_process_user_input_standard()
       }
     }
 
-    /* port/arp switch */
-    if (CONTROLS_KEY_IS_PRESSED(CONTROLS_KEY_INDEX_PATCH_EDIT_PORT_ARP_SWITCH))
-      instrument_set_port_arp_switch(G_patch_edit_instrument_index, 1);
-    else if (CONTROLS_KEY_IS_RELEASED(CONTROLS_KEY_INDEX_PATCH_EDIT_PORT_ARP_SWITCH))
-      instrument_set_port_arp_switch(G_patch_edit_instrument_index, 0);
+    /* portamento switch */
+    if (CONTROLS_KEY_IS_PRESSED(CONTROLS_KEY_INDEX_PATCH_EDIT_PORTAMENTO_SWITCH))
+      instrument_set_portamento_switch_on(G_patch_edit_instrument_index);
+    else if (CONTROLS_KEY_IS_RELEASED(CONTROLS_KEY_INDEX_PATCH_EDIT_PORTAMENTO_SWITCH))
+      instrument_set_portamento_switch_off(G_patch_edit_instrument_index);
 
     /* sustain pedal */
     if (CONTROLS_KEY_IS_PRESSED(CONTROLS_KEY_INDEX_PATCH_EDIT_SUSTAIN_PEDAL))
-      instrument_set_sustain_pedal(G_patch_edit_instrument_index, 1);
+      instrument_set_sustain_pedal_down(G_patch_edit_instrument_index);
     else if (CONTROLS_KEY_IS_RELEASED(CONTROLS_KEY_INDEX_PATCH_EDIT_SUSTAIN_PEDAL))
-      instrument_set_sustain_pedal(G_patch_edit_instrument_index, 0);
+      instrument_set_sustain_pedal_up(G_patch_edit_instrument_index);
   }
 
   /* check mouse button clicks */

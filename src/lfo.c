@@ -11,13 +11,14 @@
 #include "lfo.h"
 #include "midicont.h"
 #include "patch.h"
+#include "tempo.h"
 
 #define PI      3.14159265358979323846f
 #define TWO_PI  6.28318530717958647693f
 
 #define LFO_WAVE_AMPLITUDE 128
 
-#define LFO_BASE_NOISE_FREQUENCY 293.333333333333333f /* D-4 */
+#define LFO_BASE_NOISE_FREQUENCY (440.0f / 256.0f) /* A-4 */
 
 /* vibrato depth table */
 /* assuming 128 steps per semitone */
@@ -60,82 +61,76 @@ static short int  S_lfo_tremolo_depth_table[PATCH_EFFECT_DEPTH_NUM_VALUES] =
                     6 * 16 
                   };
 
-/* frequency tables (at 120 bpm) */
+/* wave frequency table (in cycles per beat)    */
+/* at 120 bpm, the wave frequencies range from  */
+/* 0.25 hz to 8 hz (counting up by 0.25 hz)     */
 static float  S_lfo_wave_frequency_table[PATCH_LFO_FREQUENCY_NUM_VALUES] = 
-              { 0.25f, 0.50f, 0.75f, 1.00f, 
-                1.25f, 1.50f, 1.75f, 2.00f, 
-                2.25f, 2.50f, 2.75f, 3.00f, 
-                3.25f, 3.50f, 3.75f, 4.00f, 
-                4.25f, 4.50f, 4.75f, 5.00f, 
-                5.25f, 5.50f, 5.75f, 6.00f, 
-                6.25f, 6.50f, 6.75f, 7.00f, 
-                7.25f, 7.50f, 7.75f, 8.00f 
+              { 0.125f, 0.25f, 0.375f, 0.5f, 
+                0.625f, 0.75f, 0.875f, 1.0f, 
+                1.125f, 1.25f, 1.375f, 1.5f, 
+                1.625f, 1.75f, 1.875f, 2.0f, 
+                2.125f, 2.25f, 2.375f, 2.5f, 
+                2.625f, 2.75f, 2.875f, 3.0f, 
+                3.125f, 3.25f, 3.375f, 3.5f, 
+                3.625f, 3.75f, 3.875f, 4.0f 
               };
 
-/* note that the noise frequencies describe the frequency at which the lfsr is    */
-/* updated, as opposed to the frequency of completing one "period" (256 updates). */
+/* noise frequency table (in periods per second) */
 static float  S_lfo_noise_frequency_table[PATCH_LFO_FREQUENCY_NUM_VALUES] = 
-              { (LFO_BASE_NOISE_FREQUENCY / 8.0f) * 1.75f,  /* C-2  */
-                LFO_BASE_NOISE_FREQUENCY / 4.0f,            /* D-2  */
-                (LFO_BASE_NOISE_FREQUENCY / 4.0f) * 1.25f,  /* F-2  */
-                (LFO_BASE_NOISE_FREQUENCY / 4.0f) * 1.5f,   /* A-2  */
-                (LFO_BASE_NOISE_FREQUENCY / 4.0f) * 1.75f,  /* C-3  */
-                LFO_BASE_NOISE_FREQUENCY / 2.0f,            /* D-3  */
-                (LFO_BASE_NOISE_FREQUENCY / 2.0f) * 1.25f,  /* F-3  */
-                (LFO_BASE_NOISE_FREQUENCY / 2.0f) * 1.5f,   /* A-3  */
-                (LFO_BASE_NOISE_FREQUENCY / 2.0f) * 1.75f,  /* C-4  */
-                LFO_BASE_NOISE_FREQUENCY * 1.0f,            /* D-4  */
-                (LFO_BASE_NOISE_FREQUENCY * 1.0f) * 1.25f,  /* F-4  */
-                (LFO_BASE_NOISE_FREQUENCY * 1.0f) * 1.5f,   /* A-4  */
-                (LFO_BASE_NOISE_FREQUENCY * 1.0f) * 1.75f,  /* C-5  */
-                LFO_BASE_NOISE_FREQUENCY * 2.0f,            /* D-5  */
-                (LFO_BASE_NOISE_FREQUENCY * 2.0f) * 1.25f,  /* F-5  */
-                (LFO_BASE_NOISE_FREQUENCY * 2.0f) * 1.5f,   /* A-5  */
-                (LFO_BASE_NOISE_FREQUENCY * 2.0f) * 1.75f,  /* C-6  */
-                LFO_BASE_NOISE_FREQUENCY * 4.0f,            /* D-6  */
-                (LFO_BASE_NOISE_FREQUENCY * 4.0f) * 1.25f,  /* F-6  */
-                (LFO_BASE_NOISE_FREQUENCY * 4.0f) * 1.5f,   /* A-6  */
-                (LFO_BASE_NOISE_FREQUENCY * 4.0f) * 1.75f,  /* C-7  */
-                LFO_BASE_NOISE_FREQUENCY * 8.0f,            /* D-7  */
-                (LFO_BASE_NOISE_FREQUENCY * 8.0f) * 1.25f,  /* F-7  */
-                (LFO_BASE_NOISE_FREQUENCY * 8.0f) * 1.5f,   /* A-7  */
-                (LFO_BASE_NOISE_FREQUENCY * 8.0f) * 1.75f,  /* C-8  */
-                LFO_BASE_NOISE_FREQUENCY * 16.0f,           /* D-8  */
-                (LFO_BASE_NOISE_FREQUENCY * 16.0f) * 1.25f, /* F-8  */
-                (LFO_BASE_NOISE_FREQUENCY * 16.0f) * 1.5f,  /* A-8  */
-                (LFO_BASE_NOISE_FREQUENCY * 16.0f) * 1.75f, /* C-9  */
-                LFO_BASE_NOISE_FREQUENCY * 32.0f,           /* D-9  */
-                (LFO_BASE_NOISE_FREQUENCY * 32.0f) * 1.25f, /* F-9  */
-                (LFO_BASE_NOISE_FREQUENCY * 32.0f) * 1.5f   /* A-9  */
+              { LFO_BASE_NOISE_FREQUENCY * 1, 
+                (LFO_BASE_NOISE_FREQUENCY * 1) * 1.25f, 
+                (LFO_BASE_NOISE_FREQUENCY * 1) * 1.50f, 
+                (LFO_BASE_NOISE_FREQUENCY * 1) * 1.75f, 
+                LFO_BASE_NOISE_FREQUENCY * 2, 
+                (LFO_BASE_NOISE_FREQUENCY * 2) * 1.25f, 
+                (LFO_BASE_NOISE_FREQUENCY * 2) * 1.50f, 
+                (LFO_BASE_NOISE_FREQUENCY * 2) * 1.75f, 
+                LFO_BASE_NOISE_FREQUENCY * 4, 
+                (LFO_BASE_NOISE_FREQUENCY * 4) * 1.125f, 
+                (LFO_BASE_NOISE_FREQUENCY * 4) * 1.250f, 
+                (LFO_BASE_NOISE_FREQUENCY * 4) * 1.375f, 
+                (LFO_BASE_NOISE_FREQUENCY * 4) * 1.500f, 
+                (LFO_BASE_NOISE_FREQUENCY * 4) * 1.625f, 
+                (LFO_BASE_NOISE_FREQUENCY * 4) * 1.750f, 
+                (LFO_BASE_NOISE_FREQUENCY * 4) * 1.875f, 
+                LFO_BASE_NOISE_FREQUENCY * 8, 
+                (LFO_BASE_NOISE_FREQUENCY * 8) * 1.125f, 
+                (LFO_BASE_NOISE_FREQUENCY * 8) * 1.250f, 
+                (LFO_BASE_NOISE_FREQUENCY * 8) * 1.375f, 
+                (LFO_BASE_NOISE_FREQUENCY * 8) * 1.500f, 
+                (LFO_BASE_NOISE_FREQUENCY * 8) * 1.625f, 
+                (LFO_BASE_NOISE_FREQUENCY * 8) * 1.750f, 
+                (LFO_BASE_NOISE_FREQUENCY * 8) * 1.875f, 
+                LFO_BASE_NOISE_FREQUENCY * 16, 
+                (LFO_BASE_NOISE_FREQUENCY * 16) * 1.125f, 
+                (LFO_BASE_NOISE_FREQUENCY * 16) * 1.250f, 
+                (LFO_BASE_NOISE_FREQUENCY * 16) * 1.375f, 
+                (LFO_BASE_NOISE_FREQUENCY * 16) * 1.500f, 
+                (LFO_BASE_NOISE_FREQUENCY * 16) * 1.625f, 
+                (LFO_BASE_NOISE_FREQUENCY * 16) * 1.750f, 
+                (LFO_BASE_NOISE_FREQUENCY * 16) * 1.875f 
               };
 
-/* delay table (at 120 bpm) */
-static float  S_lfo_delay_seconds_table[PATCH_LFO_DELAY_NUM_VALUES] = 
-              { 0.0f,               /*  0/48  */
-                0.020833333333333f, /*  1/48  */
-                0.041666666666667f, /*  2/48  */
-                0.0625f,            /*  3/48  */
-                0.083333333333333f, /*  4/48  */
-                0.104166666666667f, /*  5/48  */
-                0.125f,             /*  6/48  */
-                0.145833333333333f, /*  7/48  */
-                0.166666666666667f, /*  8/48  */
-                0.1875f,            /*  9/48  */
-                0.208333333333333f, /* 10/48  */
-                0.229166666666667f, /* 11/48  */
-                0.25f,              /* 12/48  */
-                0.270833333333333f, /* 13/48  */
-                0.291666666666667f, /* 14/48  */
-                0.3125f,            /* 15/48  */
-                0.333333333333333f, /* 16/48  */
-                0.354166666666667f, /* 17/48  */
-                0.375f,             /* 18/48  */
-                0.395833333333333f, /* 19/48  */
-                0.416666666666667f, /* 20/48  */
-                0.4375f,            /* 21/48  */
-                0.458333333333333f, /* 22/48  */
-                0.479166666666667f, /* 23/48  */
-                0.5f                /* 24/48  */
+/* quantize (sample and hold) frequency table (in samples per wave period) */
+static float  S_lfo_quantize_frequency_table[PATCH_LFO_QUANTIZE_NUM_VALUES] = 
+              {  0.5625f, 0.625f, 0.6875f, 0.75f, 0.8125f, 0.875f, 0.9375f, 
+                  1.125f,  1.25f,  1.375f,  1.5f,  1.625f,  1.75f,  1.875f, 2.0f, 
+                   2.25f,  2.50f,   2.75f,  3.0f,   3.25f,  3.50f,   3.75f, 4.0f, 
+                    4.5f,   5.0f,    5.5f,  6.0f,    6.5f,   7.0f,    7.5f, 8.0f, 
+                  256.0f 
+              };
+
+/* delay table (in fractions of a beat)   */
+/* at 120 bpm, the delays range from      */
+/* 0.0 s to 0.5 s (counting up by 1/48 s) */
+static float  S_lfo_delay_fraction_table[PATCH_LFO_DELAY_NUM_VALUES] = 
+              {       0.0f,  1 / 24.0f,  2 / 24.0f,  3 / 24.0f, 
+                 4 / 24.0f,  5 / 24.0f,  6 / 24.0f,  7 / 24.0f, 
+                 8 / 24.0f,  9 / 24.0f, 10 / 24.0f, 11 / 24.0f, 
+                12 / 24.0f, 13 / 24.0f, 14 / 24.0f, 15 / 24.0f, 
+                16 / 24.0f, 17 / 24.0f, 18 / 24.0f, 19 / 24.0f, 
+                20 / 24.0f, 21 / 24.0f, 22 / 24.0f, 23 / 24.0f, 
+                      1.0f 
               };
 
 /* wavetables */
@@ -143,11 +138,14 @@ static short int S_lfo_wavetable_triangle[256];
 static short int S_lfo_wavetable_sawtooth[256];
 
 /* delay cycles table */
-static int S_lfo_delay_period_table[PATCH_LFO_DELAY_NUM_VALUES];
+static int S_lfo_delay_period_table[TEMPO_NUM_VALUES][PATCH_LFO_DELAY_NUM_VALUES];
 
 /* phase increment tables */
-static unsigned int S_lfo_wave_phase_increment_table[PATCH_LFO_FREQUENCY_NUM_VALUES];
+static unsigned int S_lfo_wave_phase_increment_table[TEMPO_NUM_VALUES][PATCH_LFO_FREQUENCY_NUM_VALUES];
 static unsigned int S_lfo_noise_phase_increment_table[PATCH_LFO_FREQUENCY_NUM_VALUES];
+
+/* quantize phase bound table */
+static unsigned int S_lfo_quantize_overflow_table[PATCH_LFO_QUANTIZE_NUM_VALUES];
 
 /* lfo bank */
 lfo G_lfo_bank[BANK_NUM_LFOS];
@@ -171,47 +169,54 @@ short int lfo_setup_all()
 *******************************************************************************/
 short int lfo_reset(int voice_index)
 {
-  int m;
-
   lfo* l;
 
   /* make sure that the voice index is valid */
   if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
     return 1;
 
-  for (m = 0; m < BANK_LFOS_PER_VOICE; m++)
-  {
-    /* obtain lfo pointer */
-    l = &G_lfo_bank[BANK_LFOS_PER_VOICE * voice_index + m];
+  /* obtain lfo pointer */
+  l = &G_lfo_bank[voice_index];
 
-    /* initialize lfo variables */
-    l->waveform = PATCH_LFO_WAVEFORM_TRIANGLE;
-    l->sync = PATCH_LFO_SYNC_ON;
+  /* initialize lfo variables */
+  l->waveform = PATCH_LFO_WAVEFORM_DEFAULT;
+  l->frequency = PATCH_LFO_FREQUENCY_DEFAULT;
+  l->sync = PATCH_LFO_SYNC_DEFAULT;
 
-    l->delay_period = 0;
-    l->delay_cycles = 0;
+  l->delay_cycles = 0;
+  l->delay_period = 
+    S_lfo_delay_period_table[TEMPO_DEFAULT - TEMPO_LOWER_BOUND][PATCH_LFO_DELAY_DEFAULT - PATCH_LFO_DELAY_LOWER_BOUND];
 
-    l->phase = 0;
-    l->increment = 0;
+  l->quantize_phase = 0;
+  l->quantize_overflow = 
+    S_lfo_quantize_overflow_table[PATCH_LFO_QUANTIZE_DEFAULT - PATCH_LFO_QUANTIZE_LOWER_BOUND];
 
-    l->lfsr = 0x0001;
+  l->phase = 0;
+  l->increment = 
+    S_lfo_wave_phase_increment_table[TEMPO_DEFAULT - TEMPO_LOWER_BOUND][PATCH_LFO_FREQUENCY_DEFAULT - PATCH_LFO_FREQUENCY_LOWER_BOUND];
 
-    l->vibrato_depth = 1;
-    l->vibrato_base = 0;
-    l->vibrato_mode = 0;
+  l->lfsr = 0x0001;
 
-    l->tremolo_depth = 1;
-    l->tremolo_base = 0;
+  l->tempo = TEMPO_DEFAULT;
 
-    l->mod_wheel_effect = PATCH_CONTROLLER_EFFECT_VIBRATO;
-    l->aftertouch_effect = PATCH_CONTROLLER_EFFECT_VIBRATO;
+  l->vibrato_depth = PATCH_EFFECT_DEPTH_DEFAULT;
+  l->vibrato_base = PATCH_EFFECT_BASE_DEFAULT;
+  l->vibrato_mode = PATCH_VIBRATO_MODE_DEFAULT;
 
-    l->mod_wheel_input = 0;
-    l->aftertouch_input = 0;
+  l->tremolo_depth = PATCH_EFFECT_DEPTH_DEFAULT;
+  l->tremolo_base = PATCH_EFFECT_BASE_DEFAULT;
 
-    l->vibrato_level = 0;
-    l->tremolo_level = 0;
-  }
+  l->mod_wheel_effect = PATCH_CONTROLLER_EFFECT_VIBRATO;
+  l->aftertouch_effect = PATCH_CONTROLLER_EFFECT_VIBRATO;
+
+  l->mod_wheel_input = 0;
+  l->aftertouch_input = 0;
+
+  l->vibrato_wave_value = 0;
+  l->tremolo_wave_value = 0;
+
+  l->vibrato_level = 0;
+  l->tremolo_level = 0;
 
   return 0;
 }
@@ -251,27 +256,28 @@ short int lfo_load_patch(int voice_index, int patch_index)
   if ((p->lfo_frequency >= PATCH_LFO_FREQUENCY_LOWER_BOUND) && 
       (p->lfo_frequency <= PATCH_LFO_FREQUENCY_UPPER_BOUND))
   {
-    if (l->waveform == 5)
-      l->increment = S_lfo_noise_phase_increment_table[p->lfo_frequency - PATCH_LFO_FREQUENCY_LOWER_BOUND];
-    else
-      l->increment = S_lfo_wave_phase_increment_table[p->lfo_frequency - PATCH_LFO_FREQUENCY_LOWER_BOUND];
+    l->frequency = p->lfo_frequency;
   }
   else
+    l->frequency = PATCH_LFO_FREQUENCY_LOWER_BOUND;
+
+  /* set increment based on frequency */
+  if ((p->lfo_waveform == PATCH_LFO_WAVEFORM_NOISE_SQUARE) || 
+      (p->lfo_waveform == PATCH_LFO_WAVEFORM_NOISE_SAW))
   {
-    if (l->waveform == 5)
-      l->increment = S_lfo_noise_phase_increment_table[0];
-    else
-      l->increment = S_lfo_wave_phase_increment_table[0];
+    l->increment = S_lfo_noise_phase_increment_table[l->frequency - PATCH_LFO_FREQUENCY_LOWER_BOUND];
   }
+  else
+    l->increment = S_lfo_wave_phase_increment_table[l->tempo - TEMPO_LOWER_BOUND][l->frequency - PATCH_LFO_FREQUENCY_LOWER_BOUND];
 
   /* delay */
   if ((p->lfo_delay >= PATCH_LFO_DELAY_LOWER_BOUND) && 
       (p->lfo_delay <= PATCH_LFO_DELAY_UPPER_BOUND))
   {
-    l->delay_period = S_lfo_delay_period_table[p->lfo_delay - PATCH_LFO_DELAY_LOWER_BOUND];
+    l->delay_period = S_lfo_delay_period_table[l->tempo - TEMPO_LOWER_BOUND][p->lfo_delay - PATCH_LFO_DELAY_LOWER_BOUND];
   }
   else
-    l->delay_period = S_lfo_delay_period_table[0];
+    l->delay_period = S_lfo_delay_period_table[l->tempo - TEMPO_LOWER_BOUND][0];
 
   /* sync */
   if ((p->lfo_sync >= PATCH_LFO_SYNC_LOWER_BOUND) && 
@@ -281,6 +287,15 @@ short int lfo_load_patch(int voice_index, int patch_index)
   }
   else
     l->sync = PATCH_LFO_SYNC_LOWER_BOUND;
+
+  /* quantize */
+  if ((p->lfo_quantize >= PATCH_LFO_QUANTIZE_LOWER_BOUND) && 
+      (p->lfo_quantize <= PATCH_LFO_QUANTIZE_UPPER_BOUND))
+  {
+    l->quantize_overflow = S_lfo_quantize_overflow_table[p->lfo_quantize - PATCH_LFO_QUANTIZE_LOWER_BOUND];
+  }
+  else
+    l->quantize_overflow = S_lfo_quantize_overflow_table[PATCH_LFO_QUANTIZE_UPPER_BOUND - PATCH_LFO_QUANTIZE_LOWER_BOUND];
 
   /* vibrato */
   if ((p->vibrato_depth >= PATCH_EFFECT_DEPTH_LOWER_BOUND) && 
@@ -345,37 +360,69 @@ short int lfo_load_patch(int voice_index, int patch_index)
 }
 
 /*******************************************************************************
-** lfo_trigger()
+** lfo_set_tempo()
 *******************************************************************************/
-short int lfo_trigger(int voice_index)
+short int lfo_set_tempo(int voice_index, short int tempo)
 {
-  int m;
-
   lfo* l;
 
   /* make sure that the voice index is valid */
   if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
     return 1;
 
-  for (m = 0; m < BANK_LFOS_PER_VOICE; m++)
+  /* obtain lfo pointer */
+  l = &G_lfo_bank[voice_index];
+
+  /* set tempo */
+  if (tempo < TEMPO_LOWER_BOUND)
+    l->tempo = TEMPO_LOWER_BOUND;
+  else if (tempo > TEMPO_UPPER_BOUND)
+    l->tempo = TEMPO_UPPER_BOUND;
+  else
+    l->tempo = tempo;
+
+  /* adjust phase increment based on tempo */
+  if ((l->waveform != PATCH_LFO_WAVEFORM_NOISE_SQUARE) && 
+      (l->waveform != PATCH_LFO_WAVEFORM_NOISE_SAW))
   {
-    /* obtain lfo pointer */
-    l = &G_lfo_bank[BANK_LFOS_PER_VOICE * voice_index + m];
-
-    /* set delay cycles */
-    l->delay_cycles = l->delay_period;
-
-    /* reset phase if necessary */
-    if (l->sync == PATCH_LFO_SYNC_ON)
-    {
-      l->phase = 0;
-      l->lfsr = 0x0001;
-    }
-
-    /* initialize levels */
-    l->vibrato_level = 0;
-    l->tremolo_level = 0;
+    l->increment = S_lfo_wave_phase_increment_table[l->tempo - TEMPO_LOWER_BOUND][l->frequency - PATCH_LFO_FREQUENCY_LOWER_BOUND];
   }
+
+  return 0;
+}
+
+/*******************************************************************************
+** lfo_trigger()
+*******************************************************************************/
+short int lfo_trigger(int voice_index)
+{
+  lfo* l;
+
+  /* make sure that the voice index is valid */
+  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
+    return 1;
+
+  /* obtain lfo pointer */
+  l = &G_lfo_bank[voice_index];
+
+  /* set delay cycles */
+  l->delay_cycles = l->delay_period;
+
+  /* reset phase if necessary */
+  if (l->sync == PATCH_LFO_SYNC_ON)
+  {
+    l->phase = 0;
+    l->quantize_phase = 0;
+    l->lfsr = 0x0001;
+  }
+
+  /* initialize wave values */
+  l->vibrato_wave_value = 0;
+  l->tremolo_wave_value = 0;
+
+  /* initialize levels */
+  l->vibrato_level = 0;
+  l->tremolo_level = 0;
 
   return 0;
 }
@@ -392,9 +439,6 @@ short int lfo_update_all()
   unsigned int vibrato_phase;
   unsigned int tremolo_phase;
 
-  int vibrato_wave_value;
-  int tremolo_wave_value;
-
   int vibrato_bound;
   int tremolo_bound;
 
@@ -409,9 +453,6 @@ short int lfo_update_all()
     {
       l->delay_cycles -= 1;
 
-      l->vibrato_level = 0;
-      l->tremolo_level = 0;
-
       continue;
     }
 
@@ -420,11 +461,19 @@ short int lfo_update_all()
 
     /* wraparound phase register (28 bits) */
     if (l->phase > 0xFFFFFFF)
-    {
       l->phase &= 0xFFFFFFF;
 
-      if (l->waveform == PATCH_LFO_WAVEFORM_NOISE)
+    /* for the noise waveforms, update the lfsr for each  */
+    /* table entry, instead of updating it each period    */
+    /* note that there are 256 table entries per period.  */
+    if ((l->waveform == PATCH_LFO_WAVEFORM_NOISE_SQUARE) || 
+        (l->waveform == PATCH_LFO_WAVEFORM_NOISE_SAW))
+    {
+      /* wraparound phase register (20 bits) */
+      if (l->phase > 0x00FFFFF)
       {
+        l->phase &= 0x00FFFFF;
+
         /* update noise generator (nes) */
         /* 15-bit lfsr, taps on 1 and 2 */
         if ((l->lfsr & 0x0001) ^ ((l->lfsr & 0x0002) >> 1))
@@ -434,67 +483,80 @@ short int lfo_update_all()
       }
     }
 
-    /* determine base wave indices */
-    vibrato_phase = ((l->phase >> 20) & 0xFF);
-    tremolo_phase = (vibrato_phase + 192) % 256;
+    /* check if the new output bounds should be computed */
+    l->quantize_phase += l->increment;
 
-    /* determine wave values */
-    if (l->waveform == PATCH_LFO_WAVEFORM_TRIANGLE)
+    if (l->quantize_phase >= l->quantize_overflow)
     {
-      vibrato_wave_value = S_lfo_wavetable_triangle[vibrato_phase];
-      tremolo_wave_value = S_lfo_wavetable_triangle[tremolo_phase];
-    }
-    else if (l->waveform == PATCH_LFO_WAVEFORM_SQUARE)
-    {
-      if (vibrato_phase < 128)
-        vibrato_wave_value = LFO_WAVE_AMPLITUDE;
-      else
-        vibrato_wave_value = -LFO_WAVE_AMPLITUDE;
+      l->quantize_phase -= l->quantize_overflow;
 
-      if (tremolo_phase < 128)
-        tremolo_wave_value = -LFO_WAVE_AMPLITUDE;
-      else
-        tremolo_wave_value = LFO_WAVE_AMPLITUDE;
-    }
-    else if (l->waveform == PATCH_LFO_WAVEFORM_SAW_UP)
-    {
-      vibrato_wave_value = S_lfo_wavetable_sawtooth[vibrato_phase];
-      tremolo_wave_value = S_lfo_wavetable_sawtooth[tremolo_phase];
-    }
-    else if (l->waveform == PATCH_LFO_WAVEFORM_SAW_DOWN)
-    {
-      vibrato_wave_value = -S_lfo_wavetable_sawtooth[vibrato_phase];
-      tremolo_wave_value = -S_lfo_wavetable_sawtooth[tremolo_phase];
-    }
-    else if (l->waveform == PATCH_LFO_WAVEFORM_NOISE)
-    {
-      if (l->lfsr & 0x0001)
+      /* determine base wave indices */
+      vibrato_phase = ((l->phase >> 20) & 0xFF);
+      tremolo_phase = (vibrato_phase + 192) % 256;
+
+      /* determine wave values */
+      if (l->waveform == PATCH_LFO_WAVEFORM_TRIANGLE)
       {
-        vibrato_wave_value = LFO_WAVE_AMPLITUDE;
-        tremolo_wave_value = -LFO_WAVE_AMPLITUDE;
+        l->vibrato_wave_value = S_lfo_wavetable_triangle[vibrato_phase];
+        l->tremolo_wave_value = S_lfo_wavetable_triangle[tremolo_phase];
+      }
+      else if (l->waveform == PATCH_LFO_WAVEFORM_SQUARE)
+      {
+        if (vibrato_phase < 128)
+          l->vibrato_wave_value = LFO_WAVE_AMPLITUDE;
+        else
+          l->vibrato_wave_value = -LFO_WAVE_AMPLITUDE;
+
+        if (tremolo_phase < 128)
+          l->tremolo_wave_value = -LFO_WAVE_AMPLITUDE;
+        else
+          l->tremolo_wave_value = LFO_WAVE_AMPLITUDE;
+      }
+      else if (l->waveform == PATCH_LFO_WAVEFORM_SAW_UP)
+      {
+        l->vibrato_wave_value = S_lfo_wavetable_sawtooth[vibrato_phase];
+        l->tremolo_wave_value = S_lfo_wavetable_sawtooth[tremolo_phase];
+      }
+      else if (l->waveform == PATCH_LFO_WAVEFORM_SAW_DOWN)
+      {
+        l->vibrato_wave_value = -S_lfo_wavetable_sawtooth[vibrato_phase];
+        l->tremolo_wave_value = -S_lfo_wavetable_sawtooth[tremolo_phase];
+      }
+      else if (l->waveform == PATCH_LFO_WAVEFORM_NOISE_SQUARE)
+      {
+        if ((l->lfsr & 0x00FF) < 128)
+        {
+          l->vibrato_wave_value = LFO_WAVE_AMPLITUDE;
+          l->tremolo_wave_value = -LFO_WAVE_AMPLITUDE;
+        }
+        else
+        {
+          l->vibrato_wave_value = -LFO_WAVE_AMPLITUDE;
+          l->tremolo_wave_value = LFO_WAVE_AMPLITUDE;
+        }
+      }
+      else if (l->waveform == PATCH_LFO_WAVEFORM_NOISE_SAW)
+      {
+        l->vibrato_wave_value = S_lfo_wavetable_sawtooth[l->lfsr & 0x00FF];
+        l->tremolo_wave_value = S_lfo_wavetable_sawtooth[l->lfsr & 0x00FF];
       }
       else
       {
-        vibrato_wave_value = -LFO_WAVE_AMPLITUDE;
-        tremolo_wave_value = LFO_WAVE_AMPLITUDE;
+        l->vibrato_wave_value = 0;
+        l->tremolo_wave_value = -LFO_WAVE_AMPLITUDE;
       }
-    }
-    else
-    {
-      vibrato_wave_value = 0;
-      tremolo_wave_value = -LFO_WAVE_AMPLITUDE;
-    }
 
-    /* apply amplitude shift and scaling to vibrato wave based on mode */
-    if (l->vibrato_mode == PATCH_VIBRATO_MODE_UP_ONLY)
-      vibrato_wave_value = (vibrato_wave_value + LFO_WAVE_AMPLITUDE) / 2;
+      /* apply amplitude shift and scaling to vibrato wave based on mode */
+      if (l->vibrato_mode == PATCH_VIBRATO_MODE_UP_ONLY)
+        l->vibrato_wave_value = (l->vibrato_wave_value + LFO_WAVE_AMPLITUDE) / 2;
 
-    /* apply amplitude shift and scaling to tremolo wave */
-    tremolo_wave_value = (tremolo_wave_value + LFO_WAVE_AMPLITUDE) / 2;
+      /* apply amplitude shift and scaling to tremolo wave */
+      l->tremolo_wave_value = (l->tremolo_wave_value + LFO_WAVE_AMPLITUDE) / 2;
+    }
 
     /* determine vibrato & tremolo bounds */
-    vibrato_bound = (vibrato_wave_value * S_lfo_vibrato_depth_table[l->vibrato_depth - PATCH_EFFECT_DEPTH_LOWER_BOUND]) / LFO_WAVE_AMPLITUDE;
-    tremolo_bound = (tremolo_wave_value * S_lfo_tremolo_depth_table[l->tremolo_depth - PATCH_EFFECT_DEPTH_LOWER_BOUND]) / LFO_WAVE_AMPLITUDE;
+    vibrato_bound = (l->vibrato_wave_value * S_lfo_vibrato_depth_table[l->vibrato_depth - PATCH_EFFECT_DEPTH_LOWER_BOUND]) / LFO_WAVE_AMPLITUDE;
+    tremolo_bound = (l->tremolo_wave_value * S_lfo_tremolo_depth_table[l->tremolo_depth - PATCH_EFFECT_DEPTH_LOWER_BOUND]) / LFO_WAVE_AMPLITUDE;
 
     /* determine base vibrato & tremolo levels */
     l->vibrato_level = (vibrato_bound * l->vibrato_base) / PATCH_EFFECT_BASE_NUM_VALUES;
@@ -546,7 +608,8 @@ short int lfo_update_all()
 *******************************************************************************/
 short int lfo_generate_tables()
 {
-  int i;
+  int k;
+  int m;
 
   /* the lfo wavetables have 256 entries per period */
 
@@ -556,55 +619,120 @@ short int lfo_generate_tables()
   S_lfo_wavetable_triangle[128] = 0;
   S_lfo_wavetable_triangle[192] = -LFO_WAVE_AMPLITUDE;
 
-  for (i = 1; i < 64; i++)
+  for (k = 1; k < 64; k++)
   {
-    S_lfo_wavetable_triangle[i] = (short int) (((LFO_WAVE_AMPLITUDE * i) / 64.0f) + 0.5f);
-    S_lfo_wavetable_triangle[128 - i] = S_lfo_wavetable_triangle[i];
+    S_lfo_wavetable_triangle[k] = (short int) (((LFO_WAVE_AMPLITUDE * k) / 64.0f) + 0.5f);
+    S_lfo_wavetable_triangle[128 - k] = S_lfo_wavetable_triangle[k];
 
-    S_lfo_wavetable_triangle[128 + i] = -S_lfo_wavetable_triangle[i];
-    S_lfo_wavetable_triangle[256 - i] = -S_lfo_wavetable_triangle[128 - i];
+    S_lfo_wavetable_triangle[128 + k] = -S_lfo_wavetable_triangle[k];
+    S_lfo_wavetable_triangle[256 - k] = -S_lfo_wavetable_triangle[128 - k];
   }
 
   /* wavetable (sawtooth) */
   S_lfo_wavetable_sawtooth[0] = 0;
   S_lfo_wavetable_sawtooth[128] = -LFO_WAVE_AMPLITUDE;
 
-  for (i = 1; i < 128; i++)
+  for (k = 1; k < 128; k++)
   {
-    S_lfo_wavetable_sawtooth[i] = (short int) (((LFO_WAVE_AMPLITUDE * i) / 128.0f) + 0.5f);
-    S_lfo_wavetable_sawtooth[256 - i] = -S_lfo_wavetable_sawtooth[i];
+    S_lfo_wavetable_sawtooth[k] = (short int) (((LFO_WAVE_AMPLITUDE * k) / 128.0f) + 0.5f);
+    S_lfo_wavetable_sawtooth[256 - k] = -S_lfo_wavetable_sawtooth[k];
   }
 
   /* delay period table */
-  for (i = 0; i < PATCH_LFO_DELAY_NUM_VALUES; i++)
+  for (k = 0; k < TEMPO_NUM_VALUES; k++)
   {
-    S_lfo_delay_period_table[i] = 
-      (int) ((S_lfo_delay_seconds_table[i] * CLOCK_SAMPLING_RATE) + 0.5f);
+    for (m = 0; m < PATCH_LFO_DELAY_NUM_VALUES; m++)
+    {
+      S_lfo_delay_period_table[k][m] = 
+        (int) ((TEMPO_COMPUTE_SECONDS_PER_BEAT(k + TEMPO_LOWER_BOUND) * S_lfo_delay_fraction_table[m] * CLOCK_SAMPLING_RATE) + 0.5f);
+    }
   }
 
   /* phase increment tables */
-  for (i = 0; i < PATCH_LFO_FREQUENCY_NUM_VALUES; i++)
+  for (k = 0; k < TEMPO_NUM_VALUES; k++)
   {
-    S_lfo_wave_phase_increment_table[i] = 
-      (int) ((S_lfo_wave_frequency_table[i] * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
+    for (m = 0; m < PATCH_LFO_FREQUENCY_NUM_VALUES; m++)
+    {
+      S_lfo_wave_phase_increment_table[k][m] = 
+        (int) ((TEMPO_COMPUTE_BEATS_PER_SECOND(k + TEMPO_LOWER_BOUND) * S_lfo_wave_frequency_table[m] * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
+    }
+  }
 
-    S_lfo_noise_phase_increment_table[i] = 
-      (int) ((S_lfo_noise_frequency_table[i] * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
+  for (m = 0; m < PATCH_LFO_FREQUENCY_NUM_VALUES; m++)
+  {
+    S_lfo_noise_phase_increment_table[m] = 
+      (int) ((S_lfo_noise_frequency_table[m] * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
+  }
+
+  /* quantize phase bound table */
+  for (k = 0; k < PATCH_LFO_QUANTIZE_NUM_VALUES; k++)
+  {
+    S_lfo_quantize_overflow_table[k] = 
+      (int) (((1 << 28) / S_lfo_quantize_frequency_table[k]) + 0.5f);
   }
 
 #if 0
   /* print out triangle wavetable */
-  for (i = 0; i < 256; i++)
+  for (k = 0; k < 256; k++)
   {
     printf( "LFO Triangle Wavetable Index %d: %d \n", 
-            i, S_lfo_wavetable_triangle[i]);
+            k, S_lfo_wavetable_triangle[k]);
   }
 
   /* print out sawtooth wavetable */
-  for (i = 0; i < 256; i++)
+  for (k = 0; k < 256; k++)
   {
     printf( "LFO Sawtooth Wavetable Index %d: %d \n", 
-            i, S_lfo_wavetable_sawtooth[i]);
+            k, S_lfo_wavetable_sawtooth[k]);
+  }
+#endif
+
+#if 0
+  /* print out delay periods for various tempos */
+  printf("Delay Periods for Tempo 120 BPM:\n");
+
+  for (m = 0; m < PATCH_LFO_DELAY_NUM_VALUES; m++)
+  {
+    printf( "  Delay %d: %d \n", 
+            m, S_lfo_delay_period_table[120 - TEMPO_LOWER_BOUND][m]);
+  }
+
+  printf("Delay Periods for Tempo 180 BPM:\n");
+
+  for (m = 0; m < PATCH_LFO_DELAY_NUM_VALUES; m++)
+  {
+    printf( "  Delay %d: %d \n", 
+            m, S_lfo_delay_period_table[180 - TEMPO_LOWER_BOUND][m]);
+  }
+
+#endif
+
+#if 0
+  /* print out phase increments for various tempos */
+  printf("Wave Frequencies for Tempo 120 BPM:\n");
+
+  for (m = 0; m < PATCH_LFO_FREQUENCY_NUM_VALUES; m++)
+  {
+    printf( "  Freq %d: %d \n", 
+            m, S_lfo_wave_phase_increment_table[120 - TEMPO_LOWER_BOUND][m]);
+  }
+
+  printf("Wave Frequencies for Tempo 180 BPM:\n");
+
+  for (m = 0; m < PATCH_LFO_FREQUENCY_NUM_VALUES; m++)
+  {
+    printf( "  Freq %d: %d \n", 
+            m, S_lfo_wave_phase_increment_table[180 - TEMPO_LOWER_BOUND][m]);
+  }
+
+#endif
+
+#if 0
+  /* print out quantize overflow table */
+  for (k = 0; k < PATCH_LFO_QUANTIZE_NUM_VALUES; k++)
+  {
+    printf( "LFO Quantize Overflow Index %d: %d \n", 
+            k, S_lfo_quantize_overflow_table[k]);
   }
 #endif
 

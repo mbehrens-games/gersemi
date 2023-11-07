@@ -7,21 +7,13 @@
 
 #include "bank.h"
 
-enum
-{
-  ENVELOPE_STATE_ATTACK = 0, 
-  ENVELOPE_STATE_DECAY_1, 
-  ENVELOPE_STATE_DECAY_2, 
-  ENVELOPE_STATE_RELEASE, 
-  ENVELOPE_STATE_ALTERNATE_DECAY_2, 
-  ENVELOPE_STATE_ALTERNATE_RELEASE 
-};
-
 typedef struct envelope
 {
-  /* envelope settings */
-  short int rate_ks;
-  short int level_ks;
+  /* keyscaling settings */
+  short int ks_mode;
+  short int ks_rate_fraction;
+  short int ks_level_fraction;
+  short int ks_break_note;
 
   /* adjustments */
   short int ampl_adjustment;
@@ -30,6 +22,14 @@ typedef struct envelope
 
   /* decay 1 to decay 2 switch level */
   short int transition_level;
+
+  /* sustain pedal state */
+  short int sustain_pedal;
+
+  /* current note & offset */
+  short int note;
+  short int offset;
+  short int freq_mode;
 
   /* rows */
   int a_row;
@@ -49,12 +49,6 @@ typedef struct envelope
   unsigned int increment;
   unsigned int phase;
 
-  /* note input (from oscillator) */
-  short int note_input;
-
-  /* sustain pedal input (from instrument) */
-  short int pedal_input;
-
   /* attenuation */
   short int attenuation;
 
@@ -70,6 +64,11 @@ short int envelope_setup_all();
 short int envelope_reset(int voice_index);
 
 short int envelope_load_patch(int voice_index, int patch_index);
+
+short int envelope_set_sustain_pedal_down(int voice_index);
+short int envelope_set_sustain_pedal_up(int voice_index);
+
+short int envelope_set_note(int voice_index, int note);
 
 short int envelope_trigger(int voice_index);
 short int envelope_release(int voice_index);

@@ -64,7 +64,8 @@ short int bender_reset(int voice_index)
     b = &G_bender_bank[BANK_BOOSTS_PER_VOICE * voice_index + m];
 
     /* initialize bender variables */
-    b->range = 1;
+    b->mode = PATCH_PITCH_WHEEL_MODE_DEFAULT;
+    b->range = PATCH_PITCH_WHEEL_RANGE_DEFAULT;
 
     b->pitch_wheel_input = 0;
 
@@ -96,6 +97,15 @@ short int bender_load_patch(int voice_index, int patch_index)
   /* obtain bender pointer */
   b = &G_bender_bank[voice_index];
 
+  /* mode */
+  if ((p->pitch_wheel_mode >= PATCH_PITCH_WHEEL_MODE_LOWER_BOUND) && 
+      (p->pitch_wheel_mode <= PATCH_PITCH_WHEEL_MODE_UPPER_BOUND))
+  {
+    b->mode = p->pitch_wheel_mode;
+  }
+  else
+    b->mode = PATCH_PITCH_WHEEL_MODE_LOWER_BOUND;
+
   /* range */
   if ((p->pitch_wheel_range >= PATCH_PITCH_WHEEL_RANGE_LOWER_BOUND) && 
       (p->pitch_wheel_range <= PATCH_PITCH_WHEEL_RANGE_UPPER_BOUND))
@@ -117,7 +127,8 @@ short int bender_update_all()
 
   bender* b;
 
-  int bender_bound;
+  int bound;
+  int shift;
 
   /* update all benders */
   for (k = 0; k < BANK_NUM_VOICES; k++)
@@ -126,20 +137,37 @@ short int bender_update_all()
     b = &G_bender_bank[k];
 
     /* obtain bender upper bound */
-    bender_bound = S_bender_range_table[b->range - PATCH_PITCH_WHEEL_RANGE_LOWER_BOUND];
-
-    /* initialize level */
-    b->level = 0;
+    bound = S_bender_range_table[b->range - PATCH_PITCH_WHEEL_RANGE_LOWER_BOUND];
 
     /* apply pitch wheel */
-    b->level += 
-      (bender_bound * b->pitch_wheel_input) / MIDI_CONT_PITCH_WHEEL_UPPER_BOUND;
+    if (b->pitch_wheel_input > 0)
+      shift = (bound * b->pitch_wheel_input) / MIDI_CONT_PITCH_WHEEL_UPPER_BOUND;
+    else if (b->pitch_wheel_input < 0)
+      shift = (bound * -b->pitch_wheel_input) / MIDI_CONT_PITCH_WHEEL_UPPER_BOUND;
+    else
+      shift = 0;
+
+    /* determine level based on mode */
+    if (b->mode == PATCH_PITCH_WHEEL_MODE_BEND)
+      b->level = shift;
+    else if (b->mode == PATCH_PITCH_WHEEL_MODE_HALF_STEPS)
+    {
+      b->level = shift;
+      b->level /= TUNING_NUM_SEMITONE_STEPS;
+      b->level *= TUNING_NUM_SEMITONE_STEPS;
+    }
+    else
+      b->level = 0;
+
+    /* invert level if necessary */
+    if (b->pitch_wheel_input < 0)
+      b->level = -b->level;
 
     /* bound level */
-    if ((b->pitch_wheel_input > 0) && (b->level > bender_bound))
-      b->level = bender_bound;
-    else if ((b->pitch_wheel_input < 0) && (b->level < -bender_bound))
-      b->level = -bender_bound;
+    if ((b->pitch_wheel_input > 0) && (b->level > bound))
+      b->level = bound;
+    else if ((b->pitch_wheel_input < 0) && (b->level < -bound))
+      b->level = -bound;
   }
 
   return 0;

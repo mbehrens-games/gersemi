@@ -11,11 +11,16 @@ typedef struct lfo
 {
   /* lfo parameters */
   short int waveform;
+  short int frequency;
   short int sync;
 
   /* delay */
-  int delay_period;
   int delay_cycles;
+  int delay_period;
+
+  /* quantize (sample and hold) */
+  unsigned int quantize_phase;
+  unsigned int quantize_overflow;
 
   /* phase, phase increment */
   unsigned int phase;
@@ -23,6 +28,9 @@ typedef struct lfo
 
   /* noise lfsr */
   unsigned int lfsr;
+
+  /* tempo */
+  short int tempo;
 
   /* vibrato */
   short int vibrato_depth;
@@ -41,6 +49,10 @@ typedef struct lfo
   short int mod_wheel_input;
   short int aftertouch_input;
 
+  /* wave values (unadjusted levels) */
+  short int vibrato_wave_value;
+  short int tremolo_wave_value;
+
   /* levels */
   short int vibrato_level;
   short int tremolo_level;
@@ -54,6 +66,8 @@ short int lfo_setup_all();
 short int lfo_reset(int voice_index);
 
 short int lfo_load_patch(int voice_index, int patch_index);
+
+short int lfo_set_tempo(int voice_index, short int tempo);
 
 short int lfo_trigger(int voice_index);
 

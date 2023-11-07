@@ -10,6 +10,7 @@
 typedef struct bender
 {
   /* bender parameters */
+  short int mode;
   short int range;
 
   /* controller inputs */

@@ -151,6 +151,26 @@ short int layout_setup_headers()
       hd->center_x = LAYOUT_PATCH_EDIT_COLUMN_4_CENTER_X;
       hd->center_y = LAYOUT_PATCH_EDIT_HEADER_ENV_Y;
     }
+    else if (hd->label == LAYOUT_PATCH_EDIT_HEADER_LABEL_KEYSCALING_1)
+    {
+      hd->center_x = LAYOUT_PATCH_EDIT_COLUMN_1_CENTER_X;
+      hd->center_y = LAYOUT_PATCH_EDIT_HEADER_KEYSCALING_Y;
+    }
+    else if (hd->label == LAYOUT_PATCH_EDIT_HEADER_LABEL_KEYSCALING_2)
+    {
+      hd->center_x = LAYOUT_PATCH_EDIT_COLUMN_2_CENTER_X;
+      hd->center_y = LAYOUT_PATCH_EDIT_HEADER_KEYSCALING_Y;
+    }
+    else if (hd->label == LAYOUT_PATCH_EDIT_HEADER_LABEL_KEYSCALING_3)
+    {
+      hd->center_x = LAYOUT_PATCH_EDIT_COLUMN_3_CENTER_X;
+      hd->center_y = LAYOUT_PATCH_EDIT_HEADER_KEYSCALING_Y;
+    }
+    else if (hd->label == LAYOUT_PATCH_EDIT_HEADER_LABEL_KEYSCALING_4)
+    {
+      hd->center_x = LAYOUT_PATCH_EDIT_COLUMN_4_CENTER_X;
+      hd->center_y = LAYOUT_PATCH_EDIT_HEADER_KEYSCALING_Y;
+    }
     else if (hd->label == LAYOUT_PATCH_EDIT_HEADER_LABEL_LFO)
     {
       hd->center_x = LAYOUT_PATCH_EDIT_COLUMN_1_CENTER_X;
@@ -166,10 +186,10 @@ short int layout_setup_headers()
       hd->center_x = LAYOUT_PATCH_EDIT_COLUMN_3_CENTER_X;
       hd->center_y = LAYOUT_PATCH_EDIT_HEADER_TREMOLO_Y;
     }
-    else if (hd->label == LAYOUT_PATCH_EDIT_HEADER_LABEL_PORT_ARP)
+    else if (hd->label == LAYOUT_PATCH_EDIT_HEADER_LABEL_PORTAMENTO)
     {
       hd->center_x = LAYOUT_PATCH_EDIT_COLUMN_4_CENTER_X;
-      hd->center_y = LAYOUT_PATCH_EDIT_HEADER_PORT_ARP_Y;
+      hd->center_y = LAYOUT_PATCH_EDIT_HEADER_PORTAMENTO_Y;
     }
     else if (hd->label == LAYOUT_PATCH_EDIT_HEADER_LABEL_BOOST)
     {
@@ -242,17 +262,18 @@ short int layout_setup_params()
         (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_OSC_SYNC)           || 
         (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_LFO_WAVEFORM)       || 
         (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_MOD_WHEEL_EFFECT)   || 
-        (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AFTERTOUCH_EFFECT)  || 
-        (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_PORT_ARP_MODE)      || 
-        (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_PORT_ARP_DIRECTION))
+        (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AFTERTOUCH_EFFECT))
     {
       pr->type = LAYOUT_PATCH_EDIT_PARAM_TYPE_ARROWS;
     }
-    else if ( (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_OSC_FREQ_MODE)  || 
-              (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_LFO_SYNC)       || 
-              (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_VIBRATO_MODE)   || 
-              (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_TREMOLO_MODE)   || 
-              (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_BOOST_MODE)     || 
+    else if ( (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_OSC_FREQ_MODE)      || 
+              (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_KS_MODE)            || 
+              (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_LFO_SYNC)           || 
+              (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_VIBRATO_MODE)       || 
+              (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_TREMOLO_MODE)       || 
+              (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_BOOST_MODE)         || 
+              (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_PORTAMENTO_MODE)    || 
+              (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_PORTAMENTO_LEGATO)  || 
               (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_PITCH_WHEEL_MODE))
     {
       pr->type = LAYOUT_PATCH_EDIT_PARAM_TYPE_RADIO;
@@ -419,19 +440,33 @@ short int layout_setup_params()
         pr->lower_bound = PATCH_ENV_SUSTAIN_LOWER_BOUND;
         pr->upper_bound = PATCH_ENV_SUSTAIN_UPPER_BOUND;
       }
-      else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_ENV_RATE_KS)
+      else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_KS_MODE)
       {
-        pr->center_y = LAYOUT_PATCH_EDIT_ENV_RATE_KS_Y;
+        pr->center_y = LAYOUT_PATCH_EDIT_KS_MODE_Y;
 
-        pr->lower_bound = PATCH_ENV_KEYSCALE_LOWER_BOUND;
-        pr->upper_bound = PATCH_ENV_KEYSCALE_UPPER_BOUND;
+        pr->lower_bound = PATCH_KEYSCALING_MODE_LOWER_BOUND;
+        pr->upper_bound = PATCH_KEYSCALING_MODE_UPPER_BOUND;
       }
-      else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_ENV_LEVEL_KS)
+      else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_KS_RATE_DEPTH)
       {
-        pr->center_y = LAYOUT_PATCH_EDIT_ENV_LEVEL_KS_Y;
+        pr->center_y = LAYOUT_PATCH_EDIT_KS_RATE_DEPTH_Y;
 
-        pr->lower_bound = PATCH_ENV_KEYSCALE_LOWER_BOUND;
-        pr->upper_bound = PATCH_ENV_KEYSCALE_UPPER_BOUND;
+        pr->lower_bound = PATCH_KEYSCALING_DEPTH_LOWER_BOUND;
+        pr->upper_bound = PATCH_KEYSCALING_DEPTH_UPPER_BOUND;
+      }
+      else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_KS_LEVEL_DEPTH)
+      {
+        pr->center_y = LAYOUT_PATCH_EDIT_KS_LEVEL_DEPTH_Y;
+
+        pr->lower_bound = PATCH_KEYSCALING_DEPTH_LOWER_BOUND;
+        pr->upper_bound = PATCH_KEYSCALING_DEPTH_UPPER_BOUND;
+      }
+      else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_KS_BREAK_POINT)
+      {
+        pr->center_y = LAYOUT_PATCH_EDIT_KS_BREAK_POINT_Y;
+
+        pr->lower_bound = PATCH_KEYSCALING_BREAK_POINT_LOWER_BOUND;
+        pr->upper_bound = PATCH_KEYSCALING_BREAK_POINT_UPPER_BOUND;
       }
       else
       {
@@ -481,14 +516,6 @@ short int layout_setup_params()
 
       pr->lower_bound = PATCH_LFO_QUANTIZE_LOWER_BOUND;
       pr->upper_bound = PATCH_LFO_QUANTIZE_UPPER_BOUND;
-    }
-    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_LFO_SAH_NOISE)
-    {
-      pr->center_x = LAYOUT_PATCH_EDIT_COLUMN_1_CENTER_X;
-      pr->center_y = LAYOUT_PATCH_EDIT_LFO_SAH_NOISE_Y;
-
-      pr->lower_bound = PATCH_LFO_SAH_NOISE_LOWER_BOUND;
-      pr->upper_bound = PATCH_LFO_SAH_NOISE_UPPER_BOUND;
     }
     /* vibrato */
     else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_VIBRATO_DEPTH)
@@ -540,30 +567,30 @@ short int layout_setup_params()
       pr->lower_bound = PATCH_TREMOLO_MODE_LOWER_BOUND;
       pr->upper_bound = PATCH_TREMOLO_MODE_UPPER_BOUND;
     }
-    /* portamento / arpeggio */
-    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_PORT_ARP_MODE)
+    /* portamento */
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_PORTAMENTO_MODE)
     {
       pr->center_x = LAYOUT_PATCH_EDIT_COLUMN_4_CENTER_X;
-      pr->center_y = LAYOUT_PATCH_EDIT_PORT_ARP_MODE_Y;
+      pr->center_y = LAYOUT_PATCH_EDIT_PORTAMENTO_MODE_Y;
 
-      pr->lower_bound = PATCH_PORT_ARP_MODE_LOWER_BOUND;
-      pr->upper_bound = PATCH_PORT_ARP_MODE_UPPER_BOUND;
+      pr->lower_bound = PATCH_PORTAMENTO_MODE_LOWER_BOUND;
+      pr->upper_bound = PATCH_PORTAMENTO_MODE_UPPER_BOUND;
     }
-    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_PORT_ARP_DIRECTION)
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_PORTAMENTO_LEGATO)
     {
       pr->center_x = LAYOUT_PATCH_EDIT_COLUMN_4_CENTER_X;
-      pr->center_y = LAYOUT_PATCH_EDIT_PORT_ARP_DIRECTION_Y;
+      pr->center_y = LAYOUT_PATCH_EDIT_PORTAMENTO_LEGATO_Y;
 
-      pr->lower_bound = PATCH_PORT_ARP_DIRECTION_LOWER_BOUND;
-      pr->upper_bound = PATCH_PORT_ARP_DIRECTION_UPPER_BOUND;
+      pr->lower_bound = PATCH_PORTAMENTO_LEGATO_LOWER_BOUND;
+      pr->upper_bound = PATCH_PORTAMENTO_LEGATO_UPPER_BOUND;
     }
-    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_PORT_ARP_SPEED)
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_PORTAMENTO_SPEED)
     {
       pr->center_x = LAYOUT_PATCH_EDIT_COLUMN_4_CENTER_X;
-      pr->center_y = LAYOUT_PATCH_EDIT_PORT_ARP_SPEED_Y;
+      pr->center_y = LAYOUT_PATCH_EDIT_PORTAMENTO_SPEED_Y;
 
-      pr->lower_bound = PATCH_PORT_ARP_SPEED_LOWER_BOUND;
-      pr->upper_bound = PATCH_PORT_ARP_SPEED_UPPER_BOUND;
+      pr->lower_bound = PATCH_PORTAMENTO_SPEED_LOWER_BOUND;
+      pr->upper_bound = PATCH_PORTAMENTO_SPEED_UPPER_BOUND;
     }
     /* boost */
     else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_BOOST_DEPTH)
