@@ -150,7 +150,7 @@ short int bender_update_all()
     /* determine level based on mode */
     if (b->mode == PATCH_PITCH_WHEEL_MODE_BEND)
       b->level = shift;
-    else if (b->mode == PATCH_PITCH_WHEEL_MODE_HALF_STEPS)
+    else if (b->mode == PATCH_PITCH_WHEEL_MODE_SEMITONES)
     {
       b->level = shift;
       b->level /= TUNING_NUM_SEMITONE_STEPS;

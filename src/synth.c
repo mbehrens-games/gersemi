@@ -57,9 +57,6 @@ short int synth_reset_banks()
   /* reset tuning tables */
   tuning_reset();
 
-  /* reset instrument mapping */
-  instrument_set_layout(INSTRUMENT_LAYOUT_1_POLY_8_MONO);
-
   /* reset output levels */
   G_synth_level_left = 0;
   G_synth_level_right = 0;

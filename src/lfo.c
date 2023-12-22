@@ -18,7 +18,7 @@
 
 #define LFO_WAVE_AMPLITUDE 128
 
-#define LFO_BASE_NOISE_FREQUENCY (440.0f / 256.0f) /* A-4 */
+#define LFO_BASE_NOISE_FREQUENCY 440.0f /* A-4 */
 
 /* vibrato depth table */
 /* assuming 128 steps per semitone */
@@ -78,37 +78,37 @@ static float  S_lfo_wave_frequency_table[PATCH_LFO_FREQUENCY_NUM_VALUES] =
 /* noise frequency table (in periods per second) */
 static float  S_lfo_noise_frequency_table[PATCH_LFO_FREQUENCY_NUM_VALUES] = 
               { LFO_BASE_NOISE_FREQUENCY * 1, 
-                (LFO_BASE_NOISE_FREQUENCY * 1) * 1.25f, 
-                (LFO_BASE_NOISE_FREQUENCY * 1) * 1.50f, 
-                (LFO_BASE_NOISE_FREQUENCY * 1) * 1.75f, 
+                LFO_BASE_NOISE_FREQUENCY * 1 * 1.25f, 
+                LFO_BASE_NOISE_FREQUENCY * 1 * 1.50f, 
+                LFO_BASE_NOISE_FREQUENCY * 1 * 1.75f, 
                 LFO_BASE_NOISE_FREQUENCY * 2, 
-                (LFO_BASE_NOISE_FREQUENCY * 2) * 1.25f, 
-                (LFO_BASE_NOISE_FREQUENCY * 2) * 1.50f, 
-                (LFO_BASE_NOISE_FREQUENCY * 2) * 1.75f, 
+                LFO_BASE_NOISE_FREQUENCY * 2 * 1.25f, 
+                LFO_BASE_NOISE_FREQUENCY * 2 * 1.50f, 
+                LFO_BASE_NOISE_FREQUENCY * 2 * 1.75f, 
                 LFO_BASE_NOISE_FREQUENCY * 4, 
-                (LFO_BASE_NOISE_FREQUENCY * 4) * 1.125f, 
-                (LFO_BASE_NOISE_FREQUENCY * 4) * 1.250f, 
-                (LFO_BASE_NOISE_FREQUENCY * 4) * 1.375f, 
-                (LFO_BASE_NOISE_FREQUENCY * 4) * 1.500f, 
-                (LFO_BASE_NOISE_FREQUENCY * 4) * 1.625f, 
-                (LFO_BASE_NOISE_FREQUENCY * 4) * 1.750f, 
-                (LFO_BASE_NOISE_FREQUENCY * 4) * 1.875f, 
+                LFO_BASE_NOISE_FREQUENCY * 4 * 1.125f, 
+                LFO_BASE_NOISE_FREQUENCY * 4 * 1.250f, 
+                LFO_BASE_NOISE_FREQUENCY * 4 * 1.375f, 
+                LFO_BASE_NOISE_FREQUENCY * 4 * 1.500f, 
+                LFO_BASE_NOISE_FREQUENCY * 4 * 1.625f, 
+                LFO_BASE_NOISE_FREQUENCY * 4 * 1.750f, 
+                LFO_BASE_NOISE_FREQUENCY * 4 * 1.875f, 
                 LFO_BASE_NOISE_FREQUENCY * 8, 
-                (LFO_BASE_NOISE_FREQUENCY * 8) * 1.125f, 
-                (LFO_BASE_NOISE_FREQUENCY * 8) * 1.250f, 
-                (LFO_BASE_NOISE_FREQUENCY * 8) * 1.375f, 
-                (LFO_BASE_NOISE_FREQUENCY * 8) * 1.500f, 
-                (LFO_BASE_NOISE_FREQUENCY * 8) * 1.625f, 
-                (LFO_BASE_NOISE_FREQUENCY * 8) * 1.750f, 
-                (LFO_BASE_NOISE_FREQUENCY * 8) * 1.875f, 
+                LFO_BASE_NOISE_FREQUENCY * 8 * 1.125f, 
+                LFO_BASE_NOISE_FREQUENCY * 8 * 1.250f, 
+                LFO_BASE_NOISE_FREQUENCY * 8 * 1.375f, 
+                LFO_BASE_NOISE_FREQUENCY * 8 * 1.500f, 
+                LFO_BASE_NOISE_FREQUENCY * 8 * 1.625f, 
+                LFO_BASE_NOISE_FREQUENCY * 8 * 1.750f, 
+                LFO_BASE_NOISE_FREQUENCY * 8 * 1.875f, 
                 LFO_BASE_NOISE_FREQUENCY * 16, 
-                (LFO_BASE_NOISE_FREQUENCY * 16) * 1.125f, 
-                (LFO_BASE_NOISE_FREQUENCY * 16) * 1.250f, 
-                (LFO_BASE_NOISE_FREQUENCY * 16) * 1.375f, 
-                (LFO_BASE_NOISE_FREQUENCY * 16) * 1.500f, 
-                (LFO_BASE_NOISE_FREQUENCY * 16) * 1.625f, 
-                (LFO_BASE_NOISE_FREQUENCY * 16) * 1.750f, 
-                (LFO_BASE_NOISE_FREQUENCY * 16) * 1.875f 
+                LFO_BASE_NOISE_FREQUENCY * 16 * 1.125f, 
+                LFO_BASE_NOISE_FREQUENCY * 16 * 1.250f, 
+                LFO_BASE_NOISE_FREQUENCY * 16 * 1.375f, 
+                LFO_BASE_NOISE_FREQUENCY * 16 * 1.500f, 
+                LFO_BASE_NOISE_FREQUENCY * 16 * 1.625f, 
+                LFO_BASE_NOISE_FREQUENCY * 16 * 1.750f, 
+                LFO_BASE_NOISE_FREQUENCY * 16 * 1.875f 
               };
 
 /* quantize (sample and hold) frequency table (in samples per wave period) */
@@ -181,7 +181,7 @@ short int lfo_reset(int voice_index)
   /* initialize lfo variables */
   l->waveform = PATCH_LFO_WAVEFORM_DEFAULT;
   l->frequency = PATCH_LFO_FREQUENCY_DEFAULT;
-  l->sync = PATCH_LFO_SYNC_DEFAULT;
+  l->sync = PATCH_SYNC_LFO_DEFAULT;
 
   l->delay_cycles = 0;
   l->delay_period = 
@@ -270,6 +270,15 @@ short int lfo_load_patch(int voice_index, int patch_index)
   else
     l->increment = S_lfo_wave_phase_increment_table[l->tempo - TEMPO_LOWER_BOUND][l->frequency - PATCH_LFO_FREQUENCY_LOWER_BOUND];
 
+  /* sync */
+  if ((p->sync_lfo >= PATCH_SYNC_LFO_LOWER_BOUND) && 
+      (p->sync_lfo <= PATCH_SYNC_LFO_UPPER_BOUND))
+  {
+    l->sync = p->sync_lfo;
+  }
+  else
+    l->sync = PATCH_SYNC_LFO_LOWER_BOUND;
+
   /* delay */
   if ((p->lfo_delay >= PATCH_LFO_DELAY_LOWER_BOUND) && 
       (p->lfo_delay <= PATCH_LFO_DELAY_UPPER_BOUND))
@@ -278,15 +287,6 @@ short int lfo_load_patch(int voice_index, int patch_index)
   }
   else
     l->delay_period = S_lfo_delay_period_table[l->tempo - TEMPO_LOWER_BOUND][0];
-
-  /* sync */
-  if ((p->lfo_sync >= PATCH_LFO_SYNC_LOWER_BOUND) && 
-      (p->lfo_sync <= PATCH_LFO_SYNC_UPPER_BOUND))
-  {
-    l->sync = p->lfo_sync;
-  }
-  else
-    l->sync = PATCH_LFO_SYNC_LOWER_BOUND;
 
   /* quantize */
   if ((p->lfo_quantize >= PATCH_LFO_QUANTIZE_LOWER_BOUND) && 
@@ -392,6 +392,31 @@ short int lfo_set_tempo(int voice_index, short int tempo)
 }
 
 /*******************************************************************************
+** lfo_sync_phase()
+*******************************************************************************/
+short int lfo_sync_phase(int voice_index)
+{
+  lfo* l;
+
+  /* make sure that the voice index is valid */
+  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
+    return 1;
+
+  /* obtain lfo pointer */
+  l = &G_lfo_bank[voice_index];
+
+  /* reset phase if necessary */
+  if (l->sync == PATCH_SYNC_LFO_ON)
+  {
+    l->phase = 0;
+    l->quantize_phase = 0;
+    l->lfsr = 0x0001;
+  }
+
+  return 0;
+}
+
+/*******************************************************************************
 ** lfo_trigger()
 *******************************************************************************/
 short int lfo_trigger(int voice_index)
@@ -407,14 +432,6 @@ short int lfo_trigger(int voice_index)
 
   /* set delay cycles */
   l->delay_cycles = l->delay_period;
-
-  /* reset phase if necessary */
-  if (l->sync == PATCH_LFO_SYNC_ON)
-  {
-    l->phase = 0;
-    l->quantize_phase = 0;
-    l->lfsr = 0x0001;
-  }
 
   /* initialize wave values */
   l->vibrato_wave_value = 0;
@@ -461,19 +478,13 @@ short int lfo_update_all()
 
     /* wraparound phase register (28 bits) */
     if (l->phase > 0xFFFFFFF)
+    {
       l->phase &= 0xFFFFFFF;
 
-    /* for the noise waveforms, update the lfsr for each  */
-    /* table entry, instead of updating it each period    */
-    /* note that there are 256 table entries per period.  */
-    if ((l->waveform == PATCH_LFO_WAVEFORM_NOISE_SQUARE) || 
-        (l->waveform == PATCH_LFO_WAVEFORM_NOISE_SAW))
-    {
-      /* wraparound phase register (20 bits) */
-      if (l->phase > 0x00FFFFF)
+      /* update noise if necessary */
+      if ((l->waveform == PATCH_LFO_WAVEFORM_NOISE_SQUARE) || 
+          (l->waveform == PATCH_LFO_WAVEFORM_NOISE_SAW))
       {
-        l->phase &= 0x00FFFFF;
-
         /* update noise generator (nes) */
         /* 15-bit lfsr, taps on 1 and 2 */
         if ((l->lfsr & 0x0001) ^ ((l->lfsr & 0x0002) >> 1))

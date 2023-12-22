@@ -69,6 +69,7 @@ short int lfo_load_patch(int voice_index, int patch_index);
 
 short int lfo_set_tempo(int voice_index, short int tempo);
 
+short int lfo_sync_phase(int voice_index);
 short int lfo_trigger(int voice_index);
 
 short int lfo_update_all();

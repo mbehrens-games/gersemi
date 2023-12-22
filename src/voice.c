@@ -19,6 +19,8 @@
 
 #define DB_STEP_12_BIT 0.01171875f
 
+#define VOICE_BASE_NOISE_FREQUENCY 440.0f /* A-4 */
+
 #define VOICE_WAVETABLE_LOOKUP(num, phase)                                     \
   masked_phase = ((phase) & 0x3FF);                                            \
                                                                                \
@@ -215,11 +217,50 @@ static int  S_voice_detune_table[33] =
               ( 16 * TUNING_NUM_SEMITONE_STEPS) / 32
             };
 
+/* noise frequency table (in lfsr updates per second) */
+static float  S_voice_noise_frequency_table[PATCH_NOISE_FREQUENCY_NUM_VALUES] = 
+              { VOICE_BASE_NOISE_FREQUENCY * 1, 
+                VOICE_BASE_NOISE_FREQUENCY * 1 * 1.25f, 
+                VOICE_BASE_NOISE_FREQUENCY * 1 * 1.50f, 
+                VOICE_BASE_NOISE_FREQUENCY * 1 * 1.75f, 
+                VOICE_BASE_NOISE_FREQUENCY * 2, 
+                VOICE_BASE_NOISE_FREQUENCY * 2 * 1.25f, 
+                VOICE_BASE_NOISE_FREQUENCY * 2 * 1.50f, 
+                VOICE_BASE_NOISE_FREQUENCY * 2 * 1.75f, 
+                VOICE_BASE_NOISE_FREQUENCY * 4, 
+                VOICE_BASE_NOISE_FREQUENCY * 4 * 1.125f, 
+                VOICE_BASE_NOISE_FREQUENCY * 4 * 1.250f, 
+                VOICE_BASE_NOISE_FREQUENCY * 4 * 1.375f, 
+                VOICE_BASE_NOISE_FREQUENCY * 4 * 1.500f, 
+                VOICE_BASE_NOISE_FREQUENCY * 4 * 1.625f, 
+                VOICE_BASE_NOISE_FREQUENCY * 4 * 1.750f, 
+                VOICE_BASE_NOISE_FREQUENCY * 4 * 1.875f, 
+                VOICE_BASE_NOISE_FREQUENCY * 8, 
+                VOICE_BASE_NOISE_FREQUENCY * 8 * 1.125f, 
+                VOICE_BASE_NOISE_FREQUENCY * 8 * 1.250f, 
+                VOICE_BASE_NOISE_FREQUENCY * 8 * 1.375f, 
+                VOICE_BASE_NOISE_FREQUENCY * 8 * 1.500f, 
+                VOICE_BASE_NOISE_FREQUENCY * 8 * 1.625f, 
+                VOICE_BASE_NOISE_FREQUENCY * 8 * 1.750f, 
+                VOICE_BASE_NOISE_FREQUENCY * 8 * 1.875f, 
+                VOICE_BASE_NOISE_FREQUENCY * 16, 
+                VOICE_BASE_NOISE_FREQUENCY * 16 * 1.125f, 
+                VOICE_BASE_NOISE_FREQUENCY * 16 * 1.250f, 
+                VOICE_BASE_NOISE_FREQUENCY * 16 * 1.375f, 
+                VOICE_BASE_NOISE_FREQUENCY * 16 * 1.500f, 
+                VOICE_BASE_NOISE_FREQUENCY * 16 * 1.625f, 
+                VOICE_BASE_NOISE_FREQUENCY * 16 * 1.750f, 
+                VOICE_BASE_NOISE_FREQUENCY * 16 * 1.875f 
+              };
+
 /* db to linear table */
 static short int S_voice_db_to_linear_table[4096];
 
 /* sine wavetable */
 static short int S_voice_wavetable_sine[512];
+
+/* noise phase increment table */
+static unsigned int S_voice_noise_phase_increment_table[PATCH_NOISE_FREQUENCY_NUM_VALUES];
 
 /* voice bank */
 voice G_voice_bank[BANK_NUM_VOICES];
@@ -255,7 +296,10 @@ short int voice_reset(int voice_index)
   v = &G_voice_bank[voice_index];
 
   /* algorithm */
-  v->algorithm = PATCH_ALGORITHM_1C_CHAIN;
+  v->algorithm = PATCH_ALGORITHM_DEFAULT;
+
+  /* sync */
+  v->sync = PATCH_SYNC_OSC_DEFAULT;
 
   /* base note */
   v->base_note = TUNING_NOTE_BLANK;
@@ -273,12 +317,19 @@ short int voice_reset(int voice_index)
 
     v->osc_waveform[m] = PATCH_OSC_WAVEFORM_SINE;
     v->osc_feedback_multiplier[m] = 0;
-    v->osc_sync[m] = PATCH_OSC_SYNC_0;
+    v->osc_phi[m] = PATCH_OSC_PHI_0;
 
     v->osc_freq_mode[m] = PATCH_OSC_FREQ_MODE_RATIO;
     v->osc_offset[m] = 0;
     v->osc_detune[m] = 0;
   }
+
+  /* noise */
+  v->noise_lfsr = 0x0001;
+  v->noise_mode = PATCH_NOISE_MODE_DEFAULT;
+
+  v->noise_phase = 0;
+  v->noise_increment = S_voice_noise_phase_increment_table[PATCH_NOISE_FREQUENCY_DEFAULT - PATCH_NOISE_FREQUENCY_LOWER_BOUND];
 
   /* effect modes */
   v->tremolo_mode = 0;
@@ -338,6 +389,15 @@ short int voice_load_patch(int voice_index, int patch_index)
   else
     v->algorithm = PATCH_ALGORITHM_LOWER_BOUND;
 
+  /* sync */
+  if ((p->sync_osc >= PATCH_SYNC_OSC_LOWER_BOUND) && 
+      (p->sync_osc <= PATCH_SYNC_OSC_UPPER_BOUND))
+  {
+    v->sync = p->sync_osc;
+  }
+  else
+    v->sync = PATCH_SYNC_OSC_LOWER_BOUND;
+
   /* voice parameters, pitch index */
   for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
   {
@@ -359,14 +419,14 @@ short int voice_load_patch(int voice_index, int patch_index)
     else
       v->osc_feedback_multiplier[m] = S_voice_feedback_table[0];
 
-    /* sync */
-    if ((p->osc_sync[m] >= PATCH_OSC_SYNC_LOWER_BOUND) && 
-        (p->osc_sync[m] <= PATCH_OSC_SYNC_UPPER_BOUND))
+    /* phi */
+    if ((p->osc_phi[m] >= PATCH_OSC_PHI_LOWER_BOUND) && 
+        (p->osc_phi[m] <= PATCH_OSC_PHI_UPPER_BOUND))
     {
-      v->osc_sync[m] = p->osc_sync[m];
+      v->osc_phi[m] = p->osc_phi[m];
     }
     else
-      v->osc_sync[m] = PATCH_OSC_SYNC_LOWER_BOUND;
+      v->osc_phi[m] = PATCH_OSC_PHI_LOWER_BOUND;
 
     /* frequency mode */
     if ((p->osc_freq_mode[m] >= PATCH_OSC_FREQ_MODE_LOWER_BOUND) && 
@@ -466,6 +526,24 @@ short int voice_load_patch(int voice_index, int patch_index)
       v->osc_pitch_index[m] = TUNING_NUM_INDICES - 1;
   }
 
+  /* noise mode */
+  if ((p->noise_mode >= PATCH_NOISE_MODE_LOWER_BOUND) && 
+      (p->noise_mode <= PATCH_NOISE_MODE_UPPER_BOUND))
+  {
+    v->noise_mode = p->noise_mode;
+  }
+  else
+    v->noise_mode = PATCH_NOISE_MODE_LOWER_BOUND;
+
+  /* noise frequency */
+  if ((p->noise_frequency >= PATCH_NOISE_FREQUENCY_LOWER_BOUND) && 
+      (p->noise_frequency <= PATCH_NOISE_FREQUENCY_UPPER_BOUND))
+  {
+    v->noise_increment = S_voice_noise_phase_increment_table[p->noise_frequency - PATCH_NOISE_FREQUENCY_LOWER_BOUND];
+  }
+  else
+    v->noise_increment = S_voice_noise_phase_increment_table[0];
+
   return 0;
 }
 
@@ -492,7 +570,7 @@ short int voice_set_note(int voice_index, int note)
   /* set base note */
   v->base_note = note;
 
-  /* determine notes & pitch indices, reset phases */
+  /* determine notes & pitch indices */
   for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
   {
     if (v->osc_freq_mode[m] == PATCH_OSC_FREQ_MODE_RATIO)
@@ -509,12 +587,45 @@ short int voice_set_note(int voice_index, int note)
       v->osc_pitch_index[m] = 0;
     else if (v->osc_pitch_index[m] >= TUNING_NUM_INDICES)
       v->osc_pitch_index[m] = TUNING_NUM_INDICES - 1;
+  }
 
-    if ((v->osc_sync[m] >= PATCH_OSC_SYNC_0) && 
-        (v->osc_sync[m] <= PATCH_OSC_SYNC_270))
+  return 0;
+}
+
+/*******************************************************************************
+** voice_sync_phases()
+*******************************************************************************/
+short int voice_sync_phases(int voice_index)
+{
+  int m;
+
+  voice* v;
+
+  /* make sure that the voice index is valid */
+  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
+    return 1;
+
+  /* obtain voice pointer */
+  v = &G_voice_bank[voice_index];
+
+  /* sync (reset phases) */
+  if (v->sync == PATCH_SYNC_OSC_ON)
+  {
+    /* oscillators */
+    for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
     {
-      v->osc_phase[m] = S_voice_phase_shift_table[v->osc_sync[m] - PATCH_OSC_SYNC_0];
+      if ((v->osc_phi[m] >= PATCH_OSC_PHI_0) && 
+          (v->osc_phi[m] <= PATCH_OSC_PHI_270))
+      {
+        v->osc_phase[m] = S_voice_phase_shift_table[v->osc_phi[m] - PATCH_OSC_PHI_LOWER_BOUND];
+      }
+      else
+        v->osc_phase[m] = S_voice_phase_shift_table[PATCH_OSC_PHI_0 - PATCH_OSC_PHI_LOWER_BOUND];
     }
+
+    /* noise */
+    v->noise_lfsr = 0x0001;
+    v->noise_phase = 0;
   }
 
   return 0;
@@ -671,6 +782,26 @@ short int voice_update_all()
     VOICE_UPDATE_OSCILLATOR_FEEDBACK(2)
     VOICE_UPDATE_OSCILLATOR_FEEDBACK(3)
 
+    /* update noise */
+    if ((v->noise_mode == PATCH_NOISE_MODE_SQUARE) || 
+        (v->noise_mode == PATCH_NOISE_MODE_SAW))
+    {
+      v->noise_phase += v->noise_increment;
+
+      /* wraparound noise phase register (28 bits) */
+      if (v->noise_phase > 0xFFFFFFF)
+      {
+        v->noise_phase &= 0xFFFFFFF;
+
+        /* update noise generator (nes) */
+        /* 15-bit lfsr, taps on 1 and 2 */
+        if ((v->noise_lfsr & 0x0001) ^ ((v->noise_lfsr & 0x0002) >> 1))
+          v->noise_lfsr = ((v->noise_lfsr >> 1) & 0x3FFF) | 0x4000;
+        else
+          v->noise_lfsr = (v->noise_lfsr >> 1) & 0x3FFF;
+      }
+    }
+
     /* update oscillator levels based on current algorithm */
 
     /* 1 carrier - chain  */
@@ -764,6 +895,39 @@ short int voice_update_all()
     else
       level = 0;
 
+    /* swap in noise on oscillator 4 if necessary */
+    if ((v->noise_mode == PATCH_NOISE_MODE_SQUARE) || 
+        (v->noise_mode == PATCH_NOISE_MODE_SAW))
+    {
+      level -= osc_level[3];
+
+      masked_phase = (v->noise_lfsr & 0x3FF);
+
+      if (v->noise_mode == PATCH_NOISE_MODE_SQUARE)
+        final_index = 0;
+      else if (v->noise_mode == PATCH_NOISE_MODE_SAW)
+      {
+        if (masked_phase < 512)
+          final_index = ((511 - masked_phase) * 4095) / 512;
+        else
+          final_index = ((masked_phase - 512) * 4095) / 512;
+      }
+      else
+        final_index = 4095;
+
+      final_index += (osc_env_index[3] << 2);
+
+      if (final_index < 0)
+        final_index = 0;
+      else if (final_index > 4095)
+        final_index = 4095;
+
+      if (masked_phase < 512)
+        level += S_voice_db_to_linear_table[final_index];
+      else
+        level -= S_voice_db_to_linear_table[final_index];
+    }
+
     /* set voice level */
     v->level = level;
   }
@@ -776,7 +940,7 @@ short int voice_update_all()
 *******************************************************************************/
 short int voice_generate_tables()
 {
-  int     i;
+  int     m;
   double  val;
 
   /* ym2612 - 10 bit envelope (shifted to 12 bit), 12 bit sine, 13 bit sum    */
@@ -787,10 +951,10 @@ short int voice_generate_tables()
   /* db to linear scale conversion */
   S_voice_db_to_linear_table[0] = 32767;
 
-  for (i = 1; i < 4095; i++)
+  for (m = 1; m < 4095; m++)
   {
-    S_voice_db_to_linear_table[i] = 
-      (short int) ((32767.0f * exp(-log(10) * (DB_STEP_12_BIT / 10) * i)) + 0.5f);
+    S_voice_db_to_linear_table[m] = 
+      (short int) ((32767.0f * exp(-log(10) * (DB_STEP_12_BIT / 10) * m)) + 0.5f);
   }
 
   S_voice_db_to_linear_table[4095] = 0;
@@ -801,29 +965,45 @@ short int voice_generate_tables()
   S_voice_wavetable_sine[0] = 4095;
   S_voice_wavetable_sine[256] = 0;
 
-  for (i = 1; i < 256; i++)
+  for (m = 1; m < 256; m++)
   {
-    val = sin(TWO_PI * (i / 1024.0f));
-    S_voice_wavetable_sine[i] = (short int) ((10 * (log(1 / val) / log(10)) / DB_STEP_12_BIT) + 0.5f);
-    S_voice_wavetable_sine[512 - i] = S_voice_wavetable_sine[i];
+    val = sin(TWO_PI * (m / 1024.0f));
+    S_voice_wavetable_sine[m] = (short int) ((10 * (log(1 / val) / log(10)) / DB_STEP_12_BIT) + 0.5f);
+    S_voice_wavetable_sine[512 - m] = S_voice_wavetable_sine[m];
+  }
+
+  /* noise phase increment table */
+  for (m = 0; m < PATCH_NOISE_FREQUENCY_NUM_VALUES; m++)
+  {
+    S_voice_noise_phase_increment_table[m] = 
+      (int) ((S_voice_noise_frequency_table[m] * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
   }
 
 #if 0
   /* print out db to linear table values */
-  for (i = 0; i < 4096; i += 4)
+  for (m = 0; m < 4096; m += 4)
   {
-    printf("DB to Linear Table Index %d: %d\n", i, S_voice_db_to_linear_table[i]);
+    printf("DB to Linear Table Index %d: %d\n", m, S_voice_db_to_linear_table[m]);
   }
 #endif
 
 #if 0
   /* print out sine wavetable values */
-  for (i = 0; i < 256; i++)
+  for (m = 0; m < 256; m++)
   {
-    val = sin(TWO_PI * (i / 1024.0f));
+    val = sin(TWO_PI * (m / 1024.0f));
     printf("Sine Wavetable Index %d: %f, %d (DB: %d)\n", 
-            i, val, S_voice_db_to_linear_table[S_voice_wavetable_sine[i]], 
-                    S_voice_wavetable_sine[i]);
+            m, val, S_voice_db_to_linear_table[S_voice_wavetable_sine[m]], 
+                    S_voice_wavetable_sine[m]);
+  }
+#endif
+
+#if 0
+  /* print out noise phase increments */
+  for (m = 0; m < PATCH_NOISE_FREQUENCY_NUM_VALUES; m++)
+  {
+    printf( "Noise Freq %d (%f hz): %d \n", 
+            m, S_voice_noise_frequency_table[m], S_voice_noise_phase_increment_table[m]);
   }
 #endif
 

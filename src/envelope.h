@@ -10,7 +10,9 @@
 typedef struct envelope
 {
   /* keyscaling settings */
-  short int ks_mode;
+  short int key_follow_rate;
+  short int key_follow_level;
+
   short int ks_rate_fraction;
   short int ks_level_fraction;
   short int ks_break_note;
@@ -27,7 +29,6 @@ typedef struct envelope
   short int sustain_pedal;
 
   /* current note & offset */
-  short int note;
   short int offset;
   short int freq_mode;
 
@@ -37,9 +38,11 @@ typedef struct envelope
   int d2_row;
   int r_row;
 
-  /* alternate rows (with sustain pedal) */
-  int alt_d2_row;
-  int alt_r_row;
+  /* alternate row (with sustain pedal) */
+  int pedal_row;
+
+  /* hold switch */
+  short int hold_active;
 
   /* current state, row */
   int state;

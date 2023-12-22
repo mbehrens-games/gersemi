@@ -11,20 +11,14 @@ typedef struct sweep
 {
   /* sweep parameters */
   short int mode;
-  short int legato;
   short int speed;
 
   /* phase, phase increment */
   unsigned int phase;
   unsigned int increment;
 
-  /* switch */
-  short int portamento_switch;
-
-  /* notes, offset */
-  short int start_note;
-  short int end_note;
-
+  /* note, offset */
+  short int note;
   short int offset;
 
   /* tempo */
@@ -45,10 +39,8 @@ short int sweep_load_patch(int voice_index, int patch_index);
 
 short int sweep_set_tempo(int voice_index, short int tempo);
 
-short int sweep_set_portamento_switch_on(int voice_index);
-short int sweep_set_portamento_switch_off(int voice_index);
-
-short int sweep_trigger(int voice_index, int new_start_note, int new_end_note);
+short int sweep_set_note(int voice_index, int note);
+short int sweep_trigger(int voice_index, int note);
 
 short int sweep_update_all();
 

@@ -61,18 +61,14 @@ short int sweep_reset(int voice_index)
 
   /* initialize sweep variables */
   sw->mode = PATCH_PORTAMENTO_MODE_DEFAULT;
-  sw->legato = PATCH_PORTAMENTO_LEGATO_DEFAULT;
   sw->speed = PATCH_PORTAMENTO_SPEED_DEFAULT;
 
   sw->phase = 0;
+
   sw->increment = 
-    S_sweep_phase_increment_table[TEMPO_DEFAULT - TEMPO_LOWER_BOUND][PATCH_PORTAMENTO_SPEED_DEFAULT - PATCH_PORTAMENTO_SPEED_LOWER_BOUND];;
+    S_sweep_phase_increment_table[TEMPO_DEFAULT - TEMPO_LOWER_BOUND][PATCH_PORTAMENTO_SPEED_DEFAULT - PATCH_PORTAMENTO_SPEED_LOWER_BOUND];
 
-  sw->portamento_switch = MIDI_CONT_PORTAMENTO_SWITCH_OFF;
-
-  sw->start_note = TUNING_NOTE_BLANK;
-  sw->end_note = TUNING_NOTE_BLANK;
-
+  sw->note = TUNING_NOTE_BLANK;
   sw->offset = 0;
 
   sw->tempo = TEMPO_DEFAULT;
@@ -112,15 +108,6 @@ short int sweep_load_patch(int voice_index, int patch_index)
   }
   else
     sw->mode = PATCH_PORTAMENTO_MODE_LOWER_BOUND;
-
-  /* legato */
-  if ((p->portamento_legato >= PATCH_PORTAMENTO_LEGATO_LOWER_BOUND) && 
-      (p->portamento_legato <= PATCH_PORTAMENTO_LEGATO_UPPER_BOUND))
-  {
-    sw->legato = p->portamento_legato;
-  }
-  else
-    sw->legato = PATCH_PORTAMENTO_LEGATO_LOWER_BOUND;
 
   /* speed */
   if ((p->portamento_speed >= PATCH_PORTAMENTO_SPEED_LOWER_BOUND) && 
@@ -168,9 +155,9 @@ short int sweep_set_tempo(int voice_index, short int tempo)
 }
 
 /*******************************************************************************
-** sweep_set_portamento_switch_off()
+** sweep_set_note()
 *******************************************************************************/
-short int sweep_set_portamento_switch_off(int voice_index)
+short int sweep_set_note(int voice_index, int note)
 {
   sweep* sw;
 
@@ -181,28 +168,15 @@ short int sweep_set_portamento_switch_off(int voice_index)
   /* obtain sweep pointer */
   sw = &G_sweep_bank[voice_index];
 
-  /* turn the portamento switch off */
-  sw->portamento_switch = MIDI_CONT_PORTAMENTO_SWITCH_OFF;
+  /* determine if the new note is valid */
+  if (note == TUNING_NOTE_BLANK)
+    return 0;
 
-  return 0;
-}
+  if ((note < TUNING_NOTE_A0) || (note > TUNING_NOTE_C8))
+    return 0;
 
-/*******************************************************************************
-** sweep_set_portamento_switch_on()
-*******************************************************************************/
-short int sweep_set_portamento_switch_on(int voice_index)
-{
-  sweep* sw;
-
-  /* make sure that the voice index is valid */
-  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
-    return 1;
-
-  /* obtain sweep pointer */
-  sw = &G_sweep_bank[voice_index];
-
-  /* turn the portamento switch on */
-  sw->portamento_switch = MIDI_CONT_PORTAMENTO_SWITCH_ON;
+  /* set the note */
+  sw->note = note;
 
   return 0;
 }
@@ -210,9 +184,11 @@ short int sweep_set_portamento_switch_on(int voice_index)
 /*******************************************************************************
 ** sweep_trigger()
 *******************************************************************************/
-short int sweep_trigger(int voice_index, int new_start_note, int new_end_note)
+short int sweep_trigger(int voice_index, int note)
 {
   sweep* sw;
+
+  int tuning_index;
 
   /* make sure that the voice index is valid */
   if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
@@ -221,27 +197,28 @@ short int sweep_trigger(int voice_index, int new_start_note, int new_end_note)
   /* obtain sweep pointer */
   sw = &G_sweep_bank[voice_index];
 
-  /* determine if the new notes are valid */
-  if ((new_start_note < TUNING_NOTE_A0) || (new_start_note > TUNING_NOTE_C8))
+  /* determine if the new note is valid */
+  if (note == TUNING_NOTE_BLANK)
     return 0;
 
-  if ((new_end_note < TUNING_NOTE_A0) || (new_end_note > TUNING_NOTE_C8))
+  if ((note < TUNING_NOTE_A0) || (note > TUNING_NOTE_C8))
     return 0;
 
-  /* check if the portamento is on */
-  if (sw->portamento_switch == MIDI_CONT_PORTAMENTO_SWITCH_OFF)
+  /* if the starting note is undefined, just set the note and return */
+  if (sw->note == TUNING_NOTE_BLANK)
+  {
+    sw->note = note;
+    sw->offset = 0;
+
     return 0;
+  }
 
-  /* if there is currently a sweep active, calculate the      */
-  /* offset based on the current position on the tuning table */
-  if (sw->offset != 0)
-    sw->offset = sw->offset + ((sw->end_note - new_end_note) * TUNING_NUM_SEMITONE_STEPS);
-  else
-    sw->offset = (new_start_note - new_end_note) * TUNING_NUM_SEMITONE_STEPS;
+  /* calculate the offset based on the current  */
+  /* position of the sweep in the tuning table  */
+  tuning_index = (sw->note * TUNING_NUM_SEMITONE_STEPS) + sw->offset;
 
-  /* set the start and end notes in the sweep */
-  sw->start_note = new_start_note;
-  sw->end_note = new_end_note;
+  sw->note = note;
+  sw->offset = tuning_index - (note * TUNING_NUM_SEMITONE_STEPS);
 
   /* reset phase */
   sw->phase = 0;
@@ -249,7 +226,7 @@ short int sweep_trigger(int voice_index, int new_start_note, int new_end_note)
   /* set level based on mode */
   if (sw->mode == PATCH_PORTAMENTO_MODE_BEND)
     sw->level = sw->offset;
-  else if (sw->mode == PATCH_PORTAMENTO_MODE_HALF_STEPS)
+  else if (sw->mode == PATCH_PORTAMENTO_MODE_SEMITONES)
   {
     if (sw->offset >= 0)
     {
@@ -304,7 +281,7 @@ short int sweep_update_all()
     /* set level based on mode */
     if (sw->mode == PATCH_PORTAMENTO_MODE_BEND)
       sw->level = sw->offset;
-    else if (sw->mode == PATCH_PORTAMENTO_MODE_HALF_STEPS)
+    else if (sw->mode == PATCH_PORTAMENTO_MODE_SEMITONES)
     {
       if (sw->offset >= 0)
       {

@@ -9,8 +9,9 @@
 
 typedef struct voice
 {
-  /* algorithm */
+  /* algorithm, sync */
   short int algorithm;
+  short int sync;
 
   /* currently playing notes, pitch indices */
   int base_note;
@@ -26,11 +27,18 @@ typedef struct voice
   /* voice parameters */
   short int osc_waveform[BANK_OSCS_AND_ENVS_PER_VOICE];
   short int osc_feedback_multiplier[BANK_OSCS_AND_ENVS_PER_VOICE];
-  short int osc_sync[BANK_OSCS_AND_ENVS_PER_VOICE];
+  short int osc_phi[BANK_OSCS_AND_ENVS_PER_VOICE];
 
   short int osc_freq_mode[BANK_OSCS_AND_ENVS_PER_VOICE];
   short int osc_offset[BANK_OSCS_AND_ENVS_PER_VOICE];
   short int osc_detune[BANK_OSCS_AND_ENVS_PER_VOICE];
+
+  /* noise */
+  short int     noise_mode;
+  unsigned int  noise_lfsr;
+
+  unsigned int  noise_phase;
+  unsigned int  noise_increment;
 
   /* effect modes */
   short int tremolo_mode;
@@ -64,7 +72,9 @@ short int voice_setup_all();
 short int voice_reset(int voice_index);
 
 short int voice_load_patch(int voice_index, int patch_index);
+
 short int voice_set_note(int voice_index, int note);
+short int voice_sync_phases(int voice_index);
 
 short int voice_update_all();
 
