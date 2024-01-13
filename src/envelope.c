@@ -3,6 +3,7 @@
 *******************************************************************************/
 
 #include <stdlib.h>
+#include <math.h>
 
 #include "bank.h"
 #include "clock.h"
@@ -25,6 +26,9 @@ enum
   ENVELOPE_HOLD_OFF = 0, 
   ENVELOPE_HOLD_ON 
 };
+
+#define ENVELOPE_AMPLITUDE_STEP 12
+#define ENVELOPE_SUSTAIN_STEP   32
 
 #define ENVELOPE_TABLE_NUM_ROWS       16
 #define ENVELOPE_TABLE_RATES_PER_ROW  12
@@ -80,67 +84,62 @@ static float S_envelope_freq_table[12] =
                 30.203978005814192f   /* 16 * 2^(11/12) */
               };
 
-/* for the following tables, the values are found using the formula:  */
-/*   (10 * (log(1 / val) / log(10)) / DB_STEP_10_BIT,                 */
-/*   where DB_STEP_10_BIT = 0.046875                                  */
+/* amplitude & sustain tables */
+static short int  S_envelope_amplitude_table[PATCH_ENV_AMPLITUDE_NUM_VALUES] = 
+                  { 1023, 
+                    ENVELOPE_AMPLITUDE_STEP * 31, 
+                    ENVELOPE_AMPLITUDE_STEP * 30, 
+                    ENVELOPE_AMPLITUDE_STEP * 29, 
+                    ENVELOPE_AMPLITUDE_STEP * 28, 
+                    ENVELOPE_AMPLITUDE_STEP * 27, 
+                    ENVELOPE_AMPLITUDE_STEP * 26, 
+                    ENVELOPE_AMPLITUDE_STEP * 25, 
+                    ENVELOPE_AMPLITUDE_STEP * 24, 
+                    ENVELOPE_AMPLITUDE_STEP * 23, 
+                    ENVELOPE_AMPLITUDE_STEP * 22, 
+                    ENVELOPE_AMPLITUDE_STEP * 21, 
+                    ENVELOPE_AMPLITUDE_STEP * 20, 
+                    ENVELOPE_AMPLITUDE_STEP * 19, 
+                    ENVELOPE_AMPLITUDE_STEP * 18, 
+                    ENVELOPE_AMPLITUDE_STEP * 17, 
+                    ENVELOPE_AMPLITUDE_STEP * 16, 
+                    ENVELOPE_AMPLITUDE_STEP * 15, 
+                    ENVELOPE_AMPLITUDE_STEP * 14, 
+                    ENVELOPE_AMPLITUDE_STEP * 13, 
+                    ENVELOPE_AMPLITUDE_STEP * 12, 
+                    ENVELOPE_AMPLITUDE_STEP * 11, 
+                    ENVELOPE_AMPLITUDE_STEP * 10, 
+                    ENVELOPE_AMPLITUDE_STEP *  9, 
+                    ENVELOPE_AMPLITUDE_STEP *  8, 
+                    ENVELOPE_AMPLITUDE_STEP *  7, 
+                    ENVELOPE_AMPLITUDE_STEP *  6, 
+                    ENVELOPE_AMPLITUDE_STEP *  5, 
+                    ENVELOPE_AMPLITUDE_STEP *  4, 
+                    ENVELOPE_AMPLITUDE_STEP *  3, 
+                    ENVELOPE_AMPLITUDE_STEP *  2, 
+                    ENVELOPE_AMPLITUDE_STEP *  1, 
+                    ENVELOPE_AMPLITUDE_STEP *  0 
+                  };
 
-/* amplitude table */
-static short int S_envelope_amplitude_table[PATCH_ENV_AMPLITUDE_NUM_VALUES] = 
-  { 1023,     /*  0             */
-    12 * 31,  /* 10^(-277/160)  */
-    12 * 30,  /* ...            */
-    12 * 29,  /* ...            */
-    12 * 28,  /* ...            */
-    12 * 27,  /* ...            */
-    12 * 26,  /* ...            */
-    12 * 25,  /* ...            */
-    12 * 24,  /* ...            */
-    12 * 23,  /* ...            */
-    12 * 22,  /* ...            */
-    12 * 21,  /* ...            */
-    12 * 20,  /* ...            */
-    12 * 19,  /* ...            */
-    12 * 18,  /* ...            */
-    12 * 17,  /* ...            */
-    12 * 16,  /* 10^(-144/160)  */
-    12 * 15,  /* ...            */
-    12 * 14,  /* ...            */
-    12 * 13,  /* ...            */
-    12 * 12,  /* ...            */
-    12 * 11,  /* ...            */
-    12 * 10,  /* ...            */
-    12 * 9,   /* ...            */
-    12 * 8,   /* ...            */
-    12 * 7,   /* ...            */
-    12 * 6,   /* ...            */
-    12 * 5,   /* ...            */
-    12 * 4,   /* ...            */
-    12 * 3,   /* ...            */
-    12 * 2,   /* ...            */
-    12 * 1,   /* 10^(-9/160)    */
-         0    /*  1             */
-  };
-
-/* sustain table */
-static short int S_envelope_sustain_table[PATCH_ENV_SUSTAIN_NUM_VALUES] = 
-  { 1023,     /*  0           */
-    30 * 15,  /* 10^(-135/64) */
-    30 * 14,  /* ...          */
-    30 * 13,  /* ...          */
-    30 * 12,  /* ...          */
-    30 * 11,  /* ...          */
-    30 * 10,  /* ...          */
-    30 * 9,   /* ...          */
-    30 * 8,   /* 10^(-72/64)  */
-    30 * 7,   /* ...          */
-    30 * 6,   /* ...          */
-    30 * 5,   /* ...          */
-    30 * 4,   /* ...          */
-    30 * 3,   /* ...          */
-    30 * 2,   /* ...          */
-    30 * 1,   /* 10^(-9/64)   */
-         0    /*  1           */
-  };
+static short int  S_envelope_sustain_table[PATCH_ENV_SUSTAIN_NUM_VALUES] = 
+                  { 1023, 
+                    ENVELOPE_SUSTAIN_STEP * 15, 
+                    ENVELOPE_SUSTAIN_STEP * 14, 
+                    ENVELOPE_SUSTAIN_STEP * 13, 
+                    ENVELOPE_SUSTAIN_STEP * 12, 
+                    ENVELOPE_SUSTAIN_STEP * 11, 
+                    ENVELOPE_SUSTAIN_STEP * 10, 
+                    ENVELOPE_SUSTAIN_STEP *  9, 
+                    ENVELOPE_SUSTAIN_STEP *  8, 
+                    ENVELOPE_SUSTAIN_STEP *  7, 
+                    ENVELOPE_SUSTAIN_STEP *  6, 
+                    ENVELOPE_SUSTAIN_STEP *  5, 
+                    ENVELOPE_SUSTAIN_STEP *  4, 
+                    ENVELOPE_SUSTAIN_STEP *  3, 
+                    ENVELOPE_SUSTAIN_STEP *  2, 
+                    ENVELOPE_SUSTAIN_STEP *  1, 
+                    ENVELOPE_SUSTAIN_STEP *  0 
+                  };
 
 /* keyscaling depth table */
 
@@ -196,6 +195,10 @@ static int  S_envelope_multiple_table[16] =
               4 * 12 + 0    /* 16x  */
             };
 
+/* pedal adjust table */
+static short int  S_envelope_pedal_adjust_table[PATCH_PEDAL_ADJUST_NUM_VALUES] = 
+                  { -16, -14, -12, -10, -8, -6, -4, -2, 0 };
+
 /* envelope bank */
 envelope G_envelope_bank[BANK_NUM_ENVELOPES];
 
@@ -232,9 +235,6 @@ short int envelope_reset(int voice_index)
     e = &G_envelope_bank[BANK_OSCS_AND_ENVS_PER_VOICE * voice_index + m];
 
     /* initialize envelope variables */
-    e->key_follow_rate = PATCH_KEY_FOLLOW_MODE_DEFAULT;
-    e->key_follow_level = PATCH_KEY_FOLLOW_MODE_DEFAULT;
-
     e->ks_rate_fraction = 
       S_envelope_keyscaling_fraction_table[PATCH_ENV_KEYSCALING_DEFAULT - PATCH_ENV_KEYSCALING_LOWER_BOUND];
     e->ks_level_fraction = 
@@ -304,24 +304,6 @@ short int envelope_load_patch(int voice_index, int patch_index)
     /* obtain envelope pointer */
     e = &G_envelope_bank[BANK_OSCS_AND_ENVS_PER_VOICE * voice_index + m];
 
-    /* key follow (rate) */
-    if ((p->key_follow_rate >= PATCH_KEY_FOLLOW_MODE_LOWER_BOUND) && 
-        (p->key_follow_rate <= PATCH_KEY_FOLLOW_MODE_UPPER_BOUND))
-    {
-      e->key_follow_rate = p->key_follow_rate;
-    }
-    else
-      e->key_follow_rate = PATCH_KEY_FOLLOW_MODE_LOWER_BOUND;
-
-    /* key follow (level) */
-    if ((p->key_follow_level >= PATCH_KEY_FOLLOW_MODE_LOWER_BOUND) && 
-        (p->key_follow_level <= PATCH_KEY_FOLLOW_MODE_UPPER_BOUND))
-    {
-      e->key_follow_level = p->key_follow_level;
-    }
-    else
-      e->key_follow_level = PATCH_KEY_FOLLOW_MODE_LOWER_BOUND;
-
     /* attack rate */
     if ((p->env_attack[m] >= PATCH_ENV_RATE_LOWER_BOUND) && 
         (p->env_attack[m] <= PATCH_ENV_RATE_UPPER_BOUND))
@@ -375,7 +357,7 @@ short int envelope_load_patch(int voice_index, int patch_index)
         (p->pedal_adjust <= PATCH_PEDAL_ADJUST_UPPER_BOUND))
     {
       /* set sustained rate */
-      shifted_rate = p->env_decay_2[m] + (2 * p->pedal_adjust);
+      shifted_rate = p->env_decay_2[m] + S_envelope_pedal_adjust_table[p->pedal_adjust - PATCH_PEDAL_ADJUST_LOWER_BOUND];
 
       if (shifted_rate < PATCH_ENV_RATE_LOWER_BOUND)
         shifted_rate = PATCH_ENV_RATE_LOWER_BOUND;
@@ -556,8 +538,7 @@ short int envelope_set_note(int voice_index, int note)
 
   envelope* e;
 
-  short int rate_note;
-  short int level_note;
+  short int adjusted_note;
 
   /* make sure that the voice index is valid */
   if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
@@ -570,45 +551,25 @@ short int envelope_set_note(int voice_index, int note)
 
     /* set the current note */
     if (note < 0)
-    {
-      rate_note = 0;
-      level_note = 0;
-    }
+      adjusted_note = 0;
     else if (note > TUNING_NUM_NOTES - 1)
-    {
-      rate_note = TUNING_NUM_NOTES - 1;
-      level_note = TUNING_NUM_NOTES - 1;
-    }
+      adjusted_note = TUNING_NUM_NOTES - 1;
     else
-    {
-      rate_note = note;
-      level_note = note;
-    }
+      adjusted_note = note;
 
     /* apply note offset if necessary */
-    if (e->key_follow_rate == PATCH_KEY_FOLLOW_MODE_NOTE)
-    {
-      if (e->freq_mode == PATCH_OSC_FREQ_MODE_RATIO)
-        rate_note += e->offset;
-      else if (e->freq_mode == PATCH_OSC_FREQ_MODE_FIXED)
-        rate_note = e->offset;
-    }
-
-    if (e->key_follow_level == PATCH_KEY_FOLLOW_MODE_NOTE)
-    {
-      if (e->freq_mode == PATCH_OSC_FREQ_MODE_RATIO)
-        level_note += e->offset;
-      else if (e->freq_mode == PATCH_OSC_FREQ_MODE_FIXED)
-        level_note = e->offset;
-    }
+    if (e->freq_mode == PATCH_OSC_FREQ_MODE_RATIO)
+      adjusted_note += e->offset;
+    else if (e->freq_mode == PATCH_OSC_FREQ_MODE_FIXED)
+      adjusted_note = e->offset;
 
     /* compute rate & level adjustments based on note */
 
     /* note that adding 64 to the base level is   */
     /* the same as multiplying it by 1/2 (once    */
     /* converted back to linear instead of log).  */
-    e->rate_adjustment = (12 * (rate_note - TUNING_NOTE_C0)) / e->ks_rate_fraction;
-    e->level_adjustment = (64 * (level_note - e->ks_break_note)) / e->ks_level_fraction;
+    e->rate_adjustment = (12 * (adjusted_note - TUNING_NOTE_C0)) / e->ks_rate_fraction;
+    e->level_adjustment = (64 * (adjusted_note - e->ks_break_note)) / e->ks_level_fraction;
   }
 
   return 0;
@@ -848,7 +809,7 @@ short int envelope_generate_tables()
   }
 
 #if 0
-  printf("Phase Increment Table:\n");
+  printf("Envelope Phase Increment Table:\n");
 
   for (m = 0; m < ENVELOPE_TABLE_SIZE; m++)
     printf("Envelope Rate %d Phase Inc: %d\n", m, S_envelope_phase_increment_table[m]);

@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "global.h"
 #include "path.h"
@@ -166,14 +167,7 @@ short int shaders_load_shaders(char* filename)
     return 1;
   }
 
-  if ((signature[0] != 'S') || 
-      (signature[1] != 'H') || 
-      (signature[2] != 'A') || 
-      (signature[3] != 'D') || 
-      (signature[4] != 'E') || 
-      (signature[5] != 'R') || 
-      (signature[6] != '2') || 
-      (signature[7] != 'Z'))
+  if (strncmp(signature, "SHADER2Z", 8))
   {
     fclose(fp);
     return 1;

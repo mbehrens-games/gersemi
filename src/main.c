@@ -18,6 +18,7 @@
 #include "global.h"
 #include "graphics.h"
 #include "hola.h"
+#include "import.h"
 #include "instrument.h"
 #include "layout.h"
 #include "palette.h"
@@ -147,11 +148,19 @@ int main(int argc, char *argv[])
   /* reset synth */
   synth_reset_banks();
 
-  /* testing: load test patch set file */
-  fileio_patch_set_load(G_path_patch_set_test_1, 0);
+#if 0
+  /* testing: load test cart file */
+  fileio_cart_load(1, G_path_cart_test_1);
+#else
+  /* testing: load test .tfi files */
+  import_tfi_load(1, 1, G_path_import_tfi_1, 0);
+  import_tfi_load(1, 2, G_path_import_tfi_2, 0);
+  import_sbi_load(1, 3, G_path_import_sbi_1, 0);
+  import_sbi_load(1, 4, G_path_import_sbi_2, 0);
+#endif
 
   /* testing */
-  instrument_load_patch(G_patch_edit_instrument_index, G_patch_edit_patch_index);
+  instrument_load_patch(G_patch_edit_instrument_index, 0);
 
   /* initialize game screen */
   program_loop_change_screen(PROGRAM_SCREEN_PATCHES);
@@ -285,7 +294,7 @@ int main(int argc, char *argv[])
   /* cleanup window and quit */
 cleanup_all:
   /* testing: save test patch set file */
-  fileio_patch_set_save(G_path_patch_set_test_1, 0);
+  fileio_cart_save(1, G_path_cart_test_1);
 
   audio_deinit();
 cleanup_textures:

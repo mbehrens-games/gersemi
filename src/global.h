@@ -17,10 +17,14 @@ extern unsigned int G_saved_timer_count;
 extern int G_current_scroll_amount;
 extern int G_max_scroll_amount;
 
-extern int G_patch_edit_patch_index;
+extern int G_patch_edit_cart_number;
+extern int G_patch_edit_patch_number;
+
 extern int G_patch_edit_instrument_index;
 
 extern int G_patch_edit_octave;
+
+extern int G_patch_edit_note_velocity;
 extern int G_patch_edit_mod_wheel_pos;
 extern int G_patch_edit_aftertouch_pos;
 extern int G_patch_edit_pitch_wheel_pos;

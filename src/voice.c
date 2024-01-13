@@ -7,6 +7,7 @@
 #include <math.h>
 
 #include "clock.h"
+#include "dbstep.h"
 #include "lfo.h"
 #include "midicont.h"
 #include "patch.h"
@@ -17,9 +18,9 @@
 #define PI      3.14159265358979323846f
 #define TWO_PI  6.28318530717958647693f
 
-#define DB_STEP_12_BIT 0.01171875f
-
 #define VOICE_BASE_NOISE_FREQUENCY 440.0f /* A-4 */
+
+#define VOICE_VELOCITY_LEVEL_STEP 32
 
 #define VOICE_WAVETABLE_LOOKUP(num, phase)                                     \
   masked_phase = ((phase) & 0x3FF);                                            \
@@ -73,6 +74,7 @@
   else                                                                         \
     final_index = 4095;                                                        \
                                                                                \
+  /* apply envelope */                                                         \
   final_index += (osc_env_index[num] << 2);                                    \
                                                                                \
   if (final_index < 0)                                                         \
@@ -150,18 +152,18 @@
   osc_phase_mod[num] = (osc_level[num] >> 3) & 0x3FF;
 
 /* feedback table */
-static int  S_voice_feedback_table[8] = 
+static int  S_voice_feedback_table[PATCH_OSC_FEEDBACK_NUM_VALUES] = 
             { 0, 1, 2, 4, 8, 16, 32, 64};
 
 /* phase shift table */
-static int  S_voice_phase_shift_table[4] = 
+static int  S_voice_phase_shift_table[PATCH_OSC_PHI_NUM_VALUES] = 
             { 0x00000000, 0x04000000, 0x08000000, 0x0A000000};
 
 /* multiple table */
 
 /* the values are in semitones    */
 /* they form the harmonic series! */
-static int  S_voice_multiple_table[16] = 
+static int  S_voice_multiple_table[PATCH_OSC_MULTIPLE_NUM_VALUES] = 
             { 0 * 12 + 0,   /*  1x  */
               1 * 12 + 0,   /*  2x  */
               1 * 12 + 7,   /*  3x  */
@@ -180,8 +182,12 @@ static int  S_voice_multiple_table[16] =
               4 * 12 + 0    /* 16x  */
             };
 
+/* octave table */
+static int  S_voice_octave_table[PATCH_OSC_OCTAVE_NUM_VALUES] = 
+            { -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+
 /* detune table */
-static int  S_voice_detune_table[33] = 
+static int  S_voice_detune_table[PATCH_OSC_DETUNE_NUM_VALUES] = 
             { (-16 * TUNING_NUM_SEMITONE_STEPS) / 32, 
               (-15 * TUNING_NUM_SEMITONE_STEPS) / 32, 
               (-14 * TUNING_NUM_SEMITONE_STEPS) / 32, 
@@ -253,6 +259,19 @@ static float  S_voice_noise_frequency_table[PATCH_NOISE_FREQUENCY_NUM_VALUES] =
                 VOICE_BASE_NOISE_FREQUENCY * 16 * 1.875f 
               };
 
+/* velocity scaling table */
+static short int  S_voice_velocity_scaling_table[PATCH_VELOCITY_SCALING_NUM_VALUES] = 
+                  { 0,  
+                    VOICE_VELOCITY_LEVEL_STEP * 1, 
+                    VOICE_VELOCITY_LEVEL_STEP * 2, 
+                    VOICE_VELOCITY_LEVEL_STEP * 3, 
+                    VOICE_VELOCITY_LEVEL_STEP * 4, 
+                    VOICE_VELOCITY_LEVEL_STEP * 5, 
+                    VOICE_VELOCITY_LEVEL_STEP * 6, 
+                    VOICE_VELOCITY_LEVEL_STEP * 7, 
+                    VOICE_VELOCITY_LEVEL_STEP * 8 
+                  };
+
 /* db to linear table */
 static short int S_voice_db_to_linear_table[4096];
 
@@ -299,7 +318,7 @@ short int voice_reset(int voice_index)
   v->algorithm = PATCH_ALGORITHM_DEFAULT;
 
   /* sync */
-  v->sync = PATCH_SYNC_OSC_DEFAULT;
+  v->sync = PATCH_SYNC_DEFAULT;
 
   /* base note */
   v->base_note = TUNING_NOTE_BLANK;
@@ -331,9 +350,19 @@ short int voice_reset(int voice_index)
   v->noise_phase = 0;
   v->noise_increment = S_voice_noise_phase_increment_table[PATCH_NOISE_FREQUENCY_DEFAULT - PATCH_NOISE_FREQUENCY_LOWER_BOUND];
 
-  /* effect modes */
-  v->tremolo_mode = 0;
-  v->boost_mode = 0;
+  /* amplitude effect modes */
+  v->tremolo_mode = PATCH_TREMOLO_MODE_DEFAULT;
+  v->boost_mode = PATCH_BOOST_MODE_DEFAULT;
+  v->velocity_mode = PATCH_VELOCITY_MODE_DEFAULT;
+
+  /* velocity scaling, adjustment */
+  v->velocity_scaling_amount = 
+    S_voice_velocity_scaling_table[PATCH_VELOCITY_SCALING_DEFAULT - PATCH_VELOCITY_SCALING_LOWER_BOUND];
+
+  v->velocity_adjustment = 0;
+
+  /* note velocity */
+  v->note_velocity = MIDI_CONT_NOTE_VELOCITY_DEFAULT;
 
   /* envelope levels */
   for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
@@ -390,13 +419,13 @@ short int voice_load_patch(int voice_index, int patch_index)
     v->algorithm = PATCH_ALGORITHM_LOWER_BOUND;
 
   /* sync */
-  if ((p->sync_osc >= PATCH_SYNC_OSC_LOWER_BOUND) && 
-      (p->sync_osc <= PATCH_SYNC_OSC_UPPER_BOUND))
+  if ((p->sync_osc >= PATCH_SYNC_LOWER_BOUND) && 
+      (p->sync_osc <= PATCH_SYNC_UPPER_BOUND))
   {
     v->sync = p->sync_osc;
   }
   else
-    v->sync = PATCH_SYNC_OSC_LOWER_BOUND;
+    v->sync = PATCH_SYNC_LOWER_BOUND;
 
   /* voice parameters, pitch index */
   for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
@@ -467,7 +496,7 @@ short int voice_load_patch(int voice_index, int patch_index)
       if ((p->osc_octave[m] >= PATCH_OSC_OCTAVE_LOWER_BOUND) && 
           (p->osc_octave[m] <= PATCH_OSC_OCTAVE_UPPER_BOUND))
       {
-        v->osc_offset[m] += 12 * (p->osc_octave[m] - PATCH_OSC_OCTAVE_LOWER_BOUND);
+        v->osc_offset[m] += 12 * S_voice_octave_table[p->osc_octave[m] - PATCH_OSC_OCTAVE_LOWER_BOUND];
       }
     }
     else
@@ -491,24 +520,6 @@ short int voice_load_patch(int voice_index, int patch_index)
     else
       v->osc_detune[m] = 0;
 
-    /* tremolo mode */
-    if ((p->tremolo_mode >= PATCH_TREMOLO_MODE_LOWER_BOUND) && 
-        (p->tremolo_mode <= PATCH_TREMOLO_MODE_UPPER_BOUND))
-    {
-      v->tremolo_mode = p->tremolo_mode;
-    }
-    else
-      v->tremolo_mode = PATCH_TREMOLO_MODE_LOWER_BOUND;
-
-    /* boost mode */
-    if ((p->boost_mode >= PATCH_BOOST_MODE_LOWER_BOUND) && 
-        (p->boost_mode <= PATCH_BOOST_MODE_UPPER_BOUND))
-    {
-      v->boost_mode = p->boost_mode;
-    }
-    else
-      v->boost_mode = PATCH_BOOST_MODE_LOWER_BOUND;
-
     /* determine oscillator note and pitch index */
     if (v->osc_freq_mode[m] == PATCH_OSC_FREQ_MODE_RATIO)
       v->osc_note[m] = v->base_note + v->osc_offset[m];
@@ -524,6 +535,46 @@ short int voice_load_patch(int voice_index, int patch_index)
       v->osc_pitch_index[m] = 0;
     else if (v->osc_pitch_index[m] >= TUNING_NUM_INDICES)
       v->osc_pitch_index[m] = TUNING_NUM_INDICES - 1;
+  }
+
+  /* tremolo mode */
+  if ((p->tremolo_mode >= PATCH_TREMOLO_MODE_LOWER_BOUND) && 
+      (p->tremolo_mode <= PATCH_TREMOLO_MODE_UPPER_BOUND))
+  {
+    v->tremolo_mode = p->tremolo_mode;
+  }
+  else
+    v->tremolo_mode = PATCH_TREMOLO_MODE_LOWER_BOUND;
+
+  /* boost mode */
+  if ((p->boost_mode >= PATCH_BOOST_MODE_LOWER_BOUND) && 
+      (p->boost_mode <= PATCH_BOOST_MODE_UPPER_BOUND))
+  {
+    v->boost_mode = p->boost_mode;
+  }
+  else
+    v->boost_mode = PATCH_BOOST_MODE_LOWER_BOUND;
+
+  /* velocity mode */
+  if ((p->velocity_mode >= PATCH_VELOCITY_MODE_LOWER_BOUND) && 
+      (p->velocity_mode <= PATCH_VELOCITY_MODE_UPPER_BOUND))
+  {
+    v->velocity_mode = p->velocity_mode;
+  }
+  else
+    v->velocity_mode = PATCH_VELOCITY_MODE_LOWER_BOUND;
+
+  /* velocity scaling */
+  if ((p->velocity_scaling >= PATCH_VELOCITY_SCALING_LOWER_BOUND) && 
+      (p->velocity_scaling <= PATCH_VELOCITY_SCALING_UPPER_BOUND))
+  {
+    v->velocity_scaling_amount = 
+      S_voice_velocity_scaling_table[p->velocity_scaling - PATCH_VELOCITY_SCALING_LOWER_BOUND];
+  }
+  else
+  {
+    v->velocity_scaling_amount = 
+      S_voice_velocity_scaling_table[PATCH_VELOCITY_SCALING_DEFAULT - PATCH_VELOCITY_SCALING_LOWER_BOUND];
   }
 
   /* noise mode */
@@ -570,6 +621,16 @@ short int voice_set_note(int voice_index, int note)
   /* set base note */
   v->base_note = note;
 
+  /* set note velocity adjustment */
+  if ((v->note_velocity >=  MIDI_CONT_NOTE_VELOCITY_LOWER_BOUND) && 
+      (v->note_velocity <=  MIDI_CONT_NOTE_VELOCITY_UPPER_BOUND))
+  {
+    v->velocity_adjustment = 
+      (v->velocity_scaling_amount * (MIDI_CONT_NOTE_VELOCITY_BREAK_POINT - v->note_velocity)) / MIDI_CONT_NOTE_VELOCITY_DIVISOR;
+  }
+  else
+    v->velocity_adjustment = 0;
+
   /* determine notes & pitch indices */
   for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
   {
@@ -609,7 +670,7 @@ short int voice_sync_phases(int voice_index)
   v = &G_voice_bank[voice_index];
 
   /* sync (reset phases) */
-  if (v->sync == PATCH_SYNC_OSC_ON)
+  if (v->sync == PATCH_SYNC_ON)
   {
     /* oscillators */
     for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
@@ -686,13 +747,18 @@ short int voice_update_all()
     else if (v->boost_mode == PATCH_BOOST_MODE_MODULATORS)
       amplitude_adjustment_modulators -= v->boost_input;
 
+    if (v->velocity_mode == PATCH_VELOCITY_MODE_CARRIERS)
+      amplitude_adjustment_carriers += v->velocity_adjustment;
+    else if (v->velocity_mode == PATCH_VELOCITY_MODE_MODULATORS)
+      amplitude_adjustment_modulators += v->velocity_adjustment;
+
     /* update envelopes */
     for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
     {
       osc_env_index[m] = v->env_input[m];
     }
 
-    /* apply tremolo & boost */
+    /* apply tremolo, boost, and note velocity */
     if (v->algorithm == PATCH_ALGORITHM_1C_CHAIN)
     {
       osc_env_index[2] += amplitude_adjustment_modulators;

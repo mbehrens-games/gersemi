@@ -140,10 +140,10 @@ short int bender_update_all()
     bound = S_bender_range_table[b->range - PATCH_PITCH_WHEEL_RANGE_LOWER_BOUND];
 
     /* apply pitch wheel */
-    if (b->pitch_wheel_input > 0)
-      shift = (bound * b->pitch_wheel_input) / MIDI_CONT_PITCH_WHEEL_UPPER_BOUND;
-    else if (b->pitch_wheel_input < 0)
-      shift = (bound * -b->pitch_wheel_input) / MIDI_CONT_PITCH_WHEEL_UPPER_BOUND;
+    if (b->pitch_wheel_input > MIDI_CONT_PITCH_WHEEL_CENTER_VALUE)
+      shift = (bound * (b->pitch_wheel_input - MIDI_CONT_PITCH_WHEEL_CENTER_VALUE)) / MIDI_CONT_PITCH_WHEEL_DIVISOR;
+    else if (b->pitch_wheel_input < MIDI_CONT_PITCH_WHEEL_CENTER_VALUE)
+      shift = (bound * (MIDI_CONT_PITCH_WHEEL_CENTER_VALUE - b->pitch_wheel_input)) / MIDI_CONT_PITCH_WHEEL_DIVISOR;
     else
       shift = 0;
 
@@ -160,13 +160,13 @@ short int bender_update_all()
       b->level = 0;
 
     /* invert level if necessary */
-    if (b->pitch_wheel_input < 0)
+    if (b->pitch_wheel_input <  MIDI_CONT_PITCH_WHEEL_CENTER_VALUE)
       b->level = -b->level;
 
     /* bound level */
-    if ((b->pitch_wheel_input > 0) && (b->level > bound))
+    if ((b->pitch_wheel_input > MIDI_CONT_PITCH_WHEEL_CENTER_VALUE) && (b->level > bound))
       b->level = bound;
-    else if ((b->pitch_wheel_input < 0) && (b->level < -bound))
+    else if ((b->pitch_wheel_input < MIDI_CONT_PITCH_WHEEL_CENTER_VALUE) && (b->level < -bound))
       b->level = -bound;
   }
 

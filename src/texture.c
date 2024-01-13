@@ -100,10 +100,7 @@ short int texture_load_all_from_file(char* filename)
     return 1;
   }
 
-  if ((signature[0] != 'G') || 
-      (signature[1] != 'E') || 
-      (signature[2] != 'R') || 
-      (signature[3] != 'S'))
+  if (strncmp(signature, "GERS", 4))
   {
     fclose(fp);
     return 1;
@@ -116,10 +113,7 @@ short int texture_load_all_from_file(char* filename)
     return 1;
   }
 
-  if ((type[0] != 'G') || 
-      (type[1] != 'R') || 
-      (type[2] != 'P') || 
-      (type[3] != 'H'))
+  if (strncmp(type, "GRPH", 4))
   {
     fclose(fp);
     return 1;

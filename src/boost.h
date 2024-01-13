@@ -10,7 +10,7 @@
 typedef struct boost
 {
   /* boost parameters */
-  short int depth;
+  short int amount;
 
   /* controller effects */
   short int mod_wheel_effect;

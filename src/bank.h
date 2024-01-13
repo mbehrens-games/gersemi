@@ -5,12 +5,10 @@
 #ifndef BANK_H
 #define BANK_H
 
-/* patches */
-#define BANK_NUM_INST_PATCHES (32 * 6)
-#define BANK_NUM_SFX_PATCHES  (32 * 2)
+#include "cart.h"
 
-#define BANK_NUM_PATCHES      ( BANK_NUM_INST_PATCHES +                        \
-                                BANK_NUM_SFX_PATCHES)
+/* patches */
+#define BANK_NUM_PATCHES (CART_NUM_CARTS * CART_PATCHES_PER_CART)
 
 #define BANK_PATCH_INDEX_IS_VALID(index)                                       \
   ((index >= 0) && (index < BANK_NUM_PATCHES))

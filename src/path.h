@@ -11,8 +11,15 @@ extern char*  G_path_shader_data;
 
 extern char*  G_path_pref;
 
-extern char*  G_path_patch_sets;
-extern char*  G_path_patch_set_test_1;
+extern char*  G_path_carts;
+extern char*  G_path_cart_test_1;
+
+extern char*  G_path_imports;
+extern char*  G_path_import_sbi_1;
+extern char*  G_path_import_sbi_2;
+extern char*  G_path_import_tfi_1;
+extern char*  G_path_import_tfi_2;
+
 extern char*  G_path_songs;
 
 /* function declarations */

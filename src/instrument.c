@@ -83,7 +83,7 @@ short int instrument_reset(int instrument_index)
   ins->panning = 0;
 
   /* note velocity */
-  ins->velocity = 0;
+  ins->note_velocity = MIDI_CONT_NOTE_VELOCITY_DEFAULT;
 
    /* mod wheel, aftertouch, pitch wheel */
   ins->mod_wheel_pos = MIDI_CONT_MOD_WHEEL_DEFAULT;
@@ -438,6 +438,55 @@ short int instrument_key_off(int instrument_index, int note)
 
   /* send key off to the selected voice associated with this instrument */
   envelope_release(selected_voice_index);
+
+  return 0;
+}
+
+/*******************************************************************************
+** instrument_set_note_velocity()
+*******************************************************************************/
+short int instrument_set_note_velocity(int instrument_index, short int vel)
+{
+  int k;
+
+  instrument* ins;
+  voice* v;
+
+  /* make sure that the instrument index is valid */
+  if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
+    return 1;
+
+  /* obtain instrument pointer */
+  ins = &G_instrument_bank[instrument_index];
+
+  /* make sure the note velocity is valid */
+  if ((vel < MIDI_CONT_NOTE_VELOCITY_LOWER_BOUND) || 
+      (vel > MIDI_CONT_NOTE_VELOCITY_UPPER_BOUND))
+  {
+    return 0;
+  }
+
+  /* if this new velocity is the same as the current velocity, return */
+  if (vel == ins->note_velocity)
+    return 0;
+
+  /* set the new note velocity */
+  ins->note_velocity = vel;
+
+  /* set the velocity input for each voice associated with this instrument */
+  if (ins->type == INSTRUMENT_TYPE_POLY)
+  {
+    for (k = 0; k < 4; k++)
+    {
+      v = &G_voice_bank[ins->voice_index + k];
+      v->note_velocity = vel;
+    }
+  }
+  else if (ins->type == INSTRUMENT_TYPE_MONO)
+  {
+    v = &G_voice_bank[ins->voice_index];
+    v->note_velocity = vel;
+  }
 
   return 0;
 }

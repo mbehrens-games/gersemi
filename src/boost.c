@@ -11,24 +11,26 @@
 #include "midicont.h"
 #include "patch.h"
 
-/* boost depth table */
-static short int  S_boost_depth_table[PATCH_EFFECT_DEPTH_NUM_VALUES] = 
-                  { 12 * 1, 
-                    12 * 2, 
-                    12 * 3, 
-                    12 * 4, 
-                    12 * 5, 
-                    12 * 6, 
-                    12 * 7, 
-                    12 * 8, 
-                    12 * 9, 
-                    12 * 10, 
-                    12 * 11, 
-                    12 * 12, 
-                    12 * 13, 
-                    12 * 14, 
-                    12 * 15, 
-                    12 * 16 
+#define BOOST_AMOUNT_LEVEL_STEP 8
+
+/* boost amount table */
+static short int  S_boost_amount_table[PATCH_EFFECT_DEPTH_NUM_VALUES] = 
+                  { BOOST_AMOUNT_LEVEL_STEP * 1, 
+                    BOOST_AMOUNT_LEVEL_STEP * 2, 
+                    BOOST_AMOUNT_LEVEL_STEP * 3, 
+                    BOOST_AMOUNT_LEVEL_STEP * 4, 
+                    BOOST_AMOUNT_LEVEL_STEP * 5, 
+                    BOOST_AMOUNT_LEVEL_STEP * 6, 
+                    BOOST_AMOUNT_LEVEL_STEP * 7, 
+                    BOOST_AMOUNT_LEVEL_STEP * 8, 
+                    BOOST_AMOUNT_LEVEL_STEP * 9, 
+                    BOOST_AMOUNT_LEVEL_STEP * 10, 
+                    BOOST_AMOUNT_LEVEL_STEP * 11, 
+                    BOOST_AMOUNT_LEVEL_STEP * 12, 
+                    BOOST_AMOUNT_LEVEL_STEP * 13, 
+                    BOOST_AMOUNT_LEVEL_STEP * 14, 
+                    BOOST_AMOUNT_LEVEL_STEP * 15, 
+                    BOOST_AMOUNT_LEVEL_STEP * 16 
                   };
 
 /* boost bank */
@@ -67,7 +69,8 @@ short int boost_reset(int voice_index)
     b = &G_boost_bank[BANK_BOOSTS_PER_VOICE * voice_index + m];
 
     /* initialize boost variables */
-    b->depth = 1;
+    b->amount = 
+      S_boost_amount_table[PATCH_EFFECT_DEPTH_DEFAULT - PATCH_EFFECT_DEPTH_LOWER_BOUND];
 
     b->mod_wheel_effect = PATCH_CONTROLLER_EFFECT_VIBRATO;
     b->aftertouch_effect = PATCH_CONTROLLER_EFFECT_VIBRATO;
@@ -107,10 +110,10 @@ short int boost_load_patch(int voice_index, int patch_index)
   if ((p->boost_depth >= PATCH_EFFECT_DEPTH_LOWER_BOUND) && 
       (p->boost_depth <= PATCH_EFFECT_DEPTH_UPPER_BOUND))
   {
-    b->depth = p->boost_depth;
+    b->amount = S_boost_amount_table[p->boost_depth - PATCH_EFFECT_DEPTH_LOWER_BOUND];
   }
   else
-    b->depth = PATCH_EFFECT_DEPTH_LOWER_BOUND;
+    b->amount = S_boost_amount_table[PATCH_EFFECT_DEPTH_DEFAULT - PATCH_EFFECT_DEPTH_LOWER_BOUND];
 
   /* controller effects */
   if ((p->mod_wheel_effect >= PATCH_CONTROLLER_EFFECT_LOWER_BOUND) && 
@@ -141,16 +144,11 @@ short int boost_update_all()
 
   boost* b;
 
-  int boost_bound;
-
   /* update all boosts */
   for (k = 0; k < BANK_NUM_VOICES; k++)
   {
     /* obtain boost pointer */
     b = &G_boost_bank[k];
-
-    /* obtain boost upper bound */
-    boost_bound = S_boost_depth_table[b->depth - PATCH_EFFECT_DEPTH_LOWER_BOUND];
 
     /* initialize level */
     b->level = 0;
@@ -159,19 +157,19 @@ short int boost_update_all()
     if (b->mod_wheel_effect == PATCH_CONTROLLER_EFFECT_BOOST)
     {
       b->level += 
-        (boost_bound * b->mod_wheel_input) / MIDI_CONT_MOD_WHEEL_UPPER_BOUND;
+        (b->amount * b->mod_wheel_input) / MIDI_CONT_MOD_WHEEL_UPPER_BOUND;
     }
 
     /* apply aftertouch effect */
     if (b->aftertouch_effect == PATCH_CONTROLLER_EFFECT_BOOST)
     {
       b->level += 
-        (boost_bound * b->aftertouch_input) / MIDI_CONT_AFTERTOUCH_UPPER_BOUND;
+        (b->amount * b->aftertouch_input) / MIDI_CONT_AFTERTOUCH_UPPER_BOUND;
     }
 
     /* bound level */
-    if (b->level > boost_bound)
-      b->level = boost_bound;
+    if (b->level > b->amount)
+      b->level = b->amount;
   }
 
   return 0;

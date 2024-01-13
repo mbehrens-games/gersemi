@@ -12,6 +12,7 @@
 #include "midicont.h"
 #include "patch.h"
 #include "tempo.h"
+#include "tuning.h"
 
 #define PI      3.14159265358979323846f
 #define TWO_PI  6.28318530717958647693f
@@ -20,45 +21,47 @@
 
 #define LFO_BASE_NOISE_FREQUENCY 440.0f /* A-4 */
 
+#define LFO_TREMOLO_DEPTH_STEP 12
+
 /* vibrato depth table */
 /* assuming 128 steps per semitone */
 static short int  S_lfo_vibrato_depth_table[PATCH_EFFECT_DEPTH_NUM_VALUES] = 
-                  {   6,  /* 4.7 cents    */
-                      9,  /* 7 cents      */
-                     12,  /* 9.4 cents    */
-                     18,  /* 14.1 cents   */
-                     26,  /* 20.3 cents   */
-                     38,  /* 29.7 cents   */
-                     51,  /* 39.8 cents   */
-                     64,  /* 50 cents     */
-                     77,  /* 60.2 cents   */
-                     90,  /* 70.3 cents   */
-                    102,  /* 79.6 cents   */
-                    115,  /* 89.8 cents   */
-                    128,  /* 1 semitones  */
-                    256,  /* 2 semitones  */
-                    512,  /* 4 semitones  */
-                    896   /* 7 semitones  */
+                  { (  5.0f / 100.0f) * TUNING_NUM_SEMITONE_STEPS, 
+                    (  7.5f / 100.0f) * TUNING_NUM_SEMITONE_STEPS, 
+                    ( 10.0f / 100.0f) * TUNING_NUM_SEMITONE_STEPS, 
+                    ( 15.0f / 100.0f) * TUNING_NUM_SEMITONE_STEPS, 
+                    ( 20.0f / 100.0f) * TUNING_NUM_SEMITONE_STEPS, 
+                    ( 30.0f / 100.0f) * TUNING_NUM_SEMITONE_STEPS, 
+                    ( 40.0f / 100.0f) * TUNING_NUM_SEMITONE_STEPS, 
+                    ( 50.0f / 100.0f) * TUNING_NUM_SEMITONE_STEPS, 
+                    ( 60.0f / 100.0f) * TUNING_NUM_SEMITONE_STEPS, 
+                    ( 70.0f / 100.0f) * TUNING_NUM_SEMITONE_STEPS, 
+                    ( 80.0f / 100.0f) * TUNING_NUM_SEMITONE_STEPS, 
+                    ( 90.0f / 100.0f) * TUNING_NUM_SEMITONE_STEPS, 
+                    (100.0f / 100.0f) * TUNING_NUM_SEMITONE_STEPS, 
+                    (200.0f / 100.0f) * TUNING_NUM_SEMITONE_STEPS, 
+                    (400.0f / 100.0f) * TUNING_NUM_SEMITONE_STEPS, 
+                    (700.0f / 100.0f) * TUNING_NUM_SEMITONE_STEPS 
                   };
 
 /* tremolo depth table */
 static short int  S_lfo_tremolo_depth_table[PATCH_EFFECT_DEPTH_NUM_VALUES] = 
-                  { 6 * 1, 
-                    6 * 2, 
-                    6 * 3, 
-                    6 * 4, 
-                    6 * 5, 
-                    6 * 6, 
-                    6 * 7, 
-                    6 * 8, 
-                    6 * 9, 
-                    6 * 10, 
-                    6 * 11, 
-                    6 * 12, 
-                    6 * 13, 
-                    6 * 14, 
-                    6 * 15, 
-                    6 * 16 
+                  { LFO_TREMOLO_DEPTH_STEP *  1, 
+                    LFO_TREMOLO_DEPTH_STEP *  2, 
+                    LFO_TREMOLO_DEPTH_STEP *  3, 
+                    LFO_TREMOLO_DEPTH_STEP *  4, 
+                    LFO_TREMOLO_DEPTH_STEP *  5, 
+                    LFO_TREMOLO_DEPTH_STEP *  6, 
+                    LFO_TREMOLO_DEPTH_STEP *  7, 
+                    LFO_TREMOLO_DEPTH_STEP *  8, 
+                    LFO_TREMOLO_DEPTH_STEP *  9, 
+                    LFO_TREMOLO_DEPTH_STEP * 10, 
+                    LFO_TREMOLO_DEPTH_STEP * 11, 
+                    LFO_TREMOLO_DEPTH_STEP * 12, 
+                    LFO_TREMOLO_DEPTH_STEP * 13, 
+                    LFO_TREMOLO_DEPTH_STEP * 14, 
+                    LFO_TREMOLO_DEPTH_STEP * 15, 
+                    LFO_TREMOLO_DEPTH_STEP * 16 
                   };
 
 /* wave frequency table (in cycles per beat)    */
@@ -120,31 +123,21 @@ static float  S_lfo_quantize_frequency_table[PATCH_LFO_QUANTIZE_NUM_VALUES] =
                   256.0f 
               };
 
-/* delay table (in fractions of a beat)   */
-/* at 120 bpm, the delays range from      */
-/* 0.0 s to 0.5 s (counting up by 1/48 s) */
-static float  S_lfo_delay_fraction_table[PATCH_LFO_DELAY_NUM_VALUES] = 
-              {       0.0f,  1 / 24.0f,  2 / 24.0f,  3 / 24.0f, 
-                 4 / 24.0f,  5 / 24.0f,  6 / 24.0f,  7 / 24.0f, 
-                 8 / 24.0f,  9 / 24.0f, 10 / 24.0f, 11 / 24.0f, 
-                12 / 24.0f, 13 / 24.0f, 14 / 24.0f, 15 / 24.0f, 
-                16 / 24.0f, 17 / 24.0f, 18 / 24.0f, 19 / 24.0f, 
-                20 / 24.0f, 21 / 24.0f, 22 / 24.0f, 23 / 24.0f, 
-                      1.0f 
-              };
-
 /* wavetables */
 static short int S_lfo_wavetable_triangle[256];
 static short int S_lfo_wavetable_sawtooth[256];
 
-/* delay cycles table */
+/* delay table */
+
+/* at 120 bpm, the delays range from      */
+/* 0.0 s to 0.5 s (counting up by 1/48 s) */
 static int S_lfo_delay_period_table[TEMPO_NUM_VALUES][PATCH_LFO_DELAY_NUM_VALUES];
 
 /* phase increment tables */
 static unsigned int S_lfo_wave_phase_increment_table[TEMPO_NUM_VALUES][PATCH_LFO_FREQUENCY_NUM_VALUES];
 static unsigned int S_lfo_noise_phase_increment_table[PATCH_LFO_FREQUENCY_NUM_VALUES];
 
-/* quantize phase bound table */
+/* quantize phase overflow table */
 static unsigned int S_lfo_quantize_overflow_table[PATCH_LFO_QUANTIZE_NUM_VALUES];
 
 /* lfo bank */
@@ -181,7 +174,7 @@ short int lfo_reset(int voice_index)
   /* initialize lfo variables */
   l->waveform = PATCH_LFO_WAVEFORM_DEFAULT;
   l->frequency = PATCH_LFO_FREQUENCY_DEFAULT;
-  l->sync = PATCH_SYNC_LFO_DEFAULT;
+  l->sync = PATCH_SYNC_DEFAULT;
 
   l->delay_cycles = 0;
   l->delay_period = 
@@ -271,13 +264,13 @@ short int lfo_load_patch(int voice_index, int patch_index)
     l->increment = S_lfo_wave_phase_increment_table[l->tempo - TEMPO_LOWER_BOUND][l->frequency - PATCH_LFO_FREQUENCY_LOWER_BOUND];
 
   /* sync */
-  if ((p->sync_lfo >= PATCH_SYNC_LFO_LOWER_BOUND) && 
-      (p->sync_lfo <= PATCH_SYNC_LFO_UPPER_BOUND))
+  if ((p->sync_lfo >= PATCH_SYNC_LOWER_BOUND) && 
+      (p->sync_lfo <= PATCH_SYNC_UPPER_BOUND))
   {
     l->sync = p->sync_lfo;
   }
   else
-    l->sync = PATCH_SYNC_LFO_LOWER_BOUND;
+    l->sync = PATCH_SYNC_LOWER_BOUND;
 
   /* delay */
   if ((p->lfo_delay >= PATCH_LFO_DELAY_LOWER_BOUND) && 
@@ -406,7 +399,7 @@ short int lfo_sync_phase(int voice_index)
   l = &G_lfo_bank[voice_index];
 
   /* reset phase if necessary */
-  if (l->sync == PATCH_SYNC_LFO_ON)
+  if (l->sync == PATCH_SYNC_ON)
   {
     l->phase = 0;
     l->quantize_phase = 0;
@@ -655,7 +648,7 @@ short int lfo_generate_tables()
     for (m = 0; m < PATCH_LFO_DELAY_NUM_VALUES; m++)
     {
       S_lfo_delay_period_table[k][m] = 
-        (int) ((TEMPO_COMPUTE_SECONDS_PER_BEAT(k + TEMPO_LOWER_BOUND) * S_lfo_delay_fraction_table[m] * CLOCK_SAMPLING_RATE) + 0.5f);
+        (int) ((TEMPO_COMPUTE_SECONDS_PER_BEAT(k + TEMPO_LOWER_BOUND) * (m / 24.0f) * CLOCK_SAMPLING_RATE) + 0.5f);
     }
   }
 
@@ -675,7 +668,7 @@ short int lfo_generate_tables()
       (int) ((S_lfo_noise_frequency_table[m] * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
   }
 
-  /* quantize phase bound table */
+  /* quantize phase overflow table */
   for (k = 0; k < PATCH_LFO_QUANTIZE_NUM_VALUES; k++)
   {
     S_lfo_quantize_overflow_table[k] = 

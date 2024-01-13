@@ -10,9 +10,6 @@
 typedef struct envelope
 {
   /* keyscaling settings */
-  short int key_follow_rate;
-  short int key_follow_level;
-
   short int ks_rate_fraction;
   short int ks_level_fraction;
   short int ks_break_note;

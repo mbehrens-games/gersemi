@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "bank.h"
+#include "cart.h"
 #include "controls.h"
 #include "global.h"
 #include "graphics.h"
@@ -26,6 +28,13 @@ enum
   CONTROLS_KEY_INDEX_INCREASE_WINDOW_SIZE, 
   CONTROLS_KEY_INDEX_SCROLL_UP, 
   CONTROLS_KEY_INDEX_SCROLL_DOWN, 
+  CONTROLS_KEY_INDEX_PATCH_EDIT_MODIFIER_OCTAVE, 
+  CONTROLS_KEY_INDEX_PATCH_EDIT_SET_OCTAVE_1, 
+  CONTROLS_KEY_INDEX_PATCH_EDIT_SET_OCTAVE_2, 
+  CONTROLS_KEY_INDEX_PATCH_EDIT_SET_OCTAVE_3, 
+  CONTROLS_KEY_INDEX_PATCH_EDIT_SET_OCTAVE_4, 
+  CONTROLS_KEY_INDEX_PATCH_EDIT_SET_OCTAVE_5, 
+  CONTROLS_KEY_INDEX_PATCH_EDIT_SET_OCTAVE_6, 
   CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_THIS_OCTAVE_C, 
   CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_THIS_OCTAVE_C_SHARP, 
   CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_THIS_OCTAVE_D, 
@@ -113,13 +122,13 @@ enum
     (S_mouse_button_states[index] == CONTROLS_MOUSE_BUTTON_STATE_RELEASED))
 
 /* set key state macros */
-#define CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(scancode, index)                  \
+#define CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(scancode, index)             \
   if ((code == scancode) && (CONTROLS_KEY_IS_OFF_OR_RELEASED(index)))          \
   {                                                                            \
     S_key_states[index] = CONTROLS_KEY_STATE_PRESSED;                          \
   }
 
-#define CONTROLS_KEYBOARD_RELEASE_UPDATE_KEY_STATES(scancode, index)                 \
+#define CONTROLS_KEYBOARD_RELEASE_UPDATE_KEY_STATES(scancode, index)           \
   if ((code == scancode) && (CONTROLS_KEY_IS_ON_OR_PRESSED(index)))            \
   {                                                                            \
     S_key_states[index] = CONTROLS_KEY_STATE_RELEASED;                         \
@@ -272,7 +281,8 @@ short int controls_setup()
 /*******************************************************************************
 ** controls_patch_parameter_adjust()
 *******************************************************************************/
-short int controls_patch_parameter_adjust(int patch_index, int param_index, int amount)
+short int controls_patch_parameter_adjust(int cart_num, int patch_num, 
+                                          int param_index, int amount)
 {
   int value;
   int param_changed;
@@ -280,13 +290,21 @@ short int controls_patch_parameter_adjust(int patch_index, int param_index, int 
   patch* pc;
   param* pr;
 
-  /* make sure that the patch index is valid */
-  if (BANK_PATCH_INDEX_IS_NOT_VALID(patch_index))
+  int patch_index;
+
+  /* make sure that the cart & patch numbers is valid */
+  if (CART_EDITOR_CART_NO_IS_NOT_VALID(cart_num))
+    return 1;
+
+  if (CART_PATCH_NO_IS_NOT_VALID(patch_num))
     return 1;
 
   /* make sure that the parameter index is valid */
   if (LAYOUT_PARAM_INDEX_IS_NOT_VALID(param_index))
     return 1;
+
+  /* determine patch index */
+  CART_COMPUTE_PATCH_INDEX(cart_num, patch_num)
 
   /* obtain patch and parameter pointers */
   pc = &G_patch_bank[patch_index];
@@ -305,8 +323,18 @@ short int controls_patch_parameter_adjust(int patch_index, int param_index, int 
   /* initialize change flag */
   param_changed = 0;
 
+  /* cart number */
+  if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_CART_NUMBER)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(G_patch_edit_cart_number, CART_EDITOR_CART_NO)
+  }
+  /* patch number */
+  else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_PATCH_NUMBER)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(G_patch_edit_patch_number, CART_PATCH_NO)
+  }
   /* algorithm */
-  if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_ALGORITHM)
+  else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_ALGORITHM)
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->algorithm, PATCH_ALGORITHM)
   }
@@ -314,10 +342,6 @@ short int controls_patch_parameter_adjust(int patch_index, int param_index, int 
   else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_OSC_WAVEFORM)
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->osc_waveform[pr->num], PATCH_OSC_WAVEFORM)
-  }
-  else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_OSC_FEEDBACK)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->osc_feedback[pr->num], PATCH_OSC_FEEDBACK)
   }
   else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_OSC_PHI)
   {
@@ -350,6 +374,10 @@ short int controls_patch_parameter_adjust(int patch_index, int param_index, int 
   else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_OSC_DETUNE)
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->osc_detune[pr->num], PATCH_OSC_DETUNE)
+  }
+  else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_OSC_FEEDBACK)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->osc_feedback[pr->num], PATCH_OSC_FEEDBACK)
   }
   /* envelope */
   else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_ENV_ATTACK)
@@ -406,6 +434,10 @@ short int controls_patch_parameter_adjust(int patch_index, int param_index, int 
     CONTROLS_SET_PATCH_PARAMETER(pc->lfo_quantize, PATCH_LFO_QUANTIZE)
   }
   /* vibrato */
+  else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_VIBRATO_MODE)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->vibrato_mode, PATCH_VIBRATO_MODE)
+  }
   else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_VIBRATO_DEPTH)
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->vibrato_depth, PATCH_EFFECT_DEPTH)
@@ -414,11 +446,11 @@ short int controls_patch_parameter_adjust(int patch_index, int param_index, int 
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->vibrato_base, PATCH_EFFECT_BASE)
   }
-  else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_VIBRATO_MODE)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->vibrato_mode, PATCH_VIBRATO_MODE)
-  }
   /* tremolo */
+  else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_TREMOLO_MODE)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->tremolo_mode, PATCH_TREMOLO_MODE)
+  }
   else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_TREMOLO_DEPTH)
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->tremolo_depth, PATCH_EFFECT_DEPTH)
@@ -426,10 +458,6 @@ short int controls_patch_parameter_adjust(int patch_index, int param_index, int 
   else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_TREMOLO_BASE)
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->tremolo_base, PATCH_EFFECT_BASE)
-  }
-  else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_TREMOLO_MODE)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->tremolo_mode, PATCH_TREMOLO_MODE)
   }
   /* portamento */
   else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_PORTAMENTO_MODE)
@@ -450,13 +478,13 @@ short int controls_patch_parameter_adjust(int patch_index, int param_index, int 
     CONTROLS_SET_PATCH_PARAMETER(pc->pedal_adjust, PATCH_PEDAL_ADJUST)
   }
   /* boost */
-  else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_BOOST_DEPTH)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->boost_depth, PATCH_EFFECT_DEPTH)
-  }
   else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_BOOST_MODE)
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->boost_mode, PATCH_BOOST_MODE)
+  }
+  else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_BOOST_DEPTH)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->boost_depth, PATCH_EFFECT_DEPTH)
   }
   /* effects */
   else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_MOD_WHEEL_EFFECT)
@@ -467,15 +495,6 @@ short int controls_patch_parameter_adjust(int patch_index, int param_index, int 
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->aftertouch_effect, PATCH_CONTROLLER_EFFECT)
   }
-  /* key follow */
-  else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_KEY_FOLLOW_RATE)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->key_follow_rate, PATCH_KEY_FOLLOW_MODE)
-  }
-  else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_KEY_FOLLOW_LEVEL)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->key_follow_level, PATCH_KEY_FOLLOW_MODE)
-  }
   /* pitch wheel */
   else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_PITCH_WHEEL_MODE)
   {
@@ -484,6 +503,24 @@ short int controls_patch_parameter_adjust(int patch_index, int param_index, int 
   else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_PITCH_WHEEL_RANGE)
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->pitch_wheel_range, PATCH_PITCH_WHEEL_RANGE)
+  }
+  /* sync */
+  else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_SYNC_OSC)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->sync_osc, PATCH_SYNC)
+  }
+  else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_SYNC_LFO)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->sync_lfo, PATCH_SYNC)
+  }
+  /* velocity */
+  else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_VELOCITY_MODE)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->velocity_mode, PATCH_VELOCITY_MODE)
+  }
+  else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_VELOCITY_SCALING)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->velocity_scaling, PATCH_VELOCITY_SCALING)
   }
   /* noise */
   else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_NOISE_MODE)
@@ -503,19 +540,10 @@ short int controls_patch_parameter_adjust(int patch_index, int param_index, int 
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->lowpass_cutoff, PATCH_LOWPASS_CUTOFF)
   }
-  /* sync */
-  else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_SYNC_OSC)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->sync_osc, PATCH_SYNC_OSC)
-  }
-  else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_SYNC_LFO)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->sync_lfo, PATCH_SYNC_LFO)
-  }
   /* audition */
-  else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_OCTAVE)
+  else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_VELOCITY)
   {
-    CONTROLS_SET_PATCH_PARAMETER(G_patch_edit_octave, TUNING_AUDITION_OCTAVE)
+    CONTROLS_SET_PATCH_PARAMETER(G_patch_edit_note_velocity, MIDI_CONT_NOTE_VELOCITY)
   }
   else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_MOD_WHEEL)
   {
@@ -535,14 +563,23 @@ short int controls_patch_parameter_adjust(int patch_index, int param_index, int 
   /* reload patch if a parameter was changed */
   if (param_changed == 1)
   {
-    if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_MOD_WHEEL)
+    if ((pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_CART_NUMBER) || 
+        (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_PATCH_NUMBER))
+    {
+      CART_COMPUTE_PATCH_INDEX(G_patch_edit_cart_number, G_patch_edit_patch_number)
+
+      instrument_load_patch(G_patch_edit_instrument_index, patch_index);
+    }
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_VELOCITY)
+      instrument_set_note_velocity(G_patch_edit_instrument_index, G_patch_edit_note_velocity);
+    else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_MOD_WHEEL)
       instrument_set_mod_wheel_position(G_patch_edit_instrument_index, G_patch_edit_mod_wheel_pos);
     else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_AFTERTOUCH)
       instrument_set_aftertouch_position(G_patch_edit_instrument_index, G_patch_edit_aftertouch_pos);
     else if (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_PITCH_WHEEL)
       instrument_set_pitch_wheel_position(G_patch_edit_instrument_index, G_patch_edit_pitch_wheel_pos);
     else
-      instrument_load_patch(G_patch_edit_instrument_index, G_patch_edit_patch_index);
+      instrument_load_patch(G_patch_edit_instrument_index, patch_index);
   }
 
   return 0;
@@ -571,99 +608,130 @@ short int controls_keyboard_key_pressed(SDL_Scancode code)
   CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_DOWN, 
                                             CONTROLS_KEY_INDEX_SCROLL_DOWN)
 
-  /* patch edit notes (this octave) */
-  CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_Z, 
-                                            CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_THIS_OCTAVE_C)
+  /* patch edit: set octave */
+  CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_LCTRL, 
+                                            CONTROLS_KEY_INDEX_PATCH_EDIT_MODIFIER_OCTAVE)
 
-  CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_S, 
-                                            CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_THIS_OCTAVE_C_SHARP)
+  if (CONTROLS_KEY_IS_ON_OR_PRESSED(CONTROLS_KEY_INDEX_PATCH_EDIT_MODIFIER_OCTAVE))
+  {
+    CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_1, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_SET_OCTAVE_1)
 
-  CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_X, 
-                                            CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_THIS_OCTAVE_D)
+    CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_2, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_SET_OCTAVE_2)
 
-  CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_D, 
-                                            CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_THIS_OCTAVE_D_SHARP)
+    CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_3, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_SET_OCTAVE_3)
 
-  CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_C, 
-                                            CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_THIS_OCTAVE_E)
+    CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_4, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_SET_OCTAVE_4)
 
-  CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_V, 
-                                            CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_THIS_OCTAVE_F)
+    CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_5, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_SET_OCTAVE_5)
 
-  CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_G, 
-                                            CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_THIS_OCTAVE_F_SHARP)
+    CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_6, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_SET_OCTAVE_6)
+  }
 
-  CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_B, 
-                                            CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_THIS_OCTAVE_G)
+  /* patch edit: notes (this octave) */
+  if (CONTROLS_KEY_IS_OFF_OR_RELEASED(CONTROLS_KEY_INDEX_PATCH_EDIT_MODIFIER_OCTAVE))
+  {
+    CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_Z, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_THIS_OCTAVE_C)
 
-  CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_H, 
-                                            CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_THIS_OCTAVE_G_SHARP)
+    CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_S, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_THIS_OCTAVE_C_SHARP)
 
-  CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_N, 
-                                            CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_THIS_OCTAVE_A)
+    CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_X, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_THIS_OCTAVE_D)
 
-  CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_J, 
-                                            CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_THIS_OCTAVE_A_SHARP)
+    CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_D, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_THIS_OCTAVE_D_SHARP)
 
-  CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_M, 
-                                            CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_THIS_OCTAVE_B)
+    CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_C, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_THIS_OCTAVE_E)
 
-  CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_COMMA, 
-                                            CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_THIS_OCTAVE_C_PRIME)
+    CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_V, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_THIS_OCTAVE_F)
 
-  CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_L, 
-                                            CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_THIS_OCTAVE_C_SHARP_PRIME)
+    CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_G, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_THIS_OCTAVE_F_SHARP)
 
-  CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_PERIOD, 
-                                            CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_THIS_OCTAVE_D_PRIME)
+    CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_B, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_THIS_OCTAVE_G)
 
-  /* patch edit notes (next octave) */
-  CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_Q, 
-                                            CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_C)
+    CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_H, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_THIS_OCTAVE_G_SHARP)
 
-  CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_2, 
-                                            CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_C_SHARP)
+    CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_N, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_THIS_OCTAVE_A)
 
-  CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_W, 
-                                            CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_D)
+    CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_J, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_THIS_OCTAVE_A_SHARP)
 
-  CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_3, 
-                                            CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_D_SHARP)
+    CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_M, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_THIS_OCTAVE_B)
 
-  CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_E, 
-                                            CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_E)
+    CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_COMMA, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_THIS_OCTAVE_C_PRIME)
 
-  CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_R, 
-                                            CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_F)
+    CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_L, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_THIS_OCTAVE_C_SHARP_PRIME)
 
-  CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_5, 
-                                            CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_F_SHARP)
+    CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_PERIOD, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_THIS_OCTAVE_D_PRIME)
+  }
 
-  CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_T, 
-                                            CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_G)
+  /* patch edit: notes (next octave) */
+  if (CONTROLS_KEY_IS_OFF_OR_RELEASED(CONTROLS_KEY_INDEX_PATCH_EDIT_MODIFIER_OCTAVE))
+  {
+    CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_Q, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_C)
 
-  CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_6, 
-                                            CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_G_SHARP)
+    CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_2, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_C_SHARP)
 
-  CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_Y, 
-                                            CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_A)
+    CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_W, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_D)
 
-  CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_7, 
-                                            CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_A_SHARP)
+    CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_3, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_D_SHARP)
 
-  CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_U, 
-                                            CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_B)
+    CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_E, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_E)
 
-  CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_I, 
-                                            CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_C_PRIME)
+    CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_R, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_F)
 
-  CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_9, 
-                                            CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_C_SHARP_PRIME)
+    CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_5, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_F_SHARP)
 
-  CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_O, 
-                                            CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_D_PRIME)
+    CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_T, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_G)
 
-  /* port/arp switch, sustain pedal */
+    CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_6, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_G_SHARP)
+
+    CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_Y, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_A)
+
+    CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_7, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_A_SHARP)
+
+    CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_U, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_B)
+
+    CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_I, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_C_PRIME)
+
+    CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_9, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_C_SHARP_PRIME)
+
+    CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_O, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_D_PRIME)
+  }
+
+  /* patch edit: portamento switch, sustain pedal */
   CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_LSHIFT, 
                                             CONTROLS_KEY_INDEX_PATCH_EDIT_PORTAMENTO_SWITCH)
 
@@ -696,7 +764,29 @@ short int controls_keyboard_key_released(SDL_Scancode code)
   CONTROLS_KEYBOARD_RELEASE_UPDATE_KEY_STATES(SDL_SCANCODE_DOWN, 
                                               CONTROLS_KEY_INDEX_SCROLL_DOWN)
 
-  /* patch edit notes (this octave) */
+  /* patch edit: set octave */
+  CONTROLS_KEYBOARD_RELEASE_UPDATE_KEY_STATES(SDL_SCANCODE_LCTRL, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_MODIFIER_OCTAVE)
+
+  CONTROLS_KEYBOARD_RELEASE_UPDATE_KEY_STATES(SDL_SCANCODE_1, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_SET_OCTAVE_1)
+
+  CONTROLS_KEYBOARD_RELEASE_UPDATE_KEY_STATES(SDL_SCANCODE_2, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_SET_OCTAVE_2)
+
+  CONTROLS_KEYBOARD_RELEASE_UPDATE_KEY_STATES(SDL_SCANCODE_3, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_SET_OCTAVE_3)
+
+  CONTROLS_KEYBOARD_RELEASE_UPDATE_KEY_STATES(SDL_SCANCODE_4, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_SET_OCTAVE_4)
+
+  CONTROLS_KEYBOARD_RELEASE_UPDATE_KEY_STATES(SDL_SCANCODE_5, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_SET_OCTAVE_5)
+
+  CONTROLS_KEYBOARD_RELEASE_UPDATE_KEY_STATES(SDL_SCANCODE_6, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_SET_OCTAVE_6)
+
+  /* patch edit: notes (this octave) */
   CONTROLS_KEYBOARD_RELEASE_UPDATE_KEY_STATES(SDL_SCANCODE_Z, 
                                               CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_THIS_OCTAVE_C)
 
@@ -742,7 +832,7 @@ short int controls_keyboard_key_released(SDL_Scancode code)
   CONTROLS_KEYBOARD_RELEASE_UPDATE_KEY_STATES(SDL_SCANCODE_PERIOD, 
                                               CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_THIS_OCTAVE_D_PRIME)
 
-  /* patch edit notes (next octave) */
+  /* patch edit: notes (next octave) */
   CONTROLS_KEYBOARD_RELEASE_UPDATE_KEY_STATES(SDL_SCANCODE_Q, 
                                               CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_C)
 
@@ -788,7 +878,7 @@ short int controls_keyboard_key_released(SDL_Scancode code)
   CONTROLS_KEYBOARD_RELEASE_UPDATE_KEY_STATES(SDL_SCANCODE_O, 
                                               CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_D_PRIME)
 
-  /* port/arp switch, sustain pedal */
+  /* patch edit: portamento switch, sustain pedal */
   CONTROLS_KEYBOARD_RELEASE_UPDATE_KEY_STATES(SDL_SCANCODE_LSHIFT, 
                                               CONTROLS_KEY_INDEX_PATCH_EDIT_PORTAMENTO_SWITCH)
 
@@ -949,6 +1039,22 @@ short int controls_process_user_input_standard()
   /* patches screen */
   if (G_game_screen == PROGRAM_SCREEN_PATCHES)
   {
+    if (CONTROLS_KEY_IS_ON_OR_PRESSED(CONTROLS_KEY_INDEX_PATCH_EDIT_MODIFIER_OCTAVE))
+    {
+      if (CONTROLS_KEY_IS_PRESSED(CONTROLS_KEY_INDEX_PATCH_EDIT_SET_OCTAVE_1))
+        G_patch_edit_octave = TUNING_MIDDLE_OCTAVE - 3;
+      else if (CONTROLS_KEY_IS_PRESSED(CONTROLS_KEY_INDEX_PATCH_EDIT_SET_OCTAVE_2))
+        G_patch_edit_octave = TUNING_MIDDLE_OCTAVE - 2;
+      else if (CONTROLS_KEY_IS_PRESSED(CONTROLS_KEY_INDEX_PATCH_EDIT_SET_OCTAVE_3))
+        G_patch_edit_octave = TUNING_MIDDLE_OCTAVE - 1;
+      else if (CONTROLS_KEY_IS_PRESSED(CONTROLS_KEY_INDEX_PATCH_EDIT_SET_OCTAVE_4))
+        G_patch_edit_octave = TUNING_MIDDLE_OCTAVE + 0;
+      else if (CONTROLS_KEY_IS_PRESSED(CONTROLS_KEY_INDEX_PATCH_EDIT_SET_OCTAVE_5))
+        G_patch_edit_octave = TUNING_MIDDLE_OCTAVE + 1;
+      else if (CONTROLS_KEY_IS_PRESSED(CONTROLS_KEY_INDEX_PATCH_EDIT_SET_OCTAVE_6))
+        G_patch_edit_octave = TUNING_MIDDLE_OCTAVE + 2;
+    }
+
     for ( k = CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_THIS_OCTAVE_C; 
           k <= CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_THIS_OCTAVE_D_PRIME;
           k++)
@@ -1089,7 +1195,7 @@ short int controls_process_user_input_standard()
         pr = &G_layout_params[k];
 
         /* determine vertical position for audition bar params (remain stationary) */
-        if ((pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_OCTAVE)      || 
+        if ((pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_VELOCITY)    || 
             (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_MOD_WHEEL)   || 
             (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_AFTERTOUCH)  || 
             (pr->label == LAYOUT_PATCH_EDIT_PARAM_LABEL_AUDITION_PITCH_WHEEL))
@@ -1111,7 +1217,8 @@ short int controls_process_user_input_standard()
           if (CONTROLS_MOUSE_LAST_CLICK_WAS_OVER_PATCH_PARAM_SLIDER() && 
               CONTROLS_MOUSE_BUTTON_IS_ON_OR_PRESSED(CONTROLS_MOUSE_BUTTON_INDEX_LEFT))
           {
-            controls_patch_parameter_adjust(0, k, S_mouse_remapped_pos_x - CONTROLS_PATCH_PARAM_SLIDER_POS_X_LOWER_BOUND);
+            controls_patch_parameter_adjust(G_patch_edit_cart_number, G_patch_edit_patch_number, 
+                                            k, S_mouse_remapped_pos_x - CONTROLS_PATCH_PARAM_SLIDER_POS_X_LOWER_BOUND);
           }
         }
         else if (pr->type == LAYOUT_PATCH_EDIT_PARAM_TYPE_ARROWS)
@@ -1119,12 +1226,14 @@ short int controls_process_user_input_standard()
           if (CONTROLS_MOUSE_CURSOR_IS_OVER_PATCH_PARAM_ARROWS_LEFT() && 
               CONTROLS_MOUSE_BUTTON_IS_PRESSED(CONTROLS_MOUSE_BUTTON_INDEX_LEFT))
           {
-            controls_patch_parameter_adjust(0, k, -1);
+            controls_patch_parameter_adjust(G_patch_edit_cart_number, G_patch_edit_patch_number, 
+                                            k, -1);
           }
           else if ( CONTROLS_MOUSE_CURSOR_IS_OVER_PATCH_PARAM_ARROWS_RIGHT() && 
                     CONTROLS_MOUSE_BUTTON_IS_PRESSED(CONTROLS_MOUSE_BUTTON_INDEX_LEFT))
           {
-            controls_patch_parameter_adjust(0, k, 1);
+            controls_patch_parameter_adjust(G_patch_edit_cart_number, G_patch_edit_patch_number, 
+                                            k, 1);
           }
         }
         else if (pr->type == LAYOUT_PATCH_EDIT_PARAM_TYPE_RADIO)
@@ -1132,7 +1241,8 @@ short int controls_process_user_input_standard()
           if (CONTROLS_MOUSE_CURSOR_IS_OVER_PATCH_PARAM_RADIO_BUTTON() && 
               CONTROLS_MOUSE_BUTTON_IS_PRESSED(CONTROLS_MOUSE_BUTTON_INDEX_LEFT))
           {
-            controls_patch_parameter_adjust(0, k, 0);
+            controls_patch_parameter_adjust(G_patch_edit_cart_number, G_patch_edit_patch_number, 
+                                            k, 0);
           }
         }
       }

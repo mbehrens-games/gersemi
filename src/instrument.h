@@ -37,7 +37,7 @@ typedef struct instrument
   short int volume;
   short int panning;
 
-  short int velocity;
+  short int note_velocity;
 
   short int mod_wheel_pos;
   short int aftertouch_pos;
@@ -60,6 +60,8 @@ short int instrument_load_patch(int instrument_index, int patch_index);
 
 short int instrument_key_on(int instrument_index, int note);
 short int instrument_key_off(int instrument_index, int note);
+
+short int instrument_set_note_velocity(int instrument_index, short int vel);
 
 short int instrument_set_mod_wheel_position(int instrument_index, short int pos);
 short int instrument_set_aftertouch_position(int instrument_index, short int pos);

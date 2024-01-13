@@ -5,20 +5,22 @@
 #ifndef FILEIO_H
 #define FILEIO_H
 
+#include "cart.h"
+
 enum
 {
-  FILEIO_PATCH_BYTE_GENERAL_ALGORITHM_FILTER_CUTOFFS = 0,       /* algorithm (3 bits), lowpass (2 bits), highpass (2 bits) */
-  FILEIO_PATCH_BYTE_GENERAL_VIBRATO_DEPTH_EFFECT_MODES,         /* depth (4 bits), modes (3 bits, 1 bit each) */
-  FILEIO_PATCH_BYTE_GENERAL_TREMOLO_BOOST_DEPTH,                /* depths (8 bits, 4 bits each) */
-  FILEIO_PATCH_BYTE_GENERAL_MOD_WHEEL_EFFECT_VIBRATO_BASE,      /* base (5 bits), effect (2 bits) */
-  FILEIO_PATCH_BYTE_GENERAL_AFTERTOUCH_EFFECT_TREMOLO_BASE,     /* base (5 bits), effect (2 bits) */
-  FILEIO_PATCH_BYTE_GENERAL_PORTAMENTO_MODE_LEGATO_SPEED,       /* mode (1 bit), legato (1 bit), speed (4 bits) */
-  FILEIO_PATCH_BYTE_GENERAL_NOISE_MODE_FREQUENCY,               /* noise mode (2 bits), frequency (5 bits) */
-  FILEIO_PATCH_BYTE_GENERAL_SYNC_PEDAL_ADJUST,                  /* osc sync (1 bit), lfo sync (1 bit), pedal adjust (4 bits) */
-  FILEIO_PATCH_BYTE_GENERAL_KEY_FOLLOW_PITCH_WHEEL_MODE_RANGE,  /* key follow modes (2 bits, 1 bit each), pitch wheel mode (1 bit), range (4 bits) */
-  FILEIO_PATCH_BYTE_GENERAL_LFO_WAVEFORM_FREQUENCY,             /* lfo waveform (3 bits), lfo frequency (5 bits) */
-  FILEIO_PATCH_BYTE_GENERAL_LFO_DELAY,                          /* lfo delay (5 bits) */
-  FILEIO_PATCH_BYTE_GENERAL_LFO_QUANTIZE,                       /* lfo sample and hold frequency (5 bits) */
+  FILEIO_PATCH_BYTE_GENERAL_ALGORITHM_VELOCITY = 0,           /* algorithm (3 bits), velocity mode (1 bit), scaling (4 bits) */
+  FILEIO_PATCH_BYTE_GENERAL_NOISE,                            /* noise mode (2 bits), noise frequency (5 bits) */
+  FILEIO_PATCH_BYTE_GENERAL_PORTAMENTO,                       /* portamento mode (1 bit), legato (1 bit), speed (4 bits) */
+  FILEIO_PATCH_BYTE_GENERAL_FILTER_CUTOFFS_SUSTAIN_PEDAL,     /* lowpass (2 bits), highpass (2 bits), pedal adjust (4 bits) */
+  FILEIO_PATCH_BYTE_GENERAL_SYNC_PITCH_WHEEL,                 /* osc sync (1 bit), lfo sync (1 bit), pitch wheel mode (1 bit), range (4 bits) */
+  FILEIO_PATCH_BYTE_GENERAL_VIBRATO_TREMOLO_DEPTHS,           /* depths (8 bits, 4 bits each) */
+  FILEIO_PATCH_BYTE_GENERAL_EFFECT_MODES_BOOST_DEPTH,         /* modes (3 bits, 1 bit each), depth (4 bits) */
+  FILEIO_PATCH_BYTE_GENERAL_MOD_WHEEL_EFFECT_VIBRATO_BASE,    /* effect (2 bits), base (5 bits) */
+  FILEIO_PATCH_BYTE_GENERAL_AFTERTOUCH_EFFECT_TREMOLO_BASE,   /* effect (2 bits), base (5 bits) */
+  FILEIO_PATCH_BYTE_GENERAL_LFO_WAVEFORM_FREQUENCY,           /* lfo waveform (3 bits), lfo frequency (5 bits) */
+  FILEIO_PATCH_BYTE_GENERAL_LFO_DELAY,                        /* lfo delay (5 bits) */
+  FILEIO_PATCH_BYTE_GENERAL_LFO_QUANTIZE,                     /* lfo quantize (5 bits) */
   FILEIO_PATCH_NUM_GENERAL_BYTES 
 };
 
@@ -48,13 +50,10 @@ enum
 #define FILEIO_PATCH_OSC_ENV_END_INDEX    ( FILEIO_PATCH_OSC_ENV_START_INDEX + \
                                             4 * FILEIO_PATCH_NUM_OSC_ENV_BYTES)
 
-#define FILEIO_NUM_SETS         8
-#define FILEIO_PATCHES_PER_SET  32
-
-#define FILEIO_SET_NUM_BYTES    (FILEIO_PATCH_NUM_BYTES * FILEIO_PATCHES_PER_SET)
+#define FILEIO_CART_NUM_BYTES   (FILEIO_PATCH_NUM_BYTES * CART_PATCHES_PER_CART)
 
 /* function declarations */
-short int fileio_patch_set_load(char* filename, int set_num);
-short int fileio_patch_set_save(char* filename, int set_num);
+short int fileio_cart_load(int cart_num, char* filename);
+short int fileio_cart_save(int cart_num, char* filename);
 
 #endif

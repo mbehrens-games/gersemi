@@ -40,9 +40,17 @@ typedef struct voice
   unsigned int  noise_phase;
   unsigned int  noise_increment;
 
-  /* effect modes */
+  /* amplitude effect modes */
   short int tremolo_mode;
   short int boost_mode;
+  short int velocity_mode;
+
+  /* velocity scaling, adjustment */
+  short int velocity_scaling_amount;
+  short int velocity_adjustment;
+
+  /* note velocity */
+  short int note_velocity;
 
   /* envelope levels */
   short int env_input[BANK_OSCS_AND_ENVS_PER_VOICE];
