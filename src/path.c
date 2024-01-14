@@ -30,6 +30,7 @@ char* G_path_import_sbi_1;
 char* G_path_import_sbi_2;
 char* G_path_import_tfi_1;
 char* G_path_import_tfi_2;
+char* G_path_import_opm_1;
 
 char* G_path_songs;
 
@@ -52,6 +53,7 @@ short int path_init_paths()
   G_path_import_sbi_2 = NULL;
   G_path_import_tfi_1 = NULL;
   G_path_import_tfi_2 = NULL;
+  G_path_import_opm_1 = NULL;
 
   G_path_songs = NULL;
 
@@ -128,7 +130,11 @@ short int path_set_documents_path()
 
   G_path_import_tfi_2 = malloc(sizeof(char) * (255 + 1));
   strcpy(G_path_import_tfi_2, G_path_imports);
-  strcpy(G_path_import_tfi_2 + strlen(G_path_imports), "04_spring_yard_zone_53.tfi");
+  strcpy(G_path_import_tfi_2 + strlen(G_path_imports), "EBass.tfi");
+
+  G_path_import_opm_1 = malloc(sizeof(char) * (255 + 1));
+  strcpy(G_path_import_opm_1, G_path_imports);
+  strcpy(G_path_import_opm_1 + strlen(G_path_imports), "FB01ROM1_2.opm");
 
   return 0;
 }
@@ -152,6 +158,7 @@ short int path_free_paths()
   PATH_FREE_PATH(G_path_import_sbi_2)
   PATH_FREE_PATH(G_path_import_tfi_1)
   PATH_FREE_PATH(G_path_import_tfi_2)
+  PATH_FREE_PATH(G_path_import_opm_1)
 
   PATH_FREE_PATH(G_path_songs)
 

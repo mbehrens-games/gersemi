@@ -19,6 +19,7 @@ extern char*  G_path_import_sbi_1;
 extern char*  G_path_import_sbi_2;
 extern char*  G_path_import_tfi_1;
 extern char*  G_path_import_tfi_2;
+extern char*  G_path_import_opm_1;
 
 extern char*  G_path_songs;
 

@@ -5,6 +5,19 @@
 #ifndef IMPORT_H
 #define IMPORT_H
 
+enum
+{ IMPORT_BATCHING_1 = 1, 
+  IMPORT_BATCHING_8, 
+  IMPORT_BATCHING_16, 
+  IMPORT_BATCHING_32 
+};
+
+#define IMPORT_INSTRUMENT_ID_IS_VALID(id)                                      \
+  ((id >= 0) && (id < num_patches))
+
+#define IMPORT_INSTRUMENT_ID_IS_NOT_VALID(id)                                  \
+  (!(IMPORT_INSTRUMENT_ID_IS_VALID(id)))
+
 /* opl patches: ym3812 (adlib), ymf262 (soundblaster) */
 #define IMPORT_OPL_ALGORITHM_NUM_VALUES       4
 #define IMPORT_OPL_FEEDBACK_NUM_VALUES        8
@@ -18,6 +31,7 @@
 #define IMPORT_OPL_SUSTAIN_LEVEL_NUM_VALUES  16
 #define IMPORT_OPL_RATE_KEYSCALE_NUM_VALUES   2
 #define IMPORT_OPL_LEVEL_KEYSCALE_NUM_VALUES  4
+
 #define IMPORT_OPL_SUSTAIN_ENABLE_NUM_VALUES  2
 #define IMPORT_OPL_VIBRATO_ENABLE_NUM_VALUES  2
 #define IMPORT_OPL_TREMOLO_ENABLE_NUM_VALUES  2
@@ -44,8 +58,8 @@
 #define IMPORT_YM2151_NOISE_FREQUENCY_NUM_VALUES   32
 #define IMPORT_YM2151_LFO_FREQUENCY_NUM_VALUES    256
 #define IMPORT_YM2151_LFO_WAVEFORM_NUM_VALUES       4
-#define IMPORT_YM2151_VIBRATO_BASE_NUM_VALUES     128
-#define IMPORT_YM2151_TREMOLO_BASE_NUM_VALUES     128
+#define IMPORT_YM2151_EFFECT_BASE_NUM_VALUES      128
+#define IMPORT_YM2151_EFFECT_BASE_DIVISOR           4
 
 #define IMPORT_YM2151_MULTIPLE_NUM_VALUES          16
 #define IMPORT_YM2151_DETUNE_1_NUM_VALUES           8
@@ -171,12 +185,12 @@ enum
 /* opm format (.opm) for opm patches */
 enum
 {
-  IMPORT_OPM_VALUE_GENERAL_LFO_FREQUENCY = 0, /* LFO: label */
+  IMPORT_OPM_VALUE_GENERAL_LFO_FREQUENCY = 0, /* LFO label */
   IMPORT_OPM_VALUE_GENERAL_TREMOLO_BASE, 
   IMPORT_OPM_VALUE_GENERAL_VIBRATO_BASE, 
   IMPORT_OPM_VALUE_GENERAL_LFO_WAVEFORM, 
   IMPORT_OPM_VALUE_GENERAL_NOISE_FREQUENCY, 
-  IMPORT_OPM_VALUE_GENERAL_PANNING,           /* CH: label */
+  IMPORT_OPM_VALUE_GENERAL_PANNING,           /* CH label */
   IMPORT_OPM_VALUE_GENERAL_FEEDBACK, 
   IMPORT_OPM_VALUE_GENERAL_ALGORITHM, 
   IMPORT_OPM_VALUE_GENERAL_TREMOLO_DEPTH, 
@@ -188,7 +202,7 @@ enum
 
 enum
 {
-  IMPORT_OPM_VALUE_OPERATOR_ATTACK_RATE = 0, /* M1:, C1:, M2:, C2: labels */
+  IMPORT_OPM_VALUE_OPERATOR_ATTACK_RATE = 0, /* M1, C1, M2, C2 labels */
   IMPORT_OPM_VALUE_OPERATOR_DECAY_1_RATE, 
   IMPORT_OPM_VALUE_OPERATOR_DECAY_2_RATE, 
   IMPORT_OPM_VALUE_OPERATOR_RELEASE_RATE, 
@@ -201,6 +215,10 @@ enum
   IMPORT_OPM_VALUE_OPERATOR_TREMOLO_ENABLE, 
   IMPORT_OPM_NUM_OPERATOR_VALUES 
 };
+
+#define IMPORT_OPM_TEXT_LINE_MAX_LENGTH   256
+
+#define IMPORT_OPM_PATCH_NAME_MAX_LENGTH  10
 
 #define IMPORT_OPM_NUM_VALUES ( IMPORT_OPM_NUM_GENERAL_VALUES +                \
                                 (4 * IMPORT_OPM_NUM_OPERATOR_VALUES))
@@ -218,6 +236,7 @@ enum
 /* function declarations */
 short int import_sbi_load(int cart_num, int patch_num, char* filename, int inst_id);
 short int import_tfi_load(int cart_num, int patch_num, char* filename, int inst_id);
-short int import_opm_load(int cart_num, int patch_num, char* filename, int inst_id);
+short int import_opm_load(int cart_num, int patch_num, 
+                          char* filename, int inst_id, int batching);
 
 #endif

@@ -157,6 +157,7 @@ int main(int argc, char *argv[])
   import_tfi_load(1, 2, G_path_import_tfi_2, 0);
   import_sbi_load(1, 3, G_path_import_sbi_1, 0);
   import_sbi_load(1, 4, G_path_import_sbi_2, 0);
+  import_opm_load(1, 5, G_path_import_opm_1, 0, IMPORT_BATCHING_8);
 #endif
 
   /* testing */
