@@ -103,7 +103,8 @@ short int instrument_reset(int instrument_index)
 /*******************************************************************************
 ** instrument_load_patch()
 *******************************************************************************/
-short int instrument_load_patch(int instrument_index, int patch_index)
+short int instrument_load_patch(int instrument_index, 
+                                int cart_number, int patch_number)
 {
   int k;
 
@@ -111,13 +112,24 @@ short int instrument_load_patch(int instrument_index, int patch_index)
   patch* p;
 
   int voice_index;
+  int patch_index;
+
   int bound;
 
   /* make sure that the instrument index is valid */
   if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
     return 1;
 
-  /* make sure that the patch index is valid */
+  /* make sure that the cart and patch numbers are valid */
+  if (PATCH_CART_NO_IS_NOT_VALID(cart_number))
+    return 1;
+
+  if (PATCH_PATCH_NO_IS_NOT_VALID(patch_number))
+    return 1;
+
+  /* determine patch index */
+  PATCH_COMPUTE_PATCH_INDEX(cart_number, patch_number)
+
   if (BANK_PATCH_INDEX_IS_NOT_VALID(patch_index))
     return 1;
 

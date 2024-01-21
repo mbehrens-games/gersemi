@@ -5,7 +5,7 @@
 #ifndef FILEIO_H
 #define FILEIO_H
 
-#include "cart.h"
+#include "bank.h"
 
 enum
 {
@@ -18,8 +18,8 @@ enum
   FILEIO_PATCH_BYTE_GENERAL_EFFECT_MODES_BOOST_DEPTH,         /* modes (3 bits, 1 bit each), depth (4 bits) */
   FILEIO_PATCH_BYTE_GENERAL_MOD_WHEEL_EFFECT_VIBRATO_BASE,    /* effect (2 bits), base (5 bits) */
   FILEIO_PATCH_BYTE_GENERAL_AFTERTOUCH_EFFECT_TREMOLO_BASE,   /* effect (2 bits), base (5 bits) */
-  FILEIO_PATCH_BYTE_GENERAL_LFO_WAVEFORM_FREQUENCY,           /* lfo waveform (3 bits), lfo frequency (5 bits) */
-  FILEIO_PATCH_BYTE_GENERAL_LFO_DELAY,                        /* lfo delay (5 bits) */
+  FILEIO_PATCH_BYTE_GENERAL_LFO_WAVEFORM_DELAY,               /* lfo waveform (3 bits), lfo delay (5 bits) */
+  FILEIO_PATCH_BYTE_GENERAL_LFO_FREQUENCY,                    /* lfo frequency (5 bits) */
   FILEIO_PATCH_BYTE_GENERAL_LFO_QUANTIZE,                     /* lfo quantize (5 bits) */
   FILEIO_PATCH_NUM_GENERAL_BYTES 
 };
@@ -50,7 +50,7 @@ enum
 #define FILEIO_PATCH_OSC_ENV_END_INDEX    ( FILEIO_PATCH_OSC_ENV_START_INDEX + \
                                             4 * FILEIO_PATCH_NUM_OSC_ENV_BYTES)
 
-#define FILEIO_CART_NUM_BYTES   (FILEIO_PATCH_NUM_BYTES * CART_PATCHES_PER_CART)
+#define FILEIO_CART_NUM_BYTES   (FILEIO_PATCH_NUM_BYTES * BANK_PATCHES_PER_CART)
 
 /* function declarations */
 short int fileio_cart_load(int cart_num, char* filename);

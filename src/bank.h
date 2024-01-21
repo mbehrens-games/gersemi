@@ -5,10 +5,25 @@
 #ifndef BANK_H
 #define BANK_H
 
-#include "cart.h"
+/* carts */
+#define BANK_NUM_EDITOR_CARTS   8
+#define BANK_NUM_PLAYBACK_CARTS 1
+#define BANK_NUM_SOUND_FX_CARTS 1
+
+#define BANK_NUM_CARTS  ( BANK_NUM_EDITOR_CARTS +                              \
+                          BANK_NUM_PLAYBACK_CARTS +                            \
+                          BANK_NUM_SOUND_FX_CARTS)
+
+#define BANK_CART_INDEX_IS_VALID(index)                                        \
+  ((index >= 0) && (index < BANK_NUM_CARTS))
+
+#define BANK_CART_INDEX_IS_NOT_VALID(index)                                    \
+  (!(BANK_CART_INDEX_IS_VALID(index)))
 
 /* patches */
-#define BANK_NUM_PATCHES (CART_NUM_CARTS * CART_PATCHES_PER_CART)
+#define BANK_PATCHES_PER_CART   16
+
+#define BANK_NUM_PATCHES (BANK_NUM_CARTS * BANK_PATCHES_PER_CART)
 
 #define BANK_PATCH_INDEX_IS_VALID(index)                                       \
   ((index >= 0) && (index < BANK_NUM_PATCHES))

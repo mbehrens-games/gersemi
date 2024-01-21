@@ -10,28 +10,26 @@
 
 enum
 {
-  GRAPHICS_RESOLUTION_480P = 0,
-  GRAPHICS_RESOLUTION_600P,
-  GRAPHICS_RESOLUTION_720P,
-  GRAPHICS_RESOLUTION_768P,
-  GRAPHICS_RESOLUTION_1080P,
-  GRAPHICS_NUM_RESOLUTIONS
+  GRAPHICS_RESOLUTION_480P = 0, 
+  GRAPHICS_RESOLUTION_600P, 
+  GRAPHICS_RESOLUTION_720P, 
+  GRAPHICS_RESOLUTION_768P, 
+  GRAPHICS_RESOLUTION_1080P, 
+  GRAPHICS_NUM_RESOLUTIONS 
 };
 
 enum
 {
-  GRAPHICS_TILE_LAYER_BACKGROUND = 0,
-  GRAPHICS_TILE_LAYER_TOP_PANEL,
-  GRAPHICS_NUM_TILE_LAYERS
+  GRAPHICS_TILE_LAYER_BACKGROUND = 0, 
+  GRAPHICS_NUM_TILE_LAYERS 
 };
 
 enum
 {
-  GRAPHICS_SPRITE_LAYER_UNDERLAY = 0,
-  GRAPHICS_SPRITE_LAYER_TEXT,
-  GRAPHICS_SPRITE_LAYER_POPUP,
-  GRAPHICS_SPRITE_LAYER_OVERLAY,
-  GRAPHICS_NUM_SPRITE_LAYERS
+  GRAPHICS_SPRITE_LAYER_PANELS = 0, 
+  GRAPHICS_SPRITE_LAYER_WIDGETS, 
+  GRAPHICS_SPRITE_LAYER_TEXT, 
+  GRAPHICS_NUM_SPRITE_LAYERS 
 };
 
 #define GRAPHICS_OVERSCAN_WIDTH   400
@@ -42,62 +40,47 @@ enum
 
 /* the maximum number of tiles is determined as follows:        */
 /*   number of 16x16 background tiles (1 screen): 25 * 14 = 350 */
-/*   number of 8x8 top panel pieces (1 screen): 50 * 28 = 1400  */
-/* overall, this is 350 + 1400 = 1750                           */
+/* overall, this is 350                                         */
 #define GRAPHICS_MAX_BACKGROUND_TILES 350
-#define GRAPHICS_MAX_TOP_PANEL_TILES  1400
 
-#define GRAPHICS_MAX_TILES  ( GRAPHICS_MAX_BACKGROUND_TILES +                  \
-                              GRAPHICS_MAX_TOP_PANEL_TILES)
+#define GRAPHICS_MAX_TILES  GRAPHICS_MAX_BACKGROUND_TILES
 
 #define GRAPHICS_BACKGROUND_TILES_START_INDEX 0
 #define GRAPHICS_BACKGROUND_TILES_END_INDEX   ( GRAPHICS_BACKGROUND_TILES_START_INDEX + \
                                                 GRAPHICS_MAX_BACKGROUND_TILES)
 
-#define GRAPHICS_TOP_PANEL_TILES_START_INDEX  GRAPHICS_BACKGROUND_TILES_END_INDEX
-#define GRAPHICS_TOP_PANEL_TILES_END_INDEX    ( GRAPHICS_TOP_PANEL_TILES_START_INDEX + \
-                                                GRAPHICS_MAX_TOP_PANEL_TILES)
-
 /* the maximum number of sprites is determined as follows:  */
-/*   number of 8x8 pieces (1 screen): 50 * 28 = 1400        */
-/* overall, this is 4 * 1400 = 5600                         */
-#define GRAPHICS_MAX_UNDERLAY_SPRITES 1400
+/*   number of 8x8  (1 screen): 50 * 28 = 1400              */
+/* overall, this is 3 * 1400 = 4200                         */
+#define GRAPHICS_MAX_PANELS_SPRITES   1400
+#define GRAPHICS_MAX_WIDGETS_SPRITES  1400
 #define GRAPHICS_MAX_TEXT_SPRITES     1400
-#define GRAPHICS_MAX_POPUP_SPRITES    1400
-#define GRAPHICS_MAX_OVERLAY_SPRITES  1400
 
-#define GRAPHICS_MAX_SPRITES  ( GRAPHICS_MAX_UNDERLAY_SPRITES +                \
-                                GRAPHICS_MAX_TEXT_SPRITES +                    \
-                                GRAPHICS_MAX_POPUP_SPRITES +                   \
-                                GRAPHICS_MAX_OVERLAY_SPRITES)
+#define GRAPHICS_MAX_SPRITES  ( GRAPHICS_MAX_PANELS_SPRITES +                  \
+                                GRAPHICS_MAX_WIDGETS_SPRITES +                 \
+                                GRAPHICS_MAX_TEXT_SPRITES)
 
-#define GRAPHICS_UNDERLAY_SPRITES_START_INDEX 0
-#define GRAPHICS_UNDERLAY_SPRITES_END_INDEX   ( GRAPHICS_UNDERLAY_SPRITES_START_INDEX + \
-                                                GRAPHICS_MAX_UNDERLAY_SPRITES)
+#define GRAPHICS_PANELS_SPRITES_START_INDEX   0
+#define GRAPHICS_PANELS_SPRITES_END_INDEX     ( GRAPHICS_PANELS_SPRITES_START_INDEX + \
+                                                GRAPHICS_MAX_PANELS_SPRITES)
 
-#define GRAPHICS_TEXT_SPRITES_START_INDEX GRAPHICS_UNDERLAY_SPRITES_END_INDEX
-#define GRAPHICS_TEXT_SPRITES_END_INDEX   ( GRAPHICS_TEXT_SPRITES_START_INDEX + \
-                                            GRAPHICS_MAX_TEXT_SPRITES)
+#define GRAPHICS_WIDGETS_SPRITES_START_INDEX  GRAPHICS_PANELS_SPRITES_END_INDEX
+#define GRAPHICS_WIDGETS_SPRITES_END_INDEX    ( GRAPHICS_WIDGETS_SPRITES_START_INDEX + \
+                                                GRAPHICS_MAX_WIDGETS_SPRITES)
 
-#define GRAPHICS_POPUP_SPRITES_START_INDEX  GRAPHICS_TEXT_SPRITES_END_INDEX
-#define GRAPHICS_POPUP_SPRITES_END_INDEX    ( GRAPHICS_POPUP_SPRITES_START_INDEX + \
-                                              GRAPHICS_MAX_POPUP_SPRITES)
-
-#define GRAPHICS_OVERLAY_SPRITES_START_INDEX  GRAPHICS_POPUP_SPRITES_END_INDEX
-#define GRAPHICS_OVERLAY_SPRITES_END_INDEX    ( GRAPHICS_OVERLAY_SPRITES_START_INDEX + \
-                                                GRAPHICS_MAX_OVERLAY_SPRITES)
+#define GRAPHICS_TEXT_SPRITES_START_INDEX   GRAPHICS_WIDGETS_SPRITES_END_INDEX
+#define GRAPHICS_TEXT_SPRITES_END_INDEX     ( GRAPHICS_TEXT_SPRITES_START_INDEX + \
+                                              GRAPHICS_MAX_TEXT_SPRITES)
 
 /* the near and far planes are from 0.125 (near) to 1.375 (far)   */
 #define GRAPHICS_Z_LEVEL_BACKGROUND 1.25f
-#define GRAPHICS_Z_LEVEL_TOP_PANEL  1.0f
 
 /* the z levels for the sprites shouldn't matter, */
 /* as the depth buffer should be reset and the    */
 /* depth test should be off when we draw them.    */
-#define GRAPHICS_Z_LEVEL_UNDERLAY   0.625f
-#define GRAPHICS_Z_LEVEL_TEXT       0.5f
-#define GRAPHICS_Z_LEVEL_POPUP      0.375f
-#define GRAPHICS_Z_LEVEL_OVERLAY    0.25f
+#define GRAPHICS_Z_LEVEL_PANELS     0.75f
+#define GRAPHICS_Z_LEVEL_WIDGETS    0.50f
+#define GRAPHICS_Z_LEVEL_TEXT       0.25f
 
 /* for the postprocessing, the z level of the fullscreen  */
 /* quad is set to the midpoint of the near and far planes */

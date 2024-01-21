@@ -8,6 +8,7 @@
 #include "bank.h"
 #include "global.h"
 #include "midicont.h"
+#include "patch.h"
 #include "screen.h"
 #include "tuning.h"
 
@@ -41,8 +42,8 @@ int G_patch_edit_pitch_wheel_pos;
 short int globals_init_variables()
 {
   /* initialize variables */
-  G_game_screen = PROGRAM_SCREEN_PATCHES;
-  G_last_screen = PROGRAM_SCREEN_PATCHES;
+  G_game_screen = PROGRAM_SCREEN_CART;
+  G_last_screen = PROGRAM_SCREEN_CART;
 
   G_flag_window_minimized = 0;
   G_flag_quit_program = 0;
@@ -53,8 +54,8 @@ short int globals_init_variables()
   G_current_scroll_amount = 0;
   G_max_scroll_amount = 0;
 
-  G_patch_edit_cart_number = CART_EDITOR_CART_NO_DEFAULT;
-  G_patch_edit_patch_number = CART_PATCH_NO_DEFAULT;
+  G_patch_edit_cart_number = PATCH_CART_NO_DEFAULT;
+  G_patch_edit_patch_number = PATCH_PATCH_NO_DEFAULT;
 
   G_patch_edit_instrument_index = 0;
 

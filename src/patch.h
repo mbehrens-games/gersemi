@@ -133,6 +133,40 @@ enum
   PATCH_LOWPASS_CUTOFF_C8
 };
 
+/* cart parameters */
+#define PATCH_CART_NO_DEFAULT     1
+#define PATCH_CART_NO_LOWER_BOUND 1
+#define PATCH_CART_NO_UPPER_BOUND BANK_NUM_CARTS
+#define PATCH_CART_NO_NUM_VALUES  (PATCH_CART_NO_UPPER_BOUND - PATCH_CART_NO_LOWER_BOUND + 1)
+
+#define PATCH_CART_NO_IS_VALID(num)                                            \
+  ((num >= PATCH_CART_NO_LOWER_BOUND) && (num <= PATCH_CART_NO_UPPER_BOUND))
+
+#define PATCH_CART_NO_IS_NOT_VALID(num)                                        \
+  (!(PATCH_CART_NO_IS_VALID(num)))
+
+#define PATCH_PATCH_NO_DEFAULT      1
+#define PATCH_PATCH_NO_LOWER_BOUND  1
+#define PATCH_PATCH_NO_UPPER_BOUND  BANK_PATCHES_PER_CART
+#define PATCH_PATCH_NO_NUM_VALUES   (PATCH_PATCH_NO_UPPER_BOUND - PATCH_PATCH_NO_LOWER_BOUND + 1)
+
+#define PATCH_PATCH_NO_IS_VALID(num)                                           \
+  ((num >= PATCH_PATCH_NO_LOWER_BOUND) && (num <= PATCH_PATCH_NO_UPPER_BOUND))
+
+#define PATCH_PATCH_NO_IS_NOT_VALID(num)                                       \
+  (!(PATCH_PATCH_NO_IS_VALID(num)))
+
+#define PATCH_COMPUTE_CART_INDEX(cart_num)                                     \
+  cart_index = cart_num - PATCH_CART_NO_LOWER_BOUND;
+
+#define PATCH_COMPUTE_PATCH_INDEX(cart_num, patch_num)                         \
+  patch_index = ((cart_num - PATCH_CART_NO_LOWER_BOUND) * BANK_PATCHES_PER_CART) + (patch_num - PATCH_PATCH_NO_LOWER_BOUND);
+
+#define PATCH_CART_NAME_SIZE  11
+#define PATCH_PATCH_NAME_SIZE 11
+
+/* patch parameters */
+
 /* algorithm */
 #define PATCH_ALGORITHM_DEFAULT     PATCH_ALGORITHM_1C_CHAIN
 #define PATCH_ALGORITHM_LOWER_BOUND PATCH_ALGORITHM_1C_CHAIN
@@ -217,7 +251,7 @@ enum
 #define PATCH_LFO_WAVEFORM_UPPER_BOUND  PATCH_LFO_WAVEFORM_NOISE_SAW
 #define PATCH_LFO_WAVEFORM_NUM_VALUES   (PATCH_LFO_WAVEFORM_UPPER_BOUND - PATCH_LFO_WAVEFORM_LOWER_BOUND + 1)
 
-#define PATCH_LFO_FREQUENCY_DEFAULT     1
+#define PATCH_LFO_FREQUENCY_DEFAULT     16
 #define PATCH_LFO_FREQUENCY_LOWER_BOUND 1
 #define PATCH_LFO_FREQUENCY_UPPER_BOUND 32
 #define PATCH_LFO_FREQUENCY_NUM_VALUES  (PATCH_LFO_FREQUENCY_UPPER_BOUND - PATCH_LFO_FREQUENCY_LOWER_BOUND + 1)
@@ -270,7 +304,7 @@ enum
 #define PATCH_PORTAMENTO_LEGATO_UPPER_BOUND   PATCH_PORTAMENTO_LEGATO_ON
 #define PATCH_PORTAMENTO_LEGATO_NUM_VALUES    (PATCH_PORTAMENTO_LEGATO_UPPER_BOUND - PATCH_PORTAMENTO_LEGATO_LOWER_BOUND + 1)
 
-#define PATCH_PORTAMENTO_SPEED_DEFAULT        1
+#define PATCH_PORTAMENTO_SPEED_DEFAULT        8
 #define PATCH_PORTAMENTO_SPEED_LOWER_BOUND    1
 #define PATCH_PORTAMENTO_SPEED_UPPER_BOUND    16
 #define PATCH_PORTAMENTO_SPEED_NUM_VALUES     (PATCH_PORTAMENTO_SPEED_UPPER_BOUND - PATCH_PORTAMENTO_SPEED_LOWER_BOUND + 1)
@@ -321,7 +355,7 @@ enum
 #define PATCH_NOISE_MODE_UPPER_BOUND  PATCH_NOISE_MODE_SAW
 #define PATCH_NOISE_MODE_NUM_VALUES   (PATCH_NOISE_MODE_UPPER_BOUND - PATCH_NOISE_MODE_LOWER_BOUND + 1)
 
-#define PATCH_NOISE_FREQUENCY_DEFAULT     1
+#define PATCH_NOISE_FREQUENCY_DEFAULT     16
 #define PATCH_NOISE_FREQUENCY_LOWER_BOUND 1
 #define PATCH_NOISE_FREQUENCY_UPPER_BOUND 32
 #define PATCH_NOISE_FREQUENCY_NUM_VALUES  (PATCH_NOISE_FREQUENCY_UPPER_BOUND - PATCH_NOISE_FREQUENCY_LOWER_BOUND + 1)
@@ -416,13 +450,21 @@ typedef struct patch
   short int lowpass_cutoff;
 } patch;
 
-/* patch bank */
-extern patch G_patch_bank[BANK_NUM_PATCHES];
+/* name & patch banks */
+extern char   G_cart_names[BANK_NUM_CARTS][PATCH_CART_NAME_SIZE];
+extern char   G_patch_names[BANK_NUM_PATCHES][PATCH_PATCH_NAME_SIZE];
+
+extern patch  G_patch_bank[BANK_NUM_PATCHES];
 
 /* function declarations */
 short int patch_setup_all();
-short int patch_reset(int patch_index);
 
-short int patch_validate(int patch_index);
+short int patch_reset_patch(int patch_index);
+short int patch_validate_patch(int patch_index);
+short int patch_copy_patch(int dest_patch_index, int src_patch_index);
+
+short int patch_reset_cart(int cart_index);
+short int patch_validate_cart(int cart_index);
+short int patch_copy_cart(int dest_cart_index, int src_cart_index);
 
 #endif

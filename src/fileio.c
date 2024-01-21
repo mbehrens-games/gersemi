@@ -42,7 +42,7 @@ short int fileio_cart_load(int cart_num, char* filename)
     return 0;
 
   /* make sure cart number is valid */
-  if (CART_TOTAL_CART_NO_IS_NOT_VALID(cart_num))
+  if (PATCH_CART_NO_IS_NOT_VALID(cart_num))
     return 0;
 
   /* open cart file */
@@ -95,14 +95,14 @@ short int fileio_cart_load(int cart_num, char* filename)
   fclose(fp);
 
   /* load cart data */
-  for (k = 0; k < CART_PATCHES_PER_CART; k++)
+  for (k = 0; k < BANK_PATCHES_PER_CART; k++)
   {
-    CART_COMPUTE_PATCH_INDEX(cart_num, (CART_PATCH_NO_LOWER_BOUND + k))
+    PATCH_COMPUTE_PATCH_INDEX(cart_num, (PATCH_PATCH_NO_LOWER_BOUND + k))
 
     p = &G_patch_bank[patch_index];
 
     /* reset patch */
-    patch_reset(patch_index);
+    patch_reset_patch(patch_index);
 
     /* algorithm, velocity */
     current_byte = cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, ALGORITHM_VELOCITY)];
@@ -165,16 +165,16 @@ short int fileio_cart_load(int cart_num, char* filename)
     p->aftertouch_effect = PATCH_CONTROLLER_EFFECT_LOWER_BOUND + ((current_byte & 0xC0) >> 6);
     p->tremolo_base = PATCH_EFFECT_BASE_LOWER_BOUND + (current_byte & 0x1F);
 
-    /* lfo waveform, frequency */
-    current_byte = cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, LFO_WAVEFORM_FREQUENCY)];
+    /* lfo waveform, delay */
+    current_byte = cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, LFO_WAVEFORM_DELAY)];
 
     p->lfo_waveform = PATCH_LFO_WAVEFORM_LOWER_BOUND + ((current_byte & 0xE0) >> 5);
-    p->lfo_frequency = PATCH_LFO_FREQUENCY_LOWER_BOUND + (current_byte & 0x1F);
-
-    /* lfo delay */
-    current_byte = cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, LFO_DELAY)];
-
     p->lfo_delay = PATCH_LFO_DELAY_LOWER_BOUND + (current_byte & 0x1F);
+
+    /* lfo frequency */
+    current_byte = cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, LFO_FREQUENCY)];
+
+    p->lfo_frequency = PATCH_LFO_FREQUENCY_LOWER_BOUND + (current_byte & 0x1F);
 
     /* lfo quantize */
     current_byte = cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, LFO_QUANTIZE)];
@@ -250,7 +250,7 @@ short int fileio_cart_load(int cart_num, char* filename)
     }
 
     /* validate the parameters */
-    patch_validate(patch_index);
+    patch_validate_patch(patch_index);
   }
 
   return 0;
@@ -281,7 +281,7 @@ short int fileio_cart_save(int cart_num, char* filename)
     return 0;
 
   /* make sure cart number is valid */
-  if (CART_TOTAL_CART_NO_IS_NOT_VALID(cart_num))
+  if (PATCH_CART_NO_IS_NOT_VALID(cart_num))
     return 0;
 
   /* initialize cart data */
@@ -289,9 +289,9 @@ short int fileio_cart_save(int cart_num, char* filename)
     cart_data[m] = 0;
 
   /* generate cart data */
-  for (k = 0; k < CART_PATCHES_PER_CART; k++)
+  for (k = 0; k < BANK_PATCHES_PER_CART; k++)
   {
-    CART_COMPUTE_PATCH_INDEX(cart_num, (CART_PATCH_NO_LOWER_BOUND + k))
+    PATCH_COMPUTE_PATCH_INDEX(cart_num, (PATCH_PATCH_NO_LOWER_BOUND + k))
 
     p = &G_patch_bank[patch_index];
 
@@ -356,16 +356,16 @@ short int fileio_cart_save(int cart_num, char* filename)
 
     cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, AFTERTOUCH_EFFECT_TREMOLO_BASE)] = current_byte;
 
-    /* lfo waveform, frequency */
+    /* lfo waveform, delay */
     current_byte = ((p->lfo_waveform - PATCH_LFO_WAVEFORM_LOWER_BOUND) & 0x07) << 5;
-    current_byte |= (p->lfo_frequency - PATCH_LFO_FREQUENCY_LOWER_BOUND) & 0x1F;
+    current_byte |= (p->lfo_delay - PATCH_LFO_DELAY_LOWER_BOUND) & 0x1F;
 
-    cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, LFO_WAVEFORM_FREQUENCY)] = current_byte;
+    cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, LFO_WAVEFORM_DELAY)] = current_byte;
 
-    /* lfo delay */
-    current_byte = (p->lfo_delay - PATCH_LFO_DELAY_LOWER_BOUND) & 0x1F;
+    /* lfo frequency */
+    current_byte = (p->lfo_frequency - PATCH_LFO_FREQUENCY_LOWER_BOUND) & 0x1F;
 
-    cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, LFO_DELAY)] = current_byte;
+    cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, LFO_FREQUENCY)] = current_byte;
 
     /* lfo quantize */
     current_byte = (p->lfo_quantize - PATCH_LFO_QUANTIZE_LOWER_BOUND) & 0x1F;

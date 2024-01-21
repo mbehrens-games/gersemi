@@ -8,8 +8,7 @@
 enum
 { IMPORT_BATCHING_1 = 1, 
   IMPORT_BATCHING_8, 
-  IMPORT_BATCHING_16, 
-  IMPORT_BATCHING_32 
+  IMPORT_BATCHING_16 
 };
 
 #define IMPORT_INSTRUMENT_ID_IS_VALID(id)                                      \
@@ -145,6 +144,45 @@ enum
 
 #define IMPORT_SBI_MAX_PATCHES 128
 
+#define IMPORT_SBI_M1_START_INDEX                                              \
+  (IMPORT_SBI_SHARED_START_INDEX + IMPORT_SBI_SHARED_BYTE_MODULATOR_MULTIPLE_FLAGS)
+
+#define IMPORT_SBI_C1_START_INDEX                                              \
+  (IMPORT_SBI_SHARED_START_INDEX + IMPORT_SBI_SHARED_BYTE_CARRIER_MULTIPLE_FLAGS)
+
+#define IMPORT_SBI_M2_START_INDEX                                              \
+  (IMPORT_SBI_4OP_EXTRA_START_INDEX + IMPORT_SBI_4OP_EXTRA_BYTE_MODULATOR_MULTIPLE_FLAGS)
+
+#define IMPORT_SBI_C2_START_INDEX                                              \
+  (IMPORT_SBI_4OP_EXTRA_START_INDEX + IMPORT_SBI_4OP_EXTRA_BYTE_CARRIER_MULTIPLE_FLAGS)
+
+#define IMPORT_SBI_OPERATOR_OFFSET_MULTIPLE_FLAGS                              \
+  (IMPORT_SBI_SHARED_BYTE_MODULATOR_MULTIPLE_FLAGS - IMPORT_SBI_M1_START_INDEX)
+
+#define IMPORT_SBI_OPERATOR_OFFSET_LEVEL_KEYSCALE_TOTAL_LEVEL                  \
+  (IMPORT_SBI_SHARED_BYTE_MODULATOR_LEVEL_KEYSCALE_TOTAL_LEVEL - IMPORT_SBI_M1_START_INDEX)
+
+#define IMPORT_SBI_OPERATOR_OFFSET_ATTACK_RATE_DECAY_RATE                      \
+  (IMPORT_SBI_SHARED_BYTE_MODULATOR_ATTACK_RATE_DECAY_RATE - IMPORT_SBI_M1_START_INDEX)
+
+#define IMPORT_SBI_OPERATOR_OFFSET_SUSTAIN_LEVEL_RELEASE_RATE                  \
+  (IMPORT_SBI_SHARED_BYTE_MODULATOR_SUSTAIN_LEVEL_RELEASE_RATE - IMPORT_SBI_M1_START_INDEX)
+
+#define IMPORT_SBI_OPERATOR_OFFSET_WAVEFORM                                    \
+  (IMPORT_SBI_SHARED_BYTE_MODULATOR_WAVEFORM - IMPORT_SBI_M1_START_INDEX)
+
+#define IMPORT_SBI_COMPUTE_BYTE_SHARED_INDEX(name)                             \
+  ( IMPORT_SBI_SHARED_START_INDEX +                                            \
+    IMPORT_SBI_SHARED_BYTE_##name)
+
+#define IMPORT_SBI_COMPUTE_BYTE_2OP_EXTRA_INDEX(name)                          \
+  ( IMPORT_SBI_2OP_EXTRA_START_INDEX +                                         \
+    IMPORT_SBI_2OP_EXTRA_BYTE_##name)
+
+#define IMPORT_SBI_COMPUTE_BYTE_4OP_EXTRA_INDEX(name)                          \
+  ( IMPORT_SBI_4OP_EXTRA_START_INDEX +                                         \
+    IMPORT_SBI_4OP_EXTRA_BYTE_##name)
+
 /* tfi format (.tfi) for opn patches */
 enum
 {
@@ -182,6 +220,15 @@ enum
 
 #define IMPORT_TFI_MAX_PATCHES 128
 
+#define IMPORT_TFI_COMPUTE_BYTE_GENERAL_INDEX(name)                            \
+  ( IMPORT_TFI_GENERAL_START_INDEX +                                           \
+    IMPORT_TFI_BYTE_GENERAL_##name)
+
+#define IMPORT_TFI_COMPUTE_BYTE_OPERATOR_INDEX(op_num, name)                   \
+  ( IMPORT_TFI_OPERATOR_START_INDEX +                                          \
+    (op_num * IMPORT_TFI_NUM_OPERATOR_BYTES) +                                 \
+    IMPORT_TFI_BYTE_OPERATOR_##name)
+
 /* opm format (.opm) for opm patches */
 enum
 {
@@ -218,8 +265,6 @@ enum
 
 #define IMPORT_OPM_TEXT_LINE_MAX_LENGTH   256
 
-#define IMPORT_OPM_PATCH_NAME_MAX_LENGTH  10
-
 #define IMPORT_OPM_NUM_VALUES ( IMPORT_OPM_NUM_GENERAL_VALUES +                \
                                 (4 * IMPORT_OPM_NUM_OPERATOR_VALUES))
 
@@ -233,9 +278,20 @@ enum
 
 #define IMPORT_OPM_MAX_PATCHES 128
 
+#define IMPORT_OPM_COMPUTE_VALUE_GENERAL_INDEX(name)                           \
+  ( IMPORT_OPM_GENERAL_START_INDEX +                                           \
+    IMPORT_OPM_VALUE_GENERAL_##name)
+
+#define IMPORT_OPM_COMPUTE_VALUE_OPERATOR_INDEX(op_num, name)                  \
+  ( IMPORT_OPM_OPERATOR_START_INDEX +                                          \
+    (op_num * IMPORT_OPM_NUM_OPERATOR_VALUES) +                                \
+    IMPORT_OPM_VALUE_OPERATOR_##name)
+
 /* function declarations */
-short int import_sbi_load(int cart_num, int patch_num, char* filename, int inst_id);
-short int import_tfi_load(int cart_num, int patch_num, char* filename, int inst_id);
+short int import_sbi_load(int cart_num, int patch_num, 
+                          char* filename, int inst_id, int batching);
+short int import_tfi_load(int cart_num, int patch_num, 
+                          char* filename, int inst_id, int batching);
 short int import_opm_load(int cart_num, int patch_num, 
                           char* filename, int inst_id, int batching);
 

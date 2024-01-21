@@ -7,57 +7,14 @@
 #include <string.h>
 
 #include "bank.h"
-#include "cart.h"
 #include "import.h"
 #include "patch.h"
+#include "text.h"
 
-#define IMPORT_SBI_COMPUTE_BYTE_SHARED_INDEX(name)                             \
-  ( IMPORT_SBI_SHARED_START_INDEX +                                            \
-    IMPORT_SBI_SHARED_BYTE_##name)
-
-#define IMPORT_SBI_COMPUTE_BYTE_2OP_EXTRA_INDEX(name)                          \
-  ( IMPORT_SBI_2OP_EXTRA_START_INDEX +                                         \
-    IMPORT_SBI_2OP_EXTRA_BYTE_##name)
-
-#define IMPORT_SBI_COMPUTE_BYTE_4OP_EXTRA_INDEX(name)                          \
-  ( IMPORT_SBI_4OP_EXTRA_START_INDEX +                                         \
-    IMPORT_SBI_4OP_EXTRA_BYTE_##name)
-
-#define IMPORT_TFI_COMPUTE_BYTE_GENERAL_INDEX(name)                            \
-  ( IMPORT_TFI_GENERAL_START_INDEX +                                           \
-    IMPORT_TFI_BYTE_GENERAL_##name)
-
-#define IMPORT_TFI_COMPUTE_BYTE_OPERATOR_INDEX(op_num, name)                   \
-  ( IMPORT_TFI_OPERATOR_START_INDEX +                                          \
-    (op_num * IMPORT_TFI_NUM_OPERATOR_BYTES) +                                 \
-    IMPORT_TFI_BYTE_OPERATOR_##name)
-
-#define IMPORT_OPM_COMPUTE_VALUE_GENERAL_INDEX(name)                           \
-  ( IMPORT_OPM_GENERAL_START_INDEX +                                           \
-    IMPORT_OPM_VALUE_GENERAL_##name)
-
-#define IMPORT_OPM_COMPUTE_VALUE_OPERATOR_INDEX(op_num, name)                  \
-  ( IMPORT_OPM_OPERATOR_START_INDEX +                                          \
-    (op_num * IMPORT_OPM_NUM_OPERATOR_VALUES) +                                \
-    IMPORT_OPM_VALUE_OPERATOR_##name)
-
-/* string parsing macros */
-#define IMPORT_OPM_PARSE_CHARACTER_IS_SPACE_OR_TAB(pos)                        \
-  ( (text_line[pos] == ' ')  || (text_line[pos] == '\t'))                      \
-
-#define IMPORT_OPM_PARSE_CHARACTER_IS_NEWLINE(pos)                             \
-  ( (text_line[pos] == '\n')  || (text_line[pos] == '\r'))                     \
-
-#define IMPORT_OPM_PARSE_CHARACTER_IS_DIGIT(pos)                               \
-  ((text_line[pos] >= '0') && (text_line[pos] <= '9'))
-
-#define IMPORT_OPM_PARSE_CHARACTER_IS_LETTER(pos)                              \
-  ( ((text_line[pos] >= 'A') && (text_line[pos] <= 'Z')) ||                    \
-    ((text_line[pos] >= 'a') && (text_line[pos] <= 'z')))
-
+/* opm string parsing macros */
 #define IMPORT_OPM_PARSE_SKIP_SPACES()                                         \
   while ( (line_pos < IMPORT_OPM_TEXT_LINE_MAX_LENGTH) &&                      \
-          IMPORT_OPM_PARSE_CHARACTER_IS_SPACE_OR_TAB(line_pos))                \
+          TEXT_CHARACTER_IS_SPACE_OR_TAB(text_line[line_pos]))                 \
   {                                                                            \
     line_pos += 1;                                                             \
   }
@@ -67,7 +24,7 @@
                                                                                \
   while (line_pos + token_size < IMPORT_OPM_TEXT_LINE_MAX_LENGTH)              \
   {                                                                            \
-    if (IMPORT_OPM_PARSE_CHARACTER_IS_DIGIT(line_pos + token_size))            \
+    if (TEXT_CHARACTER_IS_DIGIT(text_line[line_pos + token_size]))             \
       token_size += 1;                                                         \
     else                                                                       \
       break;                                                                   \
@@ -81,8 +38,8 @@
                                                                                \
   while (line_pos + token_size < IMPORT_OPM_TEXT_LINE_MAX_LENGTH)              \
   {                                                                            \
-    if (IMPORT_OPM_PARSE_CHARACTER_IS_DIGIT(line_pos + token_size)  ||         \
-        IMPORT_OPM_PARSE_CHARACTER_IS_LETTER(line_pos + token_size) ||         \
+    if (TEXT_CHARACTER_IS_DIGIT(text_line[line_pos + token_size])   ||         \
+        TEXT_CHARACTER_IS_LETTER(text_line[line_pos + token_size])  ||         \
         (text_line[line_pos + token_size] >= ' '))                             \
     {                                                                          \
       token_size += 1;                                                         \
@@ -461,15 +418,18 @@ static short int  S_import_ym2151_lfo_waveform_table[IMPORT_YM2151_LFO_WAVEFORM_
 ** import_sbi_load()
 *******************************************************************************/
 short int import_sbi_load(int cart_num, int patch_num, 
-                          char* filename, int inst_id)
+                          char* filename, int inst_id, int batching)
 {
+  int k;
+  int m;
+
   FILE* fp;
 
   char      signature[4];
   short int type;
 
   unsigned char patch_data[IMPORT_SBI_MAX_PATCHES][IMPORT_SBI_4OP_TOTAL_NUM_BYTES];
-  unsigned char name_data[IMPORT_SBI_MAX_PATCHES][IMPORT_SBI_PATCH_NAME_NUM_BYTES];
+  char          name_data[IMPORT_SBI_MAX_PATCHES][IMPORT_SBI_PATCH_NAME_NUM_BYTES];
 
   unsigned char first_byte;
   unsigned char second_byte;
@@ -480,18 +440,21 @@ short int import_sbi_load(int cart_num, int patch_num,
 
   int patch_index;
 
-  short int car_op[2];
-  short int mod_op[2];
+  short int batch_count;
 
+  short int op_order[4];
   short int current_op;
   short int fb_op;
 
+  short int start_indices[4];
+  short int num_ops;
+
   /* make sure the cart number is valid */
-  if (CART_TOTAL_CART_NO_IS_NOT_VALID(cart_num))
+  if (PATCH_CART_NO_IS_NOT_VALID(cart_num))
     return 0;
 
   /* make sure the patch number is valid */
-  if (CART_PATCH_NO_IS_NOT_VALID(patch_num))
+  if (PATCH_PATCH_NO_IS_NOT_VALID(patch_num))
     return 0;
 
   /* make sure filename is valid */
@@ -548,266 +511,193 @@ short int import_sbi_load(int cart_num, int patch_num,
   /* close .sbi file */
   fclose(fp);
 
-  /* make sure instrument id is valid */
-  if ((inst_id < 0) || (inst_id >= num_patches))
-    return 0;
-
-  /* load patch data to cart */
-  CART_COMPUTE_PATCH_INDEX(cart_num, patch_num)
-
-  p = &G_patch_bank[patch_index];
-
-  /* reset patch */
-  patch_reset(patch_index);
-
-  /* algorithm & feedback */
-  if (type == IMPORT_SBI_TYPE_4OP)
-  {
-    first_byte = patch_data[inst_id][IMPORT_SBI_COMPUTE_BYTE_SHARED_INDEX(FEEDBACK_ALGORITHM)];
-    second_byte = patch_data[inst_id][IMPORT_SBI_COMPUTE_BYTE_4OP_EXTRA_INDEX(ALGORITHM)];
-  }
+  /* determine batch count */
+  if (batching == IMPORT_BATCHING_1)
+    batch_count = 1;
+  else if (batching == IMPORT_BATCHING_8)
+    batch_count = 8;
+  else if (batching == IMPORT_BATCHING_16)
+    batch_count = 16;
   else
+    batch_count = 1;
+
+  /* load batch */
+  for (k = 0; k < batch_count; k++)
   {
-    first_byte = patch_data[inst_id][IMPORT_SBI_COMPUTE_BYTE_SHARED_INDEX(FEEDBACK_ALGORITHM)];
-    second_byte = 0;
-  }
+    /* make sure the instrument id is valid */
+    if (IMPORT_INSTRUMENT_ID_IS_NOT_VALID(inst_id + k))
+      break;
 
-  if (type == IMPORT_SBI_TYPE_4OP)
-  {
-    /* chain */
-    if (((second_byte & 0x01) == 0) && ((first_byte & 0x01) == 0))
+    /* make sure the patch number is valid */
+    if (PATCH_PATCH_NO_IS_NOT_VALID(patch_num + k))
+      break;
+
+    /* load patch data to cart */
+    PATCH_COMPUTE_PATCH_INDEX(cart_num, patch_num + k)
+
+    p = &G_patch_bank[patch_index];
+
+    /* reset patch */
+    patch_reset_patch(patch_index);
+
+    /* patch name */
+    strncpy(&G_patch_names[patch_index][0], &name_data[inst_id + k][0], PATCH_PATCH_NAME_SIZE);
+
+    /* algorithm & feedback */
+    if (type == IMPORT_SBI_TYPE_4OP)
     {
-      mod_op[0] = 0;
-      car_op[0] = 1;
-      mod_op[1] = 2;
-      car_op[1] = 3;
-
-      fb_op = 0;
-    }
-    /* stacked */
-    else if (((second_byte & 0x01) == 0) && ((first_byte & 0x01) == 1))
-    {
-      mod_op[0] = 3;
-      car_op[0] = 0;
-      mod_op[1] = 1;
-      car_op[1] = 2;
-
-      fb_op = 3;
-    }
-    /* twin */
-    else if (((second_byte & 0x01) == 1) && ((first_byte & 0x01) == 0))
-    {
-      mod_op[0] = 0;
-      car_op[0] = 2;
-      mod_op[1] = 1;
-      car_op[1] = 3;
-
-      fb_op = 0;
-    }
-    /* 1 to 1 */
-    else
-    {
-      mod_op[0] = 2;
-      car_op[0] = 0;
-      mod_op[1] = 1;
-      car_op[1] = 3;
-
-      fb_op = 2;
-    }
-
-    p->algorithm = S_import_opl_algorithm_table[(first_byte & 0x01) | ((second_byte & 0x01) << 1)];
-  }
-  else
-  {
-    if ((first_byte & 0x01) == 0)
-    {
-      mod_op[0] = 2;
-      car_op[0] = 3;
-      mod_op[1] = 0;
-      car_op[1] = 1;
-
-      fb_op = 2;
+      first_byte = patch_data[inst_id + k][IMPORT_SBI_COMPUTE_BYTE_SHARED_INDEX(FEEDBACK_ALGORITHM)];
+      second_byte = patch_data[inst_id + k][IMPORT_SBI_COMPUTE_BYTE_4OP_EXTRA_INDEX(ALGORITHM)];
     }
     else
     {
-      mod_op[0] = 2;
-      car_op[0] = 3;
-      mod_op[1] = 0;
-      car_op[1] = 1;
-
-      fb_op = 2;
+      first_byte = patch_data[inst_id + k][IMPORT_SBI_COMPUTE_BYTE_SHARED_INDEX(FEEDBACK_ALGORITHM)];
+      second_byte = 0;
     }
 
-    p->algorithm = S_import_opl_algorithm_table[first_byte & 0x01];
+    /* determine op order */
+    if (type == IMPORT_SBI_TYPE_4OP)
+    {
+      /* chain */
+      if (((second_byte & 0x01) == 0) && ((first_byte & 0x01) == 0))
+      {
+        op_order[0] = 0;
+        op_order[1] = 1;
+        op_order[2] = 2;
+        op_order[3] = 3;
+
+        fb_op = 0;
+      }
+      /* stacked */
+      else if (((second_byte & 0x01) == 0) && ((first_byte & 0x01) == 1))
+      {
+        op_order[0] = 3;
+        op_order[1] = 0;
+        op_order[2] = 1;
+        op_order[3] = 2;
+
+        fb_op = 3;
+      }
+      /* twin */
+      else if (((second_byte & 0x01) == 1) && ((first_byte & 0x01) == 0))
+      {
+        op_order[0] = 0;
+        op_order[1] = 2;
+        op_order[2] = 1;
+        op_order[3] = 3;
+
+        fb_op = 0;
+      }
+      /* 1 to 1 */
+      else
+      {
+        op_order[0] = 2;
+        op_order[1] = 0;
+        op_order[2] = 1;
+        op_order[3] = 3;
+
+        fb_op = 2;
+      }
+
+      start_indices[0] = IMPORT_SBI_M1_START_INDEX;
+      start_indices[1] = IMPORT_SBI_C1_START_INDEX;
+      start_indices[2] = IMPORT_SBI_M2_START_INDEX;
+      start_indices[3] = IMPORT_SBI_C2_START_INDEX;
+
+      num_ops = 4;
+
+      p->algorithm = S_import_opl_algorithm_table[(first_byte & 0x01) | ((second_byte & 0x01) << 1)];
+    }
+    else
+    {
+      if ((first_byte & 0x01) == 0)
+      {
+        op_order[0] = 2;
+        op_order[1] = 3;
+        op_order[2] = 0;
+        op_order[3] = 1;
+
+        fb_op = 2;
+      }
+      else
+      {
+        op_order[0] = 2;
+        op_order[1] = 3;
+        op_order[2] = 0;
+        op_order[3] = 1;
+
+        fb_op = 2;
+      }
+
+      start_indices[0] = IMPORT_SBI_M1_START_INDEX;
+      start_indices[1] = IMPORT_SBI_C1_START_INDEX;
+      start_indices[2] = IMPORT_SBI_M2_START_INDEX;
+      start_indices[3] = IMPORT_SBI_C2_START_INDEX;
+
+      num_ops = 2;
+
+      p->algorithm = S_import_opl_algorithm_table[first_byte & 0x01];
+    }
+
+    p->osc_feedback[fb_op] = S_import_feedback_table[(first_byte & 0x0E) >> 1];
+
+    for (m = 0; m < num_ops; m++)
+    {
+      current_op = op_order[m];
+
+      /* level keyscaling, total level */
+      first_byte = patch_data[inst_id + k][start_indices[m] + IMPORT_SBI_OPERATOR_OFFSET_LEVEL_KEYSCALE_TOTAL_LEVEL];
+
+      p->env_level_ks[current_op] = S_import_level_ks_table[(first_byte & 0xC0) >> 6];
+      p->env_amplitude[current_op] = S_import_env_amplitude_table[first_byte & 0x3F];
+
+      /* attack rate, decay 1 rate */
+      first_byte = patch_data[inst_id + k][start_indices[m] + IMPORT_SBI_OPERATOR_OFFSET_ATTACK_RATE_DECAY_RATE];
+
+      p->env_attack[current_op] = S_import_opl_env_rate_table[(first_byte & 0xF0) >> 4];
+      p->env_decay_1[current_op] = S_import_opl_env_rate_table[first_byte & 0x0F];
+      p->env_decay_2[current_op] = p->env_decay_1[current_op];
+
+      /* sustain level, release rate */
+      first_byte = patch_data[inst_id + k][start_indices[m] + IMPORT_SBI_OPERATOR_OFFSET_SUSTAIN_LEVEL_RELEASE_RATE];
+
+      p->env_sustain[current_op] = S_import_env_sustain_table[(first_byte & 0xF0) >> 4];
+      p->env_release[current_op] = S_import_opl_env_rate_table[first_byte & 0x0F];
+
+      /* waveform */
+      first_byte = patch_data[inst_id + k][start_indices[m] + IMPORT_SBI_OPERATOR_OFFSET_WAVEFORM];
+
+      p->osc_waveform[current_op] = S_import_waveform_table[first_byte & 0x07];
+
+      /* multiple, flags */
+      first_byte = patch_data[inst_id + k][start_indices[m] + IMPORT_SBI_OPERATOR_OFFSET_MULTIPLE_FLAGS];
+
+      p->osc_freq_mode[current_op] = PATCH_OSC_FREQ_MODE_RATIO;
+
+      p->osc_multiple[current_op] = S_import_opl_multiple_table[first_byte & 0x0F];
+      p->osc_divisor[current_op] = S_import_divisor_table[first_byte & 0x0F];
+
+      if (((first_byte & 0x80) >> 7) != 0)
+      {
+        p->tremolo_depth = PATCH_EFFECT_DEPTH_LOWER_BOUND + 7;
+        p->tremolo_base = PATCH_EFFECT_BASE_UPPER_BOUND;
+      }
+
+      if (((first_byte & 0x40) >> 6) != 0)
+      {
+        p->vibrato_depth = PATCH_EFFECT_DEPTH_LOWER_BOUND + 3;
+        p->vibrato_base = PATCH_EFFECT_BASE_UPPER_BOUND;
+      }
+
+      if (((first_byte & 0x20) >> 5) != 0)
+        p->env_decay_2[current_op] = S_import_opl_env_rate_table[0];
+
+      p->env_rate_ks[current_op] = S_import_opl_rate_ks_table[(first_byte & 0x10) >> 4];
+    }
+
+    /* validate the parameters */
+    patch_validate_patch(patch_index);
   }
-
-  p->osc_feedback[fb_op] = S_import_feedback_table[(first_byte & 0x0E) >> 1];
-
-  /* modulator 1 */
-  current_op = mod_op[0];
-
-  /* modulator level keyscaling, total level */
-  first_byte = patch_data[inst_id][IMPORT_SBI_COMPUTE_BYTE_SHARED_INDEX(MODULATOR_LEVEL_KEYSCALE_TOTAL_LEVEL)];
-
-  p->env_level_ks[current_op] = S_import_level_ks_table[(first_byte & 0xC0) >> 6];
-  p->env_amplitude[current_op] = S_import_env_amplitude_table[first_byte & 0x3F];
-
-  /* modulator attack rate, decay 1 rate */
-  first_byte = patch_data[inst_id][IMPORT_SBI_COMPUTE_BYTE_SHARED_INDEX(MODULATOR_ATTACK_RATE_DECAY_RATE)];
-
-  p->env_attack[current_op] = S_import_opl_env_rate_table[(first_byte & 0xF0) >> 4];
-  p->env_decay_1[current_op] = S_import_opl_env_rate_table[first_byte & 0x0F];
-  p->env_decay_2[current_op] = p->env_decay_1[current_op];
-
-  /* modulator sustain level, release rate */
-  first_byte = patch_data[inst_id][IMPORT_SBI_COMPUTE_BYTE_SHARED_INDEX(MODULATOR_SUSTAIN_LEVEL_RELEASE_RATE)];
-
-  p->env_sustain[current_op] = S_import_env_sustain_table[(first_byte & 0xF0) >> 4];
-  p->env_release[current_op] = S_import_opl_env_rate_table[first_byte & 0x0F];
-
-  /* modulator waveform */
-  first_byte = patch_data[inst_id][IMPORT_SBI_COMPUTE_BYTE_SHARED_INDEX(MODULATOR_WAVEFORM)];
-
-  p->osc_waveform[current_op] = S_import_waveform_table[first_byte & 0x07];
-
-  /* modulator multiple, flags */
-  first_byte = patch_data[inst_id][IMPORT_SBI_COMPUTE_BYTE_SHARED_INDEX(MODULATOR_MULTIPLE_FLAGS)];
-
-  p->osc_freq_mode[current_op] = PATCH_OSC_FREQ_MODE_RATIO;
-
-  p->osc_multiple[current_op] = S_import_opl_multiple_table[first_byte & 0x0F];
-  p->osc_divisor[current_op] = S_import_divisor_table[first_byte & 0x0F];
-
-  if (((first_byte & 0x20) >> 5) != 0)
-    p->env_decay_2[current_op] = S_import_opl_env_rate_table[0];
-
-  p->env_rate_ks[current_op] = S_import_opl_rate_ks_table[(first_byte & 0x10) >> 4];
-
-  /* carrier 1 */
-  current_op = car_op[0];
-
-  /* carrier level keyscaling, total level */
-  first_byte = patch_data[inst_id][IMPORT_SBI_COMPUTE_BYTE_SHARED_INDEX(CARRIER_LEVEL_KEYSCALE_TOTAL_LEVEL)];
-
-  p->env_level_ks[current_op] = S_import_level_ks_table[(first_byte & 0xC0) >> 6];
-  p->env_amplitude[current_op] = S_import_env_amplitude_table[first_byte & 0x3F];
-
-  /* carrier attack rate, decay 1 rate */
-  first_byte = patch_data[inst_id][IMPORT_SBI_COMPUTE_BYTE_SHARED_INDEX(CARRIER_ATTACK_RATE_DECAY_RATE)];
-
-  p->env_attack[current_op] = S_import_opl_env_rate_table[(first_byte & 0xF0) >> 4];
-  p->env_decay_1[current_op] = S_import_opl_env_rate_table[first_byte & 0x0F];
-  p->env_decay_2[current_op] = p->env_decay_1[current_op];
-
-  /* carrier sustain level, release rate */
-  first_byte = patch_data[inst_id][IMPORT_SBI_COMPUTE_BYTE_SHARED_INDEX(CARRIER_SUSTAIN_LEVEL_RELEASE_RATE)];
-
-  p->env_sustain[current_op] = S_import_env_sustain_table[(first_byte & 0xF0) >> 4];
-  p->env_release[current_op] = S_import_opl_env_rate_table[first_byte & 0x0F];
-
-  /* carrier waveform */
-  first_byte = patch_data[inst_id][IMPORT_SBI_COMPUTE_BYTE_SHARED_INDEX(CARRIER_WAVEFORM)];
-
-  p->osc_waveform[current_op] = S_import_waveform_table[first_byte & 0x07];
-
-  /* carrier multiple, flags */
-  first_byte = patch_data[inst_id][IMPORT_SBI_COMPUTE_BYTE_SHARED_INDEX(CARRIER_MULTIPLE_FLAGS)];
-
-  p->osc_freq_mode[current_op] = PATCH_OSC_FREQ_MODE_RATIO;
-
-  p->osc_multiple[current_op] = S_import_opl_multiple_table[first_byte & 0x0F];
-  p->osc_divisor[current_op] = S_import_divisor_table[first_byte & 0x0F];
-
-  if (((first_byte & 0x20) >> 5) != 0)
-    p->env_decay_2[current_op] = S_import_opl_env_rate_table[0];
-
-  p->env_rate_ks[current_op] = S_import_opl_rate_ks_table[(first_byte & 0x10) >> 4];
-
-  if (type == IMPORT_SBI_TYPE_4OP)
-  {
-    /* modulator 2 */
-    current_op = mod_op[1];
-
-    /* modulator level keyscaling, total level */
-    first_byte = patch_data[inst_id][IMPORT_SBI_COMPUTE_BYTE_4OP_EXTRA_INDEX(MODULATOR_LEVEL_KEYSCALE_TOTAL_LEVEL)];
-
-    p->env_level_ks[current_op] = S_import_level_ks_table[(first_byte & 0xC0) >> 6];
-    p->env_amplitude[current_op] = S_import_env_amplitude_table[first_byte & 0x3F];
-
-    /* modulator attack rate, decay 1 rate */
-    first_byte = patch_data[inst_id][IMPORT_SBI_COMPUTE_BYTE_4OP_EXTRA_INDEX(MODULATOR_ATTACK_RATE_DECAY_RATE)];
-
-    p->env_attack[current_op] = S_import_opl_env_rate_table[(first_byte & 0xF0) >> 4];
-    p->env_decay_1[current_op] = S_import_opl_env_rate_table[first_byte & 0x0F];
-    p->env_decay_2[current_op] = p->env_decay_1[current_op];
-
-    /* modulator sustain level, release rate */
-    first_byte = patch_data[inst_id][IMPORT_SBI_COMPUTE_BYTE_4OP_EXTRA_INDEX(MODULATOR_SUSTAIN_LEVEL_RELEASE_RATE)];
-
-    p->env_sustain[current_op] = S_import_env_sustain_table[(first_byte & 0xF0) >> 4];
-    p->env_release[current_op] = S_import_opl_env_rate_table[first_byte & 0x0F];
-
-    /* modulator waveform */
-    first_byte = patch_data[inst_id][IMPORT_SBI_COMPUTE_BYTE_4OP_EXTRA_INDEX(MODULATOR_WAVEFORM)];
-
-    p->osc_waveform[current_op] = S_import_waveform_table[first_byte & 0x07];
-
-    /* modulator multiple, flags */
-    first_byte = patch_data[inst_id][IMPORT_SBI_COMPUTE_BYTE_4OP_EXTRA_INDEX(MODULATOR_MULTIPLE_FLAGS)];
-
-    p->osc_freq_mode[current_op] = PATCH_OSC_FREQ_MODE_RATIO;
-
-    p->osc_multiple[current_op] = S_import_opl_multiple_table[first_byte & 0x0F];
-    p->osc_divisor[current_op] = S_import_divisor_table[first_byte & 0x0F];
-
-    if (((first_byte & 0x20) >> 5) != 0)
-      p->env_decay_2[current_op] = S_import_opl_env_rate_table[0];
-
-    p->env_rate_ks[current_op] = S_import_opl_rate_ks_table[(first_byte & 0x10) >> 4];
-
-    /* carrier 2 */
-    current_op = car_op[1];
-
-    /* carrier level keyscaling, total level */
-    first_byte = patch_data[inst_id][IMPORT_SBI_COMPUTE_BYTE_4OP_EXTRA_INDEX(CARRIER_LEVEL_KEYSCALE_TOTAL_LEVEL)];
-
-    p->env_level_ks[current_op] = S_import_level_ks_table[(first_byte & 0xC0) >> 6];
-    p->env_amplitude[current_op] = S_import_env_amplitude_table[first_byte & 0x3F];
-
-    /* carrier attack rate, decay 1 rate */
-    first_byte = patch_data[inst_id][IMPORT_SBI_COMPUTE_BYTE_4OP_EXTRA_INDEX(CARRIER_ATTACK_RATE_DECAY_RATE)];
-
-    p->env_attack[current_op] = S_import_opl_env_rate_table[(first_byte & 0xF0) >> 4];
-    p->env_decay_1[current_op] = S_import_opl_env_rate_table[first_byte & 0x0F];
-    p->env_decay_2[current_op] = p->env_decay_1[current_op];
-
-    /* carrier sustain level, release rate */
-    first_byte = patch_data[inst_id][IMPORT_SBI_COMPUTE_BYTE_4OP_EXTRA_INDEX(CARRIER_SUSTAIN_LEVEL_RELEASE_RATE)];
-
-    p->env_sustain[current_op] = S_import_env_sustain_table[(first_byte & 0xF0) >> 4];
-    p->env_release[current_op] = S_import_opl_env_rate_table[first_byte & 0x0F];
-
-    /* carrier waveform */
-    first_byte = patch_data[inst_id][IMPORT_SBI_COMPUTE_BYTE_4OP_EXTRA_INDEX(CARRIER_WAVEFORM)];
-
-    p->osc_waveform[current_op] = S_import_waveform_table[first_byte & 0x07];
-
-    /* carrier multiple, flags */
-    first_byte = patch_data[inst_id][IMPORT_SBI_COMPUTE_BYTE_4OP_EXTRA_INDEX(CARRIER_MULTIPLE_FLAGS)];
-
-    p->osc_freq_mode[current_op] = PATCH_OSC_FREQ_MODE_RATIO;
-
-    p->osc_multiple[current_op] = S_import_opl_multiple_table[first_byte & 0x0F];
-    p->osc_divisor[current_op] = S_import_divisor_table[first_byte & 0x0F];
-
-    if (((first_byte & 0x20) >> 5) != 0)
-      p->env_decay_2[current_op] = S_import_opl_env_rate_table[0];
-
-    p->env_rate_ks[current_op] = S_import_opl_rate_ks_table[(first_byte & 0x10) >> 4];
-  }
-
-  /* validate the parameters */
-  patch_validate(patch_index);
 
   return 0;
 }
@@ -816,8 +706,9 @@ short int import_sbi_load(int cart_num, int patch_num,
 ** import_tfi_load()
 *******************************************************************************/
 short int import_tfi_load(int cart_num, int patch_num, 
-                          char* filename, int inst_id)
+                          char* filename, int inst_id, int batching)
 {
+  int k;
   int m;
 
   FILE* fp;
@@ -832,16 +723,18 @@ short int import_tfi_load(int cart_num, int patch_num,
 
   int patch_index;
 
+  short int batch_count;
+
   short int op_order[4];
   short int current_op;
   short int fb_op;
 
   /* make sure the cart number is valid */
-  if (CART_TOTAL_CART_NO_IS_NOT_VALID(cart_num))
+  if (PATCH_CART_NO_IS_NOT_VALID(cart_num))
     return 0;
 
   /* make sure the patch number is valid */
-  if (CART_PATCH_NO_IS_NOT_VALID(patch_num))
+  if (PATCH_PATCH_NO_IS_NOT_VALID(patch_num))
     return 0;
 
   /* make sure filename is valid */
@@ -866,145 +759,167 @@ short int import_tfi_load(int cart_num, int patch_num,
   /* close .tfi file */
   fclose(fp);
 
-  /* make sure instrument id is valid */
-  if ((inst_id < 0) || (inst_id >= num_patches))
-    return 0;
+  /* determine batch count */
 
-  /* load patch data to cart */
-  CART_COMPUTE_PATCH_INDEX(cart_num, patch_num)
+  /* note that .tfi files should always just have 1 patch.  */
+  /* however, we support alternate versions of .tfi files   */
+  /* that contain multiple .tfi's concatenated together.    */
+  if (batching == IMPORT_BATCHING_1)
+    batch_count = 1;
+  else if (batching == IMPORT_BATCHING_8)
+    batch_count = 8;
+  else if (batching == IMPORT_BATCHING_16)
+    batch_count = 16;
+  else
+    batch_count = 1;
 
-  p = &G_patch_bank[patch_index];
+  /* load batch */
+  for (k = 0; k < batch_count; k++)
+  {
+    /* make sure the instrument id is valid */
+    if (IMPORT_INSTRUMENT_ID_IS_NOT_VALID(inst_id + k))
+      break;
 
-  /* reset patch */
-  patch_reset(patch_index);
+    /* make sure the patch number is valid */
+    if (PATCH_PATCH_NO_IS_NOT_VALID(patch_num + k))
+      break;
 
-  /* algorithm & feedback */
-  first_byte = patch_data[inst_id][IMPORT_TFI_COMPUTE_BYTE_GENERAL_INDEX(ALGORITHM)];
-  second_byte = patch_data[inst_id][IMPORT_TFI_COMPUTE_BYTE_GENERAL_INDEX(FEEDBACK)];
+    /* load patch data to cart */
+    PATCH_COMPUTE_PATCH_INDEX(cart_num, patch_num + k)
 
-  /* determine operator ordering */
-  /* (the order in the file should be S1, S3, S2, S4) */
+    p = &G_patch_bank[patch_index];
+
+    /* reset patch */
+    patch_reset_patch(patch_index);
+
+    /* algorithm & feedback */
+    first_byte = patch_data[inst_id + k][IMPORT_TFI_COMPUTE_BYTE_GENERAL_INDEX(ALGORITHM)];
+    second_byte = patch_data[inst_id + k][IMPORT_TFI_COMPUTE_BYTE_GENERAL_INDEX(FEEDBACK)];
+
+    /* determine operator ordering */
+    /* (the order in the file should be S1, S3, S2, S4) */
 #if 1
-  if ((first_byte & 0x07) == 2)
-  {
-    op_order[0] = 2;
-    op_order[1] = 1;
-    op_order[2] = 0;
-    op_order[3] = 3;
+    if ((first_byte & 0x07) == 2)
+    {
+      op_order[0] = 2;
+      op_order[1] = 1;
+      op_order[2] = 0;
+      op_order[3] = 3;
 
-    fb_op = 2;
-  }
-  else if ((first_byte & 0x07) == 4)
-  {
-    op_order[0] = 0;
-    op_order[1] = 1;
-    op_order[2] = 2;
-    op_order[3] = 3;
+      fb_op = 2;
+    }
+    else if ((first_byte & 0x07) == 4)
+    {
+      op_order[0] = 0;
+      op_order[1] = 1;
+      op_order[2] = 2;
+      op_order[3] = 3;
 
-    fb_op = 0;
-  }
-  else
-  {
-    op_order[0] = 0;
-    op_order[1] = 2;
-    op_order[2] = 1;
-    op_order[3] = 3;
+      fb_op = 0;
+    }
+    else
+    {
+      op_order[0] = 0;
+      op_order[1] = 2;
+      op_order[2] = 1;
+      op_order[3] = 3;
 
-    fb_op = 0;
-  }
+      fb_op = 0;
+    }
 #else
-  if ((first_byte & 0x07) == 2)
-  {
-    op_order[0] = 2;
-    op_order[1] = 0;
-    op_order[2] = 1;
-    op_order[3] = 3;
+    if ((first_byte & 0x07) == 2)
+    {
+      op_order[0] = 2;
+      op_order[1] = 0;
+      op_order[2] = 1;
+      op_order[3] = 3;
 
-    fb_op = 2;
-  }
-  else if ((first_byte & 0x07) == 4)
-  {
-    op_order[0] = 0;
-    op_order[1] = 2;
-    op_order[2] = 1;
-    op_order[3] = 3;
+      fb_op = 2;
+    }
+    else if ((first_byte & 0x07) == 4)
+    {
+      op_order[0] = 0;
+      op_order[1] = 2;
+      op_order[2] = 1;
+      op_order[3] = 3;
 
-    fb_op = 0;
-  }
-  else
-  {
-    op_order[0] = 0;
-    op_order[1] = 1;
-    op_order[2] = 2;
-    op_order[3] = 3;
+      fb_op = 0;
+    }
+    else
+    {
+      op_order[0] = 0;
+      op_order[1] = 1;
+      op_order[2] = 2;
+      op_order[3] = 3;
 
-    fb_op = 0;
-  }
+      fb_op = 0;
+    }
 #endif
 
-  /* set the algorithm & feedback */
-  p->algorithm = S_import_ym2612_algorithm_table[first_byte & 0x07];
-  p->osc_feedback[fb_op] = S_import_feedback_table[second_byte & 0x07];
+    /* set the algorithm & feedback */
+    p->algorithm = S_import_ym2612_algorithm_table[first_byte & 0x07];
+    p->osc_feedback[fb_op] = S_import_feedback_table[second_byte & 0x07];
 
-  for (m = 0; m < 4; m++)
-  {
-    current_op = op_order[m];
+    for (m = 0; m < 4; m++)
+    {
+      current_op = op_order[m];
 
-    /* multiple */
-    first_byte = patch_data[inst_id][IMPORT_TFI_COMPUTE_BYTE_OPERATOR_INDEX(m, MULTIPLE)];
+      /* multiple */
+      first_byte = patch_data[inst_id + k][IMPORT_TFI_COMPUTE_BYTE_OPERATOR_INDEX(m, MULTIPLE)];
 
-    p->osc_freq_mode[current_op] = PATCH_OSC_FREQ_MODE_RATIO;
+      p->osc_freq_mode[current_op] = PATCH_OSC_FREQ_MODE_RATIO;
 
-    p->osc_multiple[current_op] = S_import_ym2612_multiple_table[first_byte & 0x0F];
-    p->osc_divisor[current_op] = S_import_divisor_table[first_byte & 0x0F];
+      p->osc_multiple[current_op] = S_import_ym2612_multiple_table[first_byte & 0x0F];
+      p->osc_divisor[current_op] = S_import_divisor_table[first_byte & 0x0F];
 
-    /* detune */
-    first_byte = patch_data[inst_id][IMPORT_TFI_COMPUTE_BYTE_OPERATOR_INDEX(m, DETUNE)];
+      /* detune */
+      first_byte = patch_data[inst_id + k][IMPORT_TFI_COMPUTE_BYTE_OPERATOR_INDEX(m, DETUNE)];
 
-    p->osc_detune[current_op] = S_import_ym2612_detune_table[first_byte & 0x07];
+      p->osc_detune[current_op] = S_import_ym2612_detune_table[first_byte & 0x07];
 
-    /* total level */
-    /* note that if the tl value is >= 64, it is clamped to 63 */
-    first_byte = patch_data[inst_id][IMPORT_TFI_COMPUTE_BYTE_OPERATOR_INDEX(m, TOTAL_LEVEL)];
+      /* total level */
+      /* note that if the tl value is >= 64, it is clamped to 63 */
+      first_byte = patch_data[inst_id + k][IMPORT_TFI_COMPUTE_BYTE_OPERATOR_INDEX(m, TOTAL_LEVEL)];
 
-    if ((first_byte & 0x40) != 0)
-      p->env_amplitude[current_op] = S_import_env_amplitude_table[63];
-    else
-      p->env_amplitude[current_op] = S_import_env_amplitude_table[first_byte & 0x3F];
+      if ((first_byte & 0x7F) > 63)
+        p->env_amplitude[current_op] = S_import_env_amplitude_table[63];
+      else
+        p->env_amplitude[current_op] = S_import_env_amplitude_table[first_byte & 0x3F];
 
-    /* rate keyscaling */
-    first_byte = patch_data[inst_id][IMPORT_TFI_COMPUTE_BYTE_OPERATOR_INDEX(m, RATE_KEYSCALE)];
+      /* rate keyscaling */
+      first_byte = patch_data[inst_id + k][IMPORT_TFI_COMPUTE_BYTE_OPERATOR_INDEX(m, RATE_KEYSCALE)];
 
-    p->env_rate_ks[current_op] = S_import_ym2612_rate_ks_table[first_byte & 0x03];
+      p->env_rate_ks[current_op] = S_import_ym2612_rate_ks_table[first_byte & 0x03];
 
-    /* attack */
-    first_byte = patch_data[inst_id][IMPORT_TFI_COMPUTE_BYTE_OPERATOR_INDEX(m, ATTACK_RATE)];
+      /* attack */
+      first_byte = patch_data[inst_id + k][IMPORT_TFI_COMPUTE_BYTE_OPERATOR_INDEX(m, ATTACK_RATE)];
 
-    p->env_attack[current_op] = S_import_ym2612_env_rate_table[first_byte & 0x1F];
+      p->env_attack[current_op] = S_import_ym2612_env_rate_table[first_byte & 0x1F];
 
-    /* decay 1 */
-    first_byte = patch_data[inst_id][IMPORT_TFI_COMPUTE_BYTE_OPERATOR_INDEX(m, DECAY_1_RATE)];
+      /* decay 1 */
+      first_byte = patch_data[inst_id + k][IMPORT_TFI_COMPUTE_BYTE_OPERATOR_INDEX(m, DECAY_1_RATE)];
 
-    p->env_decay_1[current_op] = S_import_ym2612_env_rate_table[first_byte & 0x1F];
+      p->env_decay_1[current_op] = S_import_ym2612_env_rate_table[first_byte & 0x1F];
 
-    /* decay 2 */
-    first_byte = patch_data[inst_id][IMPORT_TFI_COMPUTE_BYTE_OPERATOR_INDEX(m, DECAY_2_RATE)];
+      /* decay 2 */
+      first_byte = patch_data[inst_id + k][IMPORT_TFI_COMPUTE_BYTE_OPERATOR_INDEX(m, DECAY_2_RATE)];
 
-    p->env_decay_2[current_op] = S_import_ym2612_env_rate_table[first_byte & 0x1F];
+      p->env_decay_2[current_op] = S_import_ym2612_env_rate_table[first_byte & 0x1F];
 
-    /* release */
-    first_byte = patch_data[inst_id][IMPORT_TFI_COMPUTE_BYTE_OPERATOR_INDEX(m, RELEASE_RATE)];
+      /* release */
+      first_byte = patch_data[inst_id + k][IMPORT_TFI_COMPUTE_BYTE_OPERATOR_INDEX(m, RELEASE_RATE)];
 
-    p->env_release[current_op] = S_import_opl_env_rate_table[first_byte & 0x0F];
+      p->env_release[current_op] = S_import_opl_env_rate_table[first_byte & 0x0F];
 
-    /* sustain level */
-    first_byte = patch_data[inst_id][IMPORT_TFI_COMPUTE_BYTE_OPERATOR_INDEX(m, SUSTAIN_LEVEL)];
+      /* sustain level */
+      first_byte = patch_data[inst_id + k][IMPORT_TFI_COMPUTE_BYTE_OPERATOR_INDEX(m, SUSTAIN_LEVEL)];
 
-    p->env_sustain[current_op] = S_import_env_sustain_table[first_byte & 0x0F];
+      p->env_sustain[current_op] = S_import_env_sustain_table[first_byte & 0x0F];
+    }
+
+    /* validate the parameters */
+    patch_validate_patch(patch_index);
   }
-
-  /* validate the parameters */
-  patch_validate(patch_index);
 
   return 0;
 }
@@ -1021,7 +936,7 @@ short int import_opm_load(int cart_num, int patch_num,
   FILE* fp;
 
   short int patch_data[IMPORT_OPM_MAX_PATCHES][IMPORT_OPM_NUM_VALUES];
-  char      name_data[IMPORT_OPM_MAX_PATCHES][IMPORT_OPM_PATCH_NAME_MAX_LENGTH];
+  char      name_data[IMPORT_OPM_MAX_PATCHES][PATCH_PATCH_NAME_SIZE];
 
   char      text_line[IMPORT_OPM_TEXT_LINE_MAX_LENGTH];
 
@@ -1045,11 +960,11 @@ short int import_opm_load(int cart_num, int patch_num,
   short int val;
 
   /* make sure the cart number is valid */
-  if (CART_TOTAL_CART_NO_IS_NOT_VALID(cart_num))
+  if (PATCH_CART_NO_IS_NOT_VALID(cart_num))
     return 0;
 
   /* make sure the patch number is valid */
-  if (CART_PATCH_NO_IS_NOT_VALID(patch_num))
+  if (PATCH_PATCH_NO_IS_NOT_VALID(patch_num))
     return 0;
 
   /* make sure filename is valid */
@@ -1099,11 +1014,15 @@ short int import_opm_load(int cart_num, int patch_num,
       IMPORT_OPM_PARSE_SKIP_SPACES()
       IMPORT_OPM_PARSE_SCAN_ALPHANUMERIC_STRING()
 
+      /* initialize patch name */
+      for (m = 0; m < PATCH_PATCH_NAME_SIZE; m++)
+        name_data[num_patches][m] = '\0';
+
       /* copy patch name */
-      if (token_size < IMPORT_OPM_PATCH_NAME_MAX_LENGTH)
+      if (token_size < PATCH_PATCH_NAME_SIZE)
         strncpy(&name_data[num_patches][0], &text_line[line_pos], token_size);
       else
-        strncpy(&name_data[num_patches][0], &text_line[line_pos], IMPORT_OPM_PATCH_NAME_MAX_LENGTH);
+        strncpy(&name_data[num_patches][0], &text_line[line_pos], PATCH_PATCH_NAME_SIZE);
 
       num_lines += 1;
     }
@@ -1181,8 +1100,6 @@ short int import_opm_load(int cart_num, int patch_num,
     batch_count = 8;
   else if (batching == IMPORT_BATCHING_16)
     batch_count = 16;
-  else if (batching == IMPORT_BATCHING_32)
-    batch_count = 32;
   else
     batch_count = 1;
 
@@ -1194,16 +1111,19 @@ short int import_opm_load(int cart_num, int patch_num,
       break;
 
     /* make sure the patch number is valid */
-    if (CART_PATCH_NO_IS_NOT_VALID(patch_num + k))
+    if (PATCH_PATCH_NO_IS_NOT_VALID(patch_num + k))
       break;
 
     /* load patch data to cart */
-    CART_COMPUTE_PATCH_INDEX(cart_num, patch_num + k)
+    PATCH_COMPUTE_PATCH_INDEX(cart_num, patch_num + k)
 
     p = &G_patch_bank[patch_index];
 
     /* reset patch */
-    patch_reset(patch_index);
+    patch_reset_patch(patch_index);
+
+    /* patch name */
+    strncpy(&G_patch_names[patch_index][0], &name_data[inst_id + k][0], PATCH_PATCH_NAME_SIZE);
 
     /* determine operator ordering */
     if (patch_data[inst_id + k][IMPORT_OPM_COMPUTE_VALUE_GENERAL_INDEX(ALGORITHM)] == 2)
@@ -1246,13 +1166,6 @@ short int import_opm_load(int cart_num, int patch_num,
     if ((val >= 0) && (val < IMPORT_YM2151_FEEDBACK_NUM_VALUES))
       p->osc_feedback[fb_op] = S_import_feedback_table[val];
 
-    /* lfo frequency */
-    /* (note that this is just set to the middle value) */
-    val = patch_data[inst_id + k][IMPORT_OPM_COMPUTE_VALUE_GENERAL_INDEX(LFO_FREQUENCY)];
-
-    if ((val >= 0) && (val < IMPORT_YM2151_LFO_FREQUENCY_NUM_VALUES))
-      p->lfo_frequency = PATCH_LFO_FREQUENCY_LOWER_BOUND + ((PATCH_LFO_FREQUENCY_NUM_VALUES - 1) / 2);
-
     /* lfo waveform */
     val = patch_data[inst_id + k][IMPORT_OPM_COMPUTE_VALUE_GENERAL_INDEX(LFO_WAVEFORM)];
 
@@ -1288,13 +1201,6 @@ short int import_opm_load(int cart_num, int patch_num,
 
     if (val > 0)
       p->noise_mode = PATCH_NOISE_MODE_SQUARE;
-
-    /* noise frequency */
-    /* (note that this is just set to the middle value) */
-    val = patch_data[inst_id + k][IMPORT_OPM_COMPUTE_VALUE_GENERAL_INDEX(NOISE_FREQUENCY)];
-
-    if ((val >= 0) && (val < IMPORT_YM2151_NOISE_FREQUENCY_NUM_VALUES))
-      p->noise_frequency = PATCH_NOISE_FREQUENCY_LOWER_BOUND + ((PATCH_NOISE_FREQUENCY_NUM_VALUES - 1) / 2);
 
     for (m = 0; m < 4; m++)
     {
@@ -1362,6 +1268,9 @@ short int import_opm_load(int cart_num, int patch_num,
       if ((val >= 0) && (val < IMPORT_YM2612_RATE_KEYSCALE_NUM_VALUES))
         p->env_rate_ks[current_op] = S_import_ym2612_rate_ks_table[val];
     }
+
+    /* validate the parameters */
+    patch_validate_patch(patch_index);
   }
 
   return 0;

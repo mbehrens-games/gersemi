@@ -9,10 +9,12 @@
 short int vb_all_load_background();
 short int vb_all_load_top_panel();
 
-short int vb_all_load_top_panel_underlay_and_text();
-
-short int vb_all_load_patches_underlay_and_text();
-short int vb_all_load_patterns_underlay_and_text();
+short int vb_all_load_cart_screen();
+short int vb_all_load_instruments_screen();
+short int vb_all_load_song_screen();
+short int vb_all_load_mixer_screen();
+short int vb_all_load_sound_fx_screen();
+short int vb_all_load_reverb_screen();
 
 #endif
 

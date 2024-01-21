@@ -56,7 +56,8 @@ extern instrument G_instrument_bank[BANK_NUM_INSTRUMENTS];
 short int instrument_setup_all();
 short int instrument_reset(int instrument_index);
 
-short int instrument_load_patch(int instrument_index, int patch_index);
+short int instrument_load_patch(int instrument_index, 
+                                int cart_number, int patch_number);
 
 short int instrument_key_on(int instrument_index, int note);
 short int instrument_key_off(int instrument_index, int note);
