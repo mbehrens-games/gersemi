@@ -155,162 +155,127 @@ static short int  S_import_divisor_table[IMPORT_OPL_MULTIPLE_NUM_VALUES] =
                     PATCH_OSC_DIVISOR_LOWER_BOUND + 0 
                   };
 
-/* waveform table */
-static short int  S_import_waveform_table[IMPORT_OPL_WAVEFORM_NUM_VALUES] = 
-                  { PATCH_OSC_WAVEFORM_SINE, 
-                    PATCH_OSC_WAVEFORM_HALF, 
-                    PATCH_OSC_WAVEFORM_FULL, 
-                    PATCH_OSC_WAVEFORM_QUARTER, 
-                    PATCH_OSC_WAVEFORM_ALTERNATING, 
-                    PATCH_OSC_WAVEFORM_CAMEL, 
-                    PATCH_OSC_WAVEFORM_SQUARE, 
-                    PATCH_OSC_WAVEFORM_LOG_SAW 
-                  };
-
-/* detune tables */
-static short int  S_import_ym2612_detune_table[IMPORT_YM2612_DETUNE_NUM_VALUES] = 
-                  { PATCH_OSC_DETUNE_DEFAULT - 3, 
-                    PATCH_OSC_DETUNE_DEFAULT - 2, 
-                    PATCH_OSC_DETUNE_DEFAULT - 1, 
-                    PATCH_OSC_DETUNE_DEFAULT + 0, 
-                    PATCH_OSC_DETUNE_DEFAULT + 1, 
-                    PATCH_OSC_DETUNE_DEFAULT + 2, 
-                    PATCH_OSC_DETUNE_DEFAULT + 3, 
-                    PATCH_OSC_DETUNE_DEFAULT + 0 
-                  };
-
-static short int  S_import_ym2151_detune_table[IMPORT_YM2151_DETUNE_1_NUM_VALUES] = 
-                  { PATCH_OSC_DETUNE_DEFAULT + 0, 
-                    PATCH_OSC_DETUNE_DEFAULT + 1, 
-                    PATCH_OSC_DETUNE_DEFAULT + 2, 
-                    PATCH_OSC_DETUNE_DEFAULT + 3, 
-                    PATCH_OSC_DETUNE_DEFAULT + 0, 
-                    PATCH_OSC_DETUNE_DEFAULT - 1, 
-                    PATCH_OSC_DETUNE_DEFAULT - 2, 
-                    PATCH_OSC_DETUNE_DEFAULT - 3 
-                  };
-
 /* envelope rate tables */
 static short int  S_import_opl_env_rate_table[IMPORT_OPL_ENV_RATE_NUM_VALUES] = 
-                  { PATCH_ENV_RATE_LOWER_BOUND +  1, 
-                    PATCH_ENV_RATE_LOWER_BOUND +  3, 
-                    PATCH_ENV_RATE_LOWER_BOUND +  5, 
-                    PATCH_ENV_RATE_LOWER_BOUND +  7, 
-                    PATCH_ENV_RATE_LOWER_BOUND +  9, 
-                    PATCH_ENV_RATE_LOWER_BOUND + 11, 
-                    PATCH_ENV_RATE_LOWER_BOUND + 13, 
-                    PATCH_ENV_RATE_LOWER_BOUND + 15, 
-                    PATCH_ENV_RATE_LOWER_BOUND + 17, 
-                    PATCH_ENV_RATE_LOWER_BOUND + 19, 
-                    PATCH_ENV_RATE_LOWER_BOUND + 21, 
-                    PATCH_ENV_RATE_LOWER_BOUND + 23, 
-                    PATCH_ENV_RATE_LOWER_BOUND + 25, 
-                    PATCH_ENV_RATE_LOWER_BOUND + 27, 
+                  { PATCH_ENV_RATE_LOWER_BOUND + 31, 
                     PATCH_ENV_RATE_LOWER_BOUND + 29, 
-                    PATCH_ENV_RATE_LOWER_BOUND + 31 
+                    PATCH_ENV_RATE_LOWER_BOUND + 27, 
+                    PATCH_ENV_RATE_LOWER_BOUND + 25, 
+                    PATCH_ENV_RATE_LOWER_BOUND + 23, 
+                    PATCH_ENV_RATE_LOWER_BOUND + 21, 
+                    PATCH_ENV_RATE_LOWER_BOUND + 19, 
+                    PATCH_ENV_RATE_LOWER_BOUND + 17, 
+                    PATCH_ENV_RATE_LOWER_BOUND + 15, 
+                    PATCH_ENV_RATE_LOWER_BOUND + 13, 
+                    PATCH_ENV_RATE_LOWER_BOUND + 11, 
+                    PATCH_ENV_RATE_LOWER_BOUND +  9, 
+                    PATCH_ENV_RATE_LOWER_BOUND +  7, 
+                    PATCH_ENV_RATE_LOWER_BOUND +  5, 
+                    PATCH_ENV_RATE_LOWER_BOUND +  3, 
+                    PATCH_ENV_RATE_LOWER_BOUND +  1
                   };
 
 static short int  S_import_ym2612_env_rate_table[IMPORT_YM2612_ENV_RATE_NUM_VALUES] = 
-                  { PATCH_ENV_RATE_LOWER_BOUND +  0, 
-                    PATCH_ENV_RATE_LOWER_BOUND +  1, 
-                    PATCH_ENV_RATE_LOWER_BOUND +  2, 
-                    PATCH_ENV_RATE_LOWER_BOUND +  3, 
-                    PATCH_ENV_RATE_LOWER_BOUND +  4, 
-                    PATCH_ENV_RATE_LOWER_BOUND +  5, 
-                    PATCH_ENV_RATE_LOWER_BOUND +  6, 
-                    PATCH_ENV_RATE_LOWER_BOUND +  7, 
-                    PATCH_ENV_RATE_LOWER_BOUND +  8, 
-                    PATCH_ENV_RATE_LOWER_BOUND +  9, 
-                    PATCH_ENV_RATE_LOWER_BOUND + 10, 
-                    PATCH_ENV_RATE_LOWER_BOUND + 11, 
-                    PATCH_ENV_RATE_LOWER_BOUND + 12, 
-                    PATCH_ENV_RATE_LOWER_BOUND + 13, 
-                    PATCH_ENV_RATE_LOWER_BOUND + 14, 
-                    PATCH_ENV_RATE_LOWER_BOUND + 15, 
-                    PATCH_ENV_RATE_LOWER_BOUND + 16, 
-                    PATCH_ENV_RATE_LOWER_BOUND + 17, 
-                    PATCH_ENV_RATE_LOWER_BOUND + 18, 
-                    PATCH_ENV_RATE_LOWER_BOUND + 19, 
-                    PATCH_ENV_RATE_LOWER_BOUND + 20, 
-                    PATCH_ENV_RATE_LOWER_BOUND + 21, 
-                    PATCH_ENV_RATE_LOWER_BOUND + 22, 
-                    PATCH_ENV_RATE_LOWER_BOUND + 23, 
-                    PATCH_ENV_RATE_LOWER_BOUND + 24, 
-                    PATCH_ENV_RATE_LOWER_BOUND + 25, 
-                    PATCH_ENV_RATE_LOWER_BOUND + 26, 
-                    PATCH_ENV_RATE_LOWER_BOUND + 27, 
-                    PATCH_ENV_RATE_LOWER_BOUND + 28, 
-                    PATCH_ENV_RATE_LOWER_BOUND + 29, 
+                  { PATCH_ENV_RATE_LOWER_BOUND + 31, 
                     PATCH_ENV_RATE_LOWER_BOUND + 30, 
-                    PATCH_ENV_RATE_LOWER_BOUND + 31 
+                    PATCH_ENV_RATE_LOWER_BOUND + 29, 
+                    PATCH_ENV_RATE_LOWER_BOUND + 28, 
+                    PATCH_ENV_RATE_LOWER_BOUND + 27, 
+                    PATCH_ENV_RATE_LOWER_BOUND + 26, 
+                    PATCH_ENV_RATE_LOWER_BOUND + 25, 
+                    PATCH_ENV_RATE_LOWER_BOUND + 24, 
+                    PATCH_ENV_RATE_LOWER_BOUND + 23, 
+                    PATCH_ENV_RATE_LOWER_BOUND + 22, 
+                    PATCH_ENV_RATE_LOWER_BOUND + 21, 
+                    PATCH_ENV_RATE_LOWER_BOUND + 20, 
+                    PATCH_ENV_RATE_LOWER_BOUND + 19, 
+                    PATCH_ENV_RATE_LOWER_BOUND + 18, 
+                    PATCH_ENV_RATE_LOWER_BOUND + 17, 
+                    PATCH_ENV_RATE_LOWER_BOUND + 16, 
+                    PATCH_ENV_RATE_LOWER_BOUND + 15, 
+                    PATCH_ENV_RATE_LOWER_BOUND + 14, 
+                    PATCH_ENV_RATE_LOWER_BOUND + 13, 
+                    PATCH_ENV_RATE_LOWER_BOUND + 12, 
+                    PATCH_ENV_RATE_LOWER_BOUND + 11, 
+                    PATCH_ENV_RATE_LOWER_BOUND + 10, 
+                    PATCH_ENV_RATE_LOWER_BOUND +  9, 
+                    PATCH_ENV_RATE_LOWER_BOUND +  8, 
+                    PATCH_ENV_RATE_LOWER_BOUND +  7, 
+                    PATCH_ENV_RATE_LOWER_BOUND +  6, 
+                    PATCH_ENV_RATE_LOWER_BOUND +  5, 
+                    PATCH_ENV_RATE_LOWER_BOUND +  4, 
+                    PATCH_ENV_RATE_LOWER_BOUND +  3, 
+                    PATCH_ENV_RATE_LOWER_BOUND +  2, 
+                    PATCH_ENV_RATE_LOWER_BOUND +  1, 
+                    PATCH_ENV_RATE_LOWER_BOUND +  0
                   };
 
-/* envelope amplitude & sustain level tables */
+/* envelope amplitude & sustain tables */
 static short int  S_import_env_amplitude_table[IMPORT_OPL_TOTAL_LEVEL_NUM_VALUES] = 
-                  { PATCH_ENV_AMPLITUDE_LOWER_BOUND + 32, 
-                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 31, 
+                  { PATCH_ENV_AMPLITUDE_LOWER_BOUND + 64, 
+                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 63, 
+                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 62, 
+                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 61, 
+                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 60, 
+                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 59, 
+                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 58, 
+                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 57, 
+                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 56, 
+                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 55, 
+                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 54, 
+                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 53, 
+                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 52, 
+                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 51, 
+                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 50, 
+                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 49, 
+                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 48, 
+                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 47, 
+                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 46, 
+                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 45, 
+                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 44, 
+                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 43, 
+                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 42, 
+                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 41, 
+                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 40, 
+                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 39, 
+                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 38, 
+                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 37, 
+                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 36, 
+                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 35, 
+                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 34, 
+                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 33, 
+                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 32, 
                     PATCH_ENV_AMPLITUDE_LOWER_BOUND + 31, 
                     PATCH_ENV_AMPLITUDE_LOWER_BOUND + 30, 
                     PATCH_ENV_AMPLITUDE_LOWER_BOUND + 29, 
-                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 29, 
                     PATCH_ENV_AMPLITUDE_LOWER_BOUND + 28, 
-                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 27, 
                     PATCH_ENV_AMPLITUDE_LOWER_BOUND + 27, 
                     PATCH_ENV_AMPLITUDE_LOWER_BOUND + 26, 
                     PATCH_ENV_AMPLITUDE_LOWER_BOUND + 25, 
-                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 25, 
                     PATCH_ENV_AMPLITUDE_LOWER_BOUND + 24, 
-                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 23, 
                     PATCH_ENV_AMPLITUDE_LOWER_BOUND + 23, 
                     PATCH_ENV_AMPLITUDE_LOWER_BOUND + 22, 
                     PATCH_ENV_AMPLITUDE_LOWER_BOUND + 21, 
-                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 21, 
                     PATCH_ENV_AMPLITUDE_LOWER_BOUND + 20, 
-                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 19, 
                     PATCH_ENV_AMPLITUDE_LOWER_BOUND + 19, 
                     PATCH_ENV_AMPLITUDE_LOWER_BOUND + 18, 
                     PATCH_ENV_AMPLITUDE_LOWER_BOUND + 17, 
-                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 17, 
                     PATCH_ENV_AMPLITUDE_LOWER_BOUND + 16, 
-                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 15, 
                     PATCH_ENV_AMPLITUDE_LOWER_BOUND + 15, 
                     PATCH_ENV_AMPLITUDE_LOWER_BOUND + 14, 
                     PATCH_ENV_AMPLITUDE_LOWER_BOUND + 13, 
-                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 13, 
                     PATCH_ENV_AMPLITUDE_LOWER_BOUND + 12, 
-                    PATCH_ENV_AMPLITUDE_LOWER_BOUND + 11, 
                     PATCH_ENV_AMPLITUDE_LOWER_BOUND + 11, 
                     PATCH_ENV_AMPLITUDE_LOWER_BOUND + 10, 
                     PATCH_ENV_AMPLITUDE_LOWER_BOUND +  9, 
-                    PATCH_ENV_AMPLITUDE_LOWER_BOUND +  9, 
                     PATCH_ENV_AMPLITUDE_LOWER_BOUND +  8, 
-                    PATCH_ENV_AMPLITUDE_LOWER_BOUND +  7, 
                     PATCH_ENV_AMPLITUDE_LOWER_BOUND +  7, 
                     PATCH_ENV_AMPLITUDE_LOWER_BOUND +  6, 
                     PATCH_ENV_AMPLITUDE_LOWER_BOUND +  5, 
-                    PATCH_ENV_AMPLITUDE_LOWER_BOUND +  5, 
                     PATCH_ENV_AMPLITUDE_LOWER_BOUND +  4, 
                     PATCH_ENV_AMPLITUDE_LOWER_BOUND +  3, 
-                    PATCH_ENV_AMPLITUDE_LOWER_BOUND +  3, 
                     PATCH_ENV_AMPLITUDE_LOWER_BOUND +  2, 
-                    PATCH_ENV_AMPLITUDE_LOWER_BOUND +  1, 
-                    PATCH_ENV_AMPLITUDE_LOWER_BOUND +  1, 
-                    PATCH_ENV_AMPLITUDE_LOWER_BOUND +  0, 
-                    PATCH_ENV_AMPLITUDE_LOWER_BOUND +  0, 
-                    PATCH_ENV_AMPLITUDE_LOWER_BOUND +  0, 
-                    PATCH_ENV_AMPLITUDE_LOWER_BOUND +  0, 
-                    PATCH_ENV_AMPLITUDE_LOWER_BOUND +  0, 
-                    PATCH_ENV_AMPLITUDE_LOWER_BOUND +  0, 
-                    PATCH_ENV_AMPLITUDE_LOWER_BOUND +  0, 
-                    PATCH_ENV_AMPLITUDE_LOWER_BOUND +  0, 
-                    PATCH_ENV_AMPLITUDE_LOWER_BOUND +  0, 
-                    PATCH_ENV_AMPLITUDE_LOWER_BOUND +  0, 
-                    PATCH_ENV_AMPLITUDE_LOWER_BOUND +  0, 
-                    PATCH_ENV_AMPLITUDE_LOWER_BOUND +  0, 
-                    PATCH_ENV_AMPLITUDE_LOWER_BOUND +  0, 
-                    PATCH_ENV_AMPLITUDE_LOWER_BOUND +  0, 
-                    PATCH_ENV_AMPLITUDE_LOWER_BOUND +  0, 
-                    PATCH_ENV_AMPLITUDE_LOWER_BOUND +  0 
+                    PATCH_ENV_AMPLITUDE_LOWER_BOUND +  1 
                   };
 
 static short int  S_import_env_sustain_table[IMPORT_OPL_SUSTAIN_LEVEL_NUM_VALUES] = 
@@ -330,6 +295,41 @@ static short int  S_import_env_sustain_table[IMPORT_OPL_SUSTAIN_LEVEL_NUM_VALUES
                     PATCH_ENV_SUSTAIN_LOWER_BOUND +  3, 
                     PATCH_ENV_SUSTAIN_LOWER_BOUND +  2, 
                     PATCH_ENV_SUSTAIN_LOWER_BOUND +  1 
+                  };
+
+/* waveform table */
+static short int  S_import_waveform_table[IMPORT_OPL_WAVEFORM_NUM_VALUES] = 
+                  { PATCH_OSC_WAVEFORM_SINE, 
+                    PATCH_OSC_WAVEFORM_HALF, 
+                    PATCH_OSC_WAVEFORM_FULL, 
+                    PATCH_OSC_WAVEFORM_QUARTER, 
+                    PATCH_OSC_WAVEFORM_ALTERNATING, 
+                    PATCH_OSC_WAVEFORM_CAMEL, 
+                    PATCH_OSC_WAVEFORM_SQUARE, 
+                    PATCH_OSC_WAVEFORM_LOG_SAW 
+                  };
+
+/* detune tables */
+static short int  S_import_ym2612_detune_table[IMPORT_YM2612_DETUNE_NUM_VALUES] = 
+                  { PATCH_OSC_DETUNE_DEFAULT - 6, 
+                    PATCH_OSC_DETUNE_DEFAULT - 4, 
+                    PATCH_OSC_DETUNE_DEFAULT - 2, 
+                    PATCH_OSC_DETUNE_DEFAULT + 0, 
+                    PATCH_OSC_DETUNE_DEFAULT + 2, 
+                    PATCH_OSC_DETUNE_DEFAULT + 4, 
+                    PATCH_OSC_DETUNE_DEFAULT + 6, 
+                    PATCH_OSC_DETUNE_DEFAULT + 0 
+                  };
+
+static short int  S_import_ym2151_detune_table[IMPORT_YM2151_DETUNE_1_NUM_VALUES] = 
+                  { PATCH_OSC_DETUNE_DEFAULT + 0, 
+                    PATCH_OSC_DETUNE_DEFAULT + 2, 
+                    PATCH_OSC_DETUNE_DEFAULT + 4, 
+                    PATCH_OSC_DETUNE_DEFAULT + 6, 
+                    PATCH_OSC_DETUNE_DEFAULT + 0, 
+                    PATCH_OSC_DETUNE_DEFAULT - 2, 
+                    PATCH_OSC_DETUNE_DEFAULT - 4, 
+                    PATCH_OSC_DETUNE_DEFAULT - 6 
                   };
 
 /* keyscaling tables */
@@ -369,41 +369,6 @@ static short int  S_import_ym2151_vibrato_depth_table[IMPORT_YM2151_VIBRATO_DEPT
                     PATCH_EFFECT_DEPTH_LOWER_BOUND + 12, 
                     PATCH_EFFECT_DEPTH_LOWER_BOUND + 14, 
                     PATCH_EFFECT_DEPTH_LOWER_BOUND + 15 
-                  };
-
-static short int  S_import_ym2151_effect_base_table[IMPORT_YM2151_EFFECT_BASE_NUM_VALUES / IMPORT_YM2151_EFFECT_BASE_DIVISOR] = 
-                  { PATCH_EFFECT_BASE_LOWER_BOUND +  0, 
-                    PATCH_EFFECT_BASE_LOWER_BOUND +  1, 
-                    PATCH_EFFECT_BASE_LOWER_BOUND +  1, 
-                    PATCH_EFFECT_BASE_LOWER_BOUND +  2, 
-                    PATCH_EFFECT_BASE_LOWER_BOUND +  2, 
-                    PATCH_EFFECT_BASE_LOWER_BOUND +  3, 
-                    PATCH_EFFECT_BASE_LOWER_BOUND +  3, 
-                    PATCH_EFFECT_BASE_LOWER_BOUND +  4, 
-                    PATCH_EFFECT_BASE_LOWER_BOUND +  4, 
-                    PATCH_EFFECT_BASE_LOWER_BOUND +  5, 
-                    PATCH_EFFECT_BASE_LOWER_BOUND +  5, 
-                    PATCH_EFFECT_BASE_LOWER_BOUND +  6, 
-                    PATCH_EFFECT_BASE_LOWER_BOUND +  6, 
-                    PATCH_EFFECT_BASE_LOWER_BOUND +  7, 
-                    PATCH_EFFECT_BASE_LOWER_BOUND +  7, 
-                    PATCH_EFFECT_BASE_LOWER_BOUND +  8, 
-                    PATCH_EFFECT_BASE_LOWER_BOUND +  8, 
-                    PATCH_EFFECT_BASE_LOWER_BOUND +  9, 
-                    PATCH_EFFECT_BASE_LOWER_BOUND +  9, 
-                    PATCH_EFFECT_BASE_LOWER_BOUND + 10, 
-                    PATCH_EFFECT_BASE_LOWER_BOUND + 10, 
-                    PATCH_EFFECT_BASE_LOWER_BOUND + 11, 
-                    PATCH_EFFECT_BASE_LOWER_BOUND + 11, 
-                    PATCH_EFFECT_BASE_LOWER_BOUND + 12, 
-                    PATCH_EFFECT_BASE_LOWER_BOUND + 12, 
-                    PATCH_EFFECT_BASE_LOWER_BOUND + 13, 
-                    PATCH_EFFECT_BASE_LOWER_BOUND + 13, 
-                    PATCH_EFFECT_BASE_LOWER_BOUND + 14, 
-                    PATCH_EFFECT_BASE_LOWER_BOUND + 14, 
-                    PATCH_EFFECT_BASE_LOWER_BOUND + 15, 
-                    PATCH_EFFECT_BASE_LOWER_BOUND + 15, 
-                    PATCH_EFFECT_BASE_LOWER_BOUND + 16 
                   };
 
 /* lfo waveform table */
@@ -546,14 +511,20 @@ short int import_sbi_load(int cart_num, int patch_num,
     /* algorithm & feedback */
     if (type == IMPORT_SBI_TYPE_4OP)
     {
-      first_byte = patch_data[inst_id + k][IMPORT_SBI_COMPUTE_BYTE_SHARED_INDEX(FEEDBACK_ALGORITHM)];
-      second_byte = patch_data[inst_id + k][IMPORT_SBI_COMPUTE_BYTE_4OP_EXTRA_INDEX(ALGORITHM)];
+      first_byte = patch_data[inst_id + k][IMPORT_SBI_M1_START_INDEX + IMPORT_SBI_M1_OFFSET_FEEDBACK_ALGORITHM];
+      second_byte = patch_data[inst_id + k][IMPORT_SBI_M2_START_INDEX + IMPORT_SBI_M2_OFFSET_ALGORITHM];
     }
     else
     {
-      first_byte = patch_data[inst_id + k][IMPORT_SBI_COMPUTE_BYTE_SHARED_INDEX(FEEDBACK_ALGORITHM)];
+      first_byte = patch_data[inst_id + k][IMPORT_SBI_M1_START_INDEX + IMPORT_SBI_M1_OFFSET_FEEDBACK_ALGORITHM];
       second_byte = 0;
     }
+
+    /* set start indices */
+    start_indices[0] = IMPORT_SBI_M1_START_INDEX;
+    start_indices[1] = IMPORT_SBI_C1_START_INDEX;
+    start_indices[2] = IMPORT_SBI_M2_START_INDEX;
+    start_indices[3] = IMPORT_SBI_C2_START_INDEX;
 
     /* determine op order */
     if (type == IMPORT_SBI_TYPE_4OP)
@@ -599,11 +570,6 @@ short int import_sbi_load(int cart_num, int patch_num,
         fb_op = 2;
       }
 
-      start_indices[0] = IMPORT_SBI_M1_START_INDEX;
-      start_indices[1] = IMPORT_SBI_C1_START_INDEX;
-      start_indices[2] = IMPORT_SBI_M2_START_INDEX;
-      start_indices[3] = IMPORT_SBI_C2_START_INDEX;
-
       num_ops = 4;
 
       p->algorithm = S_import_opl_algorithm_table[(first_byte & 0x01) | ((second_byte & 0x01) << 1)];
@@ -629,11 +595,6 @@ short int import_sbi_load(int cart_num, int patch_num,
         fb_op = 2;
       }
 
-      start_indices[0] = IMPORT_SBI_M1_START_INDEX;
-      start_indices[1] = IMPORT_SBI_C1_START_INDEX;
-      start_indices[2] = IMPORT_SBI_M2_START_INDEX;
-      start_indices[3] = IMPORT_SBI_C2_START_INDEX;
-
       num_ops = 2;
 
       p->algorithm = S_import_opl_algorithm_table[first_byte & 0x01];
@@ -655,6 +616,7 @@ short int import_sbi_load(int cart_num, int patch_num,
       first_byte = patch_data[inst_id + k][start_indices[m] + IMPORT_SBI_OPERATOR_OFFSET_ATTACK_RATE_DECAY_RATE];
 
       p->env_attack[current_op] = S_import_opl_env_rate_table[(first_byte & 0xF0) >> 4];
+
       p->env_decay_1[current_op] = S_import_opl_env_rate_table[first_byte & 0x0F];
       p->env_decay_2[current_op] = p->env_decay_1[current_op];
 
@@ -1188,13 +1150,13 @@ short int import_opm_load(int cart_num, int patch_num,
     val = patch_data[inst_id + k][IMPORT_OPM_COMPUTE_VALUE_GENERAL_INDEX(TREMOLO_BASE)];
 
     if ((val >= 0) && (val < IMPORT_YM2151_EFFECT_BASE_NUM_VALUES))
-      p->tremolo_base = S_import_ym2151_effect_base_table[val / IMPORT_YM2151_EFFECT_BASE_DIVISOR];
+      p->tremolo_base = (val * PATCH_EFFECT_BASE_UPPER_BOUND) / IMPORT_YM2151_EFFECT_BASE_NUM_VALUES;
 
     /* vibrato base */
     val = patch_data[inst_id + k][IMPORT_OPM_COMPUTE_VALUE_GENERAL_INDEX(VIBRATO_BASE)];
 
     if ((val >= 0) && (val < IMPORT_YM2151_EFFECT_BASE_NUM_VALUES))
-      p->vibrato_base = S_import_ym2151_effect_base_table[val / IMPORT_YM2151_EFFECT_BASE_DIVISOR];
+      p->vibrato_base = (val * PATCH_EFFECT_BASE_UPPER_BOUND) / IMPORT_YM2151_EFFECT_BASE_NUM_VALUES;
 
     /* noise enable */
     val = patch_data[inst_id + k][IMPORT_OPM_COMPUTE_VALUE_GENERAL_INDEX(NOISE_ENABLE)];

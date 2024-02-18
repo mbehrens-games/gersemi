@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <math.h>
 
+#include "arpeggio.h"
 #include "bank.h"
 #include "bender.h"
 #include "boost.h"
@@ -28,6 +29,7 @@ int G_synth_level_right;
 *******************************************************************************/
 short int synth_generate_tables()
 {
+  arpeggio_generate_tables();
   envelope_generate_tables();
   filter_generate_tables();
   lfo_generate_tables();
@@ -43,6 +45,7 @@ short int synth_generate_tables()
 short int synth_reset_banks()
 {
   /* reset all banks */
+  arpeggio_setup_all();
   boost_setup_all();
   bender_setup_all();
   envelope_setup_all();
@@ -73,6 +76,9 @@ short int synth_update()
   int m;
 
   int level;
+
+  /* update arpeggios */
+  arpeggio_update_all();
 
   /* update lfos */
   lfo_update_all();

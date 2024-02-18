@@ -157,7 +157,11 @@ static int  S_voice_feedback_table[PATCH_OSC_FEEDBACK_NUM_VALUES] =
 
 /* phase shift table */
 static int  S_voice_phase_shift_table[PATCH_OSC_PHI_NUM_VALUES] = 
-            { 0x00000000, 0x04000000, 0x08000000, 0x0A000000};
+            { 0x00000000, 0x01555555, 0x02000000, 0x02AAAAAA, /*   0,  30,  45,  60 */
+              0x04000000, 0x05555555, 0x06000000, 0x06AAAAAA, /*  90, 120, 135, 150 */
+              0x08000000, 0x09555555, 0x0A000000, 0x0AAAAAAA, /* 180, 210, 225, 240 */
+              0x0C000000, 0x0D555555, 0x0E000000, 0x0EAAAAAA  /* 270, 300, 315, 330 */
+            };
 
 /* multiple table */
 
@@ -187,41 +191,7 @@ static int  S_voice_octave_table[PATCH_OSC_OCTAVE_NUM_VALUES] =
             { -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 
 /* detune table */
-static int  S_voice_detune_table[PATCH_OSC_DETUNE_NUM_VALUES] = 
-            { (-16 * TUNING_NUM_SEMITONE_STEPS) / 32, 
-              (-15 * TUNING_NUM_SEMITONE_STEPS) / 32, 
-              (-14 * TUNING_NUM_SEMITONE_STEPS) / 32, 
-              (-13 * TUNING_NUM_SEMITONE_STEPS) / 32, 
-              (-12 * TUNING_NUM_SEMITONE_STEPS) / 32, 
-              (-11 * TUNING_NUM_SEMITONE_STEPS) / 32, 
-              (-10 * TUNING_NUM_SEMITONE_STEPS) / 32, 
-              ( -9 * TUNING_NUM_SEMITONE_STEPS) / 32, 
-              ( -8 * TUNING_NUM_SEMITONE_STEPS) / 32, 
-              ( -7 * TUNING_NUM_SEMITONE_STEPS) / 32, 
-              ( -6 * TUNING_NUM_SEMITONE_STEPS) / 32, 
-              ( -5 * TUNING_NUM_SEMITONE_STEPS) / 32, 
-              ( -4 * TUNING_NUM_SEMITONE_STEPS) / 32, 
-              ( -3 * TUNING_NUM_SEMITONE_STEPS) / 32, 
-              ( -2 * TUNING_NUM_SEMITONE_STEPS) / 32, 
-              ( -1 * TUNING_NUM_SEMITONE_STEPS) / 32, 
-              0, 
-              (  1 * TUNING_NUM_SEMITONE_STEPS) / 32, 
-              (  2 * TUNING_NUM_SEMITONE_STEPS) / 32, 
-              (  3 * TUNING_NUM_SEMITONE_STEPS) / 32, 
-              (  4 * TUNING_NUM_SEMITONE_STEPS) / 32, 
-              (  5 * TUNING_NUM_SEMITONE_STEPS) / 32, 
-              (  6 * TUNING_NUM_SEMITONE_STEPS) / 32, 
-              (  7 * TUNING_NUM_SEMITONE_STEPS) / 32, 
-              (  8 * TUNING_NUM_SEMITONE_STEPS) / 32, 
-              (  9 * TUNING_NUM_SEMITONE_STEPS) / 32, 
-              ( 10 * TUNING_NUM_SEMITONE_STEPS) / 32, 
-              ( 11 * TUNING_NUM_SEMITONE_STEPS) / 32, 
-              ( 12 * TUNING_NUM_SEMITONE_STEPS) / 32, 
-              ( 13 * TUNING_NUM_SEMITONE_STEPS) / 32, 
-              ( 14 * TUNING_NUM_SEMITONE_STEPS) / 32, 
-              ( 15 * TUNING_NUM_SEMITONE_STEPS) / 32, 
-              ( 16 * TUNING_NUM_SEMITONE_STEPS) / 32
-            };
+static int  S_voice_detune_table[PATCH_OSC_DETUNE_NUM_VALUES];
 
 /* noise frequency table (in lfsr updates per second) */
 static float  S_voice_noise_frequency_table[PATCH_NOISE_FREQUENCY_NUM_VALUES] = 
@@ -334,11 +304,11 @@ short int voice_reset(int voice_index)
     v->feed_in[2 * m + 0] = 0;
     v->feed_in[2 * m + 1] = 0;
 
-    v->osc_waveform[m] = PATCH_OSC_WAVEFORM_SINE;
+    v->osc_waveform[m] = PATCH_OSC_WAVEFORM_DEFAULT;
     v->osc_feedback_multiplier[m] = 0;
-    v->osc_phi[m] = PATCH_OSC_PHI_0;
+    v->osc_phi[m] = PATCH_OSC_PHI_DEFAULT;
 
-    v->osc_freq_mode[m] = PATCH_OSC_FREQ_MODE_RATIO;
+    v->osc_freq_mode[m] = PATCH_OSC_FREQ_MODE_DEFAULT;
     v->osc_offset[m] = 0;
     v->osc_detune[m] = 0;
   }
@@ -457,14 +427,14 @@ short int voice_load_patch(int voice_index, int patch_index)
     else
       v->osc_phi[m] = PATCH_OSC_PHI_LOWER_BOUND;
 
-    /* frequency mode */
+   /* frequency mode */
     if ((p->osc_freq_mode[m] >= PATCH_OSC_FREQ_MODE_LOWER_BOUND) && 
         (p->osc_freq_mode[m] <= PATCH_OSC_FREQ_MODE_UPPER_BOUND))
     {
       v->osc_freq_mode[m] = p->osc_freq_mode[m];
     }
     else
-      v->osc_freq_mode[m] = PATCH_OSC_FREQ_MODE_LOWER_BOUND;
+      v->osc_freq_mode[m] = PATCH_OSC_FREQ_MODE_LOWER_BOUND; 
 
     /* note offset */
     if (p->osc_freq_mode[m] == PATCH_OSC_FREQ_MODE_RATIO)
@@ -675,13 +645,13 @@ short int voice_sync_phases(int voice_index)
     /* oscillators */
     for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
     {
-      if ((v->osc_phi[m] >= PATCH_OSC_PHI_0) && 
-          (v->osc_phi[m] <= PATCH_OSC_PHI_270))
+      if ((v->osc_phi[m] >= PATCH_OSC_PHI_LOWER_BOUND) && 
+          (v->osc_phi[m] <= PATCH_OSC_PHI_UPPER_BOUND))
       {
         v->osc_phase[m] = S_voice_phase_shift_table[v->osc_phi[m] - PATCH_OSC_PHI_LOWER_BOUND];
       }
       else
-        v->osc_phase[m] = S_voice_phase_shift_table[PATCH_OSC_PHI_0 - PATCH_OSC_PHI_LOWER_BOUND];
+        v->osc_phase[m] = S_voice_phase_shift_table[0];
     }
 
     /* noise */
@@ -1036,6 +1006,13 @@ short int voice_generate_tables()
     val = sin(TWO_PI * (m / 1024.0f));
     S_voice_wavetable_sine[m] = (short int) ((10 * (log(1 / val) / log(10)) / DB_STEP_12_BIT) + 0.5f);
     S_voice_wavetable_sine[512 - m] = S_voice_wavetable_sine[m];
+  }
+
+  /* detune table */
+  for (m = 0; m < PATCH_OSC_DETUNE_NUM_VALUES; m++)
+  {
+    S_voice_detune_table[m] = 
+      ((m - (PATCH_OSC_DETUNE_UPPER_BOUND / 2)) * TUNING_NUM_SEMITONE_STEPS) / PATCH_OSC_DETUNE_UPPER_BOUND;
   }
 
   /* noise phase increment table */

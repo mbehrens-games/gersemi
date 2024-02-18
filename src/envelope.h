@@ -65,8 +65,7 @@ short int envelope_reset(int voice_index);
 
 short int envelope_load_patch(int voice_index, int patch_index);
 
-short int envelope_set_sustain_pedal_down(int voice_index);
-short int envelope_set_sustain_pedal_up(int voice_index);
+short int envelope_set_sustain_pedal(int voice_index, int state);
 
 short int envelope_set_note(int voice_index, int note);
 

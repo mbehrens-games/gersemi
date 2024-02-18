@@ -5,7 +5,7 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
-extern int G_game_screen;
+extern int G_prog_screen;
 extern int G_last_screen;
 
 extern int G_flag_window_minimized;

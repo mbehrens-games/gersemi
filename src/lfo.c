@@ -21,7 +21,7 @@
 
 #define LFO_BASE_NOISE_FREQUENCY 440.0f /* A-4 */
 
-#define LFO_TREMOLO_DEPTH_STEP 12
+#define LFO_TREMOLO_DEPTH_STEP 8
 
 /* vibrato depth table */
 /* assuming 128 steps per semitone */

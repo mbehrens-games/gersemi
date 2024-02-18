@@ -153,14 +153,14 @@ int main(int argc, char *argv[])
   fileio_cart_load(1, G_path_cart_test_1);
 #else
   /* testing: load test .tfi files */
-  import_sbi_load(1,  1, G_path_import_sbi_1, 0, IMPORT_BATCHING_8);
+  import_sbi_load(1,  1, G_path_import_sbi_2, 0, IMPORT_BATCHING_8);
   import_opm_load(1,  9, G_path_import_opm_1, 0, IMPORT_BATCHING_8);
 #endif
 
   /* testing */
   instrument_load_patch(G_patch_edit_instrument_index, 1, 1);
 
-  /* initialize game screen */
+  /* initialize program screen */
   program_loop_change_screen(PROGRAM_SCREEN_CART);
 
   /* initialize ticks */

@@ -65,6 +65,7 @@ enum
   CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_C_SHARP_PRIME, 
   CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_D_PRIME, 
   CONTROLS_KEY_INDEX_PATCH_EDIT_PORTAMENTO_SWITCH, 
+  CONTROLS_KEY_INDEX_PATCH_EDIT_ARPEGGIO_SWITCH, 
   CONTROLS_KEY_INDEX_PATCH_EDIT_SUSTAIN_PEDAL, 
   CONTROLS_NUM_KEY_INDICES
 };
@@ -179,6 +180,13 @@ enum
 
 #define CONTROLS_VERTICAL_SCROLLBAR_POS_Y_LOWER_BOUND                          \
   ((GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (LAYOUT_SCROLLBAR_AREA_Y - (LAYOUT_SCROLLBAR_AREA_HEIGHT - 3) + 1))
+
+/* buttons */
+#define CONTROLS_MOUSE_CURSOR_IS_OVER_BUTTON()                                                        \
+  ( (S_mouse_remapped_pos_x >= (GRAPHICS_OVERSCAN_WIDTH - 8 * b->width) / 2 + (4 * b->center_x))  &&  \
+    (S_mouse_remapped_pos_x <  (GRAPHICS_OVERSCAN_WIDTH + 8 * b->width) / 2 + (4 * b->center_x))  &&  \
+    (S_mouse_remapped_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT - 16 * 1) / 2 + (4 * b->center_y))       &&  \
+    (S_mouse_remapped_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT + 16 * 1) / 2 + (4 * b->center_y)))
 
 /* patch edit parameter silders, adjustment arrows, and radio buttons */
 #define CONTROLS_MOUSE_CURSOR_IS_OVER_PATCH_PARAM_SLIDER()                                                                                                              \
@@ -337,10 +345,23 @@ short int controls_patch_parameter_adjust(int cart_num, int patch_num,
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->algorithm, PATCH_ALGORITHM)
   }
+  /* filters */
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_HIGHPASS_CUTOFF)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->highpass_cutoff, PATCH_HIGHPASS_CUTOFF)
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_LOWPASS_CUTOFF)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->lowpass_cutoff, PATCH_LOWPASS_CUTOFF)
+  }
   /* oscillator */
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_WAVEFORM)
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->osc_waveform[pr->num], PATCH_OSC_WAVEFORM)
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_FEEDBACK)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->osc_feedback[pr->num], PATCH_OSC_FEEDBACK)
   }
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_PHI)
   {
@@ -373,10 +394,6 @@ short int controls_patch_parameter_adjust(int cart_num, int patch_num,
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_DETUNE)
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->osc_detune[pr->num], PATCH_OSC_DETUNE)
-  }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_FEEDBACK)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->osc_feedback[pr->num], PATCH_OSC_FEEDBACK)
   }
   /* envelope */
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_ATTACK)
@@ -432,6 +449,77 @@ short int controls_patch_parameter_adjust(int cart_num, int patch_num,
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->lfo_quantize, PATCH_LFO_QUANTIZE)
   }
+  /* portamento */
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_PORTAMENTO_MODE)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->portamento_mode, PATCH_PORTAMENTO_MODE)
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_PORTAMENTO_LEGATO)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->portamento_legato, PATCH_PORTAMENTO_LEGATO)
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_PORTAMENTO_SPEED)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->portamento_speed, PATCH_PORTAMENTO_SPEED)
+  }
+  /* arpeggio */
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ARPEGGIO_MODE)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->arpeggio_mode, PATCH_ARPEGGIO_MODE)
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ARPEGGIO_PATTERN)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->arpeggio_pattern, PATCH_ARPEGGIO_PATTERN)
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ARPEGGIO_SPEED)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->arpeggio_speed, PATCH_ARPEGGIO_SPEED)
+  }
+  /* sync */
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_SYNC_OSC)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->sync_osc, PATCH_SYNC)
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_SYNC_LFO)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->sync_lfo, PATCH_SYNC)
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_SYNC_ARP)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->sync_arp, PATCH_SYNC)
+  }
+  /* sustain pedal */
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_PEDAL_ADJUST)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->pedal_adjust, PATCH_PEDAL_ADJUST)
+  }
+  /* pitch wheel */
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_PITCH_WHEEL_MODE)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->pitch_wheel_mode, PATCH_PITCH_WHEEL_MODE)
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_PITCH_WHEEL_RANGE)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->pitch_wheel_range, PATCH_PITCH_WHEEL_RANGE)
+  }
+  /* velocity */
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_VELOCITY_MODE)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->velocity_mode, PATCH_VELOCITY_MODE)
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_VELOCITY_SCALING)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->velocity_scaling, PATCH_VELOCITY_SCALING)
+  }
+  /* noise */
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_NOISE_MODE)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->noise_mode, PATCH_NOISE_MODE)
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_NOISE_FREQUENCY)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->noise_frequency, PATCH_NOISE_FREQUENCY)
+  }
   /* vibrato */
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_VIBRATO_MODE)
   {
@@ -458,24 +546,6 @@ short int controls_patch_parameter_adjust(int cart_num, int patch_num,
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->tremolo_base, PATCH_EFFECT_BASE)
   }
-  /* portamento */
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_PORTAMENTO_MODE)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->portamento_mode, PATCH_PORTAMENTO_MODE)
-  }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_PORTAMENTO_LEGATO)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->portamento_legato, PATCH_PORTAMENTO_LEGATO)
-  }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_PORTAMENTO_SPEED)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->portamento_speed, PATCH_PORTAMENTO_SPEED)
-  }
-  /* sustain pedal */
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_PEDAL_ADJUST)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->pedal_adjust, PATCH_PEDAL_ADJUST)
-  }
   /* boost */
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_BOOST_MODE)
   {
@@ -493,51 +563,6 @@ short int controls_patch_parameter_adjust(int cart_num, int patch_num,
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_AFTERTOUCH_EFFECT)
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->aftertouch_effect, PATCH_CONTROLLER_EFFECT)
-  }
-  /* pitch wheel */
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_PITCH_WHEEL_MODE)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->pitch_wheel_mode, PATCH_PITCH_WHEEL_MODE)
-  }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_PITCH_WHEEL_RANGE)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->pitch_wheel_range, PATCH_PITCH_WHEEL_RANGE)
-  }
-  /* sync */
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_SYNC_OSC)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->sync_osc, PATCH_SYNC)
-  }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_SYNC_LFO)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->sync_lfo, PATCH_SYNC)
-  }
-  /* velocity */
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_VELOCITY_MODE)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->velocity_mode, PATCH_VELOCITY_MODE)
-  }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_VELOCITY_SCALING)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->velocity_scaling, PATCH_VELOCITY_SCALING)
-  }
-  /* noise */
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_NOISE_MODE)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->noise_mode, PATCH_NOISE_MODE)
-  }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_NOISE_FREQUENCY)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->noise_frequency, PATCH_NOISE_FREQUENCY)
-  }
-  /* filters */
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_HIGHPASS_CUTOFF)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->highpass_cutoff, PATCH_HIGHPASS_CUTOFF)
-  }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_LOWPASS_CUTOFF)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->lowpass_cutoff, PATCH_LOWPASS_CUTOFF)
   }
   /* audition */
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_AUDITION_VELOCITY)
@@ -732,9 +757,12 @@ short int controls_keyboard_key_pressed(SDL_Scancode code)
                                               CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_D_PRIME)
   }
 
-  /* patch edit: portamento switch, sustain pedal */
+  /* patch edit: portamento switch, arpeggio switch, sustain pedal */
   CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_LSHIFT, 
                                             CONTROLS_KEY_INDEX_PATCH_EDIT_PORTAMENTO_SWITCH)
+
+  CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_RSHIFT, 
+                                            CONTROLS_KEY_INDEX_PATCH_EDIT_ARPEGGIO_SWITCH)
 
   CONTROLS_KEYBOARD_PRESS_UPDATE_KEY_STATES(SDL_SCANCODE_SPACE, 
                                             CONTROLS_KEY_INDEX_PATCH_EDIT_SUSTAIN_PEDAL)
@@ -879,9 +907,12 @@ short int controls_keyboard_key_released(SDL_Scancode code)
   CONTROLS_KEYBOARD_RELEASE_UPDATE_KEY_STATES(SDL_SCANCODE_O, 
                                               CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_NEXT_OCTAVE_D_PRIME)
 
-  /* patch edit: portamento switch, sustain pedal */
+  /* patch edit: portamento switch, arpeggio switch, sustain pedal */
   CONTROLS_KEYBOARD_RELEASE_UPDATE_KEY_STATES(SDL_SCANCODE_LSHIFT, 
                                               CONTROLS_KEY_INDEX_PATCH_EDIT_PORTAMENTO_SWITCH)
+
+  CONTROLS_KEYBOARD_RELEASE_UPDATE_KEY_STATES(SDL_SCANCODE_RSHIFT, 
+                                              CONTROLS_KEY_INDEX_PATCH_EDIT_ARPEGGIO_SWITCH)
 
   CONTROLS_KEYBOARD_RELEASE_UPDATE_KEY_STATES(SDL_SCANCODE_SPACE, 
                                               CONTROLS_KEY_INDEX_PATCH_EDIT_SUSTAIN_PEDAL)
@@ -1005,12 +1036,6 @@ short int controls_process_user_input_standard()
 
   /* check key states */
 
-  /* escape */
-  if (CONTROLS_KEY_IS_PRESSED(CONTROLS_KEY_INDEX_ESCAPE))
-  {
-
-  }
-
   /* decrease window size */
   if (CONTROLS_KEY_IS_PRESSED(CONTROLS_KEY_INDEX_DECREASE_WINDOW_SIZE))
     graphics_decrease_window_size();
@@ -1038,7 +1063,7 @@ short int controls_process_user_input_standard()
   }
 
   /* cart screen */
-  if (G_game_screen == PROGRAM_SCREEN_CART)
+  if (G_prog_screen == PROGRAM_SCREEN_CART)
   {
     if (CONTROLS_KEY_IS_ON_OR_PRESSED(CONTROLS_KEY_INDEX_PATCH_EDIT_MODIFIER_OCTAVE))
     {
@@ -1090,15 +1115,21 @@ short int controls_process_user_input_standard()
 
     /* portamento switch */
     if (CONTROLS_KEY_IS_PRESSED(CONTROLS_KEY_INDEX_PATCH_EDIT_PORTAMENTO_SWITCH))
-      instrument_set_portamento_switch_on(G_patch_edit_instrument_index);
+      instrument_set_portamento_switch(G_patch_edit_instrument_index, MIDI_CONT_SWITCH_STATE_ON);
     else if (CONTROLS_KEY_IS_RELEASED(CONTROLS_KEY_INDEX_PATCH_EDIT_PORTAMENTO_SWITCH))
-      instrument_set_portamento_switch_off(G_patch_edit_instrument_index);
+      instrument_set_portamento_switch(G_patch_edit_instrument_index, MIDI_CONT_SWITCH_STATE_OFF);
+
+    /* arpeggio switch */
+    if (CONTROLS_KEY_IS_PRESSED(CONTROLS_KEY_INDEX_PATCH_EDIT_ARPEGGIO_SWITCH))
+      instrument_set_arpeggio_switch(G_patch_edit_instrument_index, MIDI_CONT_SWITCH_STATE_ON);
+    else if (CONTROLS_KEY_IS_RELEASED(CONTROLS_KEY_INDEX_PATCH_EDIT_ARPEGGIO_SWITCH))
+      instrument_set_arpeggio_switch(G_patch_edit_instrument_index, MIDI_CONT_SWITCH_STATE_OFF);
 
     /* sustain pedal */
     if (CONTROLS_KEY_IS_PRESSED(CONTROLS_KEY_INDEX_PATCH_EDIT_SUSTAIN_PEDAL))
-      instrument_set_sustain_pedal_down(G_patch_edit_instrument_index);
+      instrument_set_sustain_pedal(G_patch_edit_instrument_index, MIDI_CONT_PEDAL_STATE_DOWN);
     else if (CONTROLS_KEY_IS_RELEASED(CONTROLS_KEY_INDEX_PATCH_EDIT_SUSTAIN_PEDAL))
-      instrument_set_sustain_pedal_up(G_patch_edit_instrument_index);
+      instrument_set_sustain_pedal(G_patch_edit_instrument_index, MIDI_CONT_PEDAL_STATE_UP);
   }
 
   /* check mouse button clicks */
@@ -1113,10 +1144,7 @@ short int controls_process_user_input_standard()
       b = &G_layout_buttons[k];
 
       /* if the cursor is over this button, click it! */
-      if ((S_mouse_remapped_pos_x >= (GRAPHICS_OVERSCAN_WIDTH - 8 * b->width) / 2 + (4 * b->center_x))  && 
-          (S_mouse_remapped_pos_x <  (GRAPHICS_OVERSCAN_WIDTH + 8 * b->width) / 2 + (4 * b->center_x))  && 
-          (S_mouse_remapped_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT - 16 * 1) / 2 + (4 * b->center_y))       && 
-          (S_mouse_remapped_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT + 16 * 1) / 2 + (4 * b->center_y)))
+      if (CONTROLS_MOUSE_CURSOR_IS_OVER_BUTTON())
       {
         if (CONTROLS_MOUSE_BUTTON_IS_PRESSED(CONTROLS_MOUSE_BUTTON_INDEX_LEFT))
         {
@@ -1134,8 +1162,8 @@ short int controls_process_user_input_standard()
             program_loop_change_screen(PROGRAM_SCREEN_MIXER);
           else if (b->label == LAYOUT_TOP_PANEL_BUTTON_LABEL_SOUND_FX)
             program_loop_change_screen(PROGRAM_SCREEN_SOUND_FX);
-          else if (b->label == LAYOUT_TOP_PANEL_BUTTON_LABEL_REVERB)
-            program_loop_change_screen(PROGRAM_SCREEN_REVERB);
+          else if (b->label == LAYOUT_TOP_PANEL_BUTTON_LABEL_DPCM)
+            program_loop_change_screen(PROGRAM_SCREEN_DPCM);
         }
 
         break;
@@ -1144,7 +1172,7 @@ short int controls_process_user_input_standard()
   }
 
   /* cart screen */
-  if (G_game_screen == PROGRAM_SCREEN_CART)
+  if (G_prog_screen == PROGRAM_SCREEN_CART)
   {
     /* check for scrollbar clicks */
     if (CONTROLS_MOUSE_CURSOR_IS_OVER_VERTICAL_SCROLLBAR_UP_ARROW() && 
@@ -1194,6 +1222,25 @@ short int controls_process_user_input_standard()
           G_current_scroll_amount = 0;
         else if (G_current_scroll_amount > G_max_scroll_amount)
           G_current_scroll_amount = G_max_scroll_amount;
+      }
+
+      /* check for button clicks */
+      for ( k = LAYOUT_CART_BUTTONS_START_INDEX; 
+            k < LAYOUT_CART_BUTTONS_END_INDEX; 
+            k++)
+      {
+        b = &G_layout_buttons[k];
+
+        /* if the cursor is over this button, click it! */
+        if (CONTROLS_MOUSE_CURSOR_IS_OVER_BUTTON())
+        {
+          if (CONTROLS_MOUSE_BUTTON_IS_PRESSED(CONTROLS_MOUSE_BUTTON_INDEX_LEFT))
+          {
+            layout_reset_cart_button_states();
+
+            b->state = LAYOUT_BUTTON_STATE_ON;
+          }
+        }
       }
 
       /* check for parameter adjustment clicks */

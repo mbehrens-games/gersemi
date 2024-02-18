@@ -31,7 +31,11 @@
 #define VB_ALL_PALETTE_3    4
 #define VB_ALL_PALETTE_GRAY 6
 
+#define VB_ALL_BUTTON_MAX_TEXT_SIZE 12
+#define VB_ALL_HEADER_MAX_TEXT_SIZE 12
 #define VB_ALL_PARAM_MAX_TEXT_SIZE  10
+
+#define VB_ALL_FILENAME_MAX_TEXT_SIZE 44
 
 enum
 {
@@ -297,50 +301,50 @@ enum
   glBindBuffer(GL_ARRAY_BUFFER, G_vertex_buffer_id_sprites);                                        \
   glBufferSubData(GL_ARRAY_BUFFER,                                                                  \
                   GRAPHICS_PANELS_SPRITES_START_INDEX * 12 * sizeof(GLfloat),                       \
-                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_PANELS] * 12 * sizeof(GLfloat),        \
+                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_PANELS] * 12 * sizeof(GLfloat),       \
                   &G_vertex_buffer_sprites[GRAPHICS_PANELS_SPRITES_START_INDEX * 12]);              \
                                                                                                     \
   glBindBuffer(GL_ARRAY_BUFFER, G_texture_coord_buffer_id_sprites);                                 \
   glBufferSubData(GL_ARRAY_BUFFER,                                                                  \
                   GRAPHICS_PANELS_SPRITES_START_INDEX * 8 * sizeof(GLfloat),                        \
-                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_PANELS] * 8 * sizeof(GLfloat),         \
+                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_PANELS] * 8 * sizeof(GLfloat),        \
                   &G_texture_coord_buffer_sprites[GRAPHICS_PANELS_SPRITES_START_INDEX * 8]);        \
                                                                                                     \
   glBindBuffer(GL_ARRAY_BUFFER, G_lighting_and_palette_buffer_id_sprites);                          \
   glBufferSubData(GL_ARRAY_BUFFER,                                                                  \
                   GRAPHICS_PANELS_SPRITES_START_INDEX * 8 * sizeof(GLfloat),                        \
-                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_PANELS] * 8 * sizeof(GLfloat),         \
+                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_PANELS] * 8 * sizeof(GLfloat),        \
                   &G_lighting_and_palette_buffer_sprites[GRAPHICS_PANELS_SPRITES_START_INDEX * 8]); \
                                                                                                     \
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, G_index_buffer_id_sprites);                                 \
   glBufferSubData(GL_ELEMENT_ARRAY_BUFFER,                                                          \
                   GRAPHICS_PANELS_SPRITES_START_INDEX * 6 * sizeof(unsigned short),                 \
-                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_PANELS] * 6 * sizeof(unsigned short),  \
+                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_PANELS] * 6 * sizeof(unsigned short), \
                   &G_index_buffer_sprites[GRAPHICS_PANELS_SPRITES_START_INDEX * 6]);
 
 #define VB_ALL_UPDATE_WIDGETS_SPRITES_IN_VBOS()                                                       \
   glBindBuffer(GL_ARRAY_BUFFER, G_vertex_buffer_id_sprites);                                          \
   glBufferSubData(GL_ARRAY_BUFFER,                                                                    \
                   GRAPHICS_WIDGETS_SPRITES_START_INDEX * 12 * sizeof(GLfloat),                        \
-                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_WIDGETS] * 12 * sizeof(GLfloat),         \
+                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_WIDGETS] * 12 * sizeof(GLfloat),        \
                   &G_vertex_buffer_sprites[GRAPHICS_WIDGETS_SPRITES_START_INDEX * 12]);               \
                                                                                                       \
   glBindBuffer(GL_ARRAY_BUFFER, G_texture_coord_buffer_id_sprites);                                   \
   glBufferSubData(GL_ARRAY_BUFFER,                                                                    \
                   GRAPHICS_WIDGETS_SPRITES_START_INDEX * 8 * sizeof(GLfloat),                         \
-                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_WIDGETS] * 8 * sizeof(GLfloat),          \
+                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_WIDGETS] * 8 * sizeof(GLfloat),         \
                   &G_texture_coord_buffer_sprites[GRAPHICS_WIDGETS_SPRITES_START_INDEX * 8]);         \
                                                                                                       \
   glBindBuffer(GL_ARRAY_BUFFER, G_lighting_and_palette_buffer_id_sprites);                            \
   glBufferSubData(GL_ARRAY_BUFFER,                                                                    \
                   GRAPHICS_WIDGETS_SPRITES_START_INDEX * 8 * sizeof(GLfloat),                         \
-                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_WIDGETS] * 8 * sizeof(GLfloat),          \
+                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_WIDGETS] * 8 * sizeof(GLfloat),         \
                   &G_lighting_and_palette_buffer_sprites[GRAPHICS_WIDGETS_SPRITES_START_INDEX * 8]);  \
                                                                                                       \
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, G_index_buffer_id_sprites);                                   \
   glBufferSubData(GL_ELEMENT_ARRAY_BUFFER,                                                            \
                   GRAPHICS_WIDGETS_SPRITES_START_INDEX * 6 * sizeof(unsigned short),                  \
-                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_WIDGETS] * 6 * sizeof(unsigned short),   \
+                  G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_WIDGETS] * 6 * sizeof(unsigned short),  \
                   &G_index_buffer_sprites[GRAPHICS_WIDGETS_SPRITES_START_INDEX * 6]);
 
 #define VB_ALL_UPDATE_TEXT_SPRITES_IN_VBOS()                                                          \
@@ -369,23 +373,31 @@ enum
                   &G_index_buffer_sprites[GRAPHICS_TEXT_SPRITES_START_INDEX * 6]);
 
 /* common edit tables */
-static char S_common_edit_1_to_32_values[32][4] = 
+static char S_common_edit_1_to_64_values[64][4] = 
   { "1",  "2",  "3",  "4",  "5",  "6",  "7", "8", 
     "9", "10", "11", "12", "13", "14", "15", "16", 
    "17", "18", "19", "20", "21", "22", "23", "24", 
-   "25", "26", "27", "28", "29", "30", "31", "32" 
+   "25", "26", "27", "28", "29", "30", "31", "32", 
+   "33", "34", "35", "36", "37", "38", "39", "40", 
+   "41", "42", "43", "44", "45", "46", "47", "48", 
+   "49", "50", "51", "52", "53", "54", "55", "56", 
+   "57", "58", "59", "60", "61", "62", "63", "64" 
   };
 
-static char S_common_edit_0_to_32_values[33][4] = 
+static char S_common_edit_0_to_64_values[65][4] = 
   { "0",  "1",  "2",  "3",  "4",  "5",  "6",  "7", "8", 
           "9", "10", "11", "12", "13", "14", "15", "16", 
          "17", "18", "19", "20", "21", "22", "23", "24", 
-         "25", "26", "27", "28", "29", "30", "31", "32" 
+         "25", "26", "27", "28", "29", "30", "31", "32", 
+         "33", "34", "35", "36", "37", "38", "39", "40", 
+         "41", "42", "43", "44", "45", "46", "47", "48", 
+         "49", "50", "51", "52", "53", "54", "55", "56", 
+         "57", "58", "59", "60", "61", "62", "63", "64"
   };
 
 /* top panel tables */
 static char S_top_panel_button_labels[LAYOUT_TOP_PANEL_BUTTON_NUM_LABELS][12] = 
-  { "Cart", "Instruments", "Song", "Mixer", "Sounds", "Reverb" };
+  { "Cart", "Instruments", "Song", "Mixer", "Sound FX", "DPCM" };
 
 static char S_top_panel_header_labels[LAYOUT_TOP_PANEL_HEADER_NUM_LABELS][12] = 
   { "Gersemi", "v0.9" };
@@ -399,28 +411,28 @@ static char S_cart_button_labels[LAYOUT_CART_BUTTON_NUM_LABELS][12] =
 static char S_cart_header_labels[LAYOUT_CART_HEADER_NUM_LABELS][12] = 
   { "Osc 1", "Osc 2", "Osc 3", "Osc 4", 
     "Env 1", "Env 2", "Env 3", "Env 4", 
-    "LFO", "Vibrato", "Tremolo", "Portamento", 
-    "Pedal", "Boost", "Effects", "Pitch Wheel", 
-    "Sync", "Velocity", "Noise", "Filters" 
+    "LFO", "Portamento", "Arpeggio", "Sync", 
+    "Pedal", "Pitch Wheel", "Velocity", "Noise", 
+    "Vibrato", "Tremolo", "Boost", "Effects" 
   };
 
 static char S_cart_param_labels[LAYOUT_CART_PARAM_NUM_LABELS][4] = 
   { "Car", "n/a", "Pat", "n/a", 
-    "Alg", "n/a", 
-    "Wav", "Phi", "Frq", "Mul", "Div", "Nte", "Oct", "Det", "FBk", 
+    "Alg", "n/a", "HPF", "LPF", 
+    "Wav", "FBk", "Phi", "Frq", "Mul", "Div", "Nte", "Oct", "Det", 
     "Att",  "D1",  "D2", "Rel", "Lev", "Sus", "RtS", "LvS", "Brk", 
     "Wav", "Frq", "Dly", "Qua", 
-    "Mde", "Dep", "Bas", 
-    "Mde", "Dep", "Bas", 
     "Mde", "Leg", "Spd", 
+    "Mde", "Pat", "Spd", 
+    "Osc", "LFO", "Arp", 
     "Adj", 
-    "Mde", "Dep", 
-     "MW",  "AT", 
     "Mde", "Rng", 
-    "Osc", "LFO", 
     "Mde", "Scl", 
     "Mde", "Frq", 
-     "HP",  "LP", 
+    "Mde", "Dep", "Bas", 
+    "Mde", "Dep", "Bas", 
+    "Mde", "Dep", 
+     "MW",  "AT", 
     "Vel",  "MW",  "AT",  "PW" 
   };
 
@@ -438,11 +450,19 @@ static char S_patch_edit_alg_name_values[PATCH_ALGORITHM_NUM_VALUES][12] =
     "4C Pipes" 
   };
 
+static char S_patch_edit_highpass_cutoff_values[PATCH_HIGHPASS_CUTOFF_NUM_VALUES][4] = 
+  { "A0", "A1", "A2", "A3" };
+
+static char S_patch_edit_lowpass_cutoff_values[PATCH_LOWPASS_CUTOFF_NUM_VALUES][4] = 
+  { "E7", "G7", "A7", "C8" };
+
 static char S_patch_edit_osc_waveform_values[PATCH_OSC_WAVEFORM_NUM_VALUES][6] = 
   { "Sine", "Half", "Full", "Quar", "Alt", "Cam", "Squa", "LSaw" };
 
 static char S_patch_edit_osc_phi_values[PATCH_OSC_PHI_NUM_VALUES][6] = 
-  { "0", "90", "180", "270" };
+  {   "0",  "30",  "45",  "60",  "90", "120", "135", "150", 
+    "180", "210", "225", "240", "270", "300", "315", "330" 
+  };
 
 static char S_patch_edit_osc_freq_mode_values[PATCH_OSC_FREQ_MODE_NUM_VALUES][8] = 
   { "Ratio", "Fixed" };
@@ -454,11 +474,15 @@ static char S_patch_edit_osc_octave_values[PATCH_OSC_OCTAVE_NUM_VALUES][4] =
   { "-4", "-3", "-2", "-1", "0",  "1",  "2",  "3",  "4",  "5",  "6",  "7", "8", "9" };
 
 static char S_patch_edit_osc_detune_values[PATCH_OSC_DETUNE_NUM_VALUES][4] = 
-  { "-16", "-15", "-14", "-13", "-12", "-11", "-10",  "-9", 
+  { "-32", "-31", "-30", "-29", "-28", "-27", "-26", "-25", 
+    "-24", "-23", "-22", "-21", "-20", "-19", "-18", "-17", 
+    "-16", "-15", "-14", "-13", "-12", "-11", "-10",  "-9", 
      "-8",  "-7",  "-6",  "-5",  "-4",  "-3",  "-2",  "-1", 
       "0", 
       "1",   "2",   "3",   "4",   "5",   "6",   "7",   "8", 
-      "9",  "10",  "11",  "12",  "13",  "14",  "15",  "16" 
+      "9",  "10",  "11",  "12",  "13",  "14",  "15",  "16", 
+     "17",  "18",  "19",  "20",  "21",  "22",  "23",  "24", 
+     "25",  "26",  "27",  "28",  "29",  "30",  "31",  "32" 
   };
 
 static char S_patch_edit_env_break_point_values[PATCH_ENV_BREAK_POINT_NUM_VALUES][4] = 
@@ -475,6 +499,27 @@ static char S_patch_edit_portamento_mode_values[PATCH_PORTAMENTO_MODE_NUM_VALUES
 static char S_patch_edit_portamento_legato_values[PATCH_PORTAMENTO_LEGATO_NUM_VALUES][8] = 
   { "Off", "On" };
 
+static char S_patch_edit_arpeggio_mode_values[PATCH_ARPEGGIO_MODE_NUM_VALUES][12] = 
+  { "Harp", "Roll" };
+
+static char S_patch_edit_arpeggio_pattern_values[PATCH_ARPEGGIO_PATTERN_NUM_VALUES][12] = 
+  { "Up", "Down", "U/D", "D/U", "U/D X", "D/U X" };
+
+static char S_patch_edit_sync_values[PATCH_SYNC_NUM_VALUES][6] = 
+  { "Off", "On" };
+
+static char S_patch_edit_pedal_adjust_values[PATCH_PEDAL_ADJUST_NUM_VALUES][6] = 
+  {  "0",  "2",  "4",  "6",  "8", "10", "12", "14", "16" };
+
+static char S_patch_edit_pitch_wheel_mode_values[PATCH_PITCH_WHEEL_MODE_NUM_VALUES][6] = 
+  { "Bend", "Half" };
+
+static char S_patch_edit_velocity_mode_values[PATCH_VELOCITY_MODE_NUM_VALUES][6] = 
+  { "Car", "Mod" };
+
+static char S_patch_edit_noise_mode_values[PATCH_NOISE_MODE_NUM_VALUES][6] = 
+  { "Off", "Squa", "Saw" };
+
 static char S_patch_edit_vibrato_mode_values[PATCH_VIBRATO_MODE_NUM_VALUES][6] = 
   { "U/D", "Up" };
 
@@ -484,29 +529,8 @@ static char S_patch_edit_tremolo_mode_values[PATCH_TREMOLO_MODE_NUM_VALUES][6] =
 static char S_patch_edit_boost_mode_values[PATCH_BOOST_MODE_NUM_VALUES][6] = 
   { "Car", "Mod" };
 
-static char S_patch_edit_pedal_adjust_values[PATCH_PEDAL_ADJUST_NUM_VALUES][6] = 
-  { "-16", "-14", "-12", "-10", "-8", "-6", "-4", "-2", "0" };
-
 static char S_patch_edit_controller_effect_values[PATCH_CONTROLLER_EFFECT_NUM_VALUES][6] = 
   { "Vib", "Trm", "Bst" };
-
-static char S_patch_edit_pitch_wheel_mode_values[PATCH_PITCH_WHEEL_MODE_NUM_VALUES][6] = 
-  { "Bend", "Half" };
-
-static char S_patch_edit_sync_values[PATCH_SYNC_NUM_VALUES][6] = 
-  { "Off", "On" };
-
-static char S_patch_edit_velocity_mode_values[PATCH_VELOCITY_MODE_NUM_VALUES][6] = 
-  { "Car", "Mod" };
-
-static char S_patch_edit_noise_mode_values[PATCH_NOISE_MODE_NUM_VALUES][6] = 
-  { "Off", "Squa", "Saw" };
-
-static char S_patch_edit_highpass_cutoff_values[PATCH_HIGHPASS_CUTOFF_NUM_VALUES][4] = 
-  { "A0", "A1", "A2", "A3" };
-
-static char S_patch_edit_lowpass_cutoff_values[PATCH_LOWPASS_CUTOFF_NUM_VALUES][4] = 
-  { "E7", "G7", "A7", "C8" };
 
 static char S_patch_edit_audition_note_velocity_values[MIDI_CONT_NOTE_VELOCITY_NUM_VALUES][4] = 
   { "-12", "-11", "-10",  "-9", 
@@ -523,6 +547,13 @@ static char S_patch_edit_audition_pitch_wheel_values[MIDI_CONT_PITCH_WHEEL_NUM_V
       "1",   "2",   "3",   "4",   "5",   "6",   "7",   "8", 
       "9",  "10",  "11",  "12",  "13",  "14",  "15",  "16" 
   };
+
+/* load tables */
+static char S_load_button_labels[LAYOUT_LOAD_BUTTON_NUM_LABELS][12] = 
+  { "Load" };
+
+static char S_load_header_labels[LAYOUT_LOAD_HEADER_NUM_LABELS][12] = 
+  { "Load Cart" };
 
 /*******************************************************************************
 ** vb_all_load_background()
@@ -1400,7 +1431,7 @@ short int vb_all_load_top_panel()
                         b->width, b->state);
 
     vb_all_load_text( b->center_x, b->center_y, 
-                      VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_GRAY, VB_ALL_PARAM_MAX_TEXT_SIZE, 
+                      VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_GRAY, VB_ALL_BUTTON_MAX_TEXT_SIZE, 
                       S_top_panel_button_labels[b->label]);
   }
 
@@ -1484,7 +1515,7 @@ short int vb_all_load_cart_screen()
                         b->width, b->state);
 
     vb_all_load_text( b->center_x, pos_y, 
-                      VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_GRAY, VB_ALL_PARAM_MAX_TEXT_SIZE, 
+                      VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_GRAY, VB_ALL_BUTTON_MAX_TEXT_SIZE, 
                       S_cart_button_labels[b->label]);
   }
 
@@ -1507,7 +1538,7 @@ short int vb_all_load_cart_screen()
 
     /* load the header! */
     vb_all_load_text( hd->center_x, pos_y, 
-                      VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_3, VB_ALL_PARAM_MAX_TEXT_SIZE, 
+                      VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_3, VB_ALL_HEADER_MAX_TEXT_SIZE, 
                       S_cart_header_labels[hd->label]);
   }
 
@@ -1567,8 +1598,14 @@ short int vb_all_load_cart_screen()
     {
       value = p->algorithm;
     }
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_HIGHPASS_CUTOFF)
+      value = p->highpass_cutoff;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_LOWPASS_CUTOFF)
+      value = p->lowpass_cutoff;
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_WAVEFORM)
       value = p->osc_waveform[pr->num];
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_FEEDBACK)
+      value = p->osc_feedback[pr->num];
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_PHI)
       value = p->osc_phi[pr->num];
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_FREQ_MODE)
@@ -1583,8 +1620,6 @@ short int vb_all_load_cart_screen()
       value = p->osc_octave[pr->num];
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_DETUNE)
       value = p->osc_detune[pr->num];
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_FEEDBACK)
-      value = p->osc_feedback[pr->num];
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_ATTACK)
       value = p->env_attack[pr->num];
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_DECAY_1)
@@ -1611,6 +1646,38 @@ short int vb_all_load_cart_screen()
       value = p->lfo_delay;
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_LFO_QUANTIZE)
       value = p->lfo_quantize;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PORTAMENTO_MODE)
+      value = p->portamento_mode;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PORTAMENTO_LEGATO)
+      value = p->portamento_legato;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PORTAMENTO_SPEED)
+      value = p->portamento_speed;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_ARPEGGIO_MODE)
+      value = p->arpeggio_mode;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_ARPEGGIO_PATTERN)
+      value = p->arpeggio_pattern;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_ARPEGGIO_SPEED)
+      value = p->arpeggio_speed;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_SYNC_OSC)
+      value = p->sync_osc;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_SYNC_LFO)
+      value = p->sync_lfo;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_SYNC_ARP)
+      value = p->sync_arp;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PEDAL_ADJUST)
+      value = p->pedal_adjust;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PITCH_WHEEL_MODE)
+      value = p->pitch_wheel_mode;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PITCH_WHEEL_RANGE)
+      value = p->pitch_wheel_range;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_VELOCITY_MODE)
+      value = p->velocity_mode;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_VELOCITY_SCALING)
+      value = p->velocity_scaling;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_NOISE_MODE)
+      value = p->noise_mode;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_NOISE_FREQUENCY)
+      value = p->noise_frequency;
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_VIBRATO_MODE)
       value = p->vibrato_mode;
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_VIBRATO_DEPTH)
@@ -1623,14 +1690,6 @@ short int vb_all_load_cart_screen()
       value = p->tremolo_depth;
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_TREMOLO_BASE)
       value = p->tremolo_base;
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PORTAMENTO_MODE)
-      value = p->portamento_mode;
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PORTAMENTO_LEGATO)
-      value = p->portamento_legato;
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PORTAMENTO_SPEED)
-      value = p->portamento_speed;
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PEDAL_ADJUST)
-      value = p->pedal_adjust;
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_BOOST_MODE)
       value = p->boost_mode;
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_BOOST_DEPTH)
@@ -1639,26 +1698,6 @@ short int vb_all_load_cart_screen()
       value = p->mod_wheel_effect;
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_AFTERTOUCH_EFFECT)
       value = p->aftertouch_effect;
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PITCH_WHEEL_MODE)
-      value = p->pitch_wheel_mode;
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PITCH_WHEEL_RANGE)
-      value = p->pitch_wheel_range;
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_SYNC_OSC)
-      value = p->sync_osc;
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_SYNC_LFO)
-      value = p->sync_lfo;
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_VELOCITY_MODE)
-      value = p->velocity_mode;
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_VELOCITY_SCALING)
-      value = p->velocity_scaling;
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_NOISE_MODE)
-      value = p->noise_mode;
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_NOISE_FREQUENCY)
-      value = p->noise_frequency;
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_HIGHPASS_CUTOFF)
-      value = p->highpass_cutoff;
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_LOWPASS_CUTOFF)
-      value = p->lowpass_cutoff;
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_AUDITION_VELOCITY)
       value = G_patch_edit_note_velocity;
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_AUDITION_MOD_WHEEL)
@@ -1683,26 +1722,27 @@ short int vb_all_load_cart_screen()
         (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_LEVEL_KS)       || 
         (pr->label == LAYOUT_CART_PARAM_LABEL_LFO_FREQUENCY)      || 
         (pr->label == LAYOUT_CART_PARAM_LABEL_LFO_QUANTIZE)       || 
+        (pr->label == LAYOUT_CART_PARAM_LABEL_PORTAMENTO_SPEED)   || 
+        (pr->label == LAYOUT_CART_PARAM_LABEL_ARPEGGIO_SPEED)     || 
+        (pr->label == LAYOUT_CART_PARAM_LABEL_PITCH_WHEEL_RANGE)  || 
         (pr->label == LAYOUT_CART_PARAM_LABEL_VIBRATO_DEPTH)      || 
         (pr->label == LAYOUT_CART_PARAM_LABEL_TREMOLO_DEPTH)      || 
-        (pr->label == LAYOUT_CART_PARAM_LABEL_PORTAMENTO_SPEED)   || 
         (pr->label == LAYOUT_CART_PARAM_LABEL_BOOST_DEPTH)        || 
-        (pr->label == LAYOUT_CART_PARAM_LABEL_PITCH_WHEEL_RANGE)  || 
         (pr->label == LAYOUT_CART_PARAM_LABEL_NOISE_FREQUENCY))
     {
-      value_string = S_common_edit_1_to_32_values[value - pr->lower_bound];
+      value_string = S_common_edit_1_to_64_values[value - pr->lower_bound];
     }
     else if ( (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_FEEDBACK)       || 
               (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_AMPLITUDE)      || 
               (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_SUSTAIN)        || 
               (pr->label == LAYOUT_CART_PARAM_LABEL_LFO_DELAY)          || 
+              (pr->label == LAYOUT_CART_PARAM_LABEL_VELOCITY_SCALING)   || 
               (pr->label == LAYOUT_CART_PARAM_LABEL_VIBRATO_BASE)       || 
               (pr->label == LAYOUT_CART_PARAM_LABEL_TREMOLO_BASE)       || 
-              (pr->label == LAYOUT_CART_PARAM_LABEL_VELOCITY_SCALING)   || 
               (pr->label == LAYOUT_CART_PARAM_LABEL_AUDITION_MOD_WHEEL) || 
               (pr->label == LAYOUT_CART_PARAM_LABEL_AUDITION_AFTERTOUCH))
     {
-      value_string = S_common_edit_0_to_32_values[value - pr->lower_bound];
+      value_string = S_common_edit_0_to_64_values[value - pr->lower_bound];
     }
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_CART_NAME)
       value_string = &G_cart_names[cart_index][0];
@@ -1712,6 +1752,10 @@ short int vb_all_load_cart_screen()
       value_string = S_patch_edit_algorithm_values[value - pr->lower_bound];
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_ALG_NAME)
       value_string = S_patch_edit_alg_name_values[value - pr->lower_bound];
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_HIGHPASS_CUTOFF)
+      value_string = S_patch_edit_highpass_cutoff_values[value - pr->lower_bound];
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_LOWPASS_CUTOFF)
+      value_string = S_patch_edit_lowpass_cutoff_values[value - pr->lower_bound];
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_WAVEFORM)
       value_string = S_patch_edit_osc_waveform_values[value - pr->lower_bound];
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_PHI)
@@ -1728,16 +1772,32 @@ short int vb_all_load_cart_screen()
       value_string = S_patch_edit_env_break_point_values[value - pr->lower_bound];
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_LFO_WAVEFORM)
       value_string = S_patch_edit_lfo_waveform_values[value - pr->lower_bound];
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_VIBRATO_MODE)
-      value_string = S_patch_edit_vibrato_mode_values[value - pr->lower_bound];
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_TREMOLO_MODE)
-      value_string = S_patch_edit_tremolo_mode_values[value - pr->lower_bound];
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_PORTAMENTO_MODE)
       value_string = S_patch_edit_portamento_mode_values[value - pr->lower_bound];
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_PORTAMENTO_LEGATO)
       value_string = S_patch_edit_portamento_legato_values[value - pr->lower_bound];
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_ARPEGGIO_MODE)
+      value_string = S_patch_edit_arpeggio_mode_values[value - pr->lower_bound];
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_ARPEGGIO_PATTERN)
+      value_string = S_patch_edit_arpeggio_pattern_values[value - pr->lower_bound];
+    else if ( (pr->label == LAYOUT_CART_PARAM_LABEL_SYNC_OSC) || 
+              (pr->label == LAYOUT_CART_PARAM_LABEL_SYNC_LFO) || 
+              (pr->label == LAYOUT_CART_PARAM_LABEL_SYNC_ARP))
+    {
+      value_string = S_patch_edit_sync_values[value - pr->lower_bound];
+    }
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_PEDAL_ADJUST)
       value_string = S_patch_edit_pedal_adjust_values[value - pr->lower_bound];
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PITCH_WHEEL_MODE)
+      value_string = S_patch_edit_pitch_wheel_mode_values[value - pr->lower_bound];
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_VELOCITY_MODE)
+      value_string = S_patch_edit_velocity_mode_values[value - pr->lower_bound];
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_NOISE_MODE)
+      value_string = S_patch_edit_noise_mode_values[value - pr->lower_bound];
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_VIBRATO_MODE)
+      value_string = S_patch_edit_vibrato_mode_values[value - pr->lower_bound];
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_TREMOLO_MODE)
+      value_string = S_patch_edit_tremolo_mode_values[value - pr->lower_bound];
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_BOOST_MODE)
       value_string = S_patch_edit_boost_mode_values[value - pr->lower_bound];
     else if ( (pr->label == LAYOUT_CART_PARAM_LABEL_MOD_WHEEL_EFFECT) || 
@@ -1745,21 +1805,6 @@ short int vb_all_load_cart_screen()
     {
       value_string = S_patch_edit_controller_effect_values[value - pr->lower_bound];
     }
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PITCH_WHEEL_MODE)
-      value_string = S_patch_edit_pitch_wheel_mode_values[value - pr->lower_bound];
-    else if ( (pr->label == LAYOUT_CART_PARAM_LABEL_SYNC_OSC) || 
-              (pr->label == LAYOUT_CART_PARAM_LABEL_SYNC_LFO))
-    {
-      value_string = S_patch_edit_sync_values[value - pr->lower_bound];
-    }
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_VELOCITY_MODE)
-      value_string = S_patch_edit_velocity_mode_values[value - pr->lower_bound];
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_NOISE_MODE)
-      value_string = S_patch_edit_noise_mode_values[value - pr->lower_bound];
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_HIGHPASS_CUTOFF)
-      value_string = S_patch_edit_highpass_cutoff_values[value - pr->lower_bound];
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_LOWPASS_CUTOFF)
-      value_string = S_patch_edit_lowpass_cutoff_values[value - pr->lower_bound];
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_AUDITION_VELOCITY)
       value_string = S_patch_edit_audition_note_velocity_values[value - pr->lower_bound];
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_AUDITION_PITCH_WHEEL)
@@ -1902,9 +1947,23 @@ short int vb_all_load_sound_fx_screen()
 }
 
 /*******************************************************************************
-** vb_all_load_reverb_screen()
+** vb_all_load_dpcm_screen()
 *******************************************************************************/
-short int vb_all_load_reverb_screen()
+short int vb_all_load_dpcm_screen()
+{
+
+  /* update vbos */
+  VB_ALL_UPDATE_PANELS_SPRITES_IN_VBOS()
+  VB_ALL_UPDATE_WIDGETS_SPRITES_IN_VBOS()
+  VB_ALL_UPDATE_TEXT_SPRITES_IN_VBOS()
+
+  return 0;
+}
+
+/*******************************************************************************
+** vb_all_load_bar_screen()
+*******************************************************************************/
+short int vb_all_load_bar_screen()
 {
 
   /* update vbos */

@@ -12,7 +12,7 @@
 #include "screen.h"
 #include "tuning.h"
 
-int G_game_screen;
+int G_prog_screen;
 int G_last_screen;
 
 int G_flag_window_minimized;
@@ -42,7 +42,7 @@ int G_patch_edit_pitch_wheel_pos;
 short int globals_init_variables()
 {
   /* initialize variables */
-  G_game_screen = PROGRAM_SCREEN_CART;
+  G_prog_screen = PROGRAM_SCREEN_CART;
   G_last_screen = PROGRAM_SCREEN_CART;
 
   G_flag_window_minimized = 0;

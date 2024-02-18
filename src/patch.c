@@ -90,39 +90,14 @@ short int patch_reset_patch(int patch_index)
     G_patch_names[patch_index][m] = '\0';
 
   /* algorithm */
-  PATCH_RESET_PARAMETER(algorithm, ALGORITHM)
+  PATCH_RESET_PARAMETER(algorithm,          ALGORITHM)
 
-  /* oscillators and envelopes */
-  for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
-  {
-    PATCH_RESET_PARAMETER(osc_waveform[m],    OSC_WAVEFORM)
-    PATCH_RESET_PARAMETER(osc_phi[m],         OSC_PHI)
-    PATCH_RESET_PARAMETER(osc_freq_mode[m],   OSC_FREQ_MODE)
-    PATCH_RESET_PARAMETER(osc_multiple[m],    OSC_MULTIPLE)
-    PATCH_RESET_PARAMETER(osc_divisor[m],     OSC_DIVISOR)
-    PATCH_RESET_PARAMETER(osc_note[m],        OSC_NOTE)
-    PATCH_RESET_PARAMETER(osc_octave[m],      OSC_OCTAVE)
-    PATCH_RESET_PARAMETER(osc_detune[m],      OSC_DETUNE)
-    PATCH_RESET_PARAMETER(osc_feedback[m],    OSC_FEEDBACK)
+  /* sync */
+  PATCH_RESET_PARAMETER(sync_osc,           SYNC)
+  PATCH_RESET_PARAMETER(sync_lfo,           SYNC)
+  PATCH_RESET_PARAMETER(sync_arp,           SYNC)
 
-    PATCH_RESET_PARAMETER(env_attack[m],      ENV_RATE)
-    PATCH_RESET_PARAMETER(env_decay_1[m],     ENV_RATE)
-    PATCH_RESET_PARAMETER(env_decay_2[m],     ENV_RATE)
-    PATCH_RESET_PARAMETER(env_release[m],     ENV_RATE)
-    PATCH_RESET_PARAMETER(env_amplitude[m],   ENV_AMPLITUDE)
-    PATCH_RESET_PARAMETER(env_sustain[m],     ENV_SUSTAIN)
-    PATCH_RESET_PARAMETER(env_rate_ks[m],     ENV_KEYSCALING)
-    PATCH_RESET_PARAMETER(env_level_ks[m],    ENV_KEYSCALING)
-    PATCH_RESET_PARAMETER(env_break_point[m], ENV_BREAK_POINT)
-  }
-
-  /* lfo */
-  PATCH_RESET_PARAMETER(lfo_waveform,       LFO_WAVEFORM)
-  PATCH_RESET_PARAMETER(lfo_frequency,      LFO_FREQUENCY)
-  PATCH_RESET_PARAMETER(lfo_delay,          LFO_DELAY)
-  PATCH_RESET_PARAMETER(lfo_quantize,       LFO_QUANTIZE)
-
-  /* vibrato, tremolo */
+  /* vibrato, tremolo, boost */
   PATCH_RESET_PARAMETER(vibrato_mode,       VIBRATO_MODE)
   PATCH_RESET_PARAMETER(vibrato_depth,      EFFECT_DEPTH)
   PATCH_RESET_PARAMETER(vibrato_base,       EFFECT_BASE)
@@ -131,29 +106,12 @@ short int patch_reset_patch(int patch_index)
   PATCH_RESET_PARAMETER(tremolo_depth,      EFFECT_DEPTH)
   PATCH_RESET_PARAMETER(tremolo_base,       EFFECT_BASE)
 
-  /* portamento */
-  PATCH_RESET_PARAMETER(portamento_mode,    PORTAMENTO_MODE)
-  PATCH_RESET_PARAMETER(portamento_legato,  PORTAMENTO_LEGATO)
-  PATCH_RESET_PARAMETER(portamento_speed,   PORTAMENTO_SPEED)
-
-  /* sustain pedal */
-  PATCH_RESET_PARAMETER(pedal_adjust,       PEDAL_ADJUST)
-
-  /* boost */
   PATCH_RESET_PARAMETER(boost_mode,         BOOST_MODE)
   PATCH_RESET_PARAMETER(boost_depth,        EFFECT_DEPTH)
 
   /* mod wheel, aftertouch */
   PATCH_RESET_PARAMETER(mod_wheel_effect,   CONTROLLER_EFFECT)
   PATCH_RESET_PARAMETER(aftertouch_effect,  CONTROLLER_EFFECT)
-
-  /* pitch wheel */
-  PATCH_RESET_PARAMETER(pitch_wheel_mode,   PITCH_WHEEL_MODE)
-  PATCH_RESET_PARAMETER(pitch_wheel_range,  PITCH_WHEEL_RANGE)
-
-  /* sync */
-  PATCH_RESET_PARAMETER(sync_osc,           SYNC)
-  PATCH_RESET_PARAMETER(sync_lfo,           SYNC)
 
   /* velocity */
   PATCH_RESET_PARAMETER(velocity_mode,      VELOCITY_MODE)
@@ -163,9 +121,56 @@ short int patch_reset_patch(int patch_index)
   PATCH_RESET_PARAMETER(noise_mode,         NOISE_MODE)
   PATCH_RESET_PARAMETER(noise_frequency,    NOISE_FREQUENCY)
 
+  /* portamento */
+  PATCH_RESET_PARAMETER(portamento_mode,    PORTAMENTO_MODE)
+  PATCH_RESET_PARAMETER(portamento_legato,  PORTAMENTO_LEGATO)
+  PATCH_RESET_PARAMETER(portamento_speed,   PORTAMENTO_SPEED)
+
+  /* pitch wheel */
+  PATCH_RESET_PARAMETER(pitch_wheel_mode,   PITCH_WHEEL_MODE)
+  PATCH_RESET_PARAMETER(pitch_wheel_range,  PITCH_WHEEL_RANGE)
+
+  /* arpeggio */
+  PATCH_RESET_PARAMETER(arpeggio_mode,      ARPEGGIO_MODE)
+  PATCH_RESET_PARAMETER(arpeggio_pattern,   ARPEGGIO_PATTERN)
+  PATCH_RESET_PARAMETER(arpeggio_speed,     ARPEGGIO_SPEED)
+
   /* filters */
   PATCH_RESET_PARAMETER(highpass_cutoff,    HIGHPASS_CUTOFF)
   PATCH_RESET_PARAMETER(lowpass_cutoff,     LOWPASS_CUTOFF)
+
+  /* sustain pedal */
+  PATCH_RESET_PARAMETER(pedal_adjust,       PEDAL_ADJUST)
+
+  /* lfo */
+  PATCH_RESET_PARAMETER(lfo_waveform,       LFO_WAVEFORM)
+  PATCH_RESET_PARAMETER(lfo_delay,          LFO_DELAY)
+  PATCH_RESET_PARAMETER(lfo_frequency,      LFO_FREQUENCY)
+  PATCH_RESET_PARAMETER(lfo_quantize,       LFO_QUANTIZE)
+
+  /* oscillators and envelopes */
+  for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
+  {
+    PATCH_RESET_PARAMETER(env_attack[m],      ENV_RATE)
+    PATCH_RESET_PARAMETER(env_decay_1[m],     ENV_RATE)
+    PATCH_RESET_PARAMETER(env_decay_2[m],     ENV_RATE)
+    PATCH_RESET_PARAMETER(env_release[m],     ENV_RATE)
+    PATCH_RESET_PARAMETER(env_amplitude[m],   ENV_AMPLITUDE)
+    PATCH_RESET_PARAMETER(env_sustain[m],     ENV_SUSTAIN)
+    PATCH_RESET_PARAMETER(env_rate_ks[m],     ENV_KEYSCALING)
+    PATCH_RESET_PARAMETER(env_level_ks[m],    ENV_KEYSCALING)
+    PATCH_RESET_PARAMETER(env_break_point[m], ENV_BREAK_POINT)
+
+    PATCH_RESET_PARAMETER(osc_waveform[m],    OSC_WAVEFORM)
+    PATCH_RESET_PARAMETER(osc_feedback[m],    OSC_FEEDBACK)
+    PATCH_RESET_PARAMETER(osc_phi[m],         OSC_PHI)
+    PATCH_RESET_PARAMETER(osc_multiple[m],    OSC_MULTIPLE)
+    PATCH_RESET_PARAMETER(osc_divisor[m],     OSC_DIVISOR)
+    PATCH_RESET_PARAMETER(osc_note[m],        OSC_NOTE)
+    PATCH_RESET_PARAMETER(osc_octave[m],      OSC_OCTAVE)
+    PATCH_RESET_PARAMETER(osc_freq_mode[m],   OSC_FREQ_MODE)
+    PATCH_RESET_PARAMETER(osc_detune[m],      OSC_DETUNE)
+  }
 
   return 0;
 }
@@ -204,39 +209,14 @@ short int patch_validate_patch(int patch_index)
   }
 
   /* algorithm */
-  PATCH_BOUND_PARAMETER(algorithm, ALGORITHM)
+  PATCH_BOUND_PARAMETER(algorithm,          ALGORITHM)
 
-  /* oscillators and envelopes */
-  for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
-  {
-    PATCH_BOUND_PARAMETER(osc_waveform[m],    OSC_WAVEFORM)
-    PATCH_BOUND_PARAMETER(osc_phi[m],         OSC_PHI)
-    PATCH_BOUND_PARAMETER(osc_freq_mode[m],   OSC_FREQ_MODE)
-    PATCH_BOUND_PARAMETER(osc_multiple[m],    OSC_MULTIPLE)
-    PATCH_BOUND_PARAMETER(osc_divisor[m],     OSC_DIVISOR)
-    PATCH_BOUND_PARAMETER(osc_note[m],        OSC_NOTE)
-    PATCH_BOUND_PARAMETER(osc_octave[m],      OSC_OCTAVE)
-    PATCH_BOUND_PARAMETER(osc_detune[m],      OSC_DETUNE)
-    PATCH_BOUND_PARAMETER(osc_feedback[m],    OSC_FEEDBACK)
+  /* sync */
+  PATCH_BOUND_PARAMETER(sync_osc,           SYNC)
+  PATCH_BOUND_PARAMETER(sync_lfo,           SYNC)
+  PATCH_BOUND_PARAMETER(sync_arp,           SYNC)
 
-    PATCH_BOUND_PARAMETER(env_attack[m],      ENV_RATE)
-    PATCH_BOUND_PARAMETER(env_decay_1[m],     ENV_RATE)
-    PATCH_BOUND_PARAMETER(env_decay_2[m],     ENV_RATE)
-    PATCH_BOUND_PARAMETER(env_release[m],     ENV_RATE)
-    PATCH_BOUND_PARAMETER(env_amplitude[m],   ENV_AMPLITUDE)
-    PATCH_BOUND_PARAMETER(env_sustain[m],     ENV_SUSTAIN)
-    PATCH_BOUND_PARAMETER(env_rate_ks[m],     ENV_KEYSCALING)
-    PATCH_BOUND_PARAMETER(env_level_ks[m],    ENV_KEYSCALING)
-    PATCH_BOUND_PARAMETER(env_break_point[m], ENV_BREAK_POINT)
-  }
-
-  /* lfo */
-  PATCH_BOUND_PARAMETER(lfo_waveform,       LFO_WAVEFORM)
-  PATCH_BOUND_PARAMETER(lfo_frequency,      LFO_FREQUENCY)
-  PATCH_BOUND_PARAMETER(lfo_delay,          LFO_DELAY)
-  PATCH_BOUND_PARAMETER(lfo_quantize,       LFO_QUANTIZE)
-
-  /* vibrato, tremolo */
+  /* vibrato, tremolo, boost */
   PATCH_BOUND_PARAMETER(vibrato_mode,       VIBRATO_MODE)
   PATCH_BOUND_PARAMETER(vibrato_depth,      EFFECT_DEPTH)
   PATCH_BOUND_PARAMETER(vibrato_base,       EFFECT_BASE)
@@ -245,29 +225,12 @@ short int patch_validate_patch(int patch_index)
   PATCH_BOUND_PARAMETER(tremolo_depth,      EFFECT_DEPTH)
   PATCH_BOUND_PARAMETER(tremolo_base,       EFFECT_BASE)
 
-  /* portamento */
-  PATCH_BOUND_PARAMETER(portamento_mode,    PORTAMENTO_MODE)
-  PATCH_BOUND_PARAMETER(portamento_legato,  PORTAMENTO_LEGATO)
-  PATCH_BOUND_PARAMETER(portamento_speed,   PORTAMENTO_SPEED)
-
-  /* sustain pedal */
-  PATCH_BOUND_PARAMETER(pedal_adjust,       PEDAL_ADJUST)
-
-  /* boost */
   PATCH_BOUND_PARAMETER(boost_mode,         BOOST_MODE)
   PATCH_BOUND_PARAMETER(boost_depth,        EFFECT_DEPTH)
 
   /* mod wheel, aftertouch */
   PATCH_BOUND_PARAMETER(mod_wheel_effect,   CONTROLLER_EFFECT)
   PATCH_BOUND_PARAMETER(aftertouch_effect,  CONTROLLER_EFFECT)
-
-  /* pitch wheel */
-  PATCH_BOUND_PARAMETER(pitch_wheel_mode,   PITCH_WHEEL_MODE)
-  PATCH_BOUND_PARAMETER(pitch_wheel_range,  PITCH_WHEEL_RANGE)
-
-  /* sync */
-  PATCH_BOUND_PARAMETER(sync_osc,           SYNC)
-  PATCH_BOUND_PARAMETER(sync_lfo,           SYNC)
 
   /* velocity */
   PATCH_BOUND_PARAMETER(velocity_mode,      VELOCITY_MODE)
@@ -277,9 +240,56 @@ short int patch_validate_patch(int patch_index)
   PATCH_BOUND_PARAMETER(noise_mode,         NOISE_MODE)
   PATCH_BOUND_PARAMETER(noise_frequency,    NOISE_FREQUENCY)
 
+  /* portamento */
+  PATCH_BOUND_PARAMETER(portamento_mode,    PORTAMENTO_MODE)
+  PATCH_BOUND_PARAMETER(portamento_legato,  PORTAMENTO_LEGATO)
+  PATCH_BOUND_PARAMETER(portamento_speed,   PORTAMENTO_SPEED)
+
+  /* pitch wheel */
+  PATCH_BOUND_PARAMETER(pitch_wheel_mode,   PITCH_WHEEL_MODE)
+  PATCH_BOUND_PARAMETER(pitch_wheel_range,  PITCH_WHEEL_RANGE)
+
+  /* arpeggio */
+  PATCH_BOUND_PARAMETER(arpeggio_mode,      ARPEGGIO_MODE)
+  PATCH_BOUND_PARAMETER(arpeggio_pattern,   ARPEGGIO_PATTERN)
+  PATCH_BOUND_PARAMETER(arpeggio_speed,     ARPEGGIO_SPEED)
+
   /* filters */
   PATCH_BOUND_PARAMETER(highpass_cutoff,    HIGHPASS_CUTOFF)
   PATCH_BOUND_PARAMETER(lowpass_cutoff,     LOWPASS_CUTOFF)
+
+  /* sustain pedal */
+  PATCH_BOUND_PARAMETER(pedal_adjust,       PEDAL_ADJUST)
+
+  /* lfo */
+  PATCH_BOUND_PARAMETER(lfo_waveform,       LFO_WAVEFORM)
+  PATCH_BOUND_PARAMETER(lfo_delay,          LFO_DELAY)
+  PATCH_BOUND_PARAMETER(lfo_frequency,      LFO_FREQUENCY)
+  PATCH_BOUND_PARAMETER(lfo_quantize,       LFO_QUANTIZE)
+
+  /* oscillators and envelopes */
+  for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
+  {
+    PATCH_BOUND_PARAMETER(env_attack[m],      ENV_RATE)
+    PATCH_BOUND_PARAMETER(env_decay_1[m],     ENV_RATE)
+    PATCH_BOUND_PARAMETER(env_decay_2[m],     ENV_RATE)
+    PATCH_BOUND_PARAMETER(env_release[m],     ENV_RATE)
+    PATCH_BOUND_PARAMETER(env_amplitude[m],   ENV_AMPLITUDE)
+    PATCH_BOUND_PARAMETER(env_sustain[m],     ENV_SUSTAIN)
+    PATCH_BOUND_PARAMETER(env_rate_ks[m],     ENV_KEYSCALING)
+    PATCH_BOUND_PARAMETER(env_level_ks[m],    ENV_KEYSCALING)
+    PATCH_BOUND_PARAMETER(env_break_point[m], ENV_BREAK_POINT)
+
+    PATCH_BOUND_PARAMETER(osc_waveform[m],    OSC_WAVEFORM)
+    PATCH_BOUND_PARAMETER(osc_feedback[m],    OSC_FEEDBACK)
+    PATCH_BOUND_PARAMETER(osc_phi[m],         OSC_PHI)
+    PATCH_BOUND_PARAMETER(osc_multiple[m],    OSC_MULTIPLE)
+    PATCH_BOUND_PARAMETER(osc_divisor[m],     OSC_DIVISOR)
+    PATCH_BOUND_PARAMETER(osc_note[m],        OSC_NOTE)
+    PATCH_BOUND_PARAMETER(osc_octave[m],      OSC_OCTAVE)
+    PATCH_BOUND_PARAMETER(osc_freq_mode[m],   OSC_FREQ_MODE)
+    PATCH_BOUND_PARAMETER(osc_detune[m],      OSC_DETUNE)
+  }
 
   return 0;
 }
@@ -322,37 +332,12 @@ short int patch_copy_patch( int dest_patch_index, int src_patch_index)
   /* algorithm */
   PATCH_COPY_PARAMETER(algorithm)
 
-  /* oscillators and envelopes */
-  for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
-  {
-    PATCH_COPY_PARAMETER(osc_waveform[m])
-    PATCH_COPY_PARAMETER(osc_phi[m])
-    PATCH_COPY_PARAMETER(osc_freq_mode[m])
-    PATCH_COPY_PARAMETER(osc_multiple[m])
-    PATCH_COPY_PARAMETER(osc_divisor[m])
-    PATCH_COPY_PARAMETER(osc_note[m])
-    PATCH_COPY_PARAMETER(osc_octave[m])
-    PATCH_COPY_PARAMETER(osc_detune[m])
-    PATCH_COPY_PARAMETER(osc_feedback[m])
+  /* sync */
+  PATCH_COPY_PARAMETER(sync_osc)
+  PATCH_COPY_PARAMETER(sync_lfo)
+  PATCH_COPY_PARAMETER(sync_arp)
 
-    PATCH_COPY_PARAMETER(env_attack[m])
-    PATCH_COPY_PARAMETER(env_decay_1[m])
-    PATCH_COPY_PARAMETER(env_decay_2[m])
-    PATCH_COPY_PARAMETER(env_release[m])
-    PATCH_COPY_PARAMETER(env_amplitude[m])
-    PATCH_COPY_PARAMETER(env_sustain[m])
-    PATCH_COPY_PARAMETER(env_rate_ks[m])
-    PATCH_COPY_PARAMETER(env_level_ks[m])
-    PATCH_COPY_PARAMETER(env_break_point[m])
-  }
-
-  /* lfo */
-  PATCH_COPY_PARAMETER(lfo_waveform)
-  PATCH_COPY_PARAMETER(lfo_frequency)
-  PATCH_COPY_PARAMETER(lfo_delay)
-  PATCH_COPY_PARAMETER(lfo_quantize)
-
-  /* vibrato, tremolo */
+  /* vibrato, tremolo, boost */
   PATCH_COPY_PARAMETER(vibrato_mode)
   PATCH_COPY_PARAMETER(vibrato_depth)
   PATCH_COPY_PARAMETER(vibrato_base)
@@ -361,29 +346,12 @@ short int patch_copy_patch( int dest_patch_index, int src_patch_index)
   PATCH_COPY_PARAMETER(tremolo_depth)
   PATCH_COPY_PARAMETER(tremolo_base)
 
-  /* portamento */
-  PATCH_COPY_PARAMETER(portamento_mode)
-  PATCH_COPY_PARAMETER(portamento_legato)
-  PATCH_COPY_PARAMETER(portamento_speed)
-
-  /* sustain pedal */
-  PATCH_COPY_PARAMETER(pedal_adjust)
-
-  /* boost */
   PATCH_COPY_PARAMETER(boost_mode)
   PATCH_COPY_PARAMETER(boost_depth)
 
   /* mod wheel, aftertouch */
   PATCH_COPY_PARAMETER(mod_wheel_effect)
   PATCH_COPY_PARAMETER(aftertouch_effect)
-
-  /* pitch wheel */
-  PATCH_COPY_PARAMETER(pitch_wheel_mode)
-  PATCH_COPY_PARAMETER(pitch_wheel_range)
-
-  /* sync */
-  PATCH_COPY_PARAMETER(sync_osc)
-  PATCH_COPY_PARAMETER(sync_lfo)
 
   /* velocity */
   PATCH_COPY_PARAMETER(velocity_mode)
@@ -393,9 +361,56 @@ short int patch_copy_patch( int dest_patch_index, int src_patch_index)
   PATCH_COPY_PARAMETER(noise_mode)
   PATCH_COPY_PARAMETER(noise_frequency)
 
+  /* portamento */
+  PATCH_COPY_PARAMETER(portamento_mode)
+  PATCH_COPY_PARAMETER(portamento_legato)
+  PATCH_COPY_PARAMETER(portamento_speed)
+
+  /* pitch wheel */
+  PATCH_COPY_PARAMETER(pitch_wheel_mode)
+  PATCH_COPY_PARAMETER(pitch_wheel_range)
+
+  /* arpeggio */
+  PATCH_COPY_PARAMETER(arpeggio_mode)
+  PATCH_COPY_PARAMETER(arpeggio_pattern)
+  PATCH_COPY_PARAMETER(arpeggio_speed)
+
   /* filters */
   PATCH_COPY_PARAMETER(highpass_cutoff)
   PATCH_COPY_PARAMETER(lowpass_cutoff)
+
+  /* sustain pedal */
+  PATCH_COPY_PARAMETER(pedal_adjust)
+
+  /* lfo */
+  PATCH_COPY_PARAMETER(lfo_waveform)
+  PATCH_COPY_PARAMETER(lfo_delay)
+  PATCH_COPY_PARAMETER(lfo_frequency)
+  PATCH_COPY_PARAMETER(lfo_quantize)
+
+  /* oscillators and envelopes */
+  for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
+  {
+    PATCH_COPY_PARAMETER(env_attack[m])
+    PATCH_COPY_PARAMETER(env_decay_1[m])
+    PATCH_COPY_PARAMETER(env_decay_2[m])
+    PATCH_COPY_PARAMETER(env_release[m])
+    PATCH_COPY_PARAMETER(env_amplitude[m])
+    PATCH_COPY_PARAMETER(env_sustain[m])
+    PATCH_COPY_PARAMETER(env_rate_ks[m])
+    PATCH_COPY_PARAMETER(env_level_ks[m])
+    PATCH_COPY_PARAMETER(env_break_point[m])
+
+    PATCH_COPY_PARAMETER(osc_waveform[m])
+    PATCH_COPY_PARAMETER(osc_feedback[m])
+    PATCH_COPY_PARAMETER(osc_phi[m])
+    PATCH_COPY_PARAMETER(osc_multiple[m])
+    PATCH_COPY_PARAMETER(osc_divisor[m])
+    PATCH_COPY_PARAMETER(osc_note[m])
+    PATCH_COPY_PARAMETER(osc_octave[m])
+    PATCH_COPY_PARAMETER(osc_freq_mode[m])
+    PATCH_COPY_PARAMETER(osc_detune[m])
+  }
 
   return 0;
 }

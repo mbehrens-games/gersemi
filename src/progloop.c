@@ -23,10 +23,10 @@ short int program_loop_change_screen(int screen)
     return 0;
 
   /* update screen if necessary */
-  if (screen != G_game_screen)
+  if (screen != G_prog_screen)
   {
-    G_last_screen = G_game_screen;
-    G_game_screen = screen;
+    G_last_screen = G_prog_screen;
+    G_prog_screen = screen;
   }
 
   /* cart screen */
@@ -36,6 +36,8 @@ short int program_loop_change_screen(int screen)
 
     G_current_scroll_amount = 0;
     G_max_scroll_amount = LAYOUT_CART_MAX_SCROLL_AMOUNT;
+
+    layout_reset_cart_button_states();
 
     render_reset_vbos();
 
@@ -99,19 +101,34 @@ short int program_loop_change_screen(int screen)
     vb_all_load_top_panel();
     vb_all_load_sound_fx_screen();
   }
-  /* reverb screen */
-  else if (screen == PROGRAM_SCREEN_REVERB)
+  /* dpcm screen */
+  else if (screen == PROGRAM_SCREEN_DPCM)
   {
     G_timer_count = 0;
 
     G_current_scroll_amount = 0;
-    G_max_scroll_amount = LAYOUT_REVERB_MAX_SCROLL_AMOUNT;
+    G_max_scroll_amount = LAYOUT_DPCM_MAX_SCROLL_AMOUNT;
 
     render_reset_vbos();
 
     vb_all_load_background();
     vb_all_load_top_panel();
-    vb_all_load_reverb_screen();
+    vb_all_load_dpcm_screen();
+  }
+  /* bar screens */
+  else if ( (screen == PROGRAM_SCREEN_MUSIC_BAR) || 
+            (screen == PROGRAM_SCREEN_FX_BAR))
+  {
+    G_timer_count = 0;
+
+    G_current_scroll_amount = 0;
+    G_max_scroll_amount = LAYOUT_BAR_MAX_SCROLL_AMOUNT;
+
+    render_reset_vbos();
+
+    vb_all_load_background();
+    vb_all_load_top_panel();
+    vb_all_load_bar_screen();
   }
   /* quit command issued */
   else if (screen == PROGRAM_SCREEN_QUIT)
@@ -135,35 +152,41 @@ short int program_loop_advance_frame()
     return 0;
 
   /* update vbos */
-  if (G_game_screen == PROGRAM_SCREEN_CART)
+  if (G_prog_screen == PROGRAM_SCREEN_CART)
   {
     vb_all_load_top_panel();
     vb_all_load_cart_screen();
   }
-  else if (G_game_screen == PROGRAM_SCREEN_INSTRUMENTS)
+  else if (G_prog_screen == PROGRAM_SCREEN_INSTRUMENTS)
   {
     vb_all_load_top_panel();
     vb_all_load_instruments_screen();
   }
-  else if (G_game_screen == PROGRAM_SCREEN_SONG)
+  else if (G_prog_screen == PROGRAM_SCREEN_SONG)
   {
     vb_all_load_top_panel();
     vb_all_load_song_screen();
   }
-  else if (G_game_screen == PROGRAM_SCREEN_MIXER)
+  else if (G_prog_screen == PROGRAM_SCREEN_MIXER)
   {
     vb_all_load_top_panel();
     vb_all_load_mixer_screen();
   }
-  else if (G_game_screen == PROGRAM_SCREEN_SOUND_FX)
+  else if (G_prog_screen == PROGRAM_SCREEN_SOUND_FX)
   {
     vb_all_load_top_panel();
     vb_all_load_sound_fx_screen();
   }
-  else if (G_game_screen == PROGRAM_SCREEN_REVERB)
+  else if (G_prog_screen == PROGRAM_SCREEN_DPCM)
   {
     vb_all_load_top_panel();
-    vb_all_load_reverb_screen();
+    vb_all_load_dpcm_screen();
+  }
+  else if ( (G_prog_screen == PROGRAM_SCREEN_MUSIC_BAR) || 
+            (G_prog_screen == PROGRAM_SCREEN_FX_BAR))
+  {
+    vb_all_load_top_panel();
+    vb_all_load_bar_screen();
   }
 
   /* rendering */

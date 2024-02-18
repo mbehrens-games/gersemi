@@ -44,6 +44,7 @@ typedef struct instrument
   short int pitch_wheel_pos;
 
   short int portamento_switch;
+  short int arpeggio_switch;
   short int sustain_pedal;
 
   short int legato;
@@ -68,10 +69,8 @@ short int instrument_set_mod_wheel_position(int instrument_index, short int pos)
 short int instrument_set_aftertouch_position(int instrument_index, short int pos);
 short int instrument_set_pitch_wheel_position(int instrument_index, short int pos);
 
-short int instrument_set_portamento_switch_on(int instrument_index);
-short int instrument_set_portamento_switch_off(int instrument_index);
-
-short int instrument_set_sustain_pedal_down(int instrument_index);
-short int instrument_set_sustain_pedal_up(int instrument_index);
+short int instrument_set_portamento_switch(int instrument_index, int state);
+short int instrument_set_arpeggio_switch(int instrument_index, int state);
+short int instrument_set_sustain_pedal(int instrument_index, int state);
 
 #endif

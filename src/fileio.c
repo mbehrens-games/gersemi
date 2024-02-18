@@ -9,13 +9,18 @@
 #include "fileio.h"
 #include "patch.h"
 
-#define FILEIO_PATCH_COMPUTE_GENERAL_INDEX(patch_num, name)                    \
-  ( (patch_num * FILEIO_PATCH_NUM_BYTES) + FILEIO_PATCH_GENERAL_START_INDEX +  \
-    FILEIO_PATCH_BYTE_GENERAL_##name)
+#define FILEIO_PATCH_COMPUTE_NAME_INDEX(patch_num)                             \
+  ( FILEIO_CART_NAME_SIZE + (patch_num * FILEIO_PATCH_NUM_BYTES))
 
-#define FILEIO_PATCH_COMPUTE_OSC_ENV_INDEX(patch_num, osc_env_num, name)       \
-  ( (patch_num * FILEIO_PATCH_NUM_BYTES) + FILEIO_PATCH_OSC_ENV_START_INDEX +  \
-    (osc_env_num * FILEIO_PATCH_NUM_OSC_ENV_BYTES) + FILEIO_PATCH_BYTE_OSC_ENV_##name)
+#define FILEIO_PATCH_COMPUTE_GENERAL_INDEX(patch_num, byte)                    \
+  ( FILEIO_CART_NAME_SIZE + (patch_num * FILEIO_PATCH_NUM_BYTES) +             \
+    FILEIO_PATCH_GENERAL_START_INDEX + FILEIO_PATCH_BYTE_GENERAL_##byte)
+
+#define FILEIO_PATCH_COMPUTE_OSC_ENV_INDEX(patch_num, osc_env_num, byte)       \
+  ( FILEIO_CART_NAME_SIZE + (patch_num * FILEIO_PATCH_NUM_BYTES) +             \
+    FILEIO_PATCH_OSC_ENV_START_INDEX +                                         \
+    (osc_env_num * FILEIO_PATCH_NUM_OSC_ENV_BYTES) +                           \
+    FILEIO_PATCH_BYTE_OSC_ENV_##byte)
 
 /*******************************************************************************
 ** fileio_cart_load()
@@ -104,45 +109,18 @@ short int fileio_cart_load(int cart_num, char* filename)
     /* reset patch */
     patch_reset_patch(patch_index);
 
-    /* algorithm, velocity */
-    current_byte = cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, ALGORITHM_VELOCITY)];
+    /* algorithm, vibrato depth */
+    current_byte = cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, ALGORITHM_VIBRATO_DEPTH)];
 
-    p->algorithm = PATCH_ALGORITHM_LOWER_BOUND + ((current_byte & 0xE0) >> 5);
-    p->velocity_mode = PATCH_VELOCITY_MODE_LOWER_BOUND + ((current_byte & 0x10) >> 4);
-    p->velocity_scaling = PATCH_VELOCITY_SCALING_LOWER_BOUND + (current_byte & 0x0F);
+    p->algorithm = PATCH_ALGORITHM_LOWER_BOUND + ((current_byte & 0x70) >> 4);
+    p->vibrato_depth = PATCH_EFFECT_DEPTH_LOWER_BOUND + (current_byte & 0x0F);
 
-    /* noise */
-    current_byte = cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, NOISE)];
+    /* sync, tremolo depth */
+    current_byte = cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, SYNC_TREMOLO_DEPTH)];
 
-    p->noise_mode = PATCH_NOISE_MODE_LOWER_BOUND + ((current_byte & 0xC0) >> 6);
-    p->noise_frequency = PATCH_NOISE_FREQUENCY_LOWER_BOUND + (current_byte & 0x1F);
-
-    /* portamento */
-    current_byte = cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, PORTAMENTO)];
-
-    p->portamento_mode = PATCH_PORTAMENTO_MODE_LOWER_BOUND + ((current_byte & 0x40) >> 6);
-    p->portamento_legato = PATCH_PORTAMENTO_LEGATO_LOWER_BOUND + ((current_byte & 0x10) >> 4);
-    p->portamento_speed = PATCH_PORTAMENTO_SPEED_LOWER_BOUND + (current_byte & 0x0F);
-
-    /* filter cutoffs, sustain pedal */
-    current_byte = cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, FILTER_CUTOFFS_SUSTAIN_PEDAL)];
-
-    p->highpass_cutoff = PATCH_HIGHPASS_CUTOFF_LOWER_BOUND + ((current_byte & 0xC0) >> 6);
-    p->lowpass_cutoff = PATCH_LOWPASS_CUTOFF_LOWER_BOUND + ((current_byte & 0x30) >> 4);
-    p->pedal_adjust = PATCH_PEDAL_ADJUST_LOWER_BOUND + (current_byte & 0x0F);
-
-    /* sync, pitch wheel */
-    current_byte = cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, SYNC_PITCH_WHEEL)];
-
-    p->sync_osc = PATCH_SYNC_LOWER_BOUND + ((current_byte & 0x80) >> 7);
-    p->sync_lfo = PATCH_SYNC_LOWER_BOUND + ((current_byte & 0x40) >> 6);
-    p->pitch_wheel_mode = PATCH_PITCH_WHEEL_MODE_LOWER_BOUND + ((current_byte & 0x10) >> 4);
-    p->pitch_wheel_range = PATCH_PITCH_WHEEL_RANGE_LOWER_BOUND + (current_byte & 0x0F);
-
-    /* vibrato & tremolo depths */
-    current_byte = cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, VIBRATO_TREMOLO_DEPTHS)];
-
-    p->vibrato_depth = PATCH_EFFECT_DEPTH_LOWER_BOUND + ((current_byte & 0xF0) >> 4);
+    p->sync_osc = PATCH_SYNC_LOWER_BOUND + ((current_byte & 0x40) >> 6);
+    p->sync_lfo = PATCH_SYNC_LOWER_BOUND + ((current_byte & 0x20) >> 5);
+    p->sync_arp = PATCH_SYNC_LOWER_BOUND + ((current_byte & 0x10) >> 4);
     p->tremolo_depth = PATCH_EFFECT_DEPTH_LOWER_BOUND + (current_byte & 0x0F);
 
     /* effect modes, boost depth */
@@ -165,6 +143,45 @@ short int fileio_cart_load(int cart_num, char* filename)
     p->aftertouch_effect = PATCH_CONTROLLER_EFFECT_LOWER_BOUND + ((current_byte & 0xC0) >> 6);
     p->tremolo_base = PATCH_EFFECT_BASE_LOWER_BOUND + (current_byte & 0x1F);
 
+    /* velocity */
+    current_byte = cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, VELOCITY)];
+
+    p->velocity_mode = PATCH_VELOCITY_MODE_LOWER_BOUND + ((current_byte & 0x10) >> 4);
+    p->velocity_scaling = PATCH_VELOCITY_SCALING_LOWER_BOUND + (current_byte & 0x0F);
+
+    /* noise */
+    current_byte = cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, NOISE)];
+
+    p->noise_mode = PATCH_NOISE_MODE_LOWER_BOUND + ((current_byte & 0xC0) >> 6);
+    p->noise_frequency = PATCH_NOISE_FREQUENCY_LOWER_BOUND + (current_byte & 0x1F);
+
+    /* portamento */
+    current_byte = cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, PORTAMENTO)];
+
+    p->portamento_mode = PATCH_PORTAMENTO_MODE_LOWER_BOUND + ((current_byte & 0x40) >> 6);
+    p->portamento_legato = PATCH_PORTAMENTO_LEGATO_LOWER_BOUND + ((current_byte & 0x10) >> 4);
+    p->portamento_speed = PATCH_PORTAMENTO_SPEED_LOWER_BOUND + (current_byte & 0x0F);
+
+    /* pitch wheel */
+    current_byte = cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, PITCH_WHEEL)];
+
+    p->pitch_wheel_mode = PATCH_PITCH_WHEEL_MODE_LOWER_BOUND + ((current_byte & 0x10) >> 4);
+    p->pitch_wheel_range = PATCH_PITCH_WHEEL_RANGE_LOWER_BOUND + (current_byte & 0x0F);
+
+    /* arpeggio */
+    current_byte = cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, ARPEGGIO)];
+
+    p->arpeggio_mode = PATCH_ARPEGGIO_MODE_LOWER_BOUND + ((current_byte & 0x80) >> 7);
+    p->arpeggio_pattern = PATCH_ARPEGGIO_PATTERN_LOWER_BOUND + ((current_byte & 0x70) >> 4);
+    p->arpeggio_speed = PATCH_ARPEGGIO_SPEED_LOWER_BOUND + (current_byte & 0x0F);
+
+    /* filter cutoffs, sustain pedal */
+    current_byte = cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, FILTER_CUTOFFS_SUSTAIN_PEDAL)];
+
+    p->highpass_cutoff = PATCH_HIGHPASS_CUTOFF_LOWER_BOUND + ((current_byte & 0xC0) >> 6);
+    p->lowpass_cutoff = PATCH_LOWPASS_CUTOFF_LOWER_BOUND + ((current_byte & 0x30) >> 4);
+    p->pedal_adjust = PATCH_PEDAL_ADJUST_LOWER_BOUND + (current_byte & 0x0F);
+
     /* lfo waveform, delay */
     current_byte = cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, LFO_WAVEFORM_DELAY)];
 
@@ -184,11 +201,45 @@ short int fileio_cart_load(int cart_num, char* filename)
     /* oscillators, envelopes */
     for (m = 0; m < 4; m++)
     {
-      /* waveform, feedback */
-      current_byte = cart_data[FILEIO_PATCH_COMPUTE_OSC_ENV_INDEX(k, m, WAVEFORM_FEEDBACK)];
+      /* attack, waveform */
+      current_byte = cart_data[FILEIO_PATCH_COMPUTE_OSC_ENV_INDEX(k, m, ATTACK_WAVEFORM)];
 
-      p->osc_waveform[m] = PATCH_OSC_WAVEFORM_LOWER_BOUND + ((current_byte & 0xF0) >> 4);
-      p->osc_feedback[m] = PATCH_OSC_FEEDBACK_LOWER_BOUND + (current_byte & 0x0F);
+      p->osc_waveform[m] = PATCH_OSC_WAVEFORM_LOWER_BOUND + ((current_byte & 0xE0) >> 5);
+      p->env_attack[m] = PATCH_ENV_RATE_LOWER_BOUND + (current_byte & 0x1F);
+
+      /* decay 1, feedback */
+      current_byte = cart_data[FILEIO_PATCH_COMPUTE_OSC_ENV_INDEX(k, m, DECAY_1_FEEDBACK)];
+
+      p->osc_feedback[m] = PATCH_OSC_FEEDBACK_LOWER_BOUND + ((current_byte & 0xE0) >> 5);
+      p->env_decay_1[m] = PATCH_ENV_RATE_LOWER_BOUND + (current_byte & 0x1F);
+
+      /* decay 2, rate keyscaling */
+      current_byte = cart_data[FILEIO_PATCH_COMPUTE_OSC_ENV_INDEX(k, m, DECAY_2_RATE_KS)];
+
+      p->env_rate_ks[m] = PATCH_ENV_KEYSCALING_LOWER_BOUND + ((current_byte & 0xE0) >> 5);
+      p->env_decay_2[m] = PATCH_ENV_RATE_LOWER_BOUND + (current_byte & 0x1F);
+
+      /* release, level keyscaling */
+      current_byte = cart_data[FILEIO_PATCH_COMPUTE_OSC_ENV_INDEX(k, m, RELEASE_LEVEL_KS)];
+
+      p->env_level_ks[m] = PATCH_ENV_KEYSCALING_LOWER_BOUND + ((current_byte & 0xE0) >> 5);
+      p->env_release[m] = PATCH_ENV_RATE_LOWER_BOUND + (current_byte & 0x1F);
+
+      /* phi, break point */
+      current_byte = cart_data[FILEIO_PATCH_COMPUTE_OSC_ENV_INDEX(k, m, PHI_BREAK_POINT)];
+
+      p->osc_phi[m] = PATCH_OSC_PHI_LOWER_BOUND + ((current_byte & 0xF0) >> 4);
+      p->env_break_point[m] = PATCH_ENV_BREAK_POINT_LOWER_BOUND + (current_byte & 0x0F);
+
+      /* amplitude */
+      current_byte = cart_data[FILEIO_PATCH_COMPUTE_OSC_ENV_INDEX(k, m, AMPLITUDE)];
+
+      p->env_amplitude[m] = PATCH_ENV_AMPLITUDE_LOWER_BOUND + (current_byte & 0x7F);
+
+      /* sustain */
+      current_byte = cart_data[FILEIO_PATCH_COMPUTE_OSC_ENV_INDEX(k, m, SUSTAIN)];
+
+      p->env_sustain[m] = PATCH_ENV_SUSTAIN_LOWER_BOUND + (current_byte & 0x1F);
 
       /* multiple, divisor or note, octave */
       current_byte = cart_data[FILEIO_PATCH_COMPUTE_OSC_ENV_INDEX(k, m, MULTIPLE_DIVISOR_OR_NOTE_OCTAVE)];
@@ -204,49 +255,11 @@ short int fileio_cart_load(int cart_num, char* filename)
         p->osc_octave[m] = PATCH_OSC_OCTAVE_LOWER_BOUND + (current_byte & 0x0F);
       }
 
-      /* detune */
-      current_byte = cart_data[FILEIO_PATCH_COMPUTE_OSC_ENV_INDEX(k, m, DETUNE)];
+      /* frequency mode, detune */
+      current_byte = cart_data[FILEIO_PATCH_COMPUTE_OSC_ENV_INDEX(k, m, FREQ_MODE_DETUNE)];
 
-      p->osc_detune[m] = PATCH_OSC_DETUNE_LOWER_BOUND + (current_byte & 0x3F);
-
-      /* phi, frequency mode, break point */
-      current_byte = cart_data[FILEIO_PATCH_COMPUTE_OSC_ENV_INDEX(k, m, PHI_FREQ_MODE_BREAK_POINT)];
-
-      p->osc_phi[m] = PATCH_OSC_PHI_LOWER_BOUND + ((current_byte & 0xC0) >> 6);
-      p->osc_freq_mode[m] = PATCH_OSC_FREQ_MODE_LOWER_BOUND + ((current_byte & 0x10) >> 4);
-      p->env_break_point[m] = PATCH_ENV_BREAK_POINT_LOWER_BOUND + (current_byte & 0x0F);
-
-      /* attack, rate keyscaling */
-      current_byte = cart_data[FILEIO_PATCH_COMPUTE_OSC_ENV_INDEX(k, m, ATTACK_RATE_KS)];
-
-      p->env_rate_ks[m] = PATCH_ENV_KEYSCALING_LOWER_BOUND + ((current_byte & 0xE0) >> 5);
-      p->env_attack[m] = PATCH_ENV_RATE_LOWER_BOUND + (current_byte & 0x1F);
-
-      /* decay 1, level keyscaling */
-      current_byte = cart_data[FILEIO_PATCH_COMPUTE_OSC_ENV_INDEX(k, m, DECAY_1_LEVEL_KS)];
-
-      p->env_level_ks[m] = PATCH_ENV_KEYSCALING_LOWER_BOUND + ((current_byte & 0xE0) >> 5);
-      p->env_decay_1[m] = PATCH_ENV_RATE_LOWER_BOUND + (current_byte & 0x1F);
-
-      /* decay 2 */
-      current_byte = cart_data[FILEIO_PATCH_COMPUTE_OSC_ENV_INDEX(k, m, DECAY_2)];
-
-      p->env_decay_2[m] = PATCH_ENV_RATE_LOWER_BOUND + (current_byte & 0x1F);
-
-      /* release */
-      current_byte = cart_data[FILEIO_PATCH_COMPUTE_OSC_ENV_INDEX(k, m, RELEASE)];
-
-      p->env_release[m] = PATCH_ENV_RATE_LOWER_BOUND + (current_byte & 0x1F);
-
-      /* amplitude */
-      current_byte = cart_data[FILEIO_PATCH_COMPUTE_OSC_ENV_INDEX(k, m, AMPLITUDE)];
-
-      p->env_amplitude[m] = PATCH_ENV_AMPLITUDE_LOWER_BOUND + (current_byte & 0x3F);
-
-      /* sustain */
-      current_byte = cart_data[FILEIO_PATCH_COMPUTE_OSC_ENV_INDEX(k, m, SUSTAIN)];
-
-      p->env_sustain[m] = PATCH_ENV_SUSTAIN_LOWER_BOUND + (current_byte & 0x1F);
+      p->osc_freq_mode[m] = PATCH_OSC_FREQ_MODE_LOWER_BOUND + ((current_byte & 0x80) >> 7);
+      p->osc_detune[m] = PATCH_OSC_DETUNE_LOWER_BOUND + (current_byte & 0x7F);
     }
 
     /* validate the parameters */
@@ -295,46 +308,19 @@ short int fileio_cart_save(int cart_num, char* filename)
 
     p = &G_patch_bank[patch_index];
 
-    /* algorithm, velocity */
-    current_byte = ((p->algorithm - PATCH_ALGORITHM_LOWER_BOUND) & 0x07) << 5;
-    current_byte |= ((p->velocity_mode - PATCH_VELOCITY_MODE_LOWER_BOUND) & 0x01) << 4;
-    current_byte |= (p->velocity_scaling - PATCH_VELOCITY_SCALING_LOWER_BOUND) & 0x0F;
+    /* algorithm, vibrato depth */
+    current_byte = ((p->algorithm - PATCH_ALGORITHM_LOWER_BOUND) & 0x07) << 4;
+    current_byte |= (p->vibrato_depth - PATCH_EFFECT_DEPTH_LOWER_BOUND) & 0x0F;
 
-    cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, ALGORITHM_VELOCITY)] = current_byte;
+    cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, ALGORITHM_VIBRATO_DEPTH)] = current_byte;
 
-    /* noise */
-    current_byte = ((p->noise_mode - PATCH_NOISE_MODE_LOWER_BOUND) & 0x03) << 6;
-    current_byte |= (p->noise_frequency - PATCH_NOISE_FREQUENCY_LOWER_BOUND) & 0x1F;
-
-    cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, NOISE)] = current_byte;
-
-    /* portamento */
-    current_byte = ((p->portamento_mode - PATCH_PORTAMENTO_MODE_LOWER_BOUND) & 0x01) << 6;
-    current_byte |= ((p->portamento_legato - PATCH_PORTAMENTO_LEGATO_LOWER_BOUND) & 0x01) << 4;
-    current_byte |= (p->portamento_speed - PATCH_PORTAMENTO_SPEED_LOWER_BOUND) & 0x0F;
-
-    cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, PORTAMENTO)] = current_byte;
-
-    /* filter cutoffs, sustain pedal */
-    current_byte = ((p->highpass_cutoff - PATCH_HIGHPASS_CUTOFF_LOWER_BOUND) & 0x03) << 6;
-    current_byte |= ((p->lowpass_cutoff - PATCH_LOWPASS_CUTOFF_LOWER_BOUND) & 0x03) << 4;
-    current_byte |= (p->pedal_adjust - PATCH_PEDAL_ADJUST_LOWER_BOUND) & 0x0F;
-
-    cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, FILTER_CUTOFFS_SUSTAIN_PEDAL)] = current_byte;
-
-    /* sync, pitch wheel */
-    current_byte = ((p->sync_osc - PATCH_SYNC_LOWER_BOUND) & 0x01) << 7;
-    current_byte |= ((p->sync_lfo - PATCH_SYNC_LOWER_BOUND) & 0x01) << 6;
-    current_byte |= ((p->pitch_wheel_mode - PATCH_PITCH_WHEEL_MODE_LOWER_BOUND) & 0x01) << 4;
-    current_byte |= (p->pitch_wheel_range - PATCH_PITCH_WHEEL_RANGE_LOWER_BOUND) & 0x0F;
-
-    cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, SYNC_PITCH_WHEEL)] = current_byte;
-
-    /* vibrato & tremolo depths */
-    current_byte = ((p->vibrato_depth - PATCH_EFFECT_DEPTH_LOWER_BOUND) & 0x0F) << 4;
+    /* sync, tremolo depth */
+    current_byte = ((p->sync_osc - PATCH_SYNC_LOWER_BOUND) & 0x01) << 6;
+    current_byte |= ((p->sync_lfo - PATCH_SYNC_LOWER_BOUND) & 0x01) << 5;
+    current_byte |= ((p->sync_arp - PATCH_SYNC_LOWER_BOUND) & 0x01) << 4;
     current_byte |= (p->tremolo_depth - PATCH_EFFECT_DEPTH_LOWER_BOUND) & 0x0F;
 
-    cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, VIBRATO_TREMOLO_DEPTHS)] = current_byte;
+    cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, SYNC_TREMOLO_DEPTH)] = current_byte;
 
     /* effect modes, boost depth */
     current_byte = ((p->vibrato_mode - PATCH_VIBRATO_MODE_LOWER_BOUND) & 0x01) << 6;
@@ -356,6 +342,45 @@ short int fileio_cart_save(int cart_num, char* filename)
 
     cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, AFTERTOUCH_EFFECT_TREMOLO_BASE)] = current_byte;
 
+    /* velocity */
+    current_byte = ((p->velocity_mode - PATCH_VELOCITY_MODE_LOWER_BOUND) & 0x01) << 4;
+    current_byte |= (p->velocity_scaling - PATCH_VELOCITY_SCALING_LOWER_BOUND) & 0x0F;
+
+    cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, VELOCITY)] = current_byte;
+
+    /* noise */
+    current_byte = ((p->noise_mode - PATCH_NOISE_MODE_LOWER_BOUND) & 0x03) << 6;
+    current_byte |= (p->noise_frequency - PATCH_NOISE_FREQUENCY_LOWER_BOUND) & 0x1F;
+
+    cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, NOISE)] = current_byte;
+
+    /* portamento */
+    current_byte = ((p->portamento_mode - PATCH_PORTAMENTO_MODE_LOWER_BOUND) & 0x01) << 6;
+    current_byte |= ((p->portamento_legato - PATCH_PORTAMENTO_LEGATO_LOWER_BOUND) & 0x01) << 4;
+    current_byte |= (p->portamento_speed - PATCH_PORTAMENTO_SPEED_LOWER_BOUND) & 0x0F;
+
+    cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, PORTAMENTO)] = current_byte;
+
+    /* pitch wheel */
+    current_byte = ((p->pitch_wheel_mode - PATCH_PITCH_WHEEL_MODE_LOWER_BOUND) & 0x01) << 4;
+    current_byte |= (p->pitch_wheel_range - PATCH_PITCH_WHEEL_RANGE_LOWER_BOUND) & 0x0F;
+
+    cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, PITCH_WHEEL)] = current_byte;
+
+    /* arpeggio */
+    current_byte = ((p->arpeggio_mode - PATCH_ARPEGGIO_MODE_LOWER_BOUND) & 0x01) << 7;
+    current_byte |= ((p->arpeggio_pattern - PATCH_ARPEGGIO_PATTERN_LOWER_BOUND) & 0x07) << 4;
+    current_byte |= (p->arpeggio_speed - PATCH_ARPEGGIO_SPEED_LOWER_BOUND) & 0x0F;
+
+    cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, ARPEGGIO)] = current_byte;
+
+    /* filter cutoffs, sustain pedal */
+    current_byte = ((p->highpass_cutoff - PATCH_HIGHPASS_CUTOFF_LOWER_BOUND) & 0x03) << 6;
+    current_byte |= ((p->lowpass_cutoff - PATCH_LOWPASS_CUTOFF_LOWER_BOUND) & 0x03) << 4;
+    current_byte |= (p->pedal_adjust - PATCH_PEDAL_ADJUST_LOWER_BOUND) & 0x0F;
+
+    cart_data[FILEIO_PATCH_COMPUTE_GENERAL_INDEX(k, FILTER_CUTOFFS_SUSTAIN_PEDAL)] = current_byte;
+
     /* lfo waveform, delay */
     current_byte = ((p->lfo_waveform - PATCH_LFO_WAVEFORM_LOWER_BOUND) & 0x07) << 5;
     current_byte |= (p->lfo_delay - PATCH_LFO_DELAY_LOWER_BOUND) & 0x1F;
@@ -375,11 +400,45 @@ short int fileio_cart_save(int cart_num, char* filename)
     /* oscillators, envelopes */
     for (m = 0; m < 4; m++)
     {
-      /* waveform, feedback */
-      current_byte = ((p->osc_waveform[m] - PATCH_OSC_WAVEFORM_LOWER_BOUND) & 0x0F) << 4;
-      current_byte |= (p->osc_feedback[m] - PATCH_OSC_FEEDBACK_LOWER_BOUND) & 0x0F;
+      /* attack, waveform */
+      current_byte = ((p->osc_waveform[m] - PATCH_OSC_WAVEFORM_LOWER_BOUND) & 0x07) << 5;
+      current_byte |= (p->env_attack[m] - PATCH_ENV_RATE_LOWER_BOUND) & 0x1F;
 
-      cart_data[FILEIO_PATCH_COMPUTE_OSC_ENV_INDEX(k, m, WAVEFORM_FEEDBACK)] = current_byte;
+      cart_data[FILEIO_PATCH_COMPUTE_OSC_ENV_INDEX(k, m, ATTACK_WAVEFORM)] = current_byte;
+
+      /* decay 1, feedback */
+      current_byte = ((p->osc_feedback[m] - PATCH_OSC_FEEDBACK_LOWER_BOUND) & 0x07) << 5;
+      current_byte |= (p->env_decay_1[m] - PATCH_ENV_RATE_LOWER_BOUND) & 0x1F;
+
+      cart_data[FILEIO_PATCH_COMPUTE_OSC_ENV_INDEX(k, m, DECAY_1_FEEDBACK)] = current_byte;
+
+      /* decay 2, rate keyscaling */
+      current_byte = ((p->env_rate_ks[m] - PATCH_ENV_KEYSCALING_LOWER_BOUND) & 0x07) << 5;
+      current_byte |= (p->env_decay_2[m] - PATCH_ENV_RATE_LOWER_BOUND) & 0x1F;
+
+      cart_data[FILEIO_PATCH_COMPUTE_OSC_ENV_INDEX(k, m, DECAY_2_RATE_KS)] = current_byte;
+
+      /* release, level keyscaling */
+      current_byte = ((p->env_level_ks[m] - PATCH_ENV_KEYSCALING_LOWER_BOUND) & 0x07) << 5;
+      current_byte |= (p->env_release[m] - PATCH_ENV_RATE_LOWER_BOUND) & 0x1F;
+
+      cart_data[FILEIO_PATCH_COMPUTE_OSC_ENV_INDEX(k, m, RELEASE_LEVEL_KS)] = current_byte;
+
+      /* phi, break point */
+      current_byte = ((p->osc_phi[m] - PATCH_OSC_PHI_LOWER_BOUND) & 0x0F) << 4;
+      current_byte |= (p->env_break_point[m] - PATCH_ENV_BREAK_POINT_LOWER_BOUND) & 0x0F;
+
+      cart_data[FILEIO_PATCH_COMPUTE_OSC_ENV_INDEX(k, m, PHI_BREAK_POINT)] = current_byte;
+
+      /* amplitude */
+      current_byte = (p->env_amplitude[m] - PATCH_ENV_AMPLITUDE_LOWER_BOUND) & 0x7F;
+
+      cart_data[FILEIO_PATCH_COMPUTE_OSC_ENV_INDEX(k, m, AMPLITUDE)] = current_byte;
+
+      /* sustain, level keyscaling */
+      current_byte = (p->env_sustain[m] - PATCH_ENV_SUSTAIN_LOWER_BOUND) & 0x1F;
+
+      cart_data[FILEIO_PATCH_COMPUTE_OSC_ENV_INDEX(k, m, SUSTAIN)] = current_byte;
 
       /* multiple, divisor or note, octave */
       if (p->osc_freq_mode[m] == PATCH_OSC_FREQ_MODE_LOWER_BOUND)
@@ -395,49 +454,11 @@ short int fileio_cart_save(int cart_num, char* filename)
 
       cart_data[FILEIO_PATCH_COMPUTE_OSC_ENV_INDEX(k, m, MULTIPLE_DIVISOR_OR_NOTE_OCTAVE)] = current_byte;
 
-      /* detune */
-      current_byte = (p->osc_detune[m] - PATCH_OSC_DETUNE_LOWER_BOUND) & 0x3F;
+      /* frequency mode, detune */
+      current_byte = ((p->osc_freq_mode[m] - PATCH_OSC_FREQ_MODE_LOWER_BOUND) & 0x01) << 7;
+      current_byte |= (p->osc_detune[m] - PATCH_OSC_DETUNE_LOWER_BOUND) & 0x7F;
 
-      cart_data[FILEIO_PATCH_COMPUTE_OSC_ENV_INDEX(k, m, DETUNE)] = current_byte;
-
-      /* phi, frequency mode, break point */
-      current_byte = ((p->osc_phi[m] - PATCH_OSC_PHI_LOWER_BOUND) & 0x03) << 6;
-      current_byte |= ((p->osc_freq_mode[m] - PATCH_OSC_FREQ_MODE_LOWER_BOUND) & 0x01) << 4;
-      current_byte |= (p->env_break_point[m] - PATCH_ENV_BREAK_POINT_LOWER_BOUND) & 0x0F;
-
-      cart_data[FILEIO_PATCH_COMPUTE_OSC_ENV_INDEX(k, m, PHI_FREQ_MODE_BREAK_POINT)] = current_byte;
-
-      /* attack, rate keyscaling  */
-      current_byte = ((p->env_rate_ks[m] - PATCH_ENV_KEYSCALING_LOWER_BOUND) & 0x07) << 5;
-      current_byte |= (p->env_attack[m] - PATCH_ENV_RATE_LOWER_BOUND) & 0x1F;
-
-      cart_data[FILEIO_PATCH_COMPUTE_OSC_ENV_INDEX(k, m, ATTACK_RATE_KS)] = current_byte;
-
-      /* decay 1, level keyscaling */
-      current_byte = ((p->env_level_ks[m] - PATCH_ENV_KEYSCALING_LOWER_BOUND) & 0x07) << 5;
-      current_byte |= (p->env_decay_1[m] - PATCH_ENV_RATE_LOWER_BOUND) & 0x1F;
-
-      cart_data[FILEIO_PATCH_COMPUTE_OSC_ENV_INDEX(k, m, DECAY_1_LEVEL_KS)] = current_byte;
-
-      /* decay 2 */
-      current_byte = (p->env_decay_2[m] - PATCH_ENV_RATE_LOWER_BOUND) & 0x1F;
-
-      cart_data[FILEIO_PATCH_COMPUTE_OSC_ENV_INDEX(k, m, DECAY_2)] = current_byte;
-
-      /* release */
-      current_byte = (p->env_release[m] - PATCH_ENV_RATE_LOWER_BOUND) & 0x1F;
-
-      cart_data[FILEIO_PATCH_COMPUTE_OSC_ENV_INDEX(k, m, RELEASE)] = current_byte;
-
-      /* amplitude */
-      current_byte = (p->env_amplitude[m] - PATCH_ENV_AMPLITUDE_LOWER_BOUND) & 0x3F;
-
-      cart_data[FILEIO_PATCH_COMPUTE_OSC_ENV_INDEX(k, m, AMPLITUDE)] = current_byte;
-
-      /* sustain */
-      current_byte = (p->env_sustain[m] - PATCH_ENV_SUSTAIN_LOWER_BOUND) & 0x1F;
-
-      cart_data[FILEIO_PATCH_COMPUTE_OSC_ENV_INDEX(k, m, SUSTAIN)] = current_byte;
+      cart_data[FILEIO_PATCH_COMPUTE_OSC_ENV_INDEX(k, m, FREQ_MODE_DETUNE)] = current_byte;
     }
   }
 

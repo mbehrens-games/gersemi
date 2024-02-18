@@ -14,7 +14,8 @@ short int vb_all_load_instruments_screen();
 short int vb_all_load_song_screen();
 short int vb_all_load_mixer_screen();
 short int vb_all_load_sound_fx_screen();
-short int vb_all_load_reverb_screen();
+short int vb_all_load_dpcm_screen();
+short int vb_all_load_bar_screen();
 
 #endif
 

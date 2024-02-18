@@ -27,7 +27,7 @@ enum
   ENVELOPE_HOLD_ON 
 };
 
-#define ENVELOPE_AMPLITUDE_STEP 12
+#define ENVELOPE_AMPLITUDE_STEP  8
 #define ENVELOPE_SUSTAIN_STEP   32
 
 #define ENVELOPE_TABLE_NUM_ROWS       16
@@ -85,61 +85,8 @@ static float S_envelope_freq_table[12] =
               };
 
 /* amplitude & sustain tables */
-static short int  S_envelope_amplitude_table[PATCH_ENV_AMPLITUDE_NUM_VALUES] = 
-                  { 1023, 
-                    ENVELOPE_AMPLITUDE_STEP * 31, 
-                    ENVELOPE_AMPLITUDE_STEP * 30, 
-                    ENVELOPE_AMPLITUDE_STEP * 29, 
-                    ENVELOPE_AMPLITUDE_STEP * 28, 
-                    ENVELOPE_AMPLITUDE_STEP * 27, 
-                    ENVELOPE_AMPLITUDE_STEP * 26, 
-                    ENVELOPE_AMPLITUDE_STEP * 25, 
-                    ENVELOPE_AMPLITUDE_STEP * 24, 
-                    ENVELOPE_AMPLITUDE_STEP * 23, 
-                    ENVELOPE_AMPLITUDE_STEP * 22, 
-                    ENVELOPE_AMPLITUDE_STEP * 21, 
-                    ENVELOPE_AMPLITUDE_STEP * 20, 
-                    ENVELOPE_AMPLITUDE_STEP * 19, 
-                    ENVELOPE_AMPLITUDE_STEP * 18, 
-                    ENVELOPE_AMPLITUDE_STEP * 17, 
-                    ENVELOPE_AMPLITUDE_STEP * 16, 
-                    ENVELOPE_AMPLITUDE_STEP * 15, 
-                    ENVELOPE_AMPLITUDE_STEP * 14, 
-                    ENVELOPE_AMPLITUDE_STEP * 13, 
-                    ENVELOPE_AMPLITUDE_STEP * 12, 
-                    ENVELOPE_AMPLITUDE_STEP * 11, 
-                    ENVELOPE_AMPLITUDE_STEP * 10, 
-                    ENVELOPE_AMPLITUDE_STEP *  9, 
-                    ENVELOPE_AMPLITUDE_STEP *  8, 
-                    ENVELOPE_AMPLITUDE_STEP *  7, 
-                    ENVELOPE_AMPLITUDE_STEP *  6, 
-                    ENVELOPE_AMPLITUDE_STEP *  5, 
-                    ENVELOPE_AMPLITUDE_STEP *  4, 
-                    ENVELOPE_AMPLITUDE_STEP *  3, 
-                    ENVELOPE_AMPLITUDE_STEP *  2, 
-                    ENVELOPE_AMPLITUDE_STEP *  1, 
-                    ENVELOPE_AMPLITUDE_STEP *  0 
-                  };
-
-static short int  S_envelope_sustain_table[PATCH_ENV_SUSTAIN_NUM_VALUES] = 
-                  { 1023, 
-                    ENVELOPE_SUSTAIN_STEP * 15, 
-                    ENVELOPE_SUSTAIN_STEP * 14, 
-                    ENVELOPE_SUSTAIN_STEP * 13, 
-                    ENVELOPE_SUSTAIN_STEP * 12, 
-                    ENVELOPE_SUSTAIN_STEP * 11, 
-                    ENVELOPE_SUSTAIN_STEP * 10, 
-                    ENVELOPE_SUSTAIN_STEP *  9, 
-                    ENVELOPE_SUSTAIN_STEP *  8, 
-                    ENVELOPE_SUSTAIN_STEP *  7, 
-                    ENVELOPE_SUSTAIN_STEP *  6, 
-                    ENVELOPE_SUSTAIN_STEP *  5, 
-                    ENVELOPE_SUSTAIN_STEP *  4, 
-                    ENVELOPE_SUSTAIN_STEP *  3, 
-                    ENVELOPE_SUSTAIN_STEP *  2, 
-                    ENVELOPE_SUSTAIN_STEP *  1, 
-                    ENVELOPE_SUSTAIN_STEP *  0 
-                  };
+static short int  S_envelope_amplitude_table[PATCH_ENV_AMPLITUDE_NUM_VALUES];
+static short int  S_envelope_sustain_table[PATCH_ENV_SUSTAIN_NUM_VALUES];
 
 /* keyscaling depth table */
 
@@ -197,7 +144,7 @@ static int  S_envelope_multiple_table[16] =
 
 /* pedal adjust table */
 static short int  S_envelope_pedal_adjust_table[PATCH_PEDAL_ADJUST_NUM_VALUES] = 
-                  { -16, -14, -12, -10, -8, -6, -4, -2, 0 };
+                  {  0,  2,  4,  6,  8, 10, 12, 14, 16 };
 
 /* envelope bank */
 envelope G_envelope_bank[BANK_NUM_ENVELOPES];
@@ -248,7 +195,7 @@ short int envelope_reset(int voice_index)
 
     e->transition_level = S_envelope_sustain_table[PATCH_ENV_SUSTAIN_DEFAULT - PATCH_ENV_SUSTAIN_LOWER_BOUND];
 
-    e->sustain_pedal = MIDI_CONT_SUSTAIN_PEDAL_UP;
+    e->sustain_pedal = MIDI_CONT_PEDAL_STATE_UP;
 
     e->offset = 0;
     e->freq_mode = PATCH_OSC_FREQ_MODE_RATIO;
@@ -286,6 +233,7 @@ short int envelope_load_patch(int voice_index, int patch_index)
   envelope* e;
   patch* p;
 
+  int inverted_rate;
   int shifted_rate;
 
   /* make sure that the voice index is valid */
@@ -308,10 +256,10 @@ short int envelope_load_patch(int voice_index, int patch_index)
     if ((p->env_attack[m] >= PATCH_ENV_RATE_LOWER_BOUND) && 
         (p->env_attack[m] <= PATCH_ENV_RATE_UPPER_BOUND))
     {
-      e->a_row = 12 * ((p->env_attack[m] - PATCH_ENV_RATE_LOWER_BOUND) / 2);
+      inverted_rate = PATCH_ENV_RATE_UPPER_BOUND - (p->env_attack[m] - PATCH_ENV_RATE_LOWER_BOUND);
 
-      if (((p->env_attack[m] - PATCH_ENV_RATE_LOWER_BOUND) % 2) == 1)
-        e->a_row += 7;
+      e->a_row =  12 * ((inverted_rate - PATCH_ENV_RATE_LOWER_BOUND) / 2);
+      e->a_row +=  7 * ((inverted_rate - PATCH_ENV_RATE_LOWER_BOUND) % 2);
     }
     else
       e->a_row = 0;
@@ -320,10 +268,10 @@ short int envelope_load_patch(int voice_index, int patch_index)
     if ((p->env_decay_1[m] >= PATCH_ENV_RATE_LOWER_BOUND) && 
         (p->env_decay_1[m] <= PATCH_ENV_RATE_UPPER_BOUND))
     {
-      e->d1_row = 12 * ((p->env_decay_1[m] - PATCH_ENV_RATE_LOWER_BOUND) / 2);
+      inverted_rate = PATCH_ENV_RATE_UPPER_BOUND - (p->env_decay_1[m] - PATCH_ENV_RATE_LOWER_BOUND);
 
-      if (((p->env_decay_1[m] - PATCH_ENV_RATE_LOWER_BOUND) % 2) == 1)
-        e->d1_row += 7;
+      e->d1_row =   12 * ((inverted_rate - PATCH_ENV_RATE_LOWER_BOUND) / 2);
+      e->d1_row +=   7 * ((inverted_rate - PATCH_ENV_RATE_LOWER_BOUND) % 2);
     }
     else
       e->d1_row = 0;
@@ -332,10 +280,10 @@ short int envelope_load_patch(int voice_index, int patch_index)
     if ((p->env_decay_2[m] >= PATCH_ENV_RATE_LOWER_BOUND) && 
         (p->env_decay_2[m] <= PATCH_ENV_RATE_UPPER_BOUND))
     {
-      e->d2_row = 12 * ((p->env_decay_2[m] - PATCH_ENV_RATE_LOWER_BOUND) / 2);
+      inverted_rate = PATCH_ENV_RATE_UPPER_BOUND - (p->env_decay_2[m] - PATCH_ENV_RATE_LOWER_BOUND);
 
-      if (((p->env_decay_2[m] - PATCH_ENV_RATE_LOWER_BOUND) % 2) == 1)
-        e->d2_row += 7;
+      e->d2_row =   12 * ((inverted_rate - PATCH_ENV_RATE_LOWER_BOUND) / 2);
+      e->d2_row +=   7 * ((inverted_rate - PATCH_ENV_RATE_LOWER_BOUND) % 2);
     }
     else
       e->d2_row = 0;
@@ -344,10 +292,10 @@ short int envelope_load_patch(int voice_index, int patch_index)
     if ((p->env_release[m] >= PATCH_ENV_RATE_LOWER_BOUND) && 
         (p->env_release[m] <= PATCH_ENV_RATE_UPPER_BOUND))
     {
-      e->r_row = 12 * ((p->env_release[m] - PATCH_ENV_RATE_LOWER_BOUND) / 2);
+      inverted_rate = PATCH_ENV_RATE_UPPER_BOUND - (p->env_release[m] - PATCH_ENV_RATE_LOWER_BOUND);
 
-      if (((p->env_release[m] - PATCH_ENV_RATE_LOWER_BOUND) % 2) == 1)
-        e->r_row += 7;
+      e->r_row =  12 * ((inverted_rate - PATCH_ENV_RATE_LOWER_BOUND) / 2);
+      e->r_row +=  7 * ((inverted_rate - PATCH_ENV_RATE_LOWER_BOUND) % 2);
     }
     else
       e->r_row = 0;
@@ -364,10 +312,10 @@ short int envelope_load_patch(int voice_index, int patch_index)
       else if (shifted_rate > PATCH_ENV_RATE_UPPER_BOUND)
         shifted_rate = PATCH_ENV_RATE_UPPER_BOUND;
 
-      e->pedal_row = 12 * ((shifted_rate - PATCH_ENV_RATE_LOWER_BOUND) / 2);
+      inverted_rate = PATCH_ENV_RATE_UPPER_BOUND - (shifted_rate - PATCH_ENV_RATE_LOWER_BOUND);
 
-      if (((shifted_rate - PATCH_ENV_RATE_LOWER_BOUND) % 2) == 1)
-        e->pedal_row += 7;
+      e->pedal_row =  12 * ((inverted_rate - PATCH_ENV_RATE_LOWER_BOUND) / 2);
+      e->pedal_row +=  7 * ((inverted_rate - PATCH_ENV_RATE_LOWER_BOUND) % 2);
     }
     else
       e->pedal_row = e->d2_row;
@@ -463,9 +411,9 @@ short int envelope_load_patch(int voice_index, int patch_index)
 }
 
 /*******************************************************************************
-** envelope_set_sustain_pedal_down()
+** envelope_set_sustain_pedal()
 *******************************************************************************/
-short int envelope_set_sustain_pedal_down(int voice_index)
+short int envelope_set_sustain_pedal(int voice_index, int state)
 {
   int m;
 
@@ -475,54 +423,42 @@ short int envelope_set_sustain_pedal_down(int voice_index)
   if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
     return 1;
 
-  for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
+  /* make sure the pedal state is valid */
+  if ((state < MIDI_CONT_SUSTAIN_PEDAL_LOWER_BOUND) || 
+      (state > MIDI_CONT_SUSTAIN_PEDAL_UPPER_BOUND))
   {
-    /* obtain envelope pointer */
-    e = &G_envelope_bank[BANK_OSCS_AND_ENVS_PER_VOICE * voice_index + m];
-
-    /* depress the sustain pedal */
-    e->sustain_pedal = MIDI_CONT_SUSTAIN_PEDAL_DOWN;
-
-    if (e->state == ENVELOPE_STATE_DECAY_2)
-    {
-      ENVELOPE_SET_STATE(SUSTAINED)
-    }
+    return 0;
   }
 
-  return 0;
-}
-
-/*******************************************************************************
-** envelope_set_sustain_pedal_up()
-*******************************************************************************/
-short int envelope_set_sustain_pedal_up(int voice_index)
-{
-  int m;
-
-  envelope* e;
-
-  /* make sure that the voice index is valid */
-  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
-    return 1;
-
   for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
   {
     /* obtain envelope pointer */
     e = &G_envelope_bank[BANK_OSCS_AND_ENVS_PER_VOICE * voice_index + m];
 
-    /* release the sustain pedal */
-    e->sustain_pedal = MIDI_CONT_SUSTAIN_PEDAL_UP;
+    /* set the sustain pedal */
+    e->sustain_pedal = state;
 
-    if (e->hold_active == ENVELOPE_HOLD_ON)
+    /* update envelope states */
+    if (e->sustain_pedal == MIDI_CONT_PEDAL_STATE_DOWN)
     {
-      ENVELOPE_SET_STATE(RELEASE)
-
-      e->hold_active = ENVELOPE_HOLD_OFF;
+      if (e->state == ENVELOPE_STATE_DECAY_2)
+      {
+        ENVELOPE_SET_STATE(SUSTAINED)
+      }
     }
-
-    if (e->state == ENVELOPE_STATE_SUSTAINED)
+    else if (e->sustain_pedal == MIDI_CONT_PEDAL_STATE_UP)
     {
-      ENVELOPE_SET_STATE(DECAY_2)
+      if (e->hold_active == ENVELOPE_HOLD_ON)
+      {
+        ENVELOPE_SET_STATE(RELEASE)
+
+        e->hold_active = ENVELOPE_HOLD_OFF;
+      }
+
+      if (e->state == ENVELOPE_STATE_SUSTAINED)
+      {
+        ENVELOPE_SET_STATE(DECAY_2)
+      }
     }
   }
 
@@ -636,7 +572,7 @@ short int envelope_release(int voice_index)
 
     /* if the sustain pedal is down, hold the note  */
     /* otherwise, set envelope to the release state */
-    if (e->sustain_pedal == MIDI_CONT_SUSTAIN_PEDAL_DOWN)
+    if (e->sustain_pedal == MIDI_CONT_PEDAL_STATE_DOWN)
     {
       e->hold_active = ENVELOPE_HOLD_ON;
     }
@@ -716,7 +652,7 @@ short int envelope_update_all()
         else if ( (e->state == ENVELOPE_STATE_DECAY_1) && 
                   (e->attenuation >= e->transition_level))
         {
-          if (e->sustain_pedal == MIDI_CONT_SUSTAIN_PEDAL_DOWN)
+          if (e->sustain_pedal == MIDI_CONT_PEDAL_STATE_DOWN)
           {
             ENVELOPE_SET_STATE(SUSTAINED)
           }
@@ -755,6 +691,24 @@ short int envelope_update_all()
 short int envelope_generate_tables()
 {
   int m;
+
+  /* amplitude table */
+  S_envelope_amplitude_table[0] = 1023;
+
+  for (m = 1; m < PATCH_ENV_AMPLITUDE_NUM_VALUES; m++)
+  {
+    S_envelope_amplitude_table[m] = 
+      ENVELOPE_AMPLITUDE_STEP * (PATCH_ENV_AMPLITUDE_UPPER_BOUND - m);
+  }
+
+  /* sustain table */
+  S_envelope_sustain_table[0] = 1023;
+
+  for (m = 1; m < PATCH_ENV_SUSTAIN_NUM_VALUES; m++)
+  {
+    S_envelope_sustain_table[m] = 
+      ENVELOPE_SUSTAIN_STEP * (PATCH_ENV_SUSTAIN_UPPER_BOUND - m);
+  }
 
   /* phase increment table  */
   for (m = 0; m < ENVELOPE_TABLE_RATES_PER_ROW; m++)
