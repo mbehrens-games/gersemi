@@ -21,12 +21,6 @@ enum
   ENVELOPE_STATE_SUSTAINED 
 };
 
-enum
-{
-  ENVELOPE_HOLD_OFF = 0, 
-  ENVELOPE_HOLD_ON 
-};
-
 #define ENVELOPE_AMPLITUDE_STEP  8
 #define ENVELOPE_SUSTAIN_STEP   32
 
@@ -150,36 +144,19 @@ static short int  S_envelope_pedal_adjust_table[PATCH_PEDAL_ADJUST_NUM_VALUES] =
 envelope G_envelope_bank[BANK_NUM_ENVELOPES];
 
 /*******************************************************************************
-** envelope_setup_all()
+** envelope_reset_all()
 *******************************************************************************/
-short int envelope_setup_all()
+short int envelope_reset_all()
 {
   int k;
 
-  /* setup all envelopes */
-  for (k = 0; k < BANK_NUM_VOICES; k++)
-    envelope_reset(k);
-
-  return 0;
-}
-
-/*******************************************************************************
-** envelope_reset()
-*******************************************************************************/
-short int envelope_reset(int voice_index)
-{
-  int m;
-
   envelope* e;
 
-  /* make sure that the voice index is valid */
-  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
-    return 1;
-
-  for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
+  /* reset all envelopes */
+  for (k = 0; k < BANK_NUM_ENVELOPES; k++)
   {
     /* obtain envelope pointer */
-    e = &G_envelope_bank[BANK_OSCS_AND_ENVS_PER_VOICE * voice_index + m];
+    e = &G_envelope_bank[k];
 
     /* initialize envelope variables */
     e->ks_rate_fraction = 
@@ -195,10 +172,9 @@ short int envelope_reset(int voice_index)
 
     e->transition_level = S_envelope_sustain_table[PATCH_ENV_SUSTAIN_DEFAULT - PATCH_ENV_SUSTAIN_LOWER_BOUND];
 
-    e->sustain_pedal = MIDI_CONT_PEDAL_STATE_UP;
+    e->sustain_pedal = MIDI_CONT_SUSTAIN_PEDAL_DEFAULT;
 
     e->offset = 0;
-    e->freq_mode = PATCH_OSC_FREQ_MODE_RATIO;
 
     e->a_row = 0;
     e->d1_row = 0;
@@ -206,8 +182,6 @@ short int envelope_reset(int voice_index)
     e->r_row = 0;
 
     e->pedal_row = 0;
-
-    e->hold_active = ENVELOPE_HOLD_OFF;
 
     e->state = ENVELOPE_STATE_RELEASE;
     e->row = 0;
@@ -233,7 +207,6 @@ short int envelope_load_patch(int voice_index, int patch_index)
   envelope* e;
   patch* p;
 
-  int inverted_rate;
   int shifted_rate;
 
   /* make sure that the voice index is valid */
@@ -256,10 +229,8 @@ short int envelope_load_patch(int voice_index, int patch_index)
     if ((p->env_attack[m] >= PATCH_ENV_RATE_LOWER_BOUND) && 
         (p->env_attack[m] <= PATCH_ENV_RATE_UPPER_BOUND))
     {
-      inverted_rate = PATCH_ENV_RATE_UPPER_BOUND - (p->env_attack[m] - PATCH_ENV_RATE_LOWER_BOUND);
-
-      e->a_row =  12 * ((inverted_rate - PATCH_ENV_RATE_LOWER_BOUND) / 2);
-      e->a_row +=  7 * ((inverted_rate - PATCH_ENV_RATE_LOWER_BOUND) % 2);
+      e->a_row =  12 * ((PATCH_ENV_RATE_UPPER_BOUND - p->env_attack[m]) / 2);
+      e->a_row +=  7 * ((PATCH_ENV_RATE_UPPER_BOUND - p->env_attack[m]) % 2);
     }
     else
       e->a_row = 0;
@@ -268,10 +239,8 @@ short int envelope_load_patch(int voice_index, int patch_index)
     if ((p->env_decay_1[m] >= PATCH_ENV_RATE_LOWER_BOUND) && 
         (p->env_decay_1[m] <= PATCH_ENV_RATE_UPPER_BOUND))
     {
-      inverted_rate = PATCH_ENV_RATE_UPPER_BOUND - (p->env_decay_1[m] - PATCH_ENV_RATE_LOWER_BOUND);
-
-      e->d1_row =   12 * ((inverted_rate - PATCH_ENV_RATE_LOWER_BOUND) / 2);
-      e->d1_row +=   7 * ((inverted_rate - PATCH_ENV_RATE_LOWER_BOUND) % 2);
+      e->d1_row =   12 * ((PATCH_ENV_RATE_UPPER_BOUND - p->env_decay_1[m]) / 2);
+      e->d1_row +=   7 * ((PATCH_ENV_RATE_UPPER_BOUND - p->env_decay_1[m]) % 2);
     }
     else
       e->d1_row = 0;
@@ -280,10 +249,8 @@ short int envelope_load_patch(int voice_index, int patch_index)
     if ((p->env_decay_2[m] >= PATCH_ENV_RATE_LOWER_BOUND) && 
         (p->env_decay_2[m] <= PATCH_ENV_RATE_UPPER_BOUND))
     {
-      inverted_rate = PATCH_ENV_RATE_UPPER_BOUND - (p->env_decay_2[m] - PATCH_ENV_RATE_LOWER_BOUND);
-
-      e->d2_row =   12 * ((inverted_rate - PATCH_ENV_RATE_LOWER_BOUND) / 2);
-      e->d2_row +=   7 * ((inverted_rate - PATCH_ENV_RATE_LOWER_BOUND) % 2);
+      e->d2_row =   12 * ((PATCH_ENV_RATE_UPPER_BOUND - p->env_decay_2[m]) / 2);
+      e->d2_row +=   7 * ((PATCH_ENV_RATE_UPPER_BOUND - p->env_decay_2[m]) % 2);
     }
     else
       e->d2_row = 0;
@@ -292,10 +259,8 @@ short int envelope_load_patch(int voice_index, int patch_index)
     if ((p->env_release[m] >= PATCH_ENV_RATE_LOWER_BOUND) && 
         (p->env_release[m] <= PATCH_ENV_RATE_UPPER_BOUND))
     {
-      inverted_rate = PATCH_ENV_RATE_UPPER_BOUND - (p->env_release[m] - PATCH_ENV_RATE_LOWER_BOUND);
-
-      e->r_row =  12 * ((inverted_rate - PATCH_ENV_RATE_LOWER_BOUND) / 2);
-      e->r_row +=  7 * ((inverted_rate - PATCH_ENV_RATE_LOWER_BOUND) % 2);
+      e->r_row =  12 * ((PATCH_ENV_RATE_UPPER_BOUND - p->env_release[m]) / 2);
+      e->r_row +=  7 * ((PATCH_ENV_RATE_UPPER_BOUND - p->env_release[m]) % 2);
     }
     else
       e->r_row = 0;
@@ -312,10 +277,8 @@ short int envelope_load_patch(int voice_index, int patch_index)
       else if (shifted_rate > PATCH_ENV_RATE_UPPER_BOUND)
         shifted_rate = PATCH_ENV_RATE_UPPER_BOUND;
 
-      inverted_rate = PATCH_ENV_RATE_UPPER_BOUND - (shifted_rate - PATCH_ENV_RATE_LOWER_BOUND);
-
-      e->pedal_row =  12 * ((inverted_rate - PATCH_ENV_RATE_LOWER_BOUND) / 2);
-      e->pedal_row +=  7 * ((inverted_rate - PATCH_ENV_RATE_LOWER_BOUND) % 2);
+      e->pedal_row =  12 * ((PATCH_ENV_RATE_UPPER_BOUND - shifted_rate) / 2);
+      e->pedal_row +=  7 * ((PATCH_ENV_RATE_UPPER_BOUND - shifted_rate) % 2);
     }
     else
       e->pedal_row = e->d2_row;
@@ -366,44 +329,18 @@ short int envelope_load_patch(int voice_index, int patch_index)
       e->ks_break_note = S_envelope_break_point_table[0];
 
     /* note offset */
-    if (p->osc_freq_mode[m] == PATCH_OSC_FREQ_MODE_RATIO)
+    e->offset = 0;
+
+    if ((p->osc_multiple[m] >= PATCH_OSC_MULTIPLE_LOWER_BOUND) && 
+        (p->osc_multiple[m] <= PATCH_OSC_MULTIPLE_UPPER_BOUND))
     {
-      e->freq_mode = p->osc_freq_mode[m];
-      e->offset = 0;
-
-      if ((p->osc_multiple[m] >= PATCH_OSC_MULTIPLE_LOWER_BOUND) && 
-          (p->osc_multiple[m] <= PATCH_OSC_MULTIPLE_UPPER_BOUND))
-      {
-        e->offset += S_envelope_multiple_table[p->osc_multiple[m] - PATCH_OSC_MULTIPLE_LOWER_BOUND];
-      }
-
-      if ((p->osc_divisor[m] >= PATCH_OSC_DIVISOR_LOWER_BOUND) && 
-          (p->osc_divisor[m] <= PATCH_OSC_DIVISOR_UPPER_BOUND))
-      {
-        e->offset -= S_envelope_multiple_table[p->osc_divisor[m] - PATCH_OSC_DIVISOR_LOWER_BOUND];
-      }
+      e->offset += S_envelope_multiple_table[p->osc_multiple[m] - PATCH_OSC_MULTIPLE_LOWER_BOUND];
     }
-    else if (p->osc_freq_mode[m] == PATCH_OSC_FREQ_MODE_FIXED)
-    {
-      e->freq_mode = p->osc_freq_mode[m];
-      e->offset = 0;
 
-      if ((p->osc_note[m] >= PATCH_OSC_NOTE_LOWER_BOUND) && 
-          (p->osc_note[m] <= PATCH_OSC_NOTE_UPPER_BOUND))
-      {
-        e->offset += p->osc_note[m] - PATCH_OSC_NOTE_LOWER_BOUND;
-      }
-
-      if ((p->osc_octave[m] >= PATCH_OSC_OCTAVE_LOWER_BOUND) && 
-          (p->osc_octave[m] <= PATCH_OSC_OCTAVE_UPPER_BOUND))
-      {
-        e->offset += 12 * (p->osc_octave[m] - PATCH_OSC_OCTAVE_LOWER_BOUND);
-      }
-    }
-    else
+    if ((p->osc_divisor[m] >= PATCH_OSC_DIVISOR_LOWER_BOUND) && 
+        (p->osc_divisor[m] <= PATCH_OSC_DIVISOR_UPPER_BOUND))
     {
-      e->freq_mode = PATCH_OSC_FREQ_MODE_RATIO;
-      e->offset = 0;
+      e->offset -= S_envelope_multiple_table[p->osc_divisor[m] - PATCH_OSC_DIVISOR_LOWER_BOUND];
     }
   }
 
@@ -448,13 +385,6 @@ short int envelope_set_sustain_pedal(int voice_index, int state)
     }
     else if (e->sustain_pedal == MIDI_CONT_PEDAL_STATE_UP)
     {
-      if (e->hold_active == ENVELOPE_HOLD_ON)
-      {
-        ENVELOPE_SET_STATE(RELEASE)
-
-        e->hold_active = ENVELOPE_HOLD_OFF;
-      }
-
       if (e->state == ENVELOPE_STATE_SUSTAINED)
       {
         ENVELOPE_SET_STATE(DECAY_2)
@@ -480,6 +410,10 @@ short int envelope_set_note(int voice_index, int note)
   if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
     return 1;
 
+  /* if note is out of range, ignore */
+  if (TUNING_NOTE_IS_NOT_VALID(note))
+    return 1;
+
   for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
   {
     /* obtain envelope pointer */
@@ -488,16 +422,13 @@ short int envelope_set_note(int voice_index, int note)
     /* set the current note */
     if (note < 0)
       adjusted_note = 0;
-    else if (note > TUNING_NUM_NOTES - 1)
-      adjusted_note = TUNING_NUM_NOTES - 1;
+    else if (note > TUNING_NUM_VALID_NOTES - 1)
+      adjusted_note = TUNING_NUM_VALID_NOTES - 1;
     else
       adjusted_note = note;
 
-    /* apply note offset if necessary */
-    if (e->freq_mode == PATCH_OSC_FREQ_MODE_RATIO)
-      adjusted_note += e->offset;
-    else if (e->freq_mode == PATCH_OSC_FREQ_MODE_FIXED)
-      adjusted_note = e->offset;
+    /* apply note offset */
+    adjusted_note += e->offset;
 
     /* compute rate & level adjustments based on note */
 
@@ -570,16 +501,8 @@ short int envelope_release(int voice_index)
     if (e->state == ENVELOPE_STATE_RELEASE)
       continue;
 
-    /* if the sustain pedal is down, hold the note  */
-    /* otherwise, set envelope to the release state */
-    if (e->sustain_pedal == MIDI_CONT_PEDAL_STATE_DOWN)
-    {
-      e->hold_active = ENVELOPE_HOLD_ON;
-    }
-    else
-    {
-      ENVELOPE_SET_STATE(RELEASE)
-    }
+    /* set envelope to the release state */
+    ENVELOPE_SET_STATE(RELEASE)
   }
 
   return 0;
@@ -591,83 +514,79 @@ short int envelope_release(int voice_index)
 short int envelope_update_all()
 {
   int k;
-  int m;
 
   envelope* e;
 
   short int periods;
 
   /* update all envelopes */
-  for (k = 0; k < BANK_NUM_VOICES; k++)
+  for (k = 0; k < BANK_NUM_ENVELOPES; k++)
   {
-    for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
+    /* obtain envelope pointer */
+    e = &G_envelope_bank[k];
+
+    /* update phase */
+    e->phase += e->increment;
+
+    /* check if a period was completed */
+    if (e->phase > 0xFFFFFFF)
     {
-      /* obtain envelope pointer */
-      e = &G_envelope_bank[BANK_OSCS_AND_ENVS_PER_VOICE * k + m];
+      periods = (e->phase >> 28) & 0x0F;
 
-      /* update phase */
-      e->phase += e->increment;
+      e->phase &= 0xFFFFFFF;
+    }
+    else
+      periods = 0;
 
-      /* check if a period was completed */
-      if (e->phase > 0xFFFFFFF)
+    /* if a period has elapsed, update the envelope */
+    if (periods > 0)
+    {
+      /* rising states */
+      if (e->state == ENVELOPE_STATE_ATTACK)
       {
-        periods = (e->phase >> 28) & 0x0F;
-
-        e->phase &= 0xFFFFFFF;
+        e->attenuation += (~e->attenuation * periods) >> 4;
+      }
+      /* falling states */
+      else if ( (e->state == ENVELOPE_STATE_DECAY_1)  || 
+                (e->state == ENVELOPE_STATE_DECAY_2)  || 
+                (e->state == ENVELOPE_STATE_RELEASE)  || 
+                (e->state == ENVELOPE_STATE_SUSTAINED))
+      {
+        e->attenuation += periods;
       }
       else
-        periods = 0;
+        e->attenuation += periods;
 
-      /* if a period has elapsed, update the envelope */
-      if (periods > 0)
+      /* bound attenuation */
+      if (e->attenuation < 0)
+        e->attenuation = 0;
+      else if (e->attenuation > 1023)
+        e->attenuation = 1023;
+
+      /* change state if necessary */
+      if ((e->state == ENVELOPE_STATE_ATTACK) && 
+          (e->attenuation == 0))
       {
-        /* rising states */
-        if (e->state == ENVELOPE_STATE_ATTACK)
+        ENVELOPE_SET_STATE(DECAY_1)
+      }
+      else if ( (e->state == ENVELOPE_STATE_DECAY_1) && 
+                (e->attenuation >= e->transition_level))
+      {
+        if (e->sustain_pedal == MIDI_CONT_PEDAL_STATE_DOWN)
         {
-          e->attenuation += (~e->attenuation * periods) >> 4;
-        }
-        /* falling states */
-        else if ( (e->state == ENVELOPE_STATE_DECAY_1)  || 
-                  (e->state == ENVELOPE_STATE_DECAY_2)  || 
-                  (e->state == ENVELOPE_STATE_RELEASE)  || 
-                  (e->state == ENVELOPE_STATE_SUSTAINED))
-        {
-          e->attenuation += periods;
+          ENVELOPE_SET_STATE(SUSTAINED)
         }
         else
-          e->attenuation += periods;
-
-        /* bound attenuation */
-        if (e->attenuation < 0)
-          e->attenuation = 0;
-        else if (e->attenuation > 1023)
-          e->attenuation = 1023;
-
-        /* change state if necessary */
-        if ((e->state == ENVELOPE_STATE_ATTACK) && 
-            (e->attenuation == 0))
         {
-          ENVELOPE_SET_STATE(DECAY_1)
+          ENVELOPE_SET_STATE(DECAY_2)
         }
-        else if ( (e->state == ENVELOPE_STATE_DECAY_1) && 
-                  (e->attenuation >= e->transition_level))
+      }
+      else if ( (e->state == ENVELOPE_STATE_DECAY_2) || 
+                (e->state == ENVELOPE_STATE_SUSTAINED))
+      {
+        if (e->attenuation == 1023)
         {
-          if (e->sustain_pedal == MIDI_CONT_PEDAL_STATE_DOWN)
-          {
-            ENVELOPE_SET_STATE(SUSTAINED)
-          }
-          else
-          {
-            ENVELOPE_SET_STATE(DECAY_2)
-          }
-        }
-        else if ( (e->state == ENVELOPE_STATE_DECAY_2) || 
-                  (e->state == ENVELOPE_STATE_SUSTAINED))
-        {
-          if (e->attenuation == 1023)
-          {
-            ENVELOPE_SET_STATE(RELEASE)
-          }
+          ENVELOPE_SET_STATE(RELEASE)
         }
       }
 

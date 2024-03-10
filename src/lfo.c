@@ -144,72 +144,60 @@ static unsigned int S_lfo_quantize_overflow_table[PATCH_LFO_QUANTIZE_NUM_VALUES]
 lfo G_lfo_bank[BANK_NUM_LFOS];
 
 /*******************************************************************************
-** lfo_setup_all()
+** lfo_reset_all()
 *******************************************************************************/
-short int lfo_setup_all()
+short int lfo_reset_all()
 {
   int k;
 
-  /* setup all lfos */
-  for (k = 0; k < BANK_NUM_VOICES; k++)
-    lfo_reset(k);
-
-  return 0;
-}
-
-/*******************************************************************************
-** lfo_reset()
-*******************************************************************************/
-short int lfo_reset(int voice_index)
-{
   lfo* l;
 
-  /* make sure that the voice index is valid */
-  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
-    return 1;
+  /* reset all lfos */
+  for (k = 0; k < BANK_NUM_LFOS; k++)
+  {
+    /* obtain lfo pointer */
+    l = &G_lfo_bank[k];
 
-  /* obtain lfo pointer */
-  l = &G_lfo_bank[voice_index];
+    /* initialize lfo variables */
+    l->waveform = PATCH_LFO_WAVEFORM_DEFAULT;
+    l->frequency = PATCH_LFO_FREQUENCY_DEFAULT;
+    l->sync = PATCH_SYNC_DEFAULT;
 
-  /* initialize lfo variables */
-  l->waveform = PATCH_LFO_WAVEFORM_DEFAULT;
-  l->frequency = PATCH_LFO_FREQUENCY_DEFAULT;
-  l->sync = PATCH_SYNC_DEFAULT;
+    l->delay_cycles = 0;
+    l->delay_period = 
+      S_lfo_delay_period_table[TEMPO_DEFAULT - TEMPO_LOWER_BOUND][PATCH_LFO_DELAY_DEFAULT - PATCH_LFO_DELAY_LOWER_BOUND];
 
-  l->delay_cycles = 0;
-  l->delay_period = 
-    S_lfo_delay_period_table[TEMPO_DEFAULT - TEMPO_LOWER_BOUND][PATCH_LFO_DELAY_DEFAULT - PATCH_LFO_DELAY_LOWER_BOUND];
+    l->quantize_phase = 0;
+    l->quantize_overflow = 
+      S_lfo_quantize_overflow_table[PATCH_LFO_QUANTIZE_DEFAULT - PATCH_LFO_QUANTIZE_LOWER_BOUND];
 
-  l->quantize_phase = 0;
-  l->quantize_overflow = 
-    S_lfo_quantize_overflow_table[PATCH_LFO_QUANTIZE_DEFAULT - PATCH_LFO_QUANTIZE_LOWER_BOUND];
+    l->phase = 0;
+    l->increment = 
+      S_lfo_wave_phase_increment_table[TEMPO_DEFAULT - TEMPO_LOWER_BOUND][PATCH_LFO_FREQUENCY_DEFAULT - PATCH_LFO_FREQUENCY_LOWER_BOUND];
 
-  l->phase = 0;
-  l->increment = 
-    S_lfo_wave_phase_increment_table[TEMPO_DEFAULT - TEMPO_LOWER_BOUND][PATCH_LFO_FREQUENCY_DEFAULT - PATCH_LFO_FREQUENCY_LOWER_BOUND];
+    l->lfsr = 0x0001;
 
-  l->lfsr = 0x0001;
+    l->tempo = TEMPO_DEFAULT;
 
-  l->tempo = TEMPO_DEFAULT;
+    l->vibrato_depth = PATCH_EFFECT_DEPTH_DEFAULT;
+    l->vibrato_base = PATCH_EFFECT_BASE_DEFAULT;
+    l->vibrato_mode = PATCH_VIBRATO_MODE_DEFAULT;
 
-  l->vibrato_depth = PATCH_EFFECT_DEPTH_DEFAULT;
-  l->vibrato_base = PATCH_EFFECT_BASE_DEFAULT;
-  l->vibrato_mode = PATCH_VIBRATO_MODE_DEFAULT;
+    l->tremolo_depth = PATCH_EFFECT_DEPTH_DEFAULT;
+    l->tremolo_base = PATCH_EFFECT_BASE_DEFAULT;
 
-  l->tremolo_depth = PATCH_EFFECT_DEPTH_DEFAULT;
-  l->tremolo_base = PATCH_EFFECT_BASE_DEFAULT;
+    l->mod_wheel_effect = PATCH_CONTROLLER_EFFECT_VIBRATO;
+    l->aftertouch_effect = PATCH_CONTROLLER_EFFECT_VIBRATO;
 
-  l->mod_wheel_effect = PATCH_CONTROLLER_EFFECT_VIBRATO;
-  l->aftertouch_effect = PATCH_CONTROLLER_EFFECT_VIBRATO;
+    l->mod_wheel_input = 0;
+    l->aftertouch_input = 0;
 
-  l->mod_wheel_input = 0;
-  l->aftertouch_input = 0;
+    l->vibrato_wave_value = 0;
+    l->tremolo_wave_value = 0;
 
-  l->vibrato_wave_value = 0;
-  l->tremolo_wave_value = 0;
-
-  l->vibrato_level = 0;
-  l->tremolo_level = 0;
+    l->vibrato_level = 0;
+    l->tremolo_level = 0;
+  }
 
   return 0;
 }
@@ -385,9 +373,9 @@ short int lfo_set_tempo(int voice_index, short int tempo)
 }
 
 /*******************************************************************************
-** lfo_sync_phase()
+** lfo_sync_to_key()
 *******************************************************************************/
-short int lfo_sync_phase(int voice_index)
+short int lfo_sync_to_key(int voice_index)
 {
   lfo* l;
 
@@ -400,6 +388,31 @@ short int lfo_sync_phase(int voice_index)
 
   /* reset phase if necessary */
   if (l->sync == PATCH_SYNC_ON)
+  {
+    l->phase = 0;
+    l->quantize_phase = 0;
+    l->lfsr = 0x0001;
+  }
+
+  return 0;
+}
+
+/*******************************************************************************
+** lfo_sync_to_tempo()
+*******************************************************************************/
+short int lfo_sync_to_tempo(int voice_index)
+{
+  lfo* l;
+
+  /* make sure that the voice index is valid */
+  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
+    return 1;
+
+  /* obtain lfo pointer */
+  l = &G_lfo_bank[voice_index];
+
+  /* reset phase if necessary */
+  if (l->sync == PATCH_SYNC_OFF)
   {
     l->phase = 0;
     l->quantize_phase = 0;
@@ -453,7 +466,7 @@ short int lfo_update_all()
   int tremolo_bound;
 
   /* update all lfos */
-  for (k = 0; k < BANK_NUM_VOICES; k++)
+  for (k = 0; k < BANK_NUM_LFOS; k++)
   {
     /* obtain lfo pointer */
     l = &G_lfo_bank[k];
@@ -567,13 +580,20 @@ short int lfo_update_all()
     l->tremolo_level = (tremolo_bound * l->tremolo_base) / PATCH_EFFECT_BASE_NUM_VALUES;
 
     /* apply mod wheel effect */
-    if (l->mod_wheel_effect == PATCH_CONTROLLER_EFFECT_VIBRATO)
+    if ((l->mod_wheel_effect == PATCH_CONTROLLER_EFFECT_VIBRATO)        || 
+        (l->mod_wheel_effect == PATCH_CONTROLLER_EFFECT_VIB_PLUS_TREM)  || 
+        (l->mod_wheel_effect == PATCH_CONTROLLER_EFFECT_VIB_PLUS_BOOST) || 
+        (l->mod_wheel_effect == PATCH_CONTROLLER_EFFECT_ALL_THREE))
     {
       l->vibrato_level += 
         (vibrato_bound * (PATCH_EFFECT_BASE_UPPER_BOUND - l->vibrato_base) * l->mod_wheel_input) / 
         (PATCH_EFFECT_BASE_NUM_VALUES * MIDI_CONT_MOD_WHEEL_UPPER_BOUND);
     }
-    else if (l->mod_wheel_effect == PATCH_CONTROLLER_EFFECT_TREMOLO)
+
+    if ((l->mod_wheel_effect == PATCH_CONTROLLER_EFFECT_TREMOLO)          || 
+        (l->mod_wheel_effect == PATCH_CONTROLLER_EFFECT_VIB_PLUS_TREM)    || 
+        (l->mod_wheel_effect == PATCH_CONTROLLER_EFFECT_TREM_PLUS_BOOST)  || 
+        (l->mod_wheel_effect == PATCH_CONTROLLER_EFFECT_ALL_THREE))
     {
       l->tremolo_level += 
         (tremolo_bound * (PATCH_EFFECT_BASE_UPPER_BOUND - l->tremolo_base) * l->mod_wheel_input) / 
@@ -581,13 +601,20 @@ short int lfo_update_all()
     }
 
     /* apply aftertouch effect */
-    if (l->aftertouch_effect == PATCH_CONTROLLER_EFFECT_VIBRATO)
+    if ((l->aftertouch_effect == PATCH_CONTROLLER_EFFECT_VIBRATO)         || 
+        (l->aftertouch_effect == PATCH_CONTROLLER_EFFECT_VIB_PLUS_TREM)   || 
+        (l->aftertouch_effect == PATCH_CONTROLLER_EFFECT_VIB_PLUS_BOOST)  || 
+        (l->aftertouch_effect == PATCH_CONTROLLER_EFFECT_ALL_THREE))
     {
       l->vibrato_level += 
         (vibrato_bound * (PATCH_EFFECT_BASE_UPPER_BOUND - l->vibrato_base) * l->aftertouch_input) / 
         (PATCH_EFFECT_BASE_NUM_VALUES * MIDI_CONT_AFTERTOUCH_UPPER_BOUND);
     }
-    else if (l->aftertouch_effect == PATCH_CONTROLLER_EFFECT_TREMOLO)
+
+    if ((l->aftertouch_effect == PATCH_CONTROLLER_EFFECT_TREMOLO)         || 
+        (l->aftertouch_effect == PATCH_CONTROLLER_EFFECT_VIB_PLUS_TREM)   || 
+        (l->aftertouch_effect == PATCH_CONTROLLER_EFFECT_TREM_PLUS_BOOST) || 
+        (l->aftertouch_effect == PATCH_CONTROLLER_EFFECT_ALL_THREE))
     {
       l->tremolo_level += 
         (tremolo_bound * (PATCH_EFFECT_BASE_UPPER_BOUND - l->tremolo_base) * l->aftertouch_input) / 

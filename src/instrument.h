@@ -6,24 +6,14 @@
 #define INSTRUMENT_H
 
 #include "bank.h"
+#include "tuning.h"
 
 enum
 {
   INSTRUMENT_TYPE_POLY = 0, 
   INSTRUMENT_TYPE_MONO, 
-  INSTRUMENT_TYPE_DRUMS, 
   INSTRUMENT_NUM_TYPES
 };
-
-#define INSTRUMENT_POLY_INDEX         0
-
-#define INSTRUMENT_MONO_START_INDEX   1
-#define INSTRUMENT_MONO_END_INDEX     8
-
-#define INSTRUMENT_DRUMS_INDEX        9
-
-#define INSTRUMENT_NUM_PRESSED_NOTES  4
-#define INSTRUMENT_NUM_SWEEP_NOTES    2
 
 typedef struct instrument
 {
@@ -31,8 +21,11 @@ typedef struct instrument
 
   int voice_index;
 
-  int pressed_notes[INSTRUMENT_NUM_PRESSED_NOTES];
-  int sweep_notes[INSTRUMENT_NUM_SWEEP_NOTES];
+  char pressed_keys[TUNING_NUM_PLAYABLE_NOTES];
+  char held_keys[TUNING_NUM_PLAYABLE_NOTES];
+
+  int num_pressed;
+  int num_held;
 
   short int volume;
   short int panning;
@@ -46,22 +39,22 @@ typedef struct instrument
   short int portamento_switch;
   short int arpeggio_switch;
   short int sustain_pedal;
-
-  short int legato;
 } instrument;
 
 /* instrument bank */
 extern instrument G_instrument_bank[BANK_NUM_INSTRUMENTS];
 
 /* function declarations */
-short int instrument_setup_all();
-short int instrument_reset(int instrument_index);
+short int instrument_reset_all();
 
 short int instrument_load_patch(int instrument_index, 
                                 int cart_number, int patch_number);
 
-short int instrument_key_on(int instrument_index, int note);
-short int instrument_key_off(int instrument_index, int note);
+short int instrument_note_on(int instrument_index, int note);
+short int instrument_note_off(int instrument_index, int note);
+
+short int instrument_key_pressed(int instrument_index, int note);
+short int instrument_key_released(int instrument_index, int note);
 
 short int instrument_set_note_velocity(int instrument_index, short int vel);
 

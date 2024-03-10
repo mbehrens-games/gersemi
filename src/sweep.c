@@ -32,48 +32,37 @@ static unsigned int S_sweep_phase_increment_table[TEMPO_NUM_VALUES][PATCH_PORTAM
 sweep G_sweep_bank[BANK_NUM_SWEEPS];
 
 /*******************************************************************************
-** sweep_setup_all()
+** sweep_reset_all()
 *******************************************************************************/
-short int sweep_setup_all()
+short int sweep_reset_all()
 {
   int k;
 
-  /* setup all sweeps */
-  for (k = 0; k < BANK_NUM_VOICES; k++)
-    sweep_reset(k);
-
-  return 0;
-}
-
-/*******************************************************************************
-** sweep_reset()
-*******************************************************************************/
-short int sweep_reset(int voice_index)
-{
   sweep* sw;
 
-  /* make sure that the voice index is valid */
-  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
-    return 1;
+  /* setup all sweeps */
+  for (k = 0; k < BANK_NUM_SWEEPS; k++)
+  {
+    /* obtain sweep pointer */
+    sw = &G_sweep_bank[k];
 
-  /* obtain sweep pointer */
-  sw = &G_sweep_bank[voice_index];
+    /* initialize sweep variables */
+    sw->mode = PATCH_PORTAMENTO_MODE_DEFAULT;
+    sw->legato = PATCH_PORTAMENTO_LEGATO_DEFAULT;
+    sw->speed = PATCH_PORTAMENTO_SPEED_DEFAULT;
 
-  /* initialize sweep variables */
-  sw->mode = PATCH_PORTAMENTO_MODE_DEFAULT;
-  sw->speed = PATCH_PORTAMENTO_SPEED_DEFAULT;
+    sw->phase = 0;
 
-  sw->phase = 0;
+    sw->increment = 
+      S_sweep_phase_increment_table[TEMPO_DEFAULT - TEMPO_LOWER_BOUND][PATCH_PORTAMENTO_SPEED_DEFAULT - PATCH_PORTAMENTO_SPEED_LOWER_BOUND];
 
-  sw->increment = 
-    S_sweep_phase_increment_table[TEMPO_DEFAULT - TEMPO_LOWER_BOUND][PATCH_PORTAMENTO_SPEED_DEFAULT - PATCH_PORTAMENTO_SPEED_LOWER_BOUND];
+    sw->note = TUNING_NOTE_BLANK;
+    sw->offset = 0;
 
-  sw->note = TUNING_NOTE_BLANK;
-  sw->offset = 0;
+    sw->tempo = TEMPO_DEFAULT;
 
-  sw->tempo = TEMPO_DEFAULT;
-
-  sw->level = 0;
+    sw->level = 0;
+  }
 
   return 0;
 }
@@ -81,13 +70,13 @@ short int sweep_reset(int voice_index)
 /*******************************************************************************
 ** sweep_load_patch()
 *******************************************************************************/
-short int sweep_load_patch(int voice_index, int patch_index)
+short int sweep_load_patch(int instrument_index, int patch_index)
 {
   sweep* sw;
   patch* p;
 
-  /* make sure that the voice index is valid */
-  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
+  /* make sure that the instrument index is valid */
+  if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
     return 1;
 
   /* make sure that the patch index is valid */
@@ -98,7 +87,7 @@ short int sweep_load_patch(int voice_index, int patch_index)
   p = &G_patch_bank[patch_index];
 
   /* obtain sweep pointer */
-  sw = &G_sweep_bank[voice_index];
+  sw = &G_sweep_bank[instrument_index];
 
   /* mode */
   if ((p->portamento_mode >= PATCH_PORTAMENTO_MODE_LOWER_BOUND) && 
@@ -108,6 +97,15 @@ short int sweep_load_patch(int voice_index, int patch_index)
   }
   else
     sw->mode = PATCH_PORTAMENTO_MODE_LOWER_BOUND;
+
+  /* legato */
+  if ((p->portamento_legato >= PATCH_PORTAMENTO_LEGATO_LOWER_BOUND) && 
+      (p->portamento_legato <= PATCH_PORTAMENTO_LEGATO_UPPER_BOUND))
+  {
+    sw->legato = p->portamento_legato;
+  }
+  else
+    sw->legato = PATCH_PORTAMENTO_LEGATO_LOWER_BOUND;
 
   /* speed */
   if ((p->portamento_speed >= PATCH_PORTAMENTO_SPEED_LOWER_BOUND) && 
@@ -128,16 +126,16 @@ short int sweep_load_patch(int voice_index, int patch_index)
 /*******************************************************************************
 ** sweep_set_tempo()
 *******************************************************************************/
-short int sweep_set_tempo(int voice_index, short int tempo)
+short int sweep_set_tempo(int instrument_index, short int tempo)
 {
   sweep* sw;
 
-  /* make sure that the voice index is valid */
-  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
+  /* make sure that the instrument index is valid */
+  if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
     return 1;
 
   /* obtain sweep pointer */
-  sw = &G_sweep_bank[voice_index];
+  sw = &G_sweep_bank[instrument_index];
 
   /* set tempo */
   if (tempo < TEMPO_LOWER_BOUND)
@@ -157,16 +155,16 @@ short int sweep_set_tempo(int voice_index, short int tempo)
 /*******************************************************************************
 ** sweep_set_note()
 *******************************************************************************/
-short int sweep_set_note(int voice_index, int note)
+short int sweep_set_note(int instrument_index, int note)
 {
   sweep* sw;
 
-  /* make sure that the voice index is valid */
-  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
+  /* make sure that the instrument index is valid */
+  if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
     return 1;
 
   /* obtain sweep pointer */
-  sw = &G_sweep_bank[voice_index];
+  sw = &G_sweep_bank[instrument_index];
 
   /* determine if the new note is valid */
   if (note == TUNING_NOTE_BLANK)
@@ -184,18 +182,18 @@ short int sweep_set_note(int voice_index, int note)
 /*******************************************************************************
 ** sweep_trigger()
 *******************************************************************************/
-short int sweep_trigger(int voice_index, int note)
+short int sweep_trigger(int instrument_index, int note)
 {
   sweep* sw;
 
   int tuning_index;
 
-  /* make sure that the voice index is valid */
-  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
+  /* make sure that the instrument index is valid */
+  if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
     return 1;
 
   /* obtain sweep pointer */
-  sw = &G_sweep_bank[voice_index];
+  sw = &G_sweep_bank[instrument_index];
 
   /* determine if the new note is valid */
   if (note == TUNING_NOTE_BLANK)
@@ -257,7 +255,7 @@ short int sweep_update_all()
   sweep* sw;
 
   /* update all sweeps */
-  for (k = 0; k < BANK_NUM_VOICES; k++)
+  for (k = 0; k < BANK_NUM_SWEEPS; k++)
   {
     /* obtain sweep pointer */
     sw = &G_sweep_bank[k];

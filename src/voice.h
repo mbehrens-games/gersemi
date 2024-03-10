@@ -29,7 +29,6 @@ typedef struct voice
   short int osc_feedback_multiplier[BANK_OSCS_AND_ENVS_PER_VOICE];
   short int osc_phi[BANK_OSCS_AND_ENVS_PER_VOICE];
 
-  short int osc_freq_mode[BANK_OSCS_AND_ENVS_PER_VOICE];
   short int osc_offset[BANK_OSCS_AND_ENVS_PER_VOICE];
   short int osc_detune[BANK_OSCS_AND_ENVS_PER_VOICE];
 
@@ -48,9 +47,6 @@ typedef struct voice
   /* velocity scaling, adjustment */
   short int velocity_scaling_amount;
   short int velocity_adjustment;
-
-  /* note velocity */
-  short int note_velocity;
 
   /* envelope levels */
   short int env_input[BANK_OSCS_AND_ENVS_PER_VOICE];
@@ -76,13 +72,12 @@ typedef struct voice
 extern voice G_voice_bank[BANK_NUM_VOICES];
 
 /* function declarations */
-short int voice_setup_all();
-short int voice_reset(int voice_index);
+short int voice_reset_all();
 
 short int voice_load_patch(int voice_index, int patch_index);
 
-short int voice_set_note(int voice_index, int note);
-short int voice_sync_phases(int voice_index);
+short int voice_set_note(int voice_index, int note, int vel);
+short int voice_sync_to_key(int voice_index);
 
 short int voice_update_all();
 

@@ -171,7 +171,7 @@ short int tuning_calculate_tables()
   else
     S_tuning_freq_table[9 * TUNING_NUM_SEMITONE_STEPS] = 440;
 
-  /* compute frequencies for the other notes in the middle octave */
+  /* compute frequencies for the other notes in the middle octave (octave 4) */
   if (S_tuning_fork == TUNING_FORK_C256)
   {
     for (m = 1; m < 12; m++)
@@ -192,7 +192,7 @@ short int tuning_calculate_tables()
     }
   }
 
-  /* compute frequencies between the notes in the middle octave */
+  /* compute frequencies between the notes in the middle octave (octave 4) */
   for (m = 0; m < 12; m++)
   {
     if (m < 11)

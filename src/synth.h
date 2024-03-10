@@ -9,9 +9,10 @@ extern int G_synth_level_left;
 extern int G_synth_level_right;
 
 /* function declarations */
-short int synth_generate_tables();
 short int synth_reset_banks();
 
 short int synth_update();
+
+short int synth_generate_tables();
 
 #endif

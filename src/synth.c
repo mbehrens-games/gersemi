@@ -25,37 +25,24 @@ int G_synth_level_left;
 int G_synth_level_right;
 
 /*******************************************************************************
-** synth_generate_tables()
-*******************************************************************************/
-short int synth_generate_tables()
-{
-  arpeggio_generate_tables();
-  envelope_generate_tables();
-  filter_generate_tables();
-  lfo_generate_tables();
-  sweep_generate_tables();
-  voice_generate_tables();
-
-  return 0;
-}
-
-/*******************************************************************************
 ** synth_reset_banks()
 *******************************************************************************/
 short int synth_reset_banks()
 {
   /* reset all banks */
-  arpeggio_setup_all();
-  boost_setup_all();
-  bender_setup_all();
-  envelope_setup_all();
-  filter_setup_all();
-  lfo_setup_all();
-  patch_setup_all();
-  sweep_setup_all();
-  voice_setup_all();
+  envelope_reset_all();
+  filter_reset_all();
+  lfo_reset_all();
+  voice_reset_all();
 
-  instrument_setup_all();
+  arpeggio_reset_all();
+  boost_reset_all();
+  bender_reset_all();
+  sweep_reset_all();
+
+  instrument_reset_all();
+
+  patch_reset_all();
 
   /* reset tuning tables */
   tuning_reset();
@@ -74,43 +61,81 @@ short int synth_update()
 {
   int k;
   int m;
+  int n;
 
   int level;
+
+  instrument* ins;
+  voice* v;
 
   /* update arpeggios */
   arpeggio_update_all();
 
-  /* update lfos */
-  lfo_update_all();
-
   /* update boosts */
   boost_update_all();
-
-  /* update sweeps */
-  sweep_update_all();
 
   /* update benders */
   bender_update_all();
 
+  /* update sweeps */
+  sweep_update_all();
+
   /* update envelopes */
   envelope_update_all();
 
-  /* copy lfo, boost, sweep, bender, and envelope levels to voice inputs */
-  for (k = 0; k < BANK_NUM_VOICES; k++)
+  /* update lfos */
+  lfo_update_all();
+
+  /* copy levels to voice inputs */
+  for (k = 0; k < BANK_NUM_INSTRUMENTS; k++)
   {
-    G_voice_bank[k].lfo_input_vibrato = G_lfo_bank[k].vibrato_level;
-    G_voice_bank[k].lfo_input_tremolo = G_lfo_bank[k].tremolo_level;
+    ins = &G_instrument_bank[k];
 
-    G_voice_bank[k].boost_input = G_boost_bank[k].level;
-    G_voice_bank[k].sweep_input = G_sweep_bank[k].level;
-    G_voice_bank[k].bender_input = G_bender_bank[k].level;
+    if (ins->type == INSTRUMENT_TYPE_POLY)
+    {
+      for (m = 0; m < BANK_VOICES_PER_POLY_INSTRUMENT; m++)
+      {
+        v = &G_voice_bank[ins->voice_index + m];
 
-    for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
-      G_voice_bank[k].env_input[m] = G_envelope_bank[4 * k + m].level;
+        v->lfo_input_vibrato = G_lfo_bank[ins->voice_index + m].vibrato_level;
+        v->lfo_input_tremolo = G_lfo_bank[ins->voice_index + m].tremolo_level;
+
+        for (n = 0; n < BANK_OSCS_AND_ENVS_PER_VOICE; n++)
+          v->env_input[n] = G_envelope_bank[(ins->voice_index + m) * BANK_OSCS_AND_ENVS_PER_VOICE + n].level;
+
+        v->boost_input = G_boost_bank[k].level;
+        v->sweep_input = G_sweep_bank[k].level;
+        v->bender_input = G_bender_bank[k].level;
+      }
+    }
+    else if (ins->type == INSTRUMENT_TYPE_MONO)
+    {
+      v = &G_voice_bank[ins->voice_index];
+
+      v->lfo_input_vibrato = G_lfo_bank[ins->voice_index].vibrato_level;
+      v->lfo_input_tremolo = G_lfo_bank[ins->voice_index].tremolo_level;
+
+      for (n = 0; n < BANK_OSCS_AND_ENVS_PER_VOICE; n++)
+        v->env_input[n] = G_envelope_bank[ins->voice_index * BANK_OSCS_AND_ENVS_PER_VOICE + n].level;
+
+      v->boost_input = G_boost_bank[k].level;
+      v->sweep_input = G_sweep_bank[k].level;
+      v->bender_input = G_bender_bank[k].level;
+    }
   }
 
   /* update voices */
   voice_update_all();
+
+#if 0
+  /* testing */
+  printf("Voice Levels: ");
+
+  for (k = 0; k < BANK_NUM_VOICES; k++)
+    printf("%d ", G_voice_bank[k].level);
+
+  printf("\n");
+#endif
 
   /* copy voice levels to lowpass filter inputs */
   for (k = 0; k < BANK_NUM_VOICES; k++)
@@ -141,6 +166,21 @@ short int synth_update()
   /* set total levels */
   G_synth_level_left = level;
   G_synth_level_right = level;
+
+  return 0;
+}
+
+/*******************************************************************************
+** synth_generate_tables()
+*******************************************************************************/
+short int synth_generate_tables()
+{
+  arpeggio_generate_tables();
+  envelope_generate_tables();
+  filter_generate_tables();
+  lfo_generate_tables();
+  sweep_generate_tables();
+  voice_generate_tables();
 
   return 0;
 }

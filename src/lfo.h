@@ -62,14 +62,15 @@ typedef struct lfo
 extern lfo G_lfo_bank[BANK_NUM_LFOS];
 
 /* function declarations */
-short int lfo_setup_all();
-short int lfo_reset(int voice_index);
+short int lfo_reset_all();
 
 short int lfo_load_patch(int voice_index, int patch_index);
 
 short int lfo_set_tempo(int voice_index, short int tempo);
 
-short int lfo_sync_phase(int voice_index);
+short int lfo_sync_to_key(int voice_index);
+short int lfo_sync_to_tempo(int voice_index);
+
 short int lfo_trigger(int voice_index);
 
 short int lfo_update_all();

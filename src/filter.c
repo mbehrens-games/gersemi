@@ -22,38 +22,20 @@ filter G_lowpass_filter_bank[BANK_NUM_LOWPASS_FILTERS];
 filter G_highpass_filter_bank[BANK_NUM_HIGHPASS_FILTERS];
 
 /*******************************************************************************
-** filter_setup_all()
+** filter_reset_all()
 *******************************************************************************/
-short int filter_setup_all()
+short int filter_reset_all()
 {
   int k;
-
-  /* setup all filters */
-  for (k = 0; k < BANK_NUM_VOICES; k++)
-    filter_reset(k);
-
-  return 0;
-}
-
-/*******************************************************************************
-** filter_reset()
-*******************************************************************************/
-short int filter_reset(int voice_index)
-{
   int m;
-  int n;
 
   filter* f;
 
-  /* make sure that the voice index is valid */
-  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
-    return 1;
-
-  /* setup lowpass filters */
-  for (m = 0; m < BANK_LOWPASS_FILTERS_PER_VOICE; m++)
+  /* reset all lowpass filters */
+  for (k = 0; k < BANK_NUM_LOWPASS_FILTERS; k++)
   {
-    /* obtain filter pointer */
-    f = &G_lowpass_filter_bank[BANK_LOWPASS_FILTERS_PER_VOICE * voice_index + m];
+    /* obtain lowpass filter pointer */
+    f = &G_lowpass_filter_bank[k];
 
     /* set cutoff */
     f->multiplier = 
@@ -62,21 +44,21 @@ short int filter_reset(int voice_index)
     /* reset state */
     f->input = 0;
 
-    for (n = 0; n < FILTER_NUM_STAGES; n++)
+    for (m = 0; m < FILTER_NUM_STAGES; m++)
     {
-      f->s[n] = 0;
-      f->v[n] = 0;
-      f->y[n] = 0;
+      f->s[m] = 0;
+      f->v[m] = 0;
+      f->y[m] = 0;
     }
 
     f->level = 0;
   }
 
-  /* setup highpass filters */
-  for (m = 0; m < BANK_HIGHPASS_FILTERS_PER_VOICE; m++)
+  /* reset all highpass filters */
+  for (k = 0; k < BANK_NUM_HIGHPASS_FILTERS; k++)
   {
-    /* obtain filter pointer */
-    f = &G_highpass_filter_bank[BANK_HIGHPASS_FILTERS_PER_VOICE * voice_index + m];
+    /* obtain highpass filter pointer */
+    f = &G_highpass_filter_bank[k];
 
     /* set cutoff */
     f->multiplier = 
@@ -85,11 +67,11 @@ short int filter_reset(int voice_index)
     /* reset state */
     f->input = 0;
 
-    for (n = 0; n < FILTER_NUM_STAGES; n++)
+    for (m = 0; m < FILTER_NUM_STAGES; m++)
     {
-      f->s[n] = 0;
-      f->v[n] = 0;
-      f->y[n] = 0;
+      f->s[m] = 0;
+      f->v[m] = 0;
+      f->y[m] = 0;
     }
 
     f->level = 0;
@@ -103,8 +85,6 @@ short int filter_reset(int voice_index)
 *******************************************************************************/
 short int filter_load_patch(int voice_index, int patch_index)
 {
-  int m;
-
   filter* f;
   patch* p;
 
@@ -119,44 +99,36 @@ short int filter_load_patch(int voice_index, int patch_index)
   /* obtain patch pointer */
   p = &G_patch_bank[patch_index];
 
-  /* setup lowpass filters */
-  for (m = 0; m < BANK_LOWPASS_FILTERS_PER_VOICE; m++)
-  {
-    /* obtain filter pointer */
-    f = &G_lowpass_filter_bank[BANK_LOWPASS_FILTERS_PER_VOICE * voice_index + m];
+  /* obtain lowpass filter pointer */
+  f = &G_lowpass_filter_bank[voice_index];
 
-    /* set lowpass cutoff */
-    if ((p->lowpass_cutoff >= PATCH_LOWPASS_CUTOFF_LOWER_BOUND) && 
-        (p->lowpass_cutoff <= PATCH_LOWPASS_CUTOFF_UPPER_BOUND))
-    {
-      f->multiplier = 
-        S_lowpass_filter_stage_multiplier_table[p->lowpass_cutoff - PATCH_LOWPASS_CUTOFF_LOWER_BOUND];
-    }
-    else
-    {
-      f->multiplier = 
-        S_lowpass_filter_stage_multiplier_table[PATCH_LOWPASS_CUTOFF_DEFAULT - PATCH_LOWPASS_CUTOFF_LOWER_BOUND];
-    }
+  /* set lowpass cutoff */
+  if ((p->lowpass_cutoff >= PATCH_LOWPASS_CUTOFF_LOWER_BOUND) && 
+      (p->lowpass_cutoff <= PATCH_LOWPASS_CUTOFF_UPPER_BOUND))
+  {
+    f->multiplier = 
+      S_lowpass_filter_stage_multiplier_table[p->lowpass_cutoff - PATCH_LOWPASS_CUTOFF_LOWER_BOUND];
+  }
+  else
+  {
+    f->multiplier = 
+      S_lowpass_filter_stage_multiplier_table[PATCH_LOWPASS_CUTOFF_DEFAULT - PATCH_LOWPASS_CUTOFF_LOWER_BOUND];
   }
 
-  /* setup highpass filters */
-  for (m = 0; m < BANK_HIGHPASS_FILTERS_PER_VOICE; m++)
-  {
-    /* obtain filter pointer */
-    f = &G_highpass_filter_bank[BANK_HIGHPASS_FILTERS_PER_VOICE * voice_index + m];
+  /* obtain highpass filter pointer */
+  f = &G_highpass_filter_bank[voice_index];
 
-    /* set highpass cutoff */
-    if ((p->highpass_cutoff >= PATCH_HIGHPASS_CUTOFF_LOWER_BOUND) && 
-        (p->highpass_cutoff <= PATCH_HIGHPASS_CUTOFF_UPPER_BOUND))
-    {
-      f->multiplier = 
-        S_highpass_filter_stage_multiplier_table[p->highpass_cutoff - PATCH_HIGHPASS_CUTOFF_LOWER_BOUND];
-    }
-    else
-    {
-      f->multiplier = 
-        S_highpass_filter_stage_multiplier_table[PATCH_HIGHPASS_CUTOFF_DEFAULT - PATCH_HIGHPASS_CUTOFF_LOWER_BOUND];
-    }
+  /* set highpass cutoff */
+  if ((p->highpass_cutoff >= PATCH_HIGHPASS_CUTOFF_LOWER_BOUND) && 
+      (p->highpass_cutoff <= PATCH_HIGHPASS_CUTOFF_UPPER_BOUND))
+  {
+    f->multiplier = 
+      S_highpass_filter_stage_multiplier_table[p->highpass_cutoff - PATCH_HIGHPASS_CUTOFF_LOWER_BOUND];
+  }
+  else
+  {
+    f->multiplier = 
+      S_highpass_filter_stage_multiplier_table[PATCH_HIGHPASS_CUTOFF_DEFAULT - PATCH_HIGHPASS_CUTOFF_LOWER_BOUND];
   }
 
   return 0;
@@ -167,35 +139,29 @@ short int filter_load_patch(int voice_index, int patch_index)
 *******************************************************************************/
 short int filter_update_lowpass()
 {
-  int k;
   int m;
 
   filter* f;
 
-  for (k = 0; k < BANK_NUM_VOICES; k++)
+  for (m = 0; m < BANK_NUM_LOWPASS_FILTERS; m++)
   {
-    for (m = 0; m < BANK_LOWPASS_FILTERS_PER_VOICE; m++)
-    {
-      /* obtain filter pointer */
-      f = &G_lowpass_filter_bank[BANK_LOWPASS_FILTERS_PER_VOICE * k + m];
+    /* obtain lowpass filter pointer */
+    f = &G_lowpass_filter_bank[m];
 
-      /* lowpass filter */
+    /* see Vadim Zavalishin's "The Art of VA Filter Design" (p. 77) */
 
-      /* see Vadim Zavalishin's "The Art of VA Filter Design" (p. 77) */
+    /* integrator 1 */
+    f->v[0] = ((f->input - f->s[0]) * f->multiplier) / 32768;
+    f->y[0] = f->v[0] + f->s[0];
+    f->s[0] = f->y[0] + f->v[0];
 
-      /* integrator 1 */
-      f->v[0] = ((f->input - f->s[0]) * f->multiplier) / 32768;
-      f->y[0] = f->v[0] + f->s[0];
-      f->s[0] = f->y[0] + f->v[0];
+    /* integrator 2 */
+    f->v[1] = ((f->y[0] - f->s[1]) * f->multiplier) / 32768;
+    f->y[1] = f->v[1] + f->s[1];
+    f->s[1] = f->y[1] + f->v[1];
 
-      /* integrator 2 */
-      f->v[1] = ((f->y[0] - f->s[1]) * f->multiplier) / 32768;
-      f->y[1] = f->v[1] + f->s[1];
-      f->s[1] = f->y[1] + f->v[1];
-
-      /* set output level */
-      f->level = f->y[1];
-    }
+    /* set output level */
+    f->level = f->y[1];
   }
 
   return 0;
@@ -206,35 +172,29 @@ short int filter_update_lowpass()
 *******************************************************************************/
 short int filter_update_highpass()
 {
-  int k;
   int m;
 
   filter* f;
 
-  for (k = 0; k < BANK_NUM_VOICES; k++)
+  for (m = 0; m < BANK_NUM_HIGHPASS_FILTERS; m++)
   {
-    for (m = 0; m < BANK_HIGHPASS_FILTERS_PER_VOICE; m++)
-    {
-      /* obtain filter pointer */
-      f = &G_highpass_filter_bank[BANK_HIGHPASS_FILTERS_PER_VOICE * k + m];
+    /* obtain highpass filter pointer */
+    f = &G_highpass_filter_bank[m];
 
-      /* highpass filter */
+    /* see Vadim Zavalishin's "The Art of VA Filter Design" (p. 77) */
 
-      /* see Vadim Zavalishin's "The Art of VA Filter Design" (p. 77) */
+    /* integrator 1 */
+    f->v[0] = ((f->input - f->s[0]) * f->multiplier) / 32768;
+    f->y[0] = f->v[0] + f->s[0];
+    f->s[0] = f->y[0] + f->v[0];
 
-      /* integrator 1 */
-      f->v[0] = ((f->input - f->s[0]) * f->multiplier) / 32768;
-      f->y[0] = f->v[0] + f->s[0];
-      f->s[0] = f->y[0] + f->v[0];
+    /* integrator 2 */
+    f->v[1] = ((f->input - f->y[0] - f->s[1]) * f->multiplier) / 32768;
+    f->y[1] = f->v[1] + f->s[1];
+    f->s[1] = f->y[1] + f->v[1];
 
-      /* integrator 2 */
-      f->v[1] = ((f->input - f->y[0] - f->s[1]) * f->multiplier) / 32768;
-      f->y[1] = f->v[1] + f->s[1];
-      f->s[1] = f->y[1] + f->v[1];
-
-      /* set output level */
-      f->level = f->input - f->y[0] - f->y[1];
-    }
+    /* set output level */
+    f->level = f->input - f->y[0] - f->y[1];
   }
 
   return 0;

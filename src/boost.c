@@ -37,43 +37,26 @@ static short int  S_boost_amount_table[PATCH_EFFECT_DEPTH_NUM_VALUES] =
 boost G_boost_bank[BANK_NUM_BOOSTS];
 
 /*******************************************************************************
-** boost_setup_all()
+** boost_reset_all()
 *******************************************************************************/
-short int boost_setup_all()
+short int boost_reset_all()
 {
   int k;
 
-  /* setup all boosts */
-  for (k = 0; k < BANK_NUM_VOICES; k++)
-    boost_reset(k);
-
-  return 0;
-}
-
-/*******************************************************************************
-** boost_reset()
-*******************************************************************************/
-short int boost_reset(int voice_index)
-{
-  int m;
-
   boost* b;
 
-  /* make sure that the voice index is valid */
-  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
-    return 1;
-
-  for (m = 0; m < BANK_BOOSTS_PER_VOICE; m++)
+  /* reset all boosts */
+  for (k = 0; k < BANK_NUM_BOOSTS; k++)
   {
     /* obtain boost pointer */
-    b = &G_boost_bank[BANK_BOOSTS_PER_VOICE * voice_index + m];
+    b = &G_boost_bank[k];
 
     /* initialize boost variables */
     b->amount = 
       S_boost_amount_table[PATCH_EFFECT_DEPTH_DEFAULT - PATCH_EFFECT_DEPTH_LOWER_BOUND];
 
-    b->mod_wheel_effect = PATCH_CONTROLLER_EFFECT_VIBRATO;
-    b->aftertouch_effect = PATCH_CONTROLLER_EFFECT_VIBRATO;
+    b->mod_wheel_effect = PATCH_CONTROLLER_EFFECT_DEFAULT;
+    b->aftertouch_effect = PATCH_CONTROLLER_EFFECT_DEFAULT;
 
     b->mod_wheel_input = 0;
     b->aftertouch_input = 0;
@@ -87,13 +70,13 @@ short int boost_reset(int voice_index)
 /*******************************************************************************
 ** boost_load_patch()
 *******************************************************************************/
-short int boost_load_patch(int voice_index, int patch_index)
+short int boost_load_patch(int instrument_index, int patch_index)
 {
   boost* b;
   patch* p;
 
-  /* make sure that the voice index is valid */
-  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
+  /* make sure that the instrument index is valid */
+  if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
     return 1;
 
   /* make sure that the patch index is valid */
@@ -104,7 +87,7 @@ short int boost_load_patch(int voice_index, int patch_index)
   p = &G_patch_bank[patch_index];
 
   /* obtain boost pointer */
-  b = &G_boost_bank[voice_index];
+  b = &G_boost_bank[instrument_index];
 
   /* depth */
   if ((p->boost_depth >= PATCH_EFFECT_DEPTH_LOWER_BOUND) && 
@@ -122,7 +105,7 @@ short int boost_load_patch(int voice_index, int patch_index)
     b->mod_wheel_effect = p->mod_wheel_effect;
   }
   else
-    b->mod_wheel_effect = PATCH_CONTROLLER_EFFECT_LOWER_BOUND;
+    b->mod_wheel_effect = PATCH_CONTROLLER_EFFECT_DEFAULT;
 
   if ((p->aftertouch_effect >= PATCH_CONTROLLER_EFFECT_LOWER_BOUND) && 
       (p->aftertouch_effect <= PATCH_CONTROLLER_EFFECT_UPPER_BOUND))
@@ -130,7 +113,7 @@ short int boost_load_patch(int voice_index, int patch_index)
     b->aftertouch_effect = p->aftertouch_effect;
   }
   else
-    b->aftertouch_effect = PATCH_CONTROLLER_EFFECT_LOWER_BOUND;
+    b->aftertouch_effect = PATCH_CONTROLLER_EFFECT_DEFAULT;
 
   return 0;
 }
@@ -145,7 +128,7 @@ short int boost_update_all()
   boost* b;
 
   /* update all boosts */
-  for (k = 0; k < BANK_NUM_VOICES; k++)
+  for (k = 0; k < BANK_NUM_BOOSTS; k++)
   {
     /* obtain boost pointer */
     b = &G_boost_bank[k];
@@ -154,14 +137,20 @@ short int boost_update_all()
     b->level = 0;
 
     /* apply mod wheel effect */
-    if (b->mod_wheel_effect == PATCH_CONTROLLER_EFFECT_BOOST)
+    if ((b->mod_wheel_effect == PATCH_CONTROLLER_EFFECT_BOOST)            || 
+        (b->mod_wheel_effect == PATCH_CONTROLLER_EFFECT_VIB_PLUS_BOOST)   || 
+        (b->mod_wheel_effect == PATCH_CONTROLLER_EFFECT_TREM_PLUS_BOOST)  || 
+        (b->mod_wheel_effect == PATCH_CONTROLLER_EFFECT_ALL_THREE))
     {
       b->level += 
         (b->amount * b->mod_wheel_input) / MIDI_CONT_MOD_WHEEL_UPPER_BOUND;
     }
 
     /* apply aftertouch effect */
-    if (b->aftertouch_effect == PATCH_CONTROLLER_EFFECT_BOOST)
+    if ((b->aftertouch_effect == PATCH_CONTROLLER_EFFECT_BOOST)           || 
+        (b->aftertouch_effect == PATCH_CONTROLLER_EFFECT_VIB_PLUS_BOOST)  || 
+        (b->aftertouch_effect == PATCH_CONTROLLER_EFFECT_TREM_PLUS_BOOST) || 
+        (b->aftertouch_effect == PATCH_CONTROLLER_EFFECT_ALL_THREE))
     {
       b->level += 
         (b->amount * b->aftertouch_input) / MIDI_CONT_AFTERTOUCH_UPPER_BOUND;

@@ -27,8 +27,7 @@ extern filter G_lowpass_filter_bank[BANK_NUM_LOWPASS_FILTERS];
 extern filter G_highpass_filter_bank[BANK_NUM_HIGHPASS_FILTERS];
 
 /* function declarations */
-short int filter_setup_all();
-short int filter_reset(int voice_index);
+short int filter_reset_all();
 
 short int filter_load_patch(int voice_index, int patch_index);
 

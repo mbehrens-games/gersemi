@@ -32,36 +32,19 @@ static short int  S_bender_range_table[PATCH_PITCH_WHEEL_RANGE_NUM_VALUES] =
 bender G_bender_bank[BANK_NUM_BENDERS];
 
 /*******************************************************************************
-** bender_setup_all()
+** bender_reset_all()
 *******************************************************************************/
-short int bender_setup_all()
+short int bender_reset_all()
 {
   int k;
 
-  /* setup all benders */
-  for (k = 0; k < BANK_NUM_VOICES; k++)
-    bender_reset(k);
-
-  return 0;
-}
-
-/*******************************************************************************
-** bender_reset()
-*******************************************************************************/
-short int bender_reset(int voice_index)
-{
-  int m;
-
   bender* b;
 
-  /* make sure that the voice index is valid */
-  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
-    return 1;
-
-  for (m = 0; m < BANK_BOOSTS_PER_VOICE; m++)
+  /* reset all benders */
+  for (k = 0; k < BANK_NUM_BENDERS; k++)
   {
     /* obtain bender pointer */
-    b = &G_bender_bank[BANK_BOOSTS_PER_VOICE * voice_index + m];
+    b = &G_bender_bank[k];
 
     /* initialize bender variables */
     b->mode = PATCH_PITCH_WHEEL_MODE_DEFAULT;
@@ -78,13 +61,13 @@ short int bender_reset(int voice_index)
 /*******************************************************************************
 ** bender_load_patch()
 *******************************************************************************/
-short int bender_load_patch(int voice_index, int patch_index)
+short int bender_load_patch(int instrument_index, int patch_index)
 {
   bender* b;
   patch* p;
 
-  /* make sure that the voice index is valid */
-  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
+  /* make sure that the instrument index is valid */
+  if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
     return 1;
 
   /* make sure that the patch index is valid */
@@ -95,7 +78,7 @@ short int bender_load_patch(int voice_index, int patch_index)
   p = &G_patch_bank[patch_index];
 
   /* obtain bender pointer */
-  b = &G_bender_bank[voice_index];
+  b = &G_bender_bank[instrument_index];
 
   /* mode */
   if ((p->pitch_wheel_mode >= PATCH_PITCH_WHEEL_MODE_LOWER_BOUND) && 
@@ -104,7 +87,7 @@ short int bender_load_patch(int voice_index, int patch_index)
     b->mode = p->pitch_wheel_mode;
   }
   else
-    b->mode = PATCH_PITCH_WHEEL_MODE_LOWER_BOUND;
+    b->mode = PATCH_PITCH_WHEEL_MODE_DEFAULT;
 
   /* range */
   if ((p->pitch_wheel_range >= PATCH_PITCH_WHEEL_RANGE_LOWER_BOUND) && 
@@ -113,7 +96,7 @@ short int bender_load_patch(int voice_index, int patch_index)
     b->range = p->pitch_wheel_range;
   }
   else
-    b->range = PATCH_PITCH_WHEEL_RANGE_LOWER_BOUND;
+    b->range = PATCH_PITCH_WHEEL_RANGE_DEFAULT;
 
   return 0;
 }
@@ -131,7 +114,7 @@ short int bender_update_all()
   int shift;
 
   /* update all benders */
-  for (k = 0; k < BANK_NUM_VOICES; k++)
+  for (k = 0; k < BANK_NUM_BENDERS; k++)
   {
     /* obtain bender pointer */
     b = &G_bender_bank[k];

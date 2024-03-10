@@ -28,10 +28,9 @@ typedef struct boost
 extern boost G_boost_bank[BANK_NUM_BOOSTS];
 
 /* function declarations */
-short int boost_setup_all();
-short int boost_reset(int voice_index);
+short int boost_reset_all();
 
-short int boost_load_patch(int voice_index, int patch_index);
+short int boost_load_patch(int instrument_index, int patch_index);
 
 short int boost_update_all();
 

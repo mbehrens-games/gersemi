@@ -634,8 +634,6 @@ short int import_sbi_load(int cart_num, int patch_num,
       /* multiple, flags */
       first_byte = patch_data[inst_id + k][start_indices[m] + IMPORT_SBI_OPERATOR_OFFSET_MULTIPLE_FLAGS];
 
-      p->osc_freq_mode[current_op] = PATCH_OSC_FREQ_MODE_RATIO;
-
       p->osc_multiple[current_op] = S_import_opl_multiple_table[first_byte & 0x0F];
       p->osc_divisor[current_op] = S_import_divisor_table[first_byte & 0x0F];
 
@@ -828,8 +826,6 @@ short int import_tfi_load(int cart_num, int patch_num,
 
       /* multiple */
       first_byte = patch_data[inst_id + k][IMPORT_TFI_COMPUTE_BYTE_OPERATOR_INDEX(m, MULTIPLE)];
-
-      p->osc_freq_mode[current_op] = PATCH_OSC_FREQ_MODE_RATIO;
 
       p->osc_multiple[current_op] = S_import_ym2612_multiple_table[first_byte & 0x0F];
       p->osc_divisor[current_op] = S_import_divisor_table[first_byte & 0x0F];

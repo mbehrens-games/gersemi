@@ -11,6 +11,7 @@ typedef struct sweep
 {
   /* sweep parameters */
   short int mode;
+  short int legato;
   short int speed;
 
   /* phase, phase increment */
@@ -32,15 +33,14 @@ typedef struct sweep
 extern sweep G_sweep_bank[BANK_NUM_SWEEPS];
 
 /* function declarations */
-short int sweep_setup_all();
-short int sweep_reset(int voice_index);
+short int sweep_reset_all();
 
-short int sweep_load_patch(int voice_index, int patch_index);
+short int sweep_load_patch(int instrument_index, int patch_index);
 
-short int sweep_set_tempo(int voice_index, short int tempo);
+short int sweep_set_tempo(int instrument_index, short int tempo);
 
-short int sweep_set_note(int voice_index, int note);
-short int sweep_trigger(int voice_index, int note);
+short int sweep_set_note(int instrument_index, int note);
+short int sweep_trigger(int instrument_index, int note);
 
 short int sweep_update_all();
 

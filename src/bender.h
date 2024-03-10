@@ -24,10 +24,9 @@ typedef struct bender
 extern bender G_bender_bank[BANK_NUM_BENDERS];
 
 /* function declarations */
-short int bender_setup_all();
-short int bender_reset(int voice_index);
+short int bender_reset_all();
 
-short int bender_load_patch(int voice_index, int patch_index);
+short int bender_load_patch(int instrument_index, int patch_index);
 
 short int bender_update_all();
 

@@ -25,9 +25,8 @@ typedef struct envelope
   /* sustain pedal state */
   short int sustain_pedal;
 
-  /* current note & offset */
+  /* current note offset */
   short int offset;
-  short int freq_mode;
 
   /* rows */
   int a_row;
@@ -37,9 +36,6 @@ typedef struct envelope
 
   /* alternate row (with sustain pedal) */
   int pedal_row;
-
-  /* hold switch */
-  short int hold_active;
 
   /* current state, row */
   int state;
@@ -60,8 +56,7 @@ typedef struct envelope
 extern envelope G_envelope_bank[BANK_NUM_ENVELOPES];
 
 /* function declarations */
-short int envelope_setup_all();
-short int envelope_reset(int voice_index);
+short int envelope_reset_all();
 
 short int envelope_load_patch(int voice_index, int patch_index);
 

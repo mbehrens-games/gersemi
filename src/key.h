@@ -44,51 +44,80 @@ enum
 };
 #endif
 
-/* octaves and notes */
-#define KEY_LOWEST_OCTAVE   0   /* 1 */
-#define KEY_MIDDLE_OCTAVE   3   /* 4 */
-#define KEY_HIGHEST_OCTAVE  6   /* 7 */
+enum
+{
+  KEY_SIGNATURE_7_FLAT = 0, 
+  KEY_SIGNATURE_6_FLAT, 
+  KEY_SIGNATURE_5_FLAT, 
+  KEY_SIGNATURE_4_FLAT, 
+  KEY_SIGNATURE_3_FLAT, 
+  KEY_SIGNATURE_2_FLAT, 
+  KEY_SIGNATURE_1_FLAT, 
+  KEY_SIGNATURE_CLEAR, 
+  KEY_SIGNATURE_1_SHARP, 
+  KEY_SIGNATURE_2_SHARP, 
+  KEY_SIGNATURE_3_SHARP, 
+  KEY_SIGNATURE_4_SHARP, 
+  KEY_SIGNATURE_5_SHARP, 
+  KEY_SIGNATURE_6_SHARP, 
+  KEY_SIGNATURE_7_SHARP, 
+  KEY_NUM_SIGNATURES
+};
 
-#define KEY_NUM_OCTAVES  (KEY_HIGHEST_OCTAVE - KEY_LOWEST_OCTAVE + 1)
+enum
+{
+  KEY_MODE_IONIAN = 0,  /* major */
+  KEY_MODE_DORIAN, 
+  KEY_MODE_PHRYGIAN, 
+  KEY_MODE_LYDIAN, 
+  KEY_MODE_MIXOLYDIAN, 
+  KEY_MODE_AEOLIAN,     /* minor */
+  KEY_MODE_LOCRIAN, 
+  KEY_NUM_MODES
+};
 
-#define KEY_NOTE_C0  (12 * (KEY_MIDDLE_OCTAVE - 4))
-#define KEY_NOTE_A0  (12 * (KEY_MIDDLE_OCTAVE - 4) + 9)
-#define KEY_NOTE_C4  (12 * (KEY_MIDDLE_OCTAVE + 0))
-#define KEY_NOTE_C8  (12 * (KEY_MIDDLE_OCTAVE + 4))
+enum
+{
+  KEY_DEGREE_TONIC = 0, 
+  KEY_DEGREE_SECOND, 
+  KEY_DEGREE_THIRD, 
+  KEY_DEGREE_FOURTH, 
+  KEY_DEGREE_FIFTH, 
+  KEY_DEGREE_SIXTH, 
+  KEY_DEGREE_SEVENTH, 
+  KEY_NUM_DEGREES
+};
 
-#define KEY_NUM_NOTES (7 * KEY_NUM_OCTAVES + 1)
+enum
+{
+  KEY_NOTE_C = 0, 
+  KEY_NOTE_C_SHARP, 
+  KEY_NOTE_D, 
+  KEY_NOTE_D_SHARP, 
+  KEY_NOTE_E, 
+  KEY_NOTE_F, 
+  KEY_NOTE_F_SHARP, 
+  KEY_NOTE_G, 
+  KEY_NOTE_G_SHARP, 
+  KEY_NOTE_A, 
+  KEY_NOTE_A_SHARP, 
+  KEY_NOTE_B, 
+  KEY_NUM_NOTES
+};
 
-/* degrees */
-#define KEY_NUM_DEGREES 8
+enum
+{
+  KEY_HIGHLIGHT_OFF = 0,
+  KEY_HIGHLIGHT_ON, 
+  KEY_HIGHLIGHT_TONIC
+};
 
-/* signatures and modes */
-#define KEY_NUM_SIGS  15
-#define KEY_NUM_MODES 7
-
-#define KEY_SIG_CLEAR   7
-
-#define KEY_SIG_1_FLAT  (KEY_SIG_CLEAR - 1)
-#define KEY_SIG_2_FLAT  (KEY_SIG_CLEAR - 2)
-#define KEY_SIG_3_FLAT  (KEY_SIG_CLEAR - 3)
-#define KEY_SIG_4_FLAT  (KEY_SIG_CLEAR - 4)
-#define KEY_SIG_5_FLAT  (KEY_SIG_CLEAR - 5)
-#define KEY_SIG_6_FLAT  (KEY_SIG_CLEAR - 6)
-#define KEY_SIG_7_FLAT  (KEY_SIG_CLEAR - 7)
-
-#define KEY_SIG_1_SHARP (KEY_SIG_CLEAR + 1)
-#define KEY_SIG_2_SHARP (KEY_SIG_CLEAR + 2)
-#define KEY_SIG_3_SHARP (KEY_SIG_CLEAR + 3)
-#define KEY_SIG_4_SHARP (KEY_SIG_CLEAR + 4)
-#define KEY_SIG_5_SHARP (KEY_SIG_CLEAR + 5)
-#define KEY_SIG_6_SHARP (KEY_SIG_CLEAR + 6)
-#define KEY_SIG_7_SHARP (KEY_SIG_CLEAR + 7)
-
-#define KEY_MODE_MAJOR  0
-#define KEY_MODE_MINOR  5
+/* note table */
+extern char G_key_highlight_table[KEY_NUM_NOTES];
 
 /* function declarations */
-int       key_note_lookup(int signature, int mode, int octave, int degree);
+short int   key_set_current_key(int signature, int mode);
 
-short int key_generate_tables();
+short int   key_generate_tables();
 
 #endif

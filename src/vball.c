@@ -411,28 +411,33 @@ static char S_cart_button_labels[LAYOUT_CART_BUTTON_NUM_LABELS][12] =
 static char S_cart_header_labels[LAYOUT_CART_HEADER_NUM_LABELS][12] = 
   { "Osc 1", "Osc 2", "Osc 3", "Osc 4", 
     "Env 1", "Env 2", "Env 3", "Env 4", 
-    "LFO", "Portamento", "Arpeggio", "Sync", 
-    "Pedal", "Pitch Wheel", "Velocity", "Noise", 
-    "Vibrato", "Tremolo", "Boost", "Effects" 
+    "Portamento", "Arpeggio", "PEG Rates", "PEG Levels", 
+    "LFO", "Vibrato", "Tremolo", "Effects", 
+    "Pedal", "Velocity", "Noise", "Boost", 
+    "Pitch Wheel", "Legacy", "Sync", "Filters" 
   };
 
 static char S_cart_param_labels[LAYOUT_CART_PARAM_NUM_LABELS][4] = 
   { "Car", "n/a", "Pat", "n/a", 
-    "Alg", "n/a", "HPF", "LPF", 
-    "Wav", "FBk", "Phi", "Frq", "Mul", "Div", "Nte", "Oct", "Det", 
-    "Att",  "D1",  "D2", "Rel", "Lev", "Sus", "RtS", "LvS", "Brk", 
-    "Wav", "Frq", "Dly", "Qua", 
-    "Mde", "Leg", "Spd", 
-    "Mde", "Pat", "Spd", 
-    "Osc", "LFO", "Arp", 
-    "Adj", 
-    "Mde", "Rng", 
-    "Mde", "Scl", 
-    "Mde", "Frq", 
-    "Mde", "Dep", "Bas", 
-    "Mde", "Dep", "Bas", 
-    "Mde", "Dep", 
-     "MW",  "AT", 
+    "Alg", "n/a", 
+    "Wav", "FBk", "Phi", "Frq", "Mul", "Div", "Det",                /* osc */
+    "Att",  "D1",  "D2", "Rel", "Lev", "Sus", "RtS", "LvS", "Brk",  /* env */
+    "Mde", "Fol", "Leg", "Spd", /* portamento */
+    "Mde", "Pat", "Oct", "Spd", /* arpeggio */
+    "Att", "Dec", "Rel", "Leg", /* pitch env rates */
+    "Lev", "Sus", "Fin", "Trn", /* pitch env levels */
+    "Wav", "Frq", "Dly", "Qua", /* lfo */
+    "Mde", "Dep", "Bas",        /* vibrato */
+    "Mde", "Dep", "Bas",        /* tremolo */
+     "MW",  "AT",  "EP",        /* effects */
+    "Adj",                      /* pedal */
+    "Mde", "Scl",               /* velocity */
+    "Mde", "Frq",               /* noise */
+    "Mde", "Dep",               /* boost */
+    "Mde", "Rng",               /* pitch wheel */
+    "Mul", "RtS",               /* legacy */
+    "Osc", "LFO",               /* sync */
+     "HP",  "LP",               /* filters */
     "Vel",  "MW",  "AT",  "PW" 
   };
 
@@ -450,28 +455,16 @@ static char S_patch_edit_alg_name_values[PATCH_ALGORITHM_NUM_VALUES][12] =
     "4C Pipes" 
   };
 
-static char S_patch_edit_highpass_cutoff_values[PATCH_HIGHPASS_CUTOFF_NUM_VALUES][4] = 
-  { "A0", "A1", "A2", "A3" };
-
-static char S_patch_edit_lowpass_cutoff_values[PATCH_LOWPASS_CUTOFF_NUM_VALUES][4] = 
-  { "E7", "G7", "A7", "C8" };
-
 static char S_patch_edit_osc_waveform_values[PATCH_OSC_WAVEFORM_NUM_VALUES][6] = 
   { "Sine", "Half", "Full", "Quar", "Alt", "Cam", "Squa", "LSaw" };
 
-static char S_patch_edit_osc_phi_values[PATCH_OSC_PHI_NUM_VALUES][6] = 
+static char S_patch_edit_osc_phi_values[PATCH_OSC_PHI_NUM_VALUES][4] = 
   {   "0",  "30",  "45",  "60",  "90", "120", "135", "150", 
     "180", "210", "225", "240", "270", "300", "315", "330" 
   };
 
-static char S_patch_edit_osc_freq_mode_values[PATCH_OSC_FREQ_MODE_NUM_VALUES][8] = 
+static char S_patch_edit_osc_freq_mode_values[PATCH_OSC_FREQ_MODE_NUM_VALUES][6] = 
   { "Ratio", "Fixed" };
-
-static char S_patch_edit_osc_note_values[PATCH_OSC_NOTE_NUM_VALUES][4] = 
-  { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
-
-static char S_patch_edit_osc_octave_values[PATCH_OSC_OCTAVE_NUM_VALUES][4] = 
-  { "-4", "-3", "-2", "-1", "0",  "1",  "2",  "3",  "4",  "5",  "6",  "7", "8", "9" };
 
 static char S_patch_edit_osc_detune_values[PATCH_OSC_DETUNE_NUM_VALUES][4] = 
   { "-32", "-31", "-30", "-29", "-28", "-27", "-26", "-25", 
@@ -490,35 +483,37 @@ static char S_patch_edit_env_break_point_values[PATCH_ENV_BREAK_POINT_NUM_VALUES
     "A4", "D5", "A5", "D6", "A6", "D7", "A7", "C8" 
   };
 
-static char S_patch_edit_lfo_waveform_values[PATCH_LFO_WAVEFORM_NUM_VALUES][6] = 
-  { "Tri", "Squa", "SawU", "SawD", "NSqu", "NSaw" };
-
-static char S_patch_edit_portamento_mode_values[PATCH_PORTAMENTO_MODE_NUM_VALUES][8] = 
+static char S_patch_edit_portamento_mode_values[PATCH_PORTAMENTO_MODE_NUM_VALUES][6] = 
   { "Bend", "Half" };
 
-static char S_patch_edit_portamento_legato_values[PATCH_PORTAMENTO_LEGATO_NUM_VALUES][8] = 
+static char S_patch_edit_portamento_follow_values[PATCH_PORTAMENTO_FOLLOW_NUM_VALUES][6] = 
+  { "Cont", "Retrn" };
+
+static char S_patch_edit_portamento_legato_values[PATCH_PORTAMENTO_LEGATO_NUM_VALUES][6] = 
   { "Off", "On" };
 
-static char S_patch_edit_arpeggio_mode_values[PATCH_ARPEGGIO_MODE_NUM_VALUES][12] = 
+static char S_patch_edit_arpeggio_mode_values[PATCH_ARPEGGIO_MODE_NUM_VALUES][6] = 
   { "Harp", "Roll" };
 
-static char S_patch_edit_arpeggio_pattern_values[PATCH_ARPEGGIO_PATTERN_NUM_VALUES][12] = 
-  { "Up", "Down", "U/D", "D/U", "U/D X", "D/U X" };
+static char S_patch_edit_arpeggio_pattern_values[PATCH_ARPEGGIO_PATTERN_NUM_VALUES][6] = 
+  { "Up", "Down", "U/D", "Alt" };
 
-static char S_patch_edit_sync_values[PATCH_SYNC_NUM_VALUES][6] = 
+static char S_patch_edit_peg_level_values[PATCH_PEG_LEVEL_NUM_VALUES][4] = 
+  { "-24", "-23", "-22", "-21", "-20", "-19", "-18", "-17", "-16", "-15", "-14", "-13", 
+    "-12", "-11", "-10",  "-9",  "-8",  "-7",  "-6",  "-5",  "-4",  "-3",  "-2",  "-1", 
+      "0", 
+      "1",   "2",   "3",   "4",   "5",   "6",   "7",   "8",   "9",  "10",  "11",  "12", 
+     "13",  "14",  "15",  "16",  "17",  "18",  "19",  "20",  "21",  "22",  "23",  "24"
+  };
+
+static char S_patch_edit_peg_legato_values[PATCH_PEG_LEGATO_NUM_VALUES][6] = 
   { "Off", "On" };
 
-static char S_patch_edit_pedal_adjust_values[PATCH_PEDAL_ADJUST_NUM_VALUES][6] = 
-  {  "0",  "2",  "4",  "6",  "8", "10", "12", "14", "16" };
+static char S_patch_edit_peg_transpose_values[PATCH_PEG_TRANSPOSE_NUM_VALUES][6] = 
+  { "Off", "On" };
 
-static char S_patch_edit_pitch_wheel_mode_values[PATCH_PITCH_WHEEL_MODE_NUM_VALUES][6] = 
-  { "Bend", "Half" };
-
-static char S_patch_edit_velocity_mode_values[PATCH_VELOCITY_MODE_NUM_VALUES][6] = 
-  { "Car", "Mod" };
-
-static char S_patch_edit_noise_mode_values[PATCH_NOISE_MODE_NUM_VALUES][6] = 
-  { "Off", "Squa", "Saw" };
+static char S_patch_edit_lfo_waveform_values[PATCH_LFO_WAVEFORM_NUM_VALUES][6] = 
+  { "Tri", "Squa", "SawU", "SawD", "NSqu", "NSaw" };
 
 static char S_patch_edit_vibrato_mode_values[PATCH_VIBRATO_MODE_NUM_VALUES][6] = 
   { "U/D", "Up" };
@@ -526,11 +521,38 @@ static char S_patch_edit_vibrato_mode_values[PATCH_VIBRATO_MODE_NUM_VALUES][6] =
 static char S_patch_edit_tremolo_mode_values[PATCH_TREMOLO_MODE_NUM_VALUES][6] = 
   { "Car", "Mod" };
 
+static char S_patch_edit_controller_effect_values[PATCH_CONTROLLER_EFFECT_NUM_VALUES][6] = 
+  { "Vib", "Trm", "Bst", "V+T", "V+B", "T+B", "All" };
+
+static char S_patch_edit_pedal_adjust_values[PATCH_PEDAL_ADJUST_NUM_VALUES][4] = 
+  {  "0",  "2",  "4",  "6",  "8", "10", "12", "14", "16" };
+
+static char S_patch_edit_velocity_mode_values[PATCH_VELOCITY_MODE_NUM_VALUES][6] = 
+  { "Car", "Mod" };
+
+static char S_patch_edit_noise_mode_values[PATCH_NOISE_MODE_NUM_VALUES][6] = 
+  { "Off", "Squa", "Saw" };
+
 static char S_patch_edit_boost_mode_values[PATCH_BOOST_MODE_NUM_VALUES][6] = 
   { "Car", "Mod" };
 
-static char S_patch_edit_controller_effect_values[PATCH_CONTROLLER_EFFECT_NUM_VALUES][6] = 
-  { "Vib", "Trm", "Bst" };
+static char S_patch_edit_pitch_wheel_mode_values[PATCH_PITCH_WHEEL_MODE_NUM_VALUES][6] = 
+  { "Bend", "Half" };
+
+static char S_patch_edit_legacy_multiple_values[PATCH_LEGACY_MULTIPLE_NUM_VALUES][6] = 
+  { "Harm", "Int" };
+
+static char S_patch_edit_legacy_keyscale_values[PATCH_LEGACY_KEYSCALE_NUM_VALUES][6] = 
+  { "Pitch", "Key" };
+
+static char S_patch_edit_sync_values[PATCH_SYNC_NUM_VALUES][6] = 
+  { "Off", "On" };
+
+static char S_patch_edit_highpass_cutoff_values[PATCH_HIGHPASS_CUTOFF_NUM_VALUES][4] = 
+  { "A0", "A1", "A2", "A3" };
+
+static char S_patch_edit_lowpass_cutoff_values[PATCH_LOWPASS_CUTOFF_NUM_VALUES][4] = 
+  { "E7", "G7", "A7", "C8" };
 
 static char S_patch_edit_audition_note_velocity_values[MIDI_CONT_NOTE_VELOCITY_NUM_VALUES][4] = 
   { "-12", "-11", "-10",  "-9", 
@@ -1570,24 +1592,6 @@ short int vb_all_load_cart_screen()
         continue;
     }
 
-    /* skip multiple/divisor or octave/note depending on the frequency mode */
-    if (p->osc_freq_mode[pr->num] == PATCH_OSC_FREQ_MODE_RATIO)
-    {
-      if ((pr->label == LAYOUT_CART_PARAM_LABEL_OSC_OCTAVE) || 
-          (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_NOTE))
-      {
-        continue;
-      }
-    }
-    else if (p->osc_freq_mode[pr->num] == PATCH_OSC_FREQ_MODE_FIXED)
-    {
-      if ((pr->label == LAYOUT_CART_PARAM_LABEL_OSC_MULTIPLE) || 
-          (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_DIVISOR))
-      {
-        continue;
-      }
-    }
-
     /* determine parameter value */
     if (pr->label == LAYOUT_CART_PARAM_LABEL_CART_NUMBER)
       value = G_patch_edit_cart_number;
@@ -1598,10 +1602,6 @@ short int vb_all_load_cart_screen()
     {
       value = p->algorithm;
     }
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_HIGHPASS_CUTOFF)
-      value = p->highpass_cutoff;
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_LOWPASS_CUTOFF)
-      value = p->lowpass_cutoff;
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_WAVEFORM)
       value = p->osc_waveform[pr->num];
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_FEEDBACK)
@@ -1614,10 +1614,6 @@ short int vb_all_load_cart_screen()
       value = p->osc_multiple[pr->num];
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_DIVISOR)
       value = p->osc_divisor[pr->num];
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_NOTE)
-      value = p->osc_note[pr->num];
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_OCTAVE)
-      value = p->osc_octave[pr->num];
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_DETUNE)
       value = p->osc_detune[pr->num];
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_ATTACK)
@@ -1638,16 +1634,10 @@ short int vb_all_load_cart_screen()
       value = p->env_level_ks[pr->num];
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_BREAK_POINT)
       value = p->env_break_point[pr->num];
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_LFO_WAVEFORM)
-      value = p->lfo_waveform;
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_LFO_FREQUENCY)
-      value = p->lfo_frequency;
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_LFO_DELAY)
-      value = p->lfo_delay;
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_LFO_QUANTIZE)
-      value = p->lfo_quantize;
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_PORTAMENTO_MODE)
       value = p->portamento_mode;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PORTAMENTO_FOLLOW)
+      value = p->portamento_follow;
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_PORTAMENTO_LEGATO)
       value = p->portamento_legato;
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_PORTAMENTO_SPEED)
@@ -1656,28 +1646,34 @@ short int vb_all_load_cart_screen()
       value = p->arpeggio_mode;
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_ARPEGGIO_PATTERN)
       value = p->arpeggio_pattern;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_ARPEGGIO_OCTAVES)
+      value = p->arpeggio_octaves;
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_ARPEGGIO_SPEED)
       value = p->arpeggio_speed;
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_SYNC_OSC)
-      value = p->sync_osc;
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_SYNC_LFO)
-      value = p->sync_lfo;
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_SYNC_ARP)
-      value = p->sync_arp;
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PEDAL_ADJUST)
-      value = p->pedal_adjust;
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PITCH_WHEEL_MODE)
-      value = p->pitch_wheel_mode;
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PITCH_WHEEL_RANGE)
-      value = p->pitch_wheel_range;
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_VELOCITY_MODE)
-      value = p->velocity_mode;
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_VELOCITY_SCALING)
-      value = p->velocity_scaling;
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_NOISE_MODE)
-      value = p->noise_mode;
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_NOISE_FREQUENCY)
-      value = p->noise_frequency;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PEG_ATTACK)
+      value = p->peg_attack;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PEG_DECAY)
+      value = p->peg_decay;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PEG_RELEASE)
+      value = p->peg_release;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PEG_LEGATO)
+      value = p->peg_legato;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PEG_AMPLITUDE)
+      value = p->peg_amplitude;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PEG_SUSTAIN)
+      value = p->peg_sustain;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PEG_FINALE)
+      value = p->peg_finale;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PEG_TRANSPOSE)
+      value = p->peg_transpose;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_LFO_WAVEFORM)
+      value = p->lfo_waveform;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_LFO_FREQUENCY)
+      value = p->lfo_frequency;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_LFO_DELAY)
+      value = p->lfo_delay;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_LFO_QUANTIZE)
+      value = p->lfo_quantize;
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_VIBRATO_MODE)
       value = p->vibrato_mode;
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_VIBRATO_DEPTH)
@@ -1690,14 +1686,42 @@ short int vb_all_load_cart_screen()
       value = p->tremolo_depth;
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_TREMOLO_BASE)
       value = p->tremolo_base;
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_BOOST_MODE)
-      value = p->boost_mode;
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_BOOST_DEPTH)
-      value = p->boost_depth;
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_MOD_WHEEL_EFFECT)
       value = p->mod_wheel_effect;
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_AFTERTOUCH_EFFECT)
       value = p->aftertouch_effect;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_EXP_PEDAL_EFFECT)
+      value = p->exp_pedal_effect;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PEDAL_ADJUST)
+      value = p->pedal_adjust;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_VELOCITY_MODE)
+      value = p->velocity_mode;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_VELOCITY_SCALING)
+      value = p->velocity_scaling;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_NOISE_MODE)
+      value = p->noise_mode;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_NOISE_FREQUENCY)
+      value = p->noise_frequency;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_BOOST_MODE)
+      value = p->boost_mode;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_BOOST_DEPTH)
+      value = p->boost_depth;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PITCH_WHEEL_MODE)
+      value = p->pitch_wheel_mode;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PITCH_WHEEL_RANGE)
+      value = p->pitch_wheel_range;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_LEGACY_MULTIPLE)
+      value = p->legacy_multiple;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_LEGACY_KEYSCALE)
+      value = p->legacy_keyscale;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_SYNC_OSC)
+      value = p->sync_osc;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_SYNC_LFO)
+      value = p->sync_lfo;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_HIGHPASS_CUTOFF)
+      value = p->highpass_cutoff;
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_LOWPASS_CUTOFF)
+      value = p->lowpass_cutoff;
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_AUDITION_VELOCITY)
       value = G_patch_edit_note_velocity;
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_AUDITION_MOD_WHEEL)
@@ -1720,15 +1744,19 @@ short int vb_all_load_cart_screen()
         (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_RELEASE)        || 
         (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_RATE_KS)        || 
         (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_LEVEL_KS)       || 
+        (pr->label == LAYOUT_CART_PARAM_LABEL_PORTAMENTO_SPEED)   || 
+        (pr->label == LAYOUT_CART_PARAM_LABEL_ARPEGGIO_OCTAVES)   || 
+        (pr->label == LAYOUT_CART_PARAM_LABEL_ARPEGGIO_SPEED)     || 
+        (pr->label == LAYOUT_CART_PARAM_LABEL_PEG_ATTACK)         || 
+        (pr->label == LAYOUT_CART_PARAM_LABEL_PEG_DECAY)          || 
+        (pr->label == LAYOUT_CART_PARAM_LABEL_PEG_RELEASE)        || 
         (pr->label == LAYOUT_CART_PARAM_LABEL_LFO_FREQUENCY)      || 
         (pr->label == LAYOUT_CART_PARAM_LABEL_LFO_QUANTIZE)       || 
-        (pr->label == LAYOUT_CART_PARAM_LABEL_PORTAMENTO_SPEED)   || 
-        (pr->label == LAYOUT_CART_PARAM_LABEL_ARPEGGIO_SPEED)     || 
-        (pr->label == LAYOUT_CART_PARAM_LABEL_PITCH_WHEEL_RANGE)  || 
         (pr->label == LAYOUT_CART_PARAM_LABEL_VIBRATO_DEPTH)      || 
         (pr->label == LAYOUT_CART_PARAM_LABEL_TREMOLO_DEPTH)      || 
+        (pr->label == LAYOUT_CART_PARAM_LABEL_NOISE_FREQUENCY)    || 
         (pr->label == LAYOUT_CART_PARAM_LABEL_BOOST_DEPTH)        || 
-        (pr->label == LAYOUT_CART_PARAM_LABEL_NOISE_FREQUENCY))
+        (pr->label == LAYOUT_CART_PARAM_LABEL_PITCH_WHEEL_RANGE))
     {
       value_string = S_common_edit_1_to_64_values[value - pr->lower_bound];
     }
@@ -1736,9 +1764,9 @@ short int vb_all_load_cart_screen()
               (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_AMPLITUDE)      || 
               (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_SUSTAIN)        || 
               (pr->label == LAYOUT_CART_PARAM_LABEL_LFO_DELAY)          || 
-              (pr->label == LAYOUT_CART_PARAM_LABEL_VELOCITY_SCALING)   || 
               (pr->label == LAYOUT_CART_PARAM_LABEL_VIBRATO_BASE)       || 
               (pr->label == LAYOUT_CART_PARAM_LABEL_TREMOLO_BASE)       || 
+              (pr->label == LAYOUT_CART_PARAM_LABEL_VELOCITY_SCALING)   || 
               (pr->label == LAYOUT_CART_PARAM_LABEL_AUDITION_MOD_WHEEL) || 
               (pr->label == LAYOUT_CART_PARAM_LABEL_AUDITION_AFTERTOUCH))
     {
@@ -1752,59 +1780,71 @@ short int vb_all_load_cart_screen()
       value_string = S_patch_edit_algorithm_values[value - pr->lower_bound];
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_ALG_NAME)
       value_string = S_patch_edit_alg_name_values[value - pr->lower_bound];
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_HIGHPASS_CUTOFF)
-      value_string = S_patch_edit_highpass_cutoff_values[value - pr->lower_bound];
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_LOWPASS_CUTOFF)
-      value_string = S_patch_edit_lowpass_cutoff_values[value - pr->lower_bound];
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_WAVEFORM)
       value_string = S_patch_edit_osc_waveform_values[value - pr->lower_bound];
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_PHI)
       value_string = S_patch_edit_osc_phi_values[value - pr->lower_bound];
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_FREQ_MODE)
       value_string = S_patch_edit_osc_freq_mode_values[value - pr->lower_bound];
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_NOTE)
-      value_string = S_patch_edit_osc_note_values[value - pr->lower_bound];
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_OCTAVE)
-      value_string = S_patch_edit_osc_octave_values[value - pr->lower_bound];
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_DETUNE)
       value_string = S_patch_edit_osc_detune_values[value - pr->lower_bound];
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_BREAK_POINT)
       value_string = S_patch_edit_env_break_point_values[value - pr->lower_bound];
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_LFO_WAVEFORM)
-      value_string = S_patch_edit_lfo_waveform_values[value - pr->lower_bound];
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_PORTAMENTO_MODE)
       value_string = S_patch_edit_portamento_mode_values[value - pr->lower_bound];
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PORTAMENTO_FOLLOW)
+      value_string = S_patch_edit_portamento_follow_values[value - pr->lower_bound];
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_PORTAMENTO_LEGATO)
       value_string = S_patch_edit_portamento_legato_values[value - pr->lower_bound];
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_ARPEGGIO_MODE)
       value_string = S_patch_edit_arpeggio_mode_values[value - pr->lower_bound];
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_ARPEGGIO_PATTERN)
       value_string = S_patch_edit_arpeggio_pattern_values[value - pr->lower_bound];
-    else if ( (pr->label == LAYOUT_CART_PARAM_LABEL_SYNC_OSC) || 
-              (pr->label == LAYOUT_CART_PARAM_LABEL_SYNC_LFO) || 
-              (pr->label == LAYOUT_CART_PARAM_LABEL_SYNC_ARP))
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PEG_LEGATO)
+      value_string = S_patch_edit_peg_legato_values[value - pr->lower_bound];
+    else if ( (pr->label == LAYOUT_CART_PARAM_LABEL_PEG_AMPLITUDE)  || 
+              (pr->label == LAYOUT_CART_PARAM_LABEL_PEG_SUSTAIN)    || 
+              (pr->label == LAYOUT_CART_PARAM_LABEL_PEG_FINALE))
     {
-      value_string = S_patch_edit_sync_values[value - pr->lower_bound];
+      value_string = S_patch_edit_peg_level_values[value - pr->lower_bound];
     }
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PEDAL_ADJUST)
-      value_string = S_patch_edit_pedal_adjust_values[value - pr->lower_bound];
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PITCH_WHEEL_MODE)
-      value_string = S_patch_edit_pitch_wheel_mode_values[value - pr->lower_bound];
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_VELOCITY_MODE)
-      value_string = S_patch_edit_velocity_mode_values[value - pr->lower_bound];
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_NOISE_MODE)
-      value_string = S_patch_edit_noise_mode_values[value - pr->lower_bound];
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PEG_TRANSPOSE)
+      value_string = S_patch_edit_peg_transpose_values[value - pr->lower_bound];
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_LFO_WAVEFORM)
+      value_string = S_patch_edit_lfo_waveform_values[value - pr->lower_bound];
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_VIBRATO_MODE)
       value_string = S_patch_edit_vibrato_mode_values[value - pr->lower_bound];
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_TREMOLO_MODE)
       value_string = S_patch_edit_tremolo_mode_values[value - pr->lower_bound];
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_BOOST_MODE)
-      value_string = S_patch_edit_boost_mode_values[value - pr->lower_bound];
-    else if ( (pr->label == LAYOUT_CART_PARAM_LABEL_MOD_WHEEL_EFFECT) || 
-              (pr->label == LAYOUT_CART_PARAM_LABEL_AFTERTOUCH_EFFECT))
+    else if ( (pr->label == LAYOUT_CART_PARAM_LABEL_MOD_WHEEL_EFFECT)   || 
+              (pr->label == LAYOUT_CART_PARAM_LABEL_AFTERTOUCH_EFFECT)  || 
+              (pr->label == LAYOUT_CART_PARAM_LABEL_EXP_PEDAL_EFFECT))
     {
       value_string = S_patch_edit_controller_effect_values[value - pr->lower_bound];
     }
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PEDAL_ADJUST)
+      value_string = S_patch_edit_pedal_adjust_values[value - pr->lower_bound];
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_VELOCITY_MODE)
+      value_string = S_patch_edit_velocity_mode_values[value - pr->lower_bound];
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_NOISE_MODE)
+      value_string = S_patch_edit_noise_mode_values[value - pr->lower_bound];
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_BOOST_MODE)
+      value_string = S_patch_edit_boost_mode_values[value - pr->lower_bound];
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PITCH_WHEEL_MODE)
+      value_string = S_patch_edit_pitch_wheel_mode_values[value - pr->lower_bound];
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_LEGACY_MULTIPLE)
+      value_string = S_patch_edit_legacy_multiple_values[value - pr->lower_bound];
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_LEGACY_KEYSCALE)
+      value_string = S_patch_edit_legacy_keyscale_values[value - pr->lower_bound];
+    else if ( (pr->label == LAYOUT_CART_PARAM_LABEL_SYNC_OSC) || 
+              (pr->label == LAYOUT_CART_PARAM_LABEL_SYNC_LFO))
+    {
+      value_string = S_patch_edit_sync_values[value - pr->lower_bound];
+    }
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_HIGHPASS_CUTOFF)
+      value_string = S_patch_edit_highpass_cutoff_values[value - pr->lower_bound];
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_LOWPASS_CUTOFF)
+      value_string = S_patch_edit_lowpass_cutoff_values[value - pr->lower_bound];
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_AUDITION_VELOCITY)
       value_string = S_patch_edit_audition_note_velocity_values[value - pr->lower_bound];
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_AUDITION_PITCH_WHEEL)
