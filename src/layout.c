@@ -230,43 +230,38 @@ short int layout_setup_headers()
     /* set position */
     if (hd->label == LAYOUT_CART_HEADER_LABEL_OSC_1)
     {
-      hd->center_x = LAYOUT_CART_COLUMN_1_CENTER_X;
-      hd->center_y = LAYOUT_CART_HEADER_OSC_Y;
+      hd->center_x = LAYOUT_CART_HEADER_OSC_1_X;
+      hd->center_y = LAYOUT_CART_HEADER_OSC_1_Y;
     }
     else if (hd->label == LAYOUT_CART_HEADER_LABEL_OSC_2)
     {
-      hd->center_x = LAYOUT_CART_COLUMN_2_CENTER_X;
-      hd->center_y = LAYOUT_CART_HEADER_OSC_Y;
+      hd->center_x = LAYOUT_CART_HEADER_OSC_2_X;
+      hd->center_y = LAYOUT_CART_HEADER_OSC_2_Y;
     }
-    else if (hd->label == LAYOUT_CART_HEADER_LABEL_OSC_3)
+    else if (hd->label == LAYOUT_CART_HEADER_LABEL_LOWPASS)
     {
-      hd->center_x = LAYOUT_CART_COLUMN_3_CENTER_X;
-      hd->center_y = LAYOUT_CART_HEADER_OSC_Y;
+      hd->center_x = LAYOUT_CART_HEADER_LOWPASS_X;
+      hd->center_y = LAYOUT_CART_HEADER_LOWPASS_Y;
     }
-    else if (hd->label == LAYOUT_CART_HEADER_LABEL_OSC_4)
+    else if (hd->label == LAYOUT_CART_HEADER_LABEL_HIGHPASS)
     {
-      hd->center_x = LAYOUT_CART_COLUMN_4_CENTER_X;
-      hd->center_y = LAYOUT_CART_HEADER_OSC_Y;
+      hd->center_x = LAYOUT_CART_HEADER_HIGHPASS_X;
+      hd->center_y = LAYOUT_CART_HEADER_HIGHPASS_Y;
     }
-    else if (hd->label == LAYOUT_CART_HEADER_LABEL_ENV_1)
+    else if (hd->label == LAYOUT_CART_HEADER_LABEL_AMP_ENV)
     {
-      hd->center_x = LAYOUT_CART_COLUMN_1_CENTER_X;
-      hd->center_y = LAYOUT_CART_HEADER_ENV_Y;
+      hd->center_x = LAYOUT_CART_HEADER_AMP_ENV_X;
+      hd->center_y = LAYOUT_CART_HEADER_AMP_ENV_Y;
     }
-    else if (hd->label == LAYOUT_CART_HEADER_LABEL_ENV_2)
+    else if (hd->label == LAYOUT_CART_HEADER_LABEL_FILTER_ENV)
     {
-      hd->center_x = LAYOUT_CART_COLUMN_2_CENTER_X;
-      hd->center_y = LAYOUT_CART_HEADER_ENV_Y;
+      hd->center_x = LAYOUT_CART_HEADER_FILTER_ENV_X;
+      hd->center_y = LAYOUT_CART_HEADER_FILTER_ENV_Y;
     }
-    else if (hd->label == LAYOUT_CART_HEADER_LABEL_ENV_3)
+    else if (hd->label == LAYOUT_CART_HEADER_LABEL_EXTRA_ENV)
     {
-      hd->center_x = LAYOUT_CART_COLUMN_3_CENTER_X;
-      hd->center_y = LAYOUT_CART_HEADER_ENV_Y;
-    }
-    else if (hd->label == LAYOUT_CART_HEADER_LABEL_ENV_4)
-    {
-      hd->center_x = LAYOUT_CART_COLUMN_4_CENTER_X;
-      hd->center_y = LAYOUT_CART_HEADER_ENV_Y;
+      hd->center_x = LAYOUT_CART_HEADER_EXTRA_ENV_X;
+      hd->center_y = LAYOUT_CART_HEADER_EXTRA_ENV_Y;
     }
     else if (hd->label == LAYOUT_CART_HEADER_LABEL_PORTAMENTO)
     {
@@ -277,16 +272,6 @@ short int layout_setup_headers()
     {
       hd->center_x = LAYOUT_CART_HEADER_ARPEGGIO_X;
       hd->center_y = LAYOUT_CART_HEADER_ARPEGGIO_Y;
-    }
-    else if (hd->label == LAYOUT_CART_HEADER_LABEL_PEG_RATES)
-    {
-      hd->center_x = LAYOUT_CART_HEADER_PEG_RATES_X;
-      hd->center_y = LAYOUT_CART_HEADER_PEG_RATES_Y;
-    }
-    else if (hd->label == LAYOUT_CART_HEADER_LABEL_PEG_LEVELS)
-    {
-      hd->center_x = LAYOUT_CART_HEADER_PEG_LEVELS_X;
-      hd->center_y = LAYOUT_CART_HEADER_PEG_LEVELS_Y;
     }
     else if (hd->label == LAYOUT_CART_HEADER_LABEL_LFO)
     {
@@ -318,10 +303,10 @@ short int layout_setup_headers()
       hd->center_x = LAYOUT_CART_HEADER_VELOCITY_X;
       hd->center_y = LAYOUT_CART_HEADER_VELOCITY_Y;
     }
-    else if (hd->label == LAYOUT_CART_HEADER_LABEL_NOISE)
+    else if (hd->label == LAYOUT_CART_HEADER_LABEL_SYNC)
     {
-      hd->center_x = LAYOUT_CART_HEADER_NOISE_X;
-      hd->center_y = LAYOUT_CART_HEADER_NOISE_Y;
+      hd->center_x = LAYOUT_CART_HEADER_SYNC_X;
+      hd->center_y = LAYOUT_CART_HEADER_SYNC_Y;
     }
     else if (hd->label == LAYOUT_CART_HEADER_LABEL_BOOST)
     {
@@ -332,21 +317,6 @@ short int layout_setup_headers()
     {
       hd->center_x = LAYOUT_CART_HEADER_PITCH_WHEEL_X;
       hd->center_y = LAYOUT_CART_HEADER_PITCH_WHEEL_Y;
-    }
-    else if (hd->label == LAYOUT_CART_HEADER_LABEL_LEGACY)
-    {
-      hd->center_x = LAYOUT_CART_HEADER_LEGACY_X;
-      hd->center_y = LAYOUT_CART_HEADER_LEGACY_Y;
-    }
-    else if (hd->label == LAYOUT_CART_HEADER_LABEL_SYNC)
-    {
-      hd->center_x = LAYOUT_CART_HEADER_SYNC_X;
-      hd->center_y = LAYOUT_CART_HEADER_SYNC_Y;
-    }
-    else if (hd->label == LAYOUT_CART_HEADER_LABEL_FILTERS)
-    {
-      hd->center_x = LAYOUT_CART_HEADER_FILTERS_X;
-      hd->center_y = LAYOUT_CART_HEADER_FILTERS_Y;
     }
     else
     {
@@ -364,8 +334,6 @@ short int layout_setup_params()
 {
   int k;
 
-  int shifted_index;
-
   param* pr;
 
   /* patch edit params */
@@ -375,63 +343,37 @@ short int layout_setup_params()
   {
     pr = &G_layout_params[k];
 
-    /* determine label and oscillator / envelope / lfo number */
-    shifted_index = k - LAYOUT_CART_PARAMS_START_INDEX;
-
-    if ((shifted_index >= 0) && (shifted_index < LAYOUT_CART_PARAM_FIRST_OSC_ENV_INDEX))
-    {
-      pr->label = shifted_index;
-      pr->num = 0;
-    }
-    else if ( (shifted_index >= LAYOUT_CART_PARAM_FIRST_OSC_ENV_INDEX) && 
-              (shifted_index <= LAYOUT_CART_PARAM_LAST_OSC_ENV_INDEX))
-    {
-      pr->label = (shifted_index - LAYOUT_CART_PARAM_FIRST_OSC_ENV_INDEX) % LAYOUT_CART_PARAM_NUM_OSC_ENV_LABELS;
-      pr->label += LAYOUT_CART_PARAM_FIRST_OSC_ENV_LABEL;
-
-      pr->num = (shifted_index - LAYOUT_CART_PARAM_FIRST_OSC_ENV_INDEX) / LAYOUT_CART_PARAM_NUM_OSC_ENV_LABELS;
-    }
-    else
-    {
-      pr->label = shifted_index - (LAYOUT_CART_PARAM_LAST_OSC_ENV_INDEX + 1);
-      pr->label += LAYOUT_CART_PARAM_LAST_OSC_ENV_LABEL + 1;
-
-      pr->num = 0;
-    }
+    /* determine label */
+    pr->label = k - LAYOUT_CART_PARAMS_START_INDEX;
 
     /* set type */
-    if ((pr->label == LAYOUT_CART_PARAM_LABEL_OSC_WAVEFORM)       || 
+    if ((pr->label == LAYOUT_CART_PARAM_LABEL_OSC_1_WAVEFORM)     || 
+        (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_2_WAVEFORM)     || 
         (pr->label == LAYOUT_CART_PARAM_LABEL_ARPEGGIO_PATTERN)   || 
         (pr->label == LAYOUT_CART_PARAM_LABEL_LFO_WAVEFORM)       || 
         (pr->label == LAYOUT_CART_PARAM_LABEL_MOD_WHEEL_EFFECT)   || 
         (pr->label == LAYOUT_CART_PARAM_LABEL_AFTERTOUCH_EFFECT)  || 
-        (pr->label == LAYOUT_CART_PARAM_LABEL_EXP_PEDAL_EFFECT)   || 
-        (pr->label == LAYOUT_CART_PARAM_LABEL_NOISE_MODE))
+        (pr->label == LAYOUT_CART_PARAM_LABEL_EXP_PEDAL_EFFECT))
     {
       pr->type = LAYOUT_PARAM_TYPE_ARROWS;
     }
-    else if ( (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_FREQ_MODE)      || 
-              (pr->label == LAYOUT_CART_PARAM_LABEL_PORTAMENTO_MODE)    || 
+    else if ( (pr->label == LAYOUT_CART_PARAM_LABEL_PORTAMENTO_MODE)    || 
               (pr->label == LAYOUT_CART_PARAM_LABEL_PORTAMENTO_FOLLOW)  || 
               (pr->label == LAYOUT_CART_PARAM_LABEL_PORTAMENTO_LEGATO)  || 
               (pr->label == LAYOUT_CART_PARAM_LABEL_ARPEGGIO_MODE)      || 
-              (pr->label == LAYOUT_CART_PARAM_LABEL_PEG_LEGATO)         || 
-              (pr->label == LAYOUT_CART_PARAM_LABEL_PEG_TRANSPOSE)      || 
               (pr->label == LAYOUT_CART_PARAM_LABEL_VIBRATO_MODE)       || 
               (pr->label == LAYOUT_CART_PARAM_LABEL_TREMOLO_MODE)       || 
               (pr->label == LAYOUT_CART_PARAM_LABEL_VELOCITY_MODE)      || 
-              (pr->label == LAYOUT_CART_PARAM_LABEL_BOOST_MODE)         || 
-              (pr->label == LAYOUT_CART_PARAM_LABEL_PITCH_WHEEL_MODE)   || 
-              (pr->label == LAYOUT_CART_PARAM_LABEL_LEGACY_MULTIPLE)    || 
-              (pr->label == LAYOUT_CART_PARAM_LABEL_LEGACY_KEYSCALE)    || 
               (pr->label == LAYOUT_CART_PARAM_LABEL_SYNC_OSC)           || 
-              (pr->label == LAYOUT_CART_PARAM_LABEL_SYNC_LFO))
+              (pr->label == LAYOUT_CART_PARAM_LABEL_SYNC_LFO)           || 
+              (pr->label == LAYOUT_CART_PARAM_LABEL_BOOST_MODE)         || 
+              (pr->label == LAYOUT_CART_PARAM_LABEL_PITCH_WHEEL_MODE))
     {
       pr->type = LAYOUT_PARAM_TYPE_RADIO;
     }
     else if ( (pr->label == LAYOUT_CART_PARAM_LABEL_CART_NAME)  || 
               (pr->label == LAYOUT_CART_PARAM_LABEL_PATCH_NAME) || 
-              (pr->label == LAYOUT_CART_PARAM_LABEL_ALG_NAME))
+              (pr->label == LAYOUT_CART_PARAM_LABEL_PROG_NAME))
     {
       pr->type = LAYOUT_PARAM_TYPE_NAME;
     }
@@ -476,160 +418,326 @@ short int layout_setup_params()
       pr->lower_bound = PATCH_PATCH_NO_LOWER_BOUND;
       pr->upper_bound = PATCH_PATCH_NO_UPPER_BOUND;
     }
-    /* algorithm */
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_ALGORITHM)
+    /* program */
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PROGRAM)
     {
-      pr->center_x = LAYOUT_CART_COLUMN_1_CENTER_X;
-      pr->center_y = LAYOUT_CART_ALGORITHM_Y;
+      pr->center_x = LAYOUT_CART_PROGRAM_X;
+      pr->center_y = LAYOUT_CART_PROGRAM_Y;
 
-      pr->lower_bound = PATCH_ALGORITHM_LOWER_BOUND;
-      pr->upper_bound = PATCH_ALGORITHM_UPPER_BOUND;
+      pr->lower_bound = PATCH_PROGRAM_LOWER_BOUND;
+      pr->upper_bound = PATCH_PROGRAM_UPPER_BOUND;
     }
-    /* algorithm name */
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_ALG_NAME)
+    /* program name */
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PROG_NAME)
     {
-      pr->center_x = LAYOUT_CART_COLUMN_2_CENTER_X;
-      pr->center_y = LAYOUT_CART_ALGORITHM_Y;
+      pr->center_x = LAYOUT_CART_PROG_NAME_X;
+      pr->center_y = LAYOUT_CART_PROG_NAME_Y;
 
-      pr->lower_bound = PATCH_ALGORITHM_LOWER_BOUND;
-      pr->upper_bound = PATCH_ALGORITHM_UPPER_BOUND;
+      pr->lower_bound = PATCH_PROGRAM_LOWER_BOUND;
+      pr->upper_bound = PATCH_PROGRAM_UPPER_BOUND;
     }
-    /* oscillator & envelope parameters */
-    else if ( (pr->label >= LAYOUT_CART_PARAM_FIRST_OSC_ENV_LABEL) && 
-              (pr->label <= LAYOUT_CART_PARAM_LAST_OSC_ENV_LABEL))
+    /* oscillator 1 */
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_1_WAVEFORM)
     {
-      /* determine column */
-      if (pr->num == 0)
-        pr->center_x = LAYOUT_CART_COLUMN_1_CENTER_X;
-      else if (pr->num == 1)
-        pr->center_x = LAYOUT_CART_COLUMN_2_CENTER_X;
-      else if (pr->num == 2)
-        pr->center_x = LAYOUT_CART_COLUMN_3_CENTER_X;
-      else if (pr->num == 3)
-        pr->center_x = LAYOUT_CART_COLUMN_4_CENTER_X;
-      else
-        pr->center_x = 0;
+      pr->center_x = LAYOUT_CART_HEADER_OSC_1_X;
+      pr->center_y = LAYOUT_CART_OSC_1_WAVEFORM_Y;
 
-      /* determine vertical position and bounds */
-      if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_WAVEFORM)
-      {
-        pr->center_y = LAYOUT_CART_OSC_WAVEFORM_Y;
+      pr->lower_bound = PATCH_OSC_WAVEFORM_LOWER_BOUND;
+      pr->upper_bound = PATCH_OSC_WAVEFORM_UPPER_BOUND;
+    }
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_1_DETUNE)
+    {
+      pr->center_x = LAYOUT_CART_HEADER_OSC_1_X;
+      pr->center_y = LAYOUT_CART_OSC_1_DETUNE_Y;
 
-        pr->lower_bound = PATCH_OSC_WAVEFORM_LOWER_BOUND;
-        pr->upper_bound = PATCH_OSC_WAVEFORM_UPPER_BOUND;
-      }
-      else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_FEEDBACK)
-      {
-        pr->center_y = LAYOUT_CART_OSC_FEEDBACK_Y;
+      pr->lower_bound = PATCH_OSC_DETUNE_LOWER_BOUND;
+      pr->upper_bound = PATCH_OSC_DETUNE_UPPER_BOUND;
+    }
+    /* oscillator 2 */
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_2_WAVEFORM)
+    {
+      pr->center_x = LAYOUT_CART_HEADER_OSC_2_X;
+      pr->center_y = LAYOUT_CART_OSC_2_WAVEFORM_Y;
 
-        pr->lower_bound = PATCH_OSC_FEEDBACK_LOWER_BOUND;
-        pr->upper_bound = PATCH_OSC_FEEDBACK_UPPER_BOUND;
-      }
-      else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_PHI)
-      {
-        pr->center_y = LAYOUT_CART_OSC_PHI_Y;
+      pr->lower_bound = PATCH_OSC_WAVEFORM_LOWER_BOUND;
+      pr->upper_bound = PATCH_OSC_WAVEFORM_UPPER_BOUND;
+    }
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_2_DETUNE)
+    {
+      pr->center_x = LAYOUT_CART_HEADER_OSC_2_X;
+      pr->center_y = LAYOUT_CART_OSC_2_DETUNE_Y;
 
-        pr->lower_bound = PATCH_OSC_PHI_LOWER_BOUND;
-        pr->upper_bound = PATCH_OSC_PHI_UPPER_BOUND;
-      }
-      else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_FREQ_MODE)
-      {
-        pr->center_y = LAYOUT_CART_OSC_FREQ_MODE_Y;
+      pr->lower_bound = PATCH_OSC_DETUNE_LOWER_BOUND;
+      pr->upper_bound = PATCH_OSC_DETUNE_UPPER_BOUND;
+    }
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_2_MULTIPLE)
+    {
+      pr->center_x = LAYOUT_CART_HEADER_OSC_2_X;
+      pr->center_y = LAYOUT_CART_OSC_2_MULTIPLE_Y;
 
-        pr->lower_bound = PATCH_OSC_FREQ_MODE_LOWER_BOUND;
-        pr->upper_bound = PATCH_OSC_FREQ_MODE_UPPER_BOUND;
-      }
-      else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_MULTIPLE)
-      {
-        pr->center_y = LAYOUT_CART_OSC_MULTIPLE_Y;
+      pr->lower_bound = PATCH_OSC_MULTIPLE_LOWER_BOUND;
+      pr->upper_bound = PATCH_OSC_MULTIPLE_UPPER_BOUND;
+    }
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_2_DIVISOR)
+    {
+      pr->center_x = LAYOUT_CART_HEADER_OSC_2_X;
+      pr->center_y = LAYOUT_CART_OSC_2_DIVISOR_Y;
 
-        pr->lower_bound = PATCH_OSC_MULTIPLE_LOWER_BOUND;
-        pr->upper_bound = PATCH_OSC_MULTIPLE_UPPER_BOUND;
-      }
-      else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_DIVISOR)
-      {
-        pr->center_y = LAYOUT_CART_OSC_DIVISOR_Y;
+      pr->lower_bound = PATCH_OSC_DIVISOR_LOWER_BOUND;
+      pr->upper_bound = PATCH_OSC_DIVISOR_UPPER_BOUND;
+    }
+    /* lowpass */
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_LOWPASS_MULTIPLE)
+    {
+      pr->center_x = LAYOUT_CART_HEADER_LOWPASS_X;
+      pr->center_y = LAYOUT_CART_LOWPASS_MULTIPLE_Y;
 
-        pr->lower_bound = PATCH_OSC_DIVISOR_LOWER_BOUND;
-        pr->upper_bound = PATCH_OSC_DIVISOR_UPPER_BOUND;
-      }
-      else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_DETUNE)
-      {
-        pr->center_y = LAYOUT_CART_OSC_DETUNE_Y;
+      pr->lower_bound = PATCH_LOWPASS_MULTIPLE_LOWER_BOUND;
+      pr->upper_bound = PATCH_LOWPASS_MULTIPLE_UPPER_BOUND;
+    }
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_LOWPASS_DIVISOR)
+    {
+      pr->center_x = LAYOUT_CART_HEADER_LOWPASS_X;
+      pr->center_y = LAYOUT_CART_LOWPASS_DIVISOR_Y;
 
-        pr->lower_bound = PATCH_OSC_DETUNE_LOWER_BOUND;
-        pr->upper_bound = PATCH_OSC_DETUNE_UPPER_BOUND;
-      }
-      else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_ATTACK)
-      {
-        pr->center_y = LAYOUT_CART_ENV_ATTACK_Y;
+      pr->lower_bound = PATCH_LOWPASS_DIVISOR_LOWER_BOUND;
+      pr->upper_bound = PATCH_LOWPASS_DIVISOR_UPPER_BOUND;
+    }
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_LOWPASS_KEYTRACKING)
+    {
+      pr->center_x = LAYOUT_CART_HEADER_LOWPASS_X;
+      pr->center_y = LAYOUT_CART_LOWPASS_KEYTRACKING_Y;
 
-        pr->lower_bound = PATCH_ENV_RATE_LOWER_BOUND;
-        pr->upper_bound = PATCH_ENV_RATE_UPPER_BOUND;
-      }
-      else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_DECAY_1)
-      {
-        pr->center_y = LAYOUT_CART_ENV_DECAY_1_Y;
+      pr->lower_bound = PATCH_LOWPASS_KEYTRACKING_LOWER_BOUND;
+      pr->upper_bound = PATCH_LOWPASS_KEYTRACKING_UPPER_BOUND;
+    }
+    /* highpass */
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_HIGHPASS_CUTOFF)
+    {
+      pr->center_x = LAYOUT_CART_HEADER_HIGHPASS_X;
+      pr->center_y = LAYOUT_CART_HIGHPASS_CUTOFF_Y;
 
-        pr->lower_bound = PATCH_ENV_RATE_LOWER_BOUND;
-        pr->upper_bound = PATCH_ENV_RATE_UPPER_BOUND;
-      }
-      else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_DECAY_2)
-      {
-        pr->center_y = LAYOUT_CART_ENV_DECAY_2_Y;
+      pr->lower_bound = PATCH_HIGHPASS_CUTOFF_LOWER_BOUND;
+      pr->upper_bound = PATCH_HIGHPASS_CUTOFF_UPPER_BOUND;
+    }
+    /* amplitude envelope */
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_AMP_ENV_ATTACK)
+    {
+      pr->center_x = LAYOUT_CART_HEADER_AMP_ENV_X;
+      pr->center_y = LAYOUT_CART_AMP_ENV_ATTACK_Y;
 
-        pr->lower_bound = PATCH_ENV_RATE_LOWER_BOUND;
-        pr->upper_bound = PATCH_ENV_RATE_UPPER_BOUND;
-      }
-      else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_RELEASE)
-      {
-        pr->center_y = LAYOUT_CART_ENV_RELEASE_Y;
+      pr->lower_bound = PATCH_ENV_TIME_LOWER_BOUND;
+      pr->upper_bound = PATCH_ENV_TIME_UPPER_BOUND;
+    }
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_AMP_ENV_DECAY_1)
+    {
+      pr->center_x = LAYOUT_CART_HEADER_AMP_ENV_X;
+      pr->center_y = LAYOUT_CART_AMP_ENV_DECAY_1_Y;
 
-        pr->lower_bound = PATCH_ENV_RATE_LOWER_BOUND;
-        pr->upper_bound = PATCH_ENV_RATE_UPPER_BOUND;
-      }
-      else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_AMPLITUDE)
-      {
-        pr->center_y = LAYOUT_CART_ENV_AMPLITUDE_Y;
+      pr->lower_bound = PATCH_ENV_TIME_LOWER_BOUND;
+      pr->upper_bound = PATCH_ENV_TIME_UPPER_BOUND;
+    }
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_AMP_ENV_DECAY_2)
+    {
+      pr->center_x = LAYOUT_CART_HEADER_AMP_ENV_X;
+      pr->center_y = LAYOUT_CART_AMP_ENV_DECAY_2_Y;
 
-        pr->lower_bound = PATCH_ENV_AMPLITUDE_LOWER_BOUND;
-        pr->upper_bound = PATCH_ENV_AMPLITUDE_UPPER_BOUND;
-      }
-      else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_SUSTAIN)
-      {
-        pr->center_y = LAYOUT_CART_ENV_SUSTAIN_Y;
+      pr->lower_bound = PATCH_ENV_TIME_LOWER_BOUND;
+      pr->upper_bound = PATCH_ENV_TIME_UPPER_BOUND;
+    }
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_AMP_ENV_RELEASE)
+    {
+      pr->center_x = LAYOUT_CART_HEADER_AMP_ENV_X;
+      pr->center_y = LAYOUT_CART_AMP_ENV_RELEASE_Y;
 
-        pr->lower_bound = PATCH_ENV_SUSTAIN_LOWER_BOUND;
-        pr->upper_bound = PATCH_ENV_SUSTAIN_UPPER_BOUND;
-      }
-      else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_RATE_KS)
-      {
-        pr->center_y = LAYOUT_CART_ENV_RATE_KS_Y;
+      pr->lower_bound = PATCH_ENV_TIME_LOWER_BOUND;
+      pr->upper_bound = PATCH_ENV_TIME_UPPER_BOUND;
+    }
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_AMP_ENV_SUSTAIN)
+    {
+      pr->center_x = LAYOUT_CART_HEADER_AMP_ENV_X;
+      pr->center_y = LAYOUT_CART_AMP_ENV_SUSTAIN_Y;
 
-        pr->lower_bound = PATCH_ENV_KEYSCALING_LOWER_BOUND;
-        pr->upper_bound = PATCH_ENV_KEYSCALING_UPPER_BOUND;
-      }
-      else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_LEVEL_KS)
-      {
-        pr->center_y = LAYOUT_CART_ENV_LEVEL_KS_Y;
+      pr->lower_bound = PATCH_ENV_LEVEL_LOWER_BOUND;
+      pr->upper_bound = PATCH_ENV_LEVEL_UPPER_BOUND;
+    }
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_AMP_ENV_RATE_KS)
+    {
+      pr->center_x = LAYOUT_CART_HEADER_AMP_ENV_X;
+      pr->center_y = LAYOUT_CART_AMP_ENV_RATE_KS_Y;
 
-        pr->lower_bound = PATCH_ENV_KEYSCALING_LOWER_BOUND;
-        pr->upper_bound = PATCH_ENV_KEYSCALING_UPPER_BOUND;
-      }
-      else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_BREAK_POINT)
-      {
-        pr->center_y = LAYOUT_CART_ENV_BREAK_POINT_Y;
+      pr->lower_bound = PATCH_ENV_KEYSCALING_LOWER_BOUND;
+      pr->upper_bound = PATCH_ENV_KEYSCALING_UPPER_BOUND;
+    }
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_AMP_ENV_LEFT_KS)
+    {
+      pr->center_x = LAYOUT_CART_HEADER_AMP_ENV_X;
+      pr->center_y = LAYOUT_CART_AMP_ENV_LEFT_KS_Y;
 
-        pr->lower_bound = PATCH_ENV_BREAK_POINT_LOWER_BOUND;
-        pr->upper_bound = PATCH_ENV_BREAK_POINT_UPPER_BOUND;
-      }
-      else
-      {
-        pr->center_y = 0;
+      pr->lower_bound = PATCH_ENV_KEYSCALING_LOWER_BOUND;
+      pr->upper_bound = PATCH_ENV_KEYSCALING_UPPER_BOUND;
+    }
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_AMP_ENV_RIGHT_KS)
+    {
+      pr->center_x = LAYOUT_CART_HEADER_AMP_ENV_X;
+      pr->center_y = LAYOUT_CART_AMP_ENV_RIGHT_KS_Y;
 
-        pr->lower_bound = 0;
-        pr->upper_bound = 0;
-      }
+      pr->lower_bound = PATCH_ENV_KEYSCALING_LOWER_BOUND;
+      pr->upper_bound = PATCH_ENV_KEYSCALING_UPPER_BOUND;
+    }
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_AMP_ENV_BREAK_POINT)
+    {
+      pr->center_x = LAYOUT_CART_HEADER_AMP_ENV_X;
+      pr->center_y = LAYOUT_CART_AMP_ENV_BREAK_POINT_Y;
+
+      pr->lower_bound = PATCH_ENV_BREAK_POINT_LOWER_BOUND;
+      pr->upper_bound = PATCH_ENV_BREAK_POINT_UPPER_BOUND;
+    }
+    /* filter envelope */
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_FILTER_ENV_ATTACK)
+    {
+      pr->center_x = LAYOUT_CART_HEADER_FILTER_ENV_X;
+      pr->center_y = LAYOUT_CART_FILTER_ENV_ATTACK_Y;
+
+      pr->lower_bound = PATCH_PEG_TIME_LOWER_BOUND;
+      pr->upper_bound = PATCH_PEG_TIME_UPPER_BOUND;
+    }
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_FILTER_ENV_DECAY_1)
+    {
+      pr->center_x = LAYOUT_CART_HEADER_FILTER_ENV_X;
+      pr->center_y = LAYOUT_CART_FILTER_ENV_DECAY_1_Y;
+
+      pr->lower_bound = PATCH_PEG_TIME_LOWER_BOUND;
+      pr->upper_bound = PATCH_PEG_TIME_UPPER_BOUND;
+    }
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_FILTER_ENV_DECAY_2)
+    {
+      pr->center_x = LAYOUT_CART_HEADER_FILTER_ENV_X;
+      pr->center_y = LAYOUT_CART_FILTER_ENV_DECAY_2_Y;
+
+      pr->lower_bound = PATCH_PEG_TIME_LOWER_BOUND;
+      pr->upper_bound = PATCH_PEG_TIME_UPPER_BOUND;
+    }
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_FILTER_ENV_RELEASE)
+    {
+      pr->center_x = LAYOUT_CART_HEADER_FILTER_ENV_X;
+      pr->center_y = LAYOUT_CART_FILTER_ENV_RELEASE_Y;
+
+      pr->lower_bound = PATCH_PEG_TIME_LOWER_BOUND;
+      pr->upper_bound = PATCH_PEG_TIME_UPPER_BOUND;
+    }
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_FILTER_ENV_AMPLITUDE)
+    {
+      pr->center_x = LAYOUT_CART_HEADER_FILTER_ENV_X;
+      pr->center_y = LAYOUT_CART_FILTER_ENV_AMPLITUDE_Y;
+
+      pr->lower_bound = PATCH_PEG_LEVEL_LOWER_BOUND;
+      pr->upper_bound = PATCH_PEG_LEVEL_UPPER_BOUND;
+    }
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_FILTER_ENV_SUSTAIN)
+    {
+      pr->center_x = LAYOUT_CART_HEADER_FILTER_ENV_X;
+      pr->center_y = LAYOUT_CART_FILTER_ENV_SUSTAIN_Y;
+
+      pr->lower_bound = PATCH_PEG_LEVEL_LOWER_BOUND;
+      pr->upper_bound = PATCH_PEG_LEVEL_UPPER_BOUND;
+    }
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_FILTER_ENV_HOLD)
+    {
+      pr->center_x = LAYOUT_CART_HEADER_FILTER_ENV_X;
+      pr->center_y = LAYOUT_CART_FILTER_ENV_HOLD_Y;
+
+      pr->lower_bound = PATCH_PEG_LEVEL_LOWER_BOUND;
+      pr->upper_bound = PATCH_PEG_LEVEL_UPPER_BOUND;
+    }
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_FILTER_ENV_FINALE)
+    {
+      pr->center_x = LAYOUT_CART_HEADER_FILTER_ENV_X;
+      pr->center_y = LAYOUT_CART_FILTER_ENV_FINALE_Y;
+
+      pr->lower_bound = PATCH_PEG_LEVEL_LOWER_BOUND;
+      pr->upper_bound = PATCH_PEG_LEVEL_UPPER_BOUND;
+    }
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_FILTER_ENV_RATE_KS)
+    {
+      pr->center_x = LAYOUT_CART_HEADER_FILTER_ENV_X;
+      pr->center_y = LAYOUT_CART_FILTER_ENV_RATE_KS_Y;
+
+      pr->lower_bound = PATCH_PEG_KEYSCALING_LOWER_BOUND;
+      pr->upper_bound = PATCH_PEG_KEYSCALING_UPPER_BOUND;
+    }
+    /* extra envelope */
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_EXTRA_ENV_ATTACK)
+    {
+      pr->center_x = LAYOUT_CART_HEADER_EXTRA_ENV_X;
+      pr->center_y = LAYOUT_CART_EXTRA_ENV_ATTACK_Y;
+
+      pr->lower_bound = PATCH_PEG_TIME_LOWER_BOUND;
+      pr->upper_bound = PATCH_PEG_TIME_UPPER_BOUND;
+    }
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_EXTRA_ENV_DECAY_1)
+    {
+      pr->center_x = LAYOUT_CART_HEADER_EXTRA_ENV_X;
+      pr->center_y = LAYOUT_CART_EXTRA_ENV_DECAY_1_Y;
+
+      pr->lower_bound = PATCH_PEG_TIME_LOWER_BOUND;
+      pr->upper_bound = PATCH_PEG_TIME_UPPER_BOUND;
+    }
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_EXTRA_ENV_DECAY_2)
+    {
+      pr->center_x = LAYOUT_CART_HEADER_EXTRA_ENV_X;
+      pr->center_y = LAYOUT_CART_EXTRA_ENV_DECAY_2_Y;
+
+      pr->lower_bound = PATCH_PEG_TIME_LOWER_BOUND;
+      pr->upper_bound = PATCH_PEG_TIME_UPPER_BOUND;
+    }
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_EXTRA_ENV_RELEASE)
+    {
+      pr->center_x = LAYOUT_CART_HEADER_EXTRA_ENV_X;
+      pr->center_y = LAYOUT_CART_EXTRA_ENV_RELEASE_Y;
+
+      pr->lower_bound = PATCH_PEG_TIME_LOWER_BOUND;
+      pr->upper_bound = PATCH_PEG_TIME_UPPER_BOUND;
+    }
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_EXTRA_ENV_AMPLITUDE)
+    {
+      pr->center_x = LAYOUT_CART_HEADER_EXTRA_ENV_X;
+      pr->center_y = LAYOUT_CART_EXTRA_ENV_AMPLITUDE_Y;
+
+      pr->lower_bound = PATCH_PEG_LEVEL_LOWER_BOUND;
+      pr->upper_bound = PATCH_PEG_LEVEL_UPPER_BOUND;
+    }
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_EXTRA_ENV_SUSTAIN)
+    {
+      pr->center_x = LAYOUT_CART_HEADER_EXTRA_ENV_X;
+      pr->center_y = LAYOUT_CART_EXTRA_ENV_SUSTAIN_Y;
+
+      pr->lower_bound = PATCH_PEG_LEVEL_LOWER_BOUND;
+      pr->upper_bound = PATCH_PEG_LEVEL_UPPER_BOUND;
+    }
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_EXTRA_ENV_HOLD)
+    {
+      pr->center_x = LAYOUT_CART_HEADER_EXTRA_ENV_X;
+      pr->center_y = LAYOUT_CART_EXTRA_ENV_HOLD_Y;
+
+      pr->lower_bound = PATCH_PEG_LEVEL_LOWER_BOUND;
+      pr->upper_bound = PATCH_PEG_LEVEL_UPPER_BOUND;
+    }
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_EXTRA_ENV_FINALE)
+    {
+      pr->center_x = LAYOUT_CART_HEADER_EXTRA_ENV_X;
+      pr->center_y = LAYOUT_CART_EXTRA_ENV_FINALE_Y;
+
+      pr->lower_bound = PATCH_PEG_LEVEL_LOWER_BOUND;
+      pr->upper_bound = PATCH_PEG_LEVEL_UPPER_BOUND;
+    }
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_EXTRA_ENV_RATE_KS)
+    {
+      pr->center_x = LAYOUT_CART_HEADER_EXTRA_ENV_X;
+      pr->center_y = LAYOUT_CART_EXTRA_ENV_RATE_KS_Y;
+
+      pr->lower_bound = PATCH_PEG_KEYSCALING_LOWER_BOUND;
+      pr->upper_bound = PATCH_PEG_KEYSCALING_UPPER_BOUND;
     }
     /* portamento */
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_PORTAMENTO_MODE)
@@ -696,72 +804,6 @@ short int layout_setup_params()
 
       pr->lower_bound = PATCH_ARPEGGIO_SPEED_LOWER_BOUND;
       pr->upper_bound = PATCH_ARPEGGIO_SPEED_UPPER_BOUND;
-    }
-    /* pitch envelope rates */
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PEG_ATTACK)
-    {
-      pr->center_x = LAYOUT_CART_HEADER_PEG_RATES_X;
-      pr->center_y = LAYOUT_CART_PEG_ATTACK_Y;
-
-      pr->lower_bound = PATCH_PEG_RATE_LOWER_BOUND;
-      pr->upper_bound = PATCH_PEG_RATE_UPPER_BOUND;
-    }
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PEG_DECAY)
-    {
-      pr->center_x = LAYOUT_CART_HEADER_PEG_RATES_X;
-      pr->center_y = LAYOUT_CART_PEG_DECAY_Y;
-
-      pr->lower_bound = PATCH_PEG_RATE_LOWER_BOUND;
-      pr->upper_bound = PATCH_PEG_RATE_UPPER_BOUND;
-    }
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PEG_RELEASE)
-    {
-      pr->center_x = LAYOUT_CART_HEADER_PEG_RATES_X;
-      pr->center_y = LAYOUT_CART_PEG_RELEASE_Y;
-
-      pr->lower_bound = PATCH_PEG_RATE_LOWER_BOUND;
-      pr->upper_bound = PATCH_PEG_RATE_UPPER_BOUND;
-    }
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PEG_LEGATO)
-    {
-      pr->center_x = LAYOUT_CART_HEADER_PEG_RATES_X;
-      pr->center_y = LAYOUT_CART_PEG_LEGATO_Y;
-
-      pr->lower_bound = PATCH_PEG_LEGATO_LOWER_BOUND;
-      pr->upper_bound = PATCH_PEG_LEGATO_UPPER_BOUND;
-    }
-    /* pitch envelope levels */
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PEG_AMPLITUDE)
-    {
-      pr->center_x = LAYOUT_CART_HEADER_PEG_LEVELS_X;
-      pr->center_y = LAYOUT_CART_PEG_AMPLITUDE_Y;
-
-      pr->lower_bound = PATCH_PEG_LEVEL_LOWER_BOUND;
-      pr->upper_bound = PATCH_PEG_LEVEL_UPPER_BOUND;
-    }
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PEG_SUSTAIN)
-    {
-      pr->center_x = LAYOUT_CART_HEADER_PEG_LEVELS_X;
-      pr->center_y = LAYOUT_CART_PEG_SUSTAIN_Y;
-
-      pr->lower_bound = PATCH_PEG_LEVEL_LOWER_BOUND;
-      pr->upper_bound = PATCH_PEG_LEVEL_UPPER_BOUND;
-    }
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PEG_FINALE)
-    {
-      pr->center_x = LAYOUT_CART_HEADER_PEG_LEVELS_X;
-      pr->center_y = LAYOUT_CART_PEG_FINALE_Y;
-
-      pr->lower_bound = PATCH_PEG_LEVEL_LOWER_BOUND;
-      pr->upper_bound = PATCH_PEG_LEVEL_UPPER_BOUND;
-    }
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_PEG_TRANSPOSE)
-    {
-      pr->center_x = LAYOUT_CART_HEADER_PEG_LEVELS_X;
-      pr->center_y = LAYOUT_CART_PEG_TRANSPOSE_Y;
-
-      pr->lower_bound = PATCH_PEG_TRANSPOSE_LOWER_BOUND;
-      pr->upper_bound = PATCH_PEG_TRANSPOSE_UPPER_BOUND;
     }
     /* lfo */
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_LFO_WAVEFORM)
@@ -897,22 +939,22 @@ short int layout_setup_params()
       pr->lower_bound = PATCH_VELOCITY_SCALING_LOWER_BOUND;
       pr->upper_bound = PATCH_VELOCITY_SCALING_UPPER_BOUND;
     }
-    /* noise */
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_NOISE_MODE)
+    /* sync */
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_SYNC_OSC)
     {
-      pr->center_x = LAYOUT_CART_HEADER_NOISE_X;
-      pr->center_y = LAYOUT_CART_NOISE_MODE_Y;
+      pr->center_x = LAYOUT_CART_HEADER_SYNC_X;
+      pr->center_y = LAYOUT_CART_SYNC_OSC_Y;
 
-      pr->lower_bound = PATCH_NOISE_MODE_LOWER_BOUND;
-      pr->upper_bound = PATCH_NOISE_MODE_UPPER_BOUND;
+      pr->lower_bound = PATCH_SYNC_LOWER_BOUND;
+      pr->upper_bound = PATCH_SYNC_UPPER_BOUND;
     }
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_NOISE_FREQUENCY)
+    else if (pr->label == LAYOUT_CART_PARAM_LABEL_SYNC_LFO)
     {
-      pr->center_x = LAYOUT_CART_HEADER_NOISE_X;
-      pr->center_y = LAYOUT_CART_NOISE_FREQUENCY_Y;
+      pr->center_x = LAYOUT_CART_HEADER_SYNC_X;
+      pr->center_y = LAYOUT_CART_SYNC_LFO_Y;
 
-      pr->lower_bound = PATCH_NOISE_FREQUENCY_LOWER_BOUND;
-      pr->upper_bound = PATCH_NOISE_FREQUENCY_UPPER_BOUND;
+      pr->lower_bound = PATCH_SYNC_LOWER_BOUND;
+      pr->upper_bound = PATCH_SYNC_UPPER_BOUND;
     }
     /* boost */
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_BOOST_MODE)
@@ -947,57 +989,6 @@ short int layout_setup_params()
 
       pr->lower_bound = PATCH_PITCH_WHEEL_RANGE_LOWER_BOUND;
       pr->upper_bound = PATCH_PITCH_WHEEL_RANGE_UPPER_BOUND;
-    }
-    /* legacy */
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_LEGACY_MULTIPLE)
-    {
-      pr->center_x = LAYOUT_CART_HEADER_LEGACY_X;
-      pr->center_y = LAYOUT_CART_LEGACY_MULTIPLE_Y;
-
-      pr->lower_bound = PATCH_LEGACY_MULTIPLE_LOWER_BOUND;
-      pr->upper_bound = PATCH_LEGACY_MULTIPLE_UPPER_BOUND;
-    }
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_LEGACY_KEYSCALE)
-    {
-      pr->center_x = LAYOUT_CART_HEADER_LEGACY_X;
-      pr->center_y = LAYOUT_CART_LEGACY_KEYSCALE_Y;
-
-      pr->lower_bound = PATCH_LEGACY_KEYSCALE_LOWER_BOUND;
-      pr->upper_bound = PATCH_LEGACY_KEYSCALE_UPPER_BOUND;
-    }
-    /* sync */
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_SYNC_OSC)
-    {
-      pr->center_x = LAYOUT_CART_HEADER_SYNC_X;
-      pr->center_y = LAYOUT_CART_SYNC_OSC_Y;
-
-      pr->lower_bound = PATCH_SYNC_LOWER_BOUND;
-      pr->upper_bound = PATCH_SYNC_UPPER_BOUND;
-    }
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_SYNC_LFO)
-    {
-      pr->center_x = LAYOUT_CART_HEADER_SYNC_X;
-      pr->center_y = LAYOUT_CART_SYNC_LFO_Y;
-
-      pr->lower_bound = PATCH_SYNC_LOWER_BOUND;
-      pr->upper_bound = PATCH_SYNC_UPPER_BOUND;
-    }
-    /* filters */
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_HIGHPASS_CUTOFF)
-    {
-      pr->center_x = LAYOUT_CART_HEADER_FILTERS_X;
-      pr->center_y = LAYOUT_CART_HIGHPASS_CUTOFF_Y;
-
-      pr->lower_bound = PATCH_HIGHPASS_CUTOFF_LOWER_BOUND;
-      pr->upper_bound = PATCH_HIGHPASS_CUTOFF_UPPER_BOUND;
-    }
-    else if (pr->label == LAYOUT_CART_PARAM_LABEL_LOWPASS_CUTOFF)
-    {
-      pr->center_x = LAYOUT_CART_HEADER_FILTERS_X;
-      pr->center_y = LAYOUT_CART_LOWPASS_CUTOFF_Y;
-
-      pr->lower_bound = PATCH_LOWPASS_CUTOFF_LOWER_BOUND;
-      pr->upper_bound = PATCH_LOWPASS_CUTOFF_UPPER_BOUND;
     }
     /* audition */
     else if (pr->label == LAYOUT_CART_PARAM_LABEL_AUDITION_VELOCITY)

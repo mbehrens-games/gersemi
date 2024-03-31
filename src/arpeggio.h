@@ -10,6 +10,7 @@
 
 #define ARPEGGIO_NUM_KEYS   16
 #define ARPEGGIO_NUM_NOTES  (ARPEGGIO_NUM_KEYS * PATCH_ARPEGGIO_OCTAVES_NUM_VALUES)
+#define ARPEGGIO_NUM_STEPS  (2 * ARPEGGIO_NUM_NOTES)
 
 typedef struct arpeggio
 {
@@ -19,21 +20,24 @@ typedef struct arpeggio
   short int octaves;
   short int speed;
 
-  /* phase, phase increment */
-  unsigned int phase;
-  unsigned int increment;
-
   /* tempo */
   short int tempo;
 
-  /* step index */
-  short int step_index;
+  /* phase, phase increment */
+  unsigned int phase;
+  unsigned int increment;
 
   /* notes */
   short int sorted_notes[ARPEGGIO_NUM_NOTES];
   short int num_notes;
 
+  short int pattern_steps[ARPEGGIO_NUM_STEPS];
+  short int num_steps;
+
   short int last_note;
+
+  /* step index */
+  short int step_index;
 
   /* switch */
   short int on_switch;
@@ -56,7 +60,12 @@ short int arpeggio_set_switch(int instrument_index, short int state);
 
 short int arpeggio_set_tempo(int instrument_index, short int tempo);
 
-short int arpeggio_generate_notes(int instrument_index);
+short int arpeggio_sync_to_tempo(int instrument_index);
+
+short int arpeggio_generate_sorted_notes(int instrument_index);
+short int arpeggio_generate_pattern_steps(int instrument_index);
+
+short int arpeggio_key_on_or_key_off(int instrument_index);
 
 short int arpeggio_update_all();
 

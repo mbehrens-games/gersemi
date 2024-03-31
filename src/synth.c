@@ -44,7 +44,7 @@ short int synth_reset_banks()
 
   patch_reset_all();
 
-  /* reset tuning tables */
+  /* reset tuning table */
   tuning_reset();
 
   /* reset output levels */
@@ -61,7 +61,6 @@ short int synth_update()
 {
   int k;
   int m;
-  int n;
 
   int level;
 
@@ -100,8 +99,7 @@ short int synth_update()
         v->lfo_input_vibrato = G_lfo_bank[ins->voice_index + m].vibrato_level;
         v->lfo_input_tremolo = G_lfo_bank[ins->voice_index + m].tremolo_level;
 
-        for (n = 0; n < BANK_OSCS_AND_ENVS_PER_VOICE; n++)
-          v->env_input[n] = G_envelope_bank[(ins->voice_index + m) * BANK_OSCS_AND_ENVS_PER_VOICE + n].level;
+        v->env_input = G_envelope_bank[ins->voice_index + m].level;
 
         v->boost_input = G_boost_bank[k].level;
         v->sweep_input = G_sweep_bank[k].level;
@@ -115,8 +113,7 @@ short int synth_update()
       v->lfo_input_vibrato = G_lfo_bank[ins->voice_index].vibrato_level;
       v->lfo_input_tremolo = G_lfo_bank[ins->voice_index].tremolo_level;
 
-      for (n = 0; n < BANK_OSCS_AND_ENVS_PER_VOICE; n++)
-        v->env_input[n] = G_envelope_bank[ins->voice_index * BANK_OSCS_AND_ENVS_PER_VOICE + n].level;
+      v->env_input = G_envelope_bank[ins->voice_index].level;
 
       v->boost_input = G_boost_bank[k].level;
       v->sweep_input = G_sweep_bank[k].level;

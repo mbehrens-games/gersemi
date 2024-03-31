@@ -25,13 +25,6 @@ char* G_path_pref;
 char* G_path_carts;
 char* G_path_cart_test_1;
 
-char* G_path_imports;
-char* G_path_import_sbi_1;
-char* G_path_import_sbi_2;
-char* G_path_import_tfi_1;
-char* G_path_import_tfi_2;
-char* G_path_import_opm_1;
-
 char* G_path_songs;
 
 /*******************************************************************************
@@ -47,13 +40,6 @@ short int path_init_paths()
 
   G_path_carts = NULL;
   G_path_cart_test_1 = NULL;
-
-  G_path_imports = NULL;
-  G_path_import_sbi_1 = NULL;
-  G_path_import_sbi_2 = NULL;
-  G_path_import_tfi_1 = NULL;
-  G_path_import_tfi_2 = NULL;
-  G_path_import_opm_1 = NULL;
 
   G_path_songs = NULL;
 
@@ -106,35 +92,12 @@ short int path_set_documents_path()
   G_path_carts = malloc(sizeof(char) * (255 + 1));
   strcpy(G_path_carts, "/Users/mike/Documents/Gersemi/Carts/");
 
-  G_path_imports = malloc(sizeof(char) * (255 + 1));
-  strcpy(G_path_imports, "/Users/mike/Documents/Gersemi/Import/");
-
   G_path_songs = malloc(sizeof(char) * (255 + 1));
   strcpy(G_path_songs, "/Users/mike/Documents/Gersemi/Songs/");
 
   G_path_cart_test_1 = malloc(sizeof(char) * (255 + 1));
   strcpy(G_path_cart_test_1, G_path_carts);
   strcpy(G_path_cart_test_1 + strlen(G_path_carts), "cart01.gct");
-
-  G_path_import_sbi_1 = malloc(sizeof(char) * (255 + 1));
-  strcpy(G_path_import_sbi_1, G_path_imports);
-  strcpy(G_path_import_sbi_1 + strlen(G_path_imports), "fat-melodic.sb");
-
-  G_path_import_sbi_2 = malloc(sizeof(char) * (255 + 1));
-  strcpy(G_path_import_sbi_2, G_path_imports);
-  strcpy(G_path_import_sbi_2 + strlen(G_path_imports), "fat-melodic.o3");
-
-  G_path_import_tfi_1 = malloc(sizeof(char) * (255 + 1));
-  strcpy(G_path_import_tfi_1, G_path_imports);
-  strcpy(G_path_import_tfi_1 + strlen(G_path_imports), "04_spring_yard_zone_42.tfi");
-
-  G_path_import_tfi_2 = malloc(sizeof(char) * (255 + 1));
-  strcpy(G_path_import_tfi_2, G_path_imports);
-  strcpy(G_path_import_tfi_2 + strlen(G_path_imports), "EBass.tfi");
-
-  G_path_import_opm_1 = malloc(sizeof(char) * (255 + 1));
-  strcpy(G_path_import_opm_1, G_path_imports);
-  strcpy(G_path_import_opm_1 + strlen(G_path_imports), "FB01ROM1_2.opm");
 
   return 0;
 }
@@ -152,13 +115,6 @@ short int path_free_paths()
 
   PATH_FREE_PATH(G_path_carts)
   PATH_FREE_PATH(G_path_cart_test_1)
-
-  PATH_FREE_PATH(G_path_imports)
-  PATH_FREE_PATH(G_path_import_sbi_1)
-  PATH_FREE_PATH(G_path_import_sbi_2)
-  PATH_FREE_PATH(G_path_import_tfi_1)
-  PATH_FREE_PATH(G_path_import_tfi_2)
-  PATH_FREE_PATH(G_path_import_opm_1)
 
   PATH_FREE_PATH(G_path_songs)
 

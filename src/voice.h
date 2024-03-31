@@ -9,35 +9,26 @@
 
 typedef struct voice
 {
-  /* algorithm, sync */
-  short int algorithm;
+  /* program, sync */
+  short int program;
   short int sync;
 
   /* currently playing notes, pitch indices */
   int base_note;
-  int osc_note[BANK_OSCS_AND_ENVS_PER_VOICE];
-  int osc_pitch_index[BANK_OSCS_AND_ENVS_PER_VOICE];
+
+  int osc_1_pitch_index;
+  int osc_2_pitch_index;
 
   /* phases */
-  unsigned int osc_phase[BANK_OSCS_AND_ENVS_PER_VOICE];
-
-  /* feedback levels */
-  int feed_in[2 * BANK_OSCS_AND_ENVS_PER_VOICE];
+  unsigned int osc_1_phase;
+  unsigned int osc_2_phase;
 
   /* voice parameters */
-  short int osc_waveform[BANK_OSCS_AND_ENVS_PER_VOICE];
-  short int osc_feedback_multiplier[BANK_OSCS_AND_ENVS_PER_VOICE];
-  short int osc_phi[BANK_OSCS_AND_ENVS_PER_VOICE];
+  short int osc_1_waveform;
+  short int osc_2_waveform;
 
-  short int osc_offset[BANK_OSCS_AND_ENVS_PER_VOICE];
-  short int osc_detune[BANK_OSCS_AND_ENVS_PER_VOICE];
-
-  /* noise */
-  short int     noise_mode;
-  unsigned int  noise_lfsr;
-
-  unsigned int  noise_phase;
-  unsigned int  noise_increment;
+  short int osc_1_offset;
+  short int osc_2_offset;
 
   /* amplitude effect modes */
   short int tremolo_mode;
@@ -48,8 +39,8 @@ typedef struct voice
   short int velocity_scaling_amount;
   short int velocity_adjustment;
 
-  /* envelope levels */
-  short int env_input[BANK_OSCS_AND_ENVS_PER_VOICE];
+  /* envelope level */
+  short int env_input;
 
   /* lfo levels */
   short int lfo_input_vibrato;

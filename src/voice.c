@@ -20,28 +20,68 @@
 
 #define VOICE_BASE_NOISE_FREQUENCY 440.0f /* A-4 */
 
-#define VOICE_VELOCITY_LEVEL_STEP 32
+#define VOICE_VELOCITY_LEVEL_STEP (4 * 32)
 
-#define VOICE_WAVETABLE_LOOKUP(num, phase)                                     \
+#define VOICE_OSC_WAVETABLE_LOOKUP(num, phase)                                 \
   masked_phase = ((phase) & 0x3FF);                                            \
                                                                                \
   /* determine waveform level (db) */                                          \
-  if ((v->osc_waveform[num] == PATCH_OSC_WAVEFORM_SINE) ||                     \
-      (v->osc_waveform[num] == PATCH_OSC_WAVEFORM_FULL))                       \
+  if (v->osc_##num##_waveform == PATCH_OSC_WAVEFORM_TRIANGLE)                  \
+  {                                                                            \
+    if (masked_phase < 512)                                                    \
+      final_index = S_voice_wavetable_saw[2 * masked_phase];                   \
+    else                                                                       \
+      final_index = S_voice_wavetable_saw[2 * (masked_phase - 512)];           \
+  }                                                                            \
+  else if (v->osc_##num##_waveform == PATCH_OSC_WAVEFORM_SQUARE)               \
+    final_index = 0;                                                           \
+  else if (v->osc_##num##_waveform == PATCH_OSC_WAVEFORM_SAW)                  \
+    final_index = S_voice_wavetable_saw[masked_phase];                         \
+  else                                                                         \
+    final_index = 4095;                                                        \
+                                                                               \
+  /* apply envelope */                                                         \
+  final_index += osc_##num##_env_index;                                        \
+                                                                               \
+  if (final_index < 0)                                                         \
+    final_index = 0;                                                           \
+  else if (final_index > 4095)                                                 \
+    final_index = 4095;                                                        \
+                                                                               \
+  /* determine waveform level (linear) */                                      \
+  if ((v->osc_##num##_waveform == PATCH_OSC_WAVEFORM_TRIANGLE)  ||             \
+      (v->osc_##num##_waveform == PATCH_OSC_WAVEFORM_SQUARE)    ||             \
+      (v->osc_##num##_waveform == PATCH_OSC_WAVEFORM_SAW))                     \
+  {                                                                            \
+    if (masked_phase < 512)                                                    \
+      osc_##num##_level = S_voice_db_to_linear_table[final_index];             \
+    else                                                                       \
+      osc_##num##_level = -S_voice_db_to_linear_table[final_index];            \
+  }                                                                            \
+  else                                                                         \
+    osc_##num##_level = S_voice_db_to_linear_table[4095];
+
+#if 0
+#define VOICE_FM_WAVETABLE_LOOKUP(num, phase)                                  \
+  masked_phase = ((phase) & 0x3FF);                                            \
+                                                                               \
+  /* determine waveform level (db) */                                          \
+  if ((v->osc_##num##_waveform == PATCH_FM_WAVEFORM_SINE) ||                   \
+      (v->osc_##num##_waveform == PATCH_FM_WAVEFORM_FULL))                     \
   {                                                                            \
     if (masked_phase < 512)                                                    \
       final_index = S_voice_wavetable_sine[masked_phase];                      \
     else                                                                       \
       final_index = S_voice_wavetable_sine[masked_phase - 512];                \
   }                                                                            \
-  else if (v->osc_waveform[num] == PATCH_OSC_WAVEFORM_HALF)                    \
+  else if (v->osc_##num##_waveform == PATCH_FM_WAVEFORM_HALF)                  \
   {                                                                            \
     if (masked_phase < 512)                                                    \
       final_index = S_voice_wavetable_sine[masked_phase];                      \
     else                                                                       \
       final_index = 4095;                                                      \
   }                                                                            \
-  else if (v->osc_waveform[num] == PATCH_OSC_WAVEFORM_QUARTER)                 \
+  else if (v->osc_##num##_waveform == PATCH_FM_WAVEFORM_QUARTER)               \
   {                                                                            \
     if (masked_phase < 256)                                                    \
       final_index = S_voice_wavetable_sine[masked_phase];                      \
@@ -52,8 +92,8 @@
     else                                                                       \
       final_index = 4095;                                                      \
   }                                                                            \
-  else if ( (v->osc_waveform[num] == PATCH_OSC_WAVEFORM_ALTERNATING) ||        \
-            (v->osc_waveform[num] == PATCH_OSC_WAVEFORM_CAMEL))                \
+  else if ( (v->osc_##num##_waveform == PATCH_FM_WAVEFORM_ALTERNATING) ||      \
+            (v->osc_##num##_waveform == PATCH_FM_WAVEFORM_CAMEL))              \
   {                                                                            \
     if (masked_phase < 256)                                                    \
       final_index = S_voice_wavetable_sine[2 * masked_phase];                  \
@@ -62,9 +102,9 @@
     else                                                                       \
       final_index = 4095;                                                      \
   }                                                                            \
-  else if (v->osc_waveform[num] == PATCH_OSC_WAVEFORM_SQUARE)                  \
+  else if (v->osc_##num##_waveform == PATCH_FM_WAVEFORM_SQUARE)                \
     final_index = 0;                                                           \
-  else if (v->osc_waveform[num] == PATCH_OSC_WAVEFORM_LOG_SAW)                 \
+  else if (v->osc_##num##_waveform == PATCH_FM_WAVEFORM_LOG_SAW)               \
   {                                                                            \
     if (masked_phase < 512)                                                    \
       final_index = ((511 - masked_phase) * 4095) / 512;                       \
@@ -75,7 +115,7 @@
     final_index = 4095;                                                        \
                                                                                \
   /* apply envelope */                                                         \
-  final_index += (osc_env_index[num] << 2);                                    \
+  final_index += osc_##num##_env_index;                                        \
                                                                                \
   if (final_index < 0)                                                         \
     final_index = 0;                                                           \
@@ -83,23 +123,23 @@
     final_index = 4095;                                                        \
                                                                                \
   /* determine waveform level (linear) */                                      \
-  if ((v->osc_waveform[num] == PATCH_OSC_WAVEFORM_SINE)   ||                   \
-      (v->osc_waveform[num] == PATCH_OSC_WAVEFORM_SQUARE) ||                   \
-      (v->osc_waveform[num] == PATCH_OSC_WAVEFORM_LOG_SAW))                    \
+  if ((v->osc_##num##_waveform == PATCH_FM_WAVEFORM_SINE)   ||                 \
+      (v->osc_##num##_waveform == PATCH_FM_WAVEFORM_SQUARE) ||                 \
+      (v->osc_##num##_waveform == PATCH_FM_WAVEFORM_LOG_SAW))                  \
   {                                                                            \
     if (masked_phase < 512)                                                    \
       osc_level[num] = S_voice_db_to_linear_table[final_index];                \
     else                                                                       \
       osc_level[num] = -S_voice_db_to_linear_table[final_index];               \
   }                                                                            \
-  else if ( (v->osc_waveform[num] == PATCH_OSC_WAVEFORM_HALF)     ||           \
-            (v->osc_waveform[num] == PATCH_OSC_WAVEFORM_FULL)     ||           \
-            (v->osc_waveform[num] == PATCH_OSC_WAVEFORM_QUARTER)  ||           \
-            (v->osc_waveform[num] == PATCH_OSC_WAVEFORM_CAMEL))                \
+  else if ( (v->osc_##num##_waveform == PATCH_FM_WAVEFORM_HALF)     ||         \
+            (v->osc_##num##_waveform == PATCH_FM_WAVEFORM_FULL)     ||         \
+            (v->osc_##num##_waveform == PATCH_FM_WAVEFORM_QUARTER)  ||         \
+            (v->osc_##num##_waveform == PATCH_FM_WAVEFORM_CAMEL))              \
   {                                                                            \
     osc_level[num] = S_voice_db_to_linear_table[final_index];                  \
   }                                                                            \
-  else if (v->osc_waveform[num] == PATCH_OSC_WAVEFORM_ALTERNATING)             \
+  else if (v->osc_##num##_waveform == PATCH_FM_WAVEFORM_ALTERNATING)           \
   {                                                                            \
     if (masked_phase < 256)                                                    \
       osc_level[num] = S_voice_db_to_linear_table[final_index];                \
@@ -111,46 +151,36 @@
   else                                                                         \
     osc_level[num] = S_voice_db_to_linear_table[4095];
 
-#define VOICE_UPDATE_OSCILLATOR_FEEDBACK(num)                                           \
-  /* compute feedback phase mod                     */                                  \
-  /* we take the average of the last two values,    */                                  \
-  /* and then find the phase mod amount normally    */                                  \
-  /* (right shift by another 3, and then mask it).  */                                  \
-  osc_fb_mod[num] = ((v->feed_in[2 * num + 0] + v->feed_in[2 * num + 1]) >> 4) & 0x3FF; \
-                                                                                        \
-  /* update oscillator */                                                               \
-  VOICE_WAVETABLE_LOOKUP(num, (v->osc_phase[num] >> 18) + osc_fb_mod[num])              \
-                                                                                        \
-  /* cycle feedback */                                                                  \
-  v->feed_in[2 * num + 1] = v->feed_in[2 * num + 0];                                    \
-  v->feed_in[2 * num + 0] = (osc_level[num] * v->osc_feedback_multiplier[num]) >> 6;
-
-#define VOICE_UPDATE_OSCILLATOR_NO_MOD(num)                                    \
-  VOICE_WAVETABLE_LOOKUP(num, (v->osc_phase[num] >> 18) + osc_fb_mod[num])     \
+#define VOICE_UPDATE_FM_MODULATOR_FEEDBACK()                                   \
+  /* compute feedback phase mod                     */                         \
+  /* we take the average of the last two values,    */                         \
+  /* and then find the phase mod amount normally    */                         \
+  /* (right shift by another 3, and then mask it).  */                         \
+  fm_fb_mod = ((v->feed_in[0] + v->feed_in[1]) >> 4) & 0x3FF;                  \
                                                                                \
-  osc_phase_mod[num] = (osc_level[num] >> 3) & 0x3FF;
-
-#define VOICE_UPDATE_OSCILLATOR_MOD_X1(num, mod1)                              \
-  VOICE_WAVETABLE_LOOKUP(num, (v->osc_phase[num] >> 18) + osc_fb_mod[num]      \
-                                                        + osc_phase_mod[mod1]) \
+  /* update oscillator */                                                      \
+  VOICE_FM_WAVETABLE_LOOKUP(2, (v->osc_2_phase >> 18) + fm_fb_mod)             \
                                                                                \
-  osc_phase_mod[num] = (osc_level[num] >> 3) & 0x3FF;
+  /* cycle feedback */                                                         \
+  v->feed_in[1] = v->feed_in[0];                                               \
+  v->feed_in[0] = (osc_2_level * v->fm_feedback_multiplier) >> 6;
 
-#define VOICE_UPDATE_OSCILLATOR_MOD_X2(num, mod1, mod2)                        \
-  VOICE_WAVETABLE_LOOKUP(num, (v->osc_phase[num] >> 18) + osc_fb_mod[num]      \
-                                                        + osc_phase_mod[mod1]  \
-                                                        + osc_phase_mod[mod2]) \
+#define VOICE_UPDATE_FM_MODULATOR()                                            \
+  VOICE_FM_WAVETABLE_LOOKUP(2, (v->osc_2_phase >> 18) + fm_fb_mod)             \
                                                                                \
-  osc_phase_mod[num] = (osc_level[num] >> 3) & 0x3FF;
+  fm_phase_mod = (osc_2_level >> 3) & 0x3FF;
 
-#define VOICE_UPDATE_OSCILLATOR_MOD_X3(num, mod1, mod2, mod3)                  \
-  VOICE_WAVETABLE_LOOKUP(num, (v->osc_phase[num] >> 18) + osc_fb_mod[num]      \
-                                                        + osc_phase_mod[mod1]  \
-                                                        + osc_phase_mod[mod2]  \
-                                                        + osc_phase_mod[mod3]) \
-                                                                               \
-  osc_phase_mod[num] = (osc_level[num] >> 3) & 0x3FF;
+#define VOICE_UPDATE_FM_CARRIER()                                              \
+  VOICE_FM_WAVETABLE_LOOKUP(1, (v->osc_1_phase >> 18) + fm_phase_mod)
+#endif
 
+#define VOICE_BOUND_PITCH_INDEX(pitch_index)                                   \
+  if (pitch_index < 0)                                                         \
+    pitch_index = 0;                                                           \
+  else if (pitch_index >= TUNING_NUM_INDICES)                                  \
+    pitch_index = TUNING_NUM_INDICES - 1;
+
+#if 0
 /* feedback table */
 static int  S_voice_feedback_table[PATCH_OSC_FEEDBACK_NUM_VALUES] = 
             { 0, 1, 2, 4, 8, 16, 32, 64};
@@ -162,33 +192,35 @@ static int  S_voice_phase_shift_table[PATCH_OSC_PHI_NUM_VALUES] =
               0x08000000, 0x09555555, 0x0A000000, 0x0AAAAAAA, /* 180, 210, 225, 240 */
               0x0C000000, 0x0D555555, 0x0E000000, 0x0EAAAAAA  /* 270, 300, 315, 330 */
             };
+#endif
 
 /* multiple table */
 
-/* the values are in semitones    */
-/* they form the harmonic series! */
+/* the values are in steps (cents)  */
+/* they form the harmonic series!   */
 static int  S_voice_multiple_table[PATCH_OSC_MULTIPLE_NUM_VALUES] = 
-            { 0 * 12 + 0,   /*  1x  */
-              1 * 12 + 0,   /*  2x  */
-              1 * 12 + 7,   /*  3x  */
-              2 * 12 + 0,   /*  4x  */
-              2 * 12 + 4,   /*  5x  */
-              2 * 12 + 7,   /*  6x  */
-              2 * 12 + 10,  /*  7x  */
-              3 * 12 + 0,   /*  8x  */
-              3 * 12 + 2,   /*  9x  */
-              3 * 12 + 4,   /* 10x  */
-              3 * 12 + 6,   /* 11x  */
-              3 * 12 + 7,   /* 12x  */
-              3 * 12 + 8,   /* 13x  */
-              3 * 12 + 10,  /* 14x  */
-              3 * 12 + 11,  /* 15x  */
-              4 * 12 + 0    /* 16x  */
+            { (0 * 12 + 0)  * TUNING_NUM_SEMITONE_STEPS,  /*  1x  */
+              (1 * 12 + 0)  * TUNING_NUM_SEMITONE_STEPS,  /*  2x  */
+              (1 * 12 + 7)  * TUNING_NUM_SEMITONE_STEPS,  /*  3x  */
+              (2 * 12 + 0)  * TUNING_NUM_SEMITONE_STEPS,  /*  4x  */
+              (2 * 12 + 4)  * TUNING_NUM_SEMITONE_STEPS,  /*  5x  */
+              (2 * 12 + 7)  * TUNING_NUM_SEMITONE_STEPS,  /*  6x  */
+              (2 * 12 + 10) * TUNING_NUM_SEMITONE_STEPS,  /*  7x  */
+              (3 * 12 + 0)  * TUNING_NUM_SEMITONE_STEPS,  /*  8x  */
+              (3 * 12 + 2)  * TUNING_NUM_SEMITONE_STEPS,  /*  9x  */
+              (3 * 12 + 4)  * TUNING_NUM_SEMITONE_STEPS,  /* 10x  */
+              (3 * 12 + 6)  * TUNING_NUM_SEMITONE_STEPS,  /* 11x  */
+              (3 * 12 + 7)  * TUNING_NUM_SEMITONE_STEPS,  /* 12x  */
+              (3 * 12 + 8)  * TUNING_NUM_SEMITONE_STEPS,  /* 13x  */
+              (3 * 12 + 10) * TUNING_NUM_SEMITONE_STEPS,  /* 14x  */
+              (3 * 12 + 11) * TUNING_NUM_SEMITONE_STEPS,  /* 15x  */
+              (4 * 12 + 0)  * TUNING_NUM_SEMITONE_STEPS   /* 16x  */
             };
 
 /* detune table */
 static int  S_voice_detune_table[PATCH_OSC_DETUNE_NUM_VALUES];
 
+#if 0
 /* noise frequency table (in lfsr updates per second) */
 static float  S_voice_noise_frequency_table[PATCH_NOISE_FREQUENCY_NUM_VALUES] = 
               { VOICE_BASE_NOISE_FREQUENCY * 1, 
@@ -224,6 +256,7 @@ static float  S_voice_noise_frequency_table[PATCH_NOISE_FREQUENCY_NUM_VALUES] =
                 VOICE_BASE_NOISE_FREQUENCY * 16 * 1.750f, 
                 VOICE_BASE_NOISE_FREQUENCY * 16 * 1.875f 
               };
+#endif
 
 /* velocity scaling table */
 static short int  S_voice_velocity_scaling_table[PATCH_VELOCITY_SCALING_NUM_VALUES] = 
@@ -241,11 +274,17 @@ static short int  S_voice_velocity_scaling_table[PATCH_VELOCITY_SCALING_NUM_VALU
 /* db to linear table */
 static short int S_voice_db_to_linear_table[4096];
 
-/* sine wavetable */
+/* wavetables */
 static short int S_voice_wavetable_sine[512];
+static short int S_voice_wavetable_saw[1024];
 
+/* phase increment table */
+static unsigned int S_voice_wave_phase_increment_table[TUNING_NUM_INDICES];
+
+#if 0
 /* noise phase increment table */
 static unsigned int S_voice_noise_phase_increment_table[PATCH_NOISE_FREQUENCY_NUM_VALUES];
+#endif
 
 /* voice bank */
 voice G_voice_bank[BANK_NUM_VOICES];
@@ -256,7 +295,6 @@ voice G_voice_bank[BANK_NUM_VOICES];
 short int voice_reset_all()
 {
   int k;
-  int m;
 
   voice* v;
 
@@ -266,40 +304,28 @@ short int voice_reset_all()
     /* obtain voice pointer */
     v = &G_voice_bank[k];
 
-    /* algorithm */
-    v->algorithm = PATCH_ALGORITHM_DEFAULT;
+    /* program */
+    v->program = PATCH_PROGRAM_DEFAULT;
 
     /* sync */
     v->sync = PATCH_SYNC_DEFAULT;
 
-    /* base note */
+    /* currently playing note, pitch indices */
     v->base_note = TUNING_NOTE_BLANK;
 
-    /* currently playing notes, pitch table indices, phase, feedback levels, voice parameters */
-    for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
-    {
-      v->osc_note[m] = 0;
-      v->osc_pitch_index[m] = 0;
+    v->osc_1_pitch_index = 0;
+    v->osc_2_pitch_index = 0;
 
-      v->osc_phase[m] = 0;
+    /* phases */
+    v->osc_1_phase = 0;
+    v->osc_2_phase = 0;
 
-      v->feed_in[2 * m + 0] = 0;
-      v->feed_in[2 * m + 1] = 0;
+    /* voice parameters */
+    v->osc_1_waveform = PATCH_OSC_WAVEFORM_DEFAULT;
+    v->osc_2_waveform = PATCH_OSC_WAVEFORM_DEFAULT;
 
-      v->osc_waveform[m] = PATCH_OSC_WAVEFORM_DEFAULT;
-      v->osc_feedback_multiplier[m] = 0;
-      v->osc_phi[m] = PATCH_OSC_PHI_DEFAULT;
-
-      v->osc_offset[m] = 0;
-      v->osc_detune[m] = 0;
-    }
-
-    /* noise */
-    v->noise_lfsr = 0x0001;
-    v->noise_mode = PATCH_NOISE_MODE_DEFAULT;
-
-    v->noise_phase = 0;
-    v->noise_increment = S_voice_noise_phase_increment_table[PATCH_NOISE_FREQUENCY_DEFAULT - PATCH_NOISE_FREQUENCY_LOWER_BOUND];
+    v->osc_1_offset = 0;
+    v->osc_2_offset = 0;
 
     /* amplitude effect modes */
     v->tremolo_mode = PATCH_TREMOLO_MODE_DEFAULT;
@@ -312,9 +338,8 @@ short int voice_reset_all()
 
     v->velocity_adjustment = 0;
 
-    /* envelope levels */
-    for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
-      v->env_input[m] = 1023;
+    /* envelope level */
+    v->env_input = 4095;
 
     /* lfo levels */
     v->lfo_input_vibrato = 0;
@@ -341,8 +366,6 @@ short int voice_reset_all()
 *******************************************************************************/
 short int voice_load_patch(int voice_index, int patch_index)
 {
-  int m;
-
   voice* v;
   patch* p;
 
@@ -358,14 +381,14 @@ short int voice_load_patch(int voice_index, int patch_index)
   v = &G_voice_bank[voice_index];
   p = &G_patch_bank[patch_index];
 
-  /* algorithm */
-  if ((p->algorithm >= PATCH_ALGORITHM_LOWER_BOUND) && 
-      (p->algorithm <= PATCH_ALGORITHM_UPPER_BOUND))
+  /* program */
+  if ((p->program >= PATCH_PROGRAM_LOWER_BOUND) && 
+      (p->program <= PATCH_PROGRAM_UPPER_BOUND))
   {
-    v->algorithm = p->algorithm;
+    v->program = p->program;
   }
   else
-    v->algorithm = PATCH_ALGORITHM_LOWER_BOUND;
+    v->program = PATCH_PROGRAM_LOWER_BOUND;
 
   /* sync */
   if ((p->sync_osc >= PATCH_SYNC_LOWER_BOUND) && 
@@ -376,80 +399,62 @@ short int voice_load_patch(int voice_index, int patch_index)
   else
     v->sync = PATCH_SYNC_LOWER_BOUND;
 
-  /* voice parameters, pitch index */
-  for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
+  /* waveforms */
+  if ((p->osc_1_waveform >= PATCH_OSC_WAVEFORM_LOWER_BOUND) && 
+      (p->osc_1_waveform <= PATCH_OSC_WAVEFORM_UPPER_BOUND))
   {
-    /* waveform */
-    if ((p->osc_waveform[m] >= PATCH_OSC_WAVEFORM_LOWER_BOUND) && 
-        (p->osc_waveform[m] <= PATCH_OSC_WAVEFORM_UPPER_BOUND))
-    {
-      v->osc_waveform[m] = p->osc_waveform[m];
-    }
-    else
-      v->osc_waveform[m] = PATCH_OSC_WAVEFORM_LOWER_BOUND;
-
-    /* feedback */
-    if ((p->osc_feedback[m] >= PATCH_OSC_FEEDBACK_LOWER_BOUND) && 
-        (p->osc_feedback[m] <= PATCH_OSC_FEEDBACK_UPPER_BOUND))
-    {
-      v->osc_feedback_multiplier[m] = S_voice_feedback_table[p->osc_feedback[m] - PATCH_OSC_FEEDBACK_LOWER_BOUND];
-    }
-    else
-      v->osc_feedback_multiplier[m] = S_voice_feedback_table[0];
-
-    /* phi */
-    if ((p->osc_phi[m] >= PATCH_OSC_PHI_LOWER_BOUND) && 
-        (p->osc_phi[m] <= PATCH_OSC_PHI_UPPER_BOUND))
-    {
-      v->osc_phi[m] = p->osc_phi[m];
-    }
-    else
-      v->osc_phi[m] = PATCH_OSC_PHI_LOWER_BOUND;
-
-    /* note offset */
-    v->osc_offset[m] = 0;
-
-    if ((p->osc_multiple[m] >= PATCH_OSC_MULTIPLE_LOWER_BOUND) && 
-        (p->osc_multiple[m] <= PATCH_OSC_MULTIPLE_UPPER_BOUND))
-    {
-      v->osc_offset[m] += S_voice_multiple_table[p->osc_multiple[m] - PATCH_OSC_MULTIPLE_LOWER_BOUND];
-    }
-
-    if ((p->osc_divisor[m] >= PATCH_OSC_DIVISOR_LOWER_BOUND) && 
-        (p->osc_divisor[m] <= PATCH_OSC_DIVISOR_UPPER_BOUND))
-    {
-      v->osc_offset[m] -= S_voice_multiple_table[p->osc_divisor[m] - PATCH_OSC_DIVISOR_LOWER_BOUND];
-    }
-
-    /* if the waveform is sine (even periods only)  */
-    /* or full-rectified sine (even periods only),  */
-    /* then add an additional division by 2.        */
-    if ((p->osc_waveform[m] == PATCH_OSC_WAVEFORM_ALTERNATING) || 
-        (p->osc_waveform[m] == PATCH_OSC_WAVEFORM_CAMEL))
-    {
-      v->osc_offset[m] -= S_voice_multiple_table[1];
-    }
-
-    /* detune */
-    if ((p->osc_detune[m] >= PATCH_OSC_DETUNE_LOWER_BOUND) && 
-        (p->osc_detune[m] <= PATCH_OSC_DETUNE_UPPER_BOUND))
-    {
-      v->osc_detune[m] = S_voice_detune_table[p->osc_detune[m] - PATCH_OSC_DETUNE_LOWER_BOUND];
-    }
-    else
-      v->osc_detune[m] = 0;
-
-    /* determine oscillator note and pitch index */
-    v->osc_note[m] = v->base_note + v->osc_offset[m];
-
-    v->osc_pitch_index[m] = 
-      (v->osc_note[m] * TUNING_NUM_SEMITONE_STEPS) + v->osc_detune[m];
-
-    if (v->osc_pitch_index[m] < 0)
-      v->osc_pitch_index[m] = 0;
-    else if (v->osc_pitch_index[m] >= TUNING_NUM_INDICES)
-      v->osc_pitch_index[m] = TUNING_NUM_INDICES - 1;
+    v->osc_1_waveform = p->osc_1_waveform;
   }
+  else
+    v->osc_1_waveform = PATCH_OSC_WAVEFORM_LOWER_BOUND;
+
+  if ((p->osc_2_waveform >= PATCH_OSC_WAVEFORM_LOWER_BOUND) && 
+      (p->osc_2_waveform <= PATCH_OSC_WAVEFORM_UPPER_BOUND))
+  {
+    v->osc_2_waveform = p->osc_2_waveform;
+  }
+  else
+    v->osc_2_waveform = PATCH_OSC_WAVEFORM_LOWER_BOUND;
+
+  /* oscillator 1 offset (detune) */
+  if ((p->osc_1_detune >= PATCH_OSC_DETUNE_LOWER_BOUND) && 
+      (p->osc_1_detune <= PATCH_OSC_DETUNE_UPPER_BOUND))
+  {
+    v->osc_1_offset = S_voice_detune_table[p->osc_1_detune - PATCH_OSC_DETUNE_LOWER_BOUND];
+  }
+  else
+    v->osc_1_offset = 0;
+
+  /* oscillator 2 offset (detune, multiple, divisor) */
+  if ((p->osc_2_detune >= PATCH_OSC_DETUNE_LOWER_BOUND) && 
+      (p->osc_2_detune <= PATCH_OSC_DETUNE_UPPER_BOUND))
+  {
+    v->osc_2_offset = S_voice_detune_table[p->osc_2_detune - PATCH_OSC_DETUNE_LOWER_BOUND];
+  }
+  else
+    v->osc_2_offset = 0;
+
+  if ((p->osc_2_multiple >= PATCH_OSC_MULTIPLE_LOWER_BOUND) && 
+      (p->osc_2_multiple <= PATCH_OSC_MULTIPLE_UPPER_BOUND))
+  {
+    v->osc_2_offset += S_voice_multiple_table[p->osc_2_multiple - PATCH_OSC_MULTIPLE_LOWER_BOUND];
+  }
+
+  if ((p->osc_2_divisor >= PATCH_OSC_DIVISOR_LOWER_BOUND) && 
+      (p->osc_2_divisor <= PATCH_OSC_DIVISOR_UPPER_BOUND))
+  {
+    v->osc_2_offset -= S_voice_multiple_table[p->osc_2_divisor - PATCH_OSC_DIVISOR_LOWER_BOUND];
+  }
+
+  /* determine oscillator notes and pitch indices */
+  v->osc_1_pitch_index = 
+    (v->base_note * TUNING_NUM_SEMITONE_STEPS) + v->osc_1_offset;
+
+  v->osc_2_pitch_index = 
+    (v->base_note * TUNING_NUM_SEMITONE_STEPS) + v->osc_2_offset;
+
+  VOICE_BOUND_PITCH_INDEX(v->osc_1_pitch_index)
+  VOICE_BOUND_PITCH_INDEX(v->osc_2_pitch_index)
 
   /* tremolo mode */
   if ((p->tremolo_mode >= PATCH_TREMOLO_MODE_LOWER_BOUND) && 
@@ -491,24 +496,6 @@ short int voice_load_patch(int voice_index, int patch_index)
       S_voice_velocity_scaling_table[PATCH_VELOCITY_SCALING_DEFAULT - PATCH_VELOCITY_SCALING_LOWER_BOUND];
   }
 
-  /* noise mode */
-  if ((p->noise_mode >= PATCH_NOISE_MODE_LOWER_BOUND) && 
-      (p->noise_mode <= PATCH_NOISE_MODE_UPPER_BOUND))
-  {
-    v->noise_mode = p->noise_mode;
-  }
-  else
-    v->noise_mode = PATCH_NOISE_MODE_LOWER_BOUND;
-
-  /* noise frequency */
-  if ((p->noise_frequency >= PATCH_NOISE_FREQUENCY_LOWER_BOUND) && 
-      (p->noise_frequency <= PATCH_NOISE_FREQUENCY_UPPER_BOUND))
-  {
-    v->noise_increment = S_voice_noise_phase_increment_table[p->noise_frequency - PATCH_NOISE_FREQUENCY_LOWER_BOUND];
-  }
-  else
-    v->noise_increment = S_voice_noise_phase_increment_table[0];
-
   return 0;
 }
 
@@ -517,8 +504,6 @@ short int voice_load_patch(int voice_index, int patch_index)
 *******************************************************************************/
 short int voice_set_note(int voice_index, int note, int vel)
 {
-  int m;
-
   voice* v;
 
   /* make sure that the voice index is valid */
@@ -546,18 +531,14 @@ short int voice_set_note(int voice_index, int note, int vel)
     v->velocity_adjustment = 0;
 
   /* determine notes & pitch indices */
-  for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
-  {
-    v->osc_note[m] = v->base_note + v->osc_offset[m];
+  v->osc_1_pitch_index = 
+    (v->base_note * TUNING_NUM_SEMITONE_STEPS) + v->osc_1_offset;
 
-    v->osc_pitch_index[m] = 
-      (v->osc_note[m] * TUNING_NUM_SEMITONE_STEPS) + v->osc_detune[m];
+  v->osc_2_pitch_index = 
+    (v->base_note * TUNING_NUM_SEMITONE_STEPS) + v->osc_2_offset;
 
-    if (v->osc_pitch_index[m] < 0)
-      v->osc_pitch_index[m] = 0;
-    else if (v->osc_pitch_index[m] >= TUNING_NUM_INDICES)
-      v->osc_pitch_index[m] = TUNING_NUM_INDICES - 1;
-  }
+  VOICE_BOUND_PITCH_INDEX(v->osc_1_pitch_index)
+  VOICE_BOUND_PITCH_INDEX(v->osc_2_pitch_index)
 
   return 0;
 }
@@ -567,8 +548,6 @@ short int voice_set_note(int voice_index, int note, int vel)
 *******************************************************************************/
 short int voice_sync_to_key(int voice_index)
 {
-  int m;
-
   voice* v;
 
   /* make sure that the voice index is valid */
@@ -581,21 +560,13 @@ short int voice_sync_to_key(int voice_index)
   /* reset phases if necessary */
   if (v->sync == PATCH_SYNC_ON)
   {
-    /* oscillators */
-    for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
-    {
-      if ((v->osc_phi[m] >= PATCH_OSC_PHI_LOWER_BOUND) && 
-          (v->osc_phi[m] <= PATCH_OSC_PHI_UPPER_BOUND))
-      {
-        v->osc_phase[m] = S_voice_phase_shift_table[v->osc_phi[m] - PATCH_OSC_PHI_LOWER_BOUND];
-      }
-      else
-        v->osc_phase[m] = S_voice_phase_shift_table[0];
-    }
+    v->osc_1_phase = 0;
+    v->osc_2_phase = 0;
 
-    /* noise */
+#if 0
     v->noise_lfsr = 0x0001;
     v->noise_phase = 0;
+#endif
   }
 
   return 0;
@@ -606,26 +577,22 @@ short int voice_sync_to_key(int voice_index)
 *******************************************************************************/
 short int voice_update_all()
 {
-  short int osc_env_index[BANK_OSCS_AND_ENVS_PER_VOICE];
+  short int osc_1_env_index;
+  short int osc_2_env_index;
 
-  int osc_fb_mod[BANK_OSCS_AND_ENVS_PER_VOICE];
-  int osc_phase_mod[BANK_OSCS_AND_ENVS_PER_VOICE];
-
-  int osc_level[BANK_OSCS_AND_ENVS_PER_VOICE];
+  int osc_1_level;
+  int osc_2_level;
 
   int pitch_adjustment;
-  int amplitude_adjustment_carriers;
-  int amplitude_adjustment_modulators;
+
+  int amplitude_adjustment;
+  int cutoff_adjustment;
+  int extra_adjustment;
 
   int adjusted_pitch_index;
 
-  int octave;
-  int increment_index;
-
   unsigned int masked_phase;
   int final_index;
-
-  int level;
 
   int k;
   int m;
@@ -639,124 +606,69 @@ short int voice_update_all()
 
     /* update adjustments */
     pitch_adjustment = 0;
-    amplitude_adjustment_carriers = 0;
-    amplitude_adjustment_modulators = 0;
+    amplitude_adjustment = 0;
+    cutoff_adjustment = 0;
+    extra_adjustment = 0;
 
     pitch_adjustment += v->lfo_input_vibrato;
     pitch_adjustment += v->sweep_input;
     pitch_adjustment += v->bender_input;
 
     if (v->tremolo_mode == PATCH_TREMOLO_MODE_CARRIERS)
-      amplitude_adjustment_carriers += v->lfo_input_tremolo;
+      amplitude_adjustment += v->lfo_input_tremolo;
     else if (v->tremolo_mode == PATCH_TREMOLO_MODE_MODULATORS)
-      amplitude_adjustment_modulators += v->lfo_input_tremolo;
+      cutoff_adjustment += v->lfo_input_tremolo;
 
     if (v->boost_mode == PATCH_BOOST_MODE_CARRIERS)
-      amplitude_adjustment_carriers -= v->boost_input;
+      amplitude_adjustment -= v->boost_input;
     else if (v->boost_mode == PATCH_BOOST_MODE_MODULATORS)
-      amplitude_adjustment_modulators -= v->boost_input;
+      cutoff_adjustment -= v->boost_input;
 
     if (v->velocity_mode == PATCH_VELOCITY_MODE_CARRIERS)
-      amplitude_adjustment_carriers += v->velocity_adjustment;
+      amplitude_adjustment += v->velocity_adjustment;
     else if (v->velocity_mode == PATCH_VELOCITY_MODE_MODULATORS)
-      amplitude_adjustment_modulators += v->velocity_adjustment;
+      cutoff_adjustment += v->velocity_adjustment;
 
     /* update envelopes */
-    for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
-    {
-      osc_env_index[m] = v->env_input[m];
-    }
+    osc_1_env_index = v->env_input;
+    osc_2_env_index = v->env_input;
 
     /* apply tremolo, boost, and note velocity */
-    if (v->algorithm == PATCH_ALGORITHM_1C_CHAIN)
-    {
-      osc_env_index[2] += amplitude_adjustment_modulators;
-      osc_env_index[3] += amplitude_adjustment_carriers;
-    }
-    else if (v->algorithm == PATCH_ALGORITHM_1C_THE_Y)
-    {
-      osc_env_index[2] += amplitude_adjustment_modulators;
-      osc_env_index[3] += amplitude_adjustment_carriers;
-    }
-    else if (v->algorithm == PATCH_ALGORITHM_1C_CRAB)
-    {
-      osc_env_index[1] += amplitude_adjustment_modulators;
-      osc_env_index[2] += amplitude_adjustment_modulators;
-      osc_env_index[3] += amplitude_adjustment_carriers;
-    }
-    else if (v->algorithm == PATCH_ALGORITHM_2C_TWIN)
-    {
-      osc_env_index[0] += amplitude_adjustment_modulators;
-      osc_env_index[1] += amplitude_adjustment_modulators;
-      osc_env_index[2] += amplitude_adjustment_carriers;
-      osc_env_index[3] += amplitude_adjustment_carriers;
-    }
-    else if (v->algorithm == PATCH_ALGORITHM_2C_STACKED)
-    {
-      osc_env_index[1] += amplitude_adjustment_modulators;
-      osc_env_index[2] += amplitude_adjustment_carriers;
-      osc_env_index[3] += amplitude_adjustment_carriers;
-    }
-    else if (v->algorithm == PATCH_ALGORITHM_3C_1_TO_3)
-    {
-      osc_env_index[0] += amplitude_adjustment_modulators;
-      osc_env_index[1] += amplitude_adjustment_carriers;
-      osc_env_index[2] += amplitude_adjustment_carriers;
-      osc_env_index[3] += amplitude_adjustment_carriers;
-    }
-    else if (v->algorithm == PATCH_ALGORITHM_3C_1_TO_1)
-    {
-      osc_env_index[0] += amplitude_adjustment_modulators;
-      osc_env_index[1] += amplitude_adjustment_carriers;
-      osc_env_index[2] += amplitude_adjustment_carriers;
-      osc_env_index[3] += amplitude_adjustment_carriers;
-    }
-    else if (v->algorithm == PATCH_ALGORITHM_4C_PIPES)
-    {
-      osc_env_index[0] += amplitude_adjustment_carriers;
-      osc_env_index[1] += amplitude_adjustment_carriers;
-      osc_env_index[2] += amplitude_adjustment_carriers;
-      osc_env_index[3] += amplitude_adjustment_carriers;
-    }
+    osc_1_env_index += amplitude_adjustment;
+    osc_2_env_index += amplitude_adjustment;
 
     /* bound envelopes */
-    for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
-    {
-      if (osc_env_index[m] < 0)
-        osc_env_index[m] = 0;
-      else if (osc_env_index[m] > 1023)
-        osc_env_index[m] = 1023;
-    }
+    if (osc_1_env_index < 0)
+      osc_1_env_index = 0;
+    else if (osc_1_env_index > 4095)
+      osc_1_env_index = 4095;
+
+    if (osc_2_env_index < 0)
+      osc_2_env_index = 0;
+    else if (osc_2_env_index > 4095)
+      osc_2_env_index = 4095;
 
     /* update pitches & phases */
-    for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
-    {
-      adjusted_pitch_index = v->osc_pitch_index[m] + pitch_adjustment;
+    adjusted_pitch_index = v->osc_1_pitch_index + pitch_adjustment;
 
-      if (adjusted_pitch_index < 0)
-        adjusted_pitch_index = 0;
-      else if (adjusted_pitch_index >= TUNING_NUM_INDICES)
-        adjusted_pitch_index = TUNING_NUM_INDICES - 1;
+    VOICE_BOUND_PITCH_INDEX(adjusted_pitch_index)
 
-      octave = adjusted_pitch_index / TUNING_TABLE_SIZE;
-      increment_index = adjusted_pitch_index % TUNING_TABLE_SIZE;
+    v->osc_1_phase += S_voice_wave_phase_increment_table[adjusted_pitch_index];
 
-      if (octave < TUNING_HIGHEST_OCTAVE)
-        v->osc_phase[m] += G_tuning_phase_increment_table[increment_index] >> (TUNING_HIGHEST_OCTAVE - octave);
-      else
-        v->osc_phase[m] += G_tuning_phase_increment_table[increment_index];
+    adjusted_pitch_index = v->osc_2_pitch_index + pitch_adjustment;
 
-      /* wraparound phase register (28 bits) */
-      if (v->osc_phase[m] > 0xFFFFFFF)
-        v->osc_phase[m] &= 0xFFFFFFF;
-    }
+    VOICE_BOUND_PITCH_INDEX(adjusted_pitch_index)
 
-    /* update oscillator feedback */
-    VOICE_UPDATE_OSCILLATOR_FEEDBACK(0)
-    VOICE_UPDATE_OSCILLATOR_FEEDBACK(1)
-    VOICE_UPDATE_OSCILLATOR_FEEDBACK(2)
-    VOICE_UPDATE_OSCILLATOR_FEEDBACK(3)
+    v->osc_2_phase += S_voice_wave_phase_increment_table[adjusted_pitch_index];
 
+    /* wraparound phase register (28 bits) */
+    if (v->osc_1_phase > 0xFFFFFFF)
+      v->osc_1_phase &= 0xFFFFFFF;
+
+    if (v->osc_2_phase > 0xFFFFFFF)
+      v->osc_2_phase &= 0xFFFFFFF;
+
+#if 0
     /* update noise */
     if ((v->noise_mode == PATCH_NOISE_MODE_SQUARE) || 
         (v->noise_mode == PATCH_NOISE_MODE_SAW))
@@ -776,100 +688,19 @@ short int voice_update_all()
           v->noise_lfsr = (v->noise_lfsr >> 1) & 0x3FFF;
       }
     }
+#endif
 
     /* update oscillator levels based on current algorithm */
-
-    /* 1 carrier - chain  */
-    /*   1 -> 2 -> 3 -> 4 */
-    if (v->algorithm == PATCH_ALGORITHM_1C_CHAIN)
+    if (v->program == PATCH_PROGRAM_WAVE_MIX)
     {
-      VOICE_UPDATE_OSCILLATOR_NO_MOD(0)
-      VOICE_UPDATE_OSCILLATOR_MOD_X1(1, 0)
-      VOICE_UPDATE_OSCILLATOR_MOD_X1(2, 1)
-      VOICE_UPDATE_OSCILLATOR_MOD_X1(3, 2)
+      VOICE_OSC_WAVETABLE_LOOKUP(1, (v->osc_1_phase >> 18))
 
-      level = osc_level[3];
-    }
-    /* 1 carrier - Y        */
-    /*   (1 + 2) -> 3 -> 4  */
-    else if (v->algorithm == PATCH_ALGORITHM_1C_THE_Y)
-    {
-      VOICE_UPDATE_OSCILLATOR_NO_MOD(0)
-      VOICE_UPDATE_OSCILLATOR_NO_MOD(1)
-      VOICE_UPDATE_OSCILLATOR_MOD_X2(2, 0, 1)
-      VOICE_UPDATE_OSCILLATOR_MOD_X1(3, 2)
-
-      level = osc_level[3];
-    }
-    /* 1 carrier - crab claw  */
-    /*   1 -> 2, (2 + 3) -> 4 */
-    else if (v->algorithm == PATCH_ALGORITHM_1C_CRAB)
-    {
-      VOICE_UPDATE_OSCILLATOR_NO_MOD(0)
-      VOICE_UPDATE_OSCILLATOR_MOD_X1(1, 0)
-      VOICE_UPDATE_OSCILLATOR_NO_MOD(2)
-      VOICE_UPDATE_OSCILLATOR_MOD_X2(3, 1, 2)
-
-      level = osc_level[3];
-    }
-    /* 2 carriers - twin                  */
-    /*   1 -> 3, 2 -> 4, output is 3 + 4  */
-    else if (v->algorithm == PATCH_ALGORITHM_2C_TWIN)
-    {
-      VOICE_UPDATE_OSCILLATOR_NO_MOD(0)
-      VOICE_UPDATE_OSCILLATOR_NO_MOD(1)
-      VOICE_UPDATE_OSCILLATOR_MOD_X1(2, 0)
-      VOICE_UPDATE_OSCILLATOR_MOD_X1(3, 1)
-
-      level = osc_level[2] + osc_level[3];
-    }
-    /* 2 carriers - stacked           */
-    /*   1 -> 2 -> 3, output is 3 + 4 */
-    else if (v->algorithm == PATCH_ALGORITHM_2C_STACKED)
-    {
-      VOICE_UPDATE_OSCILLATOR_NO_MOD(0)
-      VOICE_UPDATE_OSCILLATOR_MOD_X1(1, 0)
-      VOICE_UPDATE_OSCILLATOR_MOD_X1(2, 1)
-      VOICE_UPDATE_OSCILLATOR_NO_MOD(3)
-
-      level = osc_level[2] + osc_level[3];
-    }
-    /* 3 carriers - one to three                      */
-    /*   1 -> 2, 1 -> 3, 1 -> 4, output is 2 + 3 + 4  */
-    else if (v->algorithm == PATCH_ALGORITHM_3C_1_TO_3)
-    {
-      VOICE_UPDATE_OSCILLATOR_NO_MOD(0)
-      VOICE_UPDATE_OSCILLATOR_MOD_X1(1, 0)
-      VOICE_UPDATE_OSCILLATOR_MOD_X1(2, 0)
-      VOICE_UPDATE_OSCILLATOR_MOD_X1(3, 0)
-
-      level = osc_level[1] + osc_level[2] + osc_level[3];
-    }
-    /* 3 carriers - one to one        */
-    /*   1 -> 2, output is 2 + 3 + 4  */
-    else if (v->algorithm == PATCH_ALGORITHM_3C_1_TO_1)
-    {
-      VOICE_UPDATE_OSCILLATOR_NO_MOD(0)
-      VOICE_UPDATE_OSCILLATOR_MOD_X1(1, 0)
-      VOICE_UPDATE_OSCILLATOR_NO_MOD(2)
-      VOICE_UPDATE_OSCILLATOR_NO_MOD(3)
-
-      level = osc_level[1] + osc_level[2] + osc_level[3];
-    }
-    /* 4 carriers - pipes         */
-    /*   output is 1 + 2 + 3 + 4  */
-    else if (v->algorithm == PATCH_ALGORITHM_4C_PIPES)
-    {
-      VOICE_UPDATE_OSCILLATOR_NO_MOD(0)
-      VOICE_UPDATE_OSCILLATOR_NO_MOD(1)
-      VOICE_UPDATE_OSCILLATOR_NO_MOD(2)
-      VOICE_UPDATE_OSCILLATOR_NO_MOD(3)
-
-      level = osc_level[0] + osc_level[1] + osc_level[2] + osc_level[3];
+      v->level = osc_1_level;
     }
     else
-      level = 0;
+      v->level = 0;
 
+#if 0
     /* swap in noise on oscillator 4 if necessary */
     if ((v->noise_mode == PATCH_NOISE_MODE_SQUARE) || 
         (v->noise_mode == PATCH_NOISE_MODE_SAW))
@@ -902,9 +733,7 @@ short int voice_update_all()
       else
         level -= S_voice_db_to_linear_table[final_index];
     }
-
-    /* set voice level */
-    v->level = level;
+#endif
   }
 
   return 0;
@@ -947,19 +776,40 @@ short int voice_generate_tables()
     S_voice_wavetable_sine[512 - m] = S_voice_wavetable_sine[m];
   }
 
+  /* wavetable (sawtooth) */
+  S_voice_wavetable_saw[0] = 4095;
+  S_voice_wavetable_saw[512] = 0;
+
+  for (m = 1; m < 512; m++)
+  {
+    val = m / 512.0f;
+    S_voice_wavetable_saw[m] = (short int) ((10 * (log(1 / val) / log(10)) / DB_STEP_12_BIT) + 0.5f);
+    S_voice_wavetable_saw[1024 - m] = S_voice_wavetable_saw[m];
+  }
+
   /* detune table */
   for (m = 0; m < PATCH_OSC_DETUNE_NUM_VALUES; m++)
   {
-    S_voice_detune_table[m] = 
-      ((m - (PATCH_OSC_DETUNE_UPPER_BOUND / 2)) * TUNING_NUM_SEMITONE_STEPS) / PATCH_OSC_DETUNE_UPPER_BOUND;
+    S_voice_detune_table[m] = PATCH_OSC_DETUNE_LOWER_BOUND + m;
   }
 
+  /* wave phase increment table */
+  for (m = 0; m < TUNING_NUM_INDICES; m++)
+  {
+    val = 440.0f * exp(log(2) * ((m - TUNING_INDEX_A4) / 1200.0f));
+
+    S_voice_wave_phase_increment_table[m] = 
+      (unsigned int) ((val * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
+  }
+
+#if 0
   /* noise phase increment table */
   for (m = 0; m < PATCH_NOISE_FREQUENCY_NUM_VALUES; m++)
   {
     S_voice_noise_phase_increment_table[m] = 
       (int) ((S_voice_noise_frequency_table[m] * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
   }
+#endif
 
 #if 0
   /* print out db to linear table values */

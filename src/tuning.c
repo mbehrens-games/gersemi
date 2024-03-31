@@ -4,18 +4,10 @@
 
 #include <math.h>
 
-#include "clock.h"
 #include "tuning.h"
 
 #define PI      3.14159265358979323846f
 #define TWO_PI  6.28318530717958647693f
-
-/* phase increment table */
-unsigned int G_tuning_phase_increment_table[TUNING_TABLE_SIZE];
-
-/* tuning system & fork */
-static int S_tuning_system;
-static int S_tuning_fork;
 
 /* multipliers from c in 12 tone equal temperament */
 static float S_tuning_mult_12_equal_temperament[12] = 
@@ -77,8 +69,76 @@ static float S_tuning_mult_werckmeister_iii[12] =
           1.77777777777778,     /* 16:9             Bb */
           1.87924087309072};    /* 128*2^(1/4):81   B  */
 
-/* frequencies in the middle octave (populated during generation) */
-static float S_tuning_freq_table[TUNING_TABLE_SIZE];
+/* tuning system & fork */
+static int S_tuning_system;
+static int S_tuning_fork;
+
+/* offset table */
+short int G_tuning_offset_table[12];
+
+/*******************************************************************************
+** tuning_generate_offsets()
+*******************************************************************************/
+short int tuning_generate_offsets()
+{
+  int     m;
+
+  float*  mult_table;
+
+  float   freq_fork;
+
+  short int offset;
+
+  /* reset tuning offsets */
+  for (m = 0; m < 12; m++)
+    G_tuning_offset_table[m] = 0;
+
+  /* apply offset from tuning fork (same for all notes) */
+  if (S_tuning_fork == TUNING_FORK_A430)
+    freq_fork = 430.0f;
+  else if (S_tuning_fork == TUNING_FORK_A432)
+    freq_fork = 432.0f;
+  else if (S_tuning_fork == TUNING_FORK_A434)
+    freq_fork = 434.0f;
+  else if (S_tuning_fork == TUNING_FORK_A436)
+    freq_fork = 436.0f;
+  else if (S_tuning_fork == TUNING_FORK_A438)
+    freq_fork = 438.0f;
+  else if (S_tuning_fork == TUNING_FORK_A440)
+    freq_fork = 440.0f;
+  else if (S_tuning_fork == TUNING_FORK_A442)
+    freq_fork = 442.0f;
+  else if (S_tuning_fork == TUNING_FORK_A444)
+    freq_fork = 444.0f;
+  else
+    freq_fork = 440.0f;
+
+  offset = (short int) (1200 * ((log(freq_fork) - log(440)) / log(2)) + 0.5f);
+
+  for (m = 0; m < 12; m++)
+    G_tuning_offset_table[m] += offset;
+
+  /* apply offset from tuning system (different for each note) */
+  if (S_tuning_system == TUNING_SYSTEM_12_EQUAL_TEMPERAMENT)
+    mult_table = S_tuning_mult_12_equal_temperament;
+  else if (S_tuning_system == TUNING_SYSTEM_PYTHAGOREAN)
+    mult_table = S_tuning_mult_pythagorean;
+  else if (S_tuning_system == TUNING_SYSTEM_QUARTER_COMMA_MEANTONE)
+    mult_table = S_tuning_mult_quarter_comma_meantone;
+  else if (S_tuning_system == TUNING_SYSTEM_WERCKMEISTER_III)
+    mult_table = S_tuning_mult_werckmeister_iii;
+  else
+    mult_table = S_tuning_mult_12_equal_temperament;
+
+  for (m = 0; m < 12; m++)
+  {
+    offset = (short int) (1200 * ((log(mult_table[m]) - log(S_tuning_mult_12_equal_temperament[m])) / log(2)) + 0.5f);
+
+    G_tuning_offset_table[m] += offset;
+  }
+
+  return 0;
+}
 
 /*******************************************************************************
 ** tuning_reset()
@@ -88,7 +148,7 @@ short int tuning_reset()
   S_tuning_system = TUNING_SYSTEM_12_EQUAL_TEMPERAMENT;
   S_tuning_fork = TUNING_FORK_A440;
 
-  tuning_calculate_tables();
+  tuning_generate_offsets();
 
   return 0;
 }
@@ -105,7 +165,7 @@ short int tuning_set_system(int system)
   /* set tuning system and recalculate tables */
   S_tuning_system = system;
 
-  tuning_calculate_tables();
+  tuning_generate_offsets();
 
   return 0;
 }
@@ -122,122 +182,7 @@ short int tuning_set_fork(int fork)
   /* set tuning fork and recalculate tables */
   S_tuning_fork = fork;
 
-  tuning_calculate_tables();
-
-  return 0;
-}
-
-/*******************************************************************************
-** tuning_calculate_tables()
-*******************************************************************************/
-short int tuning_calculate_tables()
-{
-  int     m;
-  int     n;
-
-  float*  mult_table;
-
-  float   cents;
-
-  /* determine multiplier table */
-  if (S_tuning_system == TUNING_SYSTEM_12_EQUAL_TEMPERAMENT)
-    mult_table = S_tuning_mult_12_equal_temperament;
-  else if (S_tuning_system == TUNING_SYSTEM_PYTHAGOREAN)
-    mult_table = S_tuning_mult_pythagorean;
-  else if (S_tuning_system == TUNING_SYSTEM_QUARTER_COMMA_MEANTONE)
-    mult_table = S_tuning_mult_quarter_comma_meantone;
-  else if (S_tuning_system == TUNING_SYSTEM_WERCKMEISTER_III)
-    mult_table = S_tuning_mult_werckmeister_iii;
-  else
-    mult_table = S_tuning_mult_12_equal_temperament;
-
-  /* compute frequency at the tuning fork */
-  if (S_tuning_fork == TUNING_FORK_C256)
-    S_tuning_freq_table[0 * TUNING_NUM_SEMITONE_STEPS] = 256;
-  else if (S_tuning_fork == TUNING_FORK_A432)
-    S_tuning_freq_table[9 * TUNING_NUM_SEMITONE_STEPS] = 432;
-  else if (S_tuning_fork == TUNING_FORK_A434)
-    S_tuning_freq_table[9 * TUNING_NUM_SEMITONE_STEPS] = 434;
-  else if (S_tuning_fork == TUNING_FORK_A436)
-    S_tuning_freq_table[9 * TUNING_NUM_SEMITONE_STEPS] = 436;
-  else if (S_tuning_fork == TUNING_FORK_A438)
-    S_tuning_freq_table[9 * TUNING_NUM_SEMITONE_STEPS] = 438;
-  else if (S_tuning_fork == TUNING_FORK_A440)
-    S_tuning_freq_table[9 * TUNING_NUM_SEMITONE_STEPS] = 440;
-  else if (S_tuning_fork == TUNING_FORK_A442)
-    S_tuning_freq_table[9 * TUNING_NUM_SEMITONE_STEPS] = 442;
-  else if (S_tuning_fork == TUNING_FORK_A444)
-    S_tuning_freq_table[9 * TUNING_NUM_SEMITONE_STEPS] = 444;
-  else
-    S_tuning_freq_table[9 * TUNING_NUM_SEMITONE_STEPS] = 440;
-
-  /* compute frequencies for the other notes in the middle octave (octave 4) */
-  if (S_tuning_fork == TUNING_FORK_C256)
-  {
-    for (m = 1; m < 12; m++)
-    {
-      S_tuning_freq_table[m * TUNING_NUM_SEMITONE_STEPS] = 
-        S_tuning_freq_table[0 * TUNING_NUM_SEMITONE_STEPS] * mult_table[m];
-    }
-  }
-  else
-  {
-    for (m = 0; m < 12; m++)
-    {
-      if (m == 9)
-        continue;
-
-      S_tuning_freq_table[m * TUNING_NUM_SEMITONE_STEPS] = 
-        S_tuning_freq_table[9 * TUNING_NUM_SEMITONE_STEPS] * (mult_table[m] / mult_table[9]);
-    }
-  }
-
-  /* compute frequencies between the notes in the middle octave (octave 4) */
-  for (m = 0; m < 12; m++)
-  {
-    if (m < 11)
-      cents = (1200.0f * (log(mult_table[m + 1]) - log(mult_table[m])) / log(2)) / TUNING_NUM_SEMITONE_STEPS;
-    else
-      cents = (1200.0f * (log(2) - log(mult_table[m])) / log(2)) / TUNING_NUM_SEMITONE_STEPS;
-
-    for (n = 1; n < TUNING_NUM_SEMITONE_STEPS; n++)
-    {
-      S_tuning_freq_table[m * TUNING_NUM_SEMITONE_STEPS + n] = 
-        S_tuning_freq_table[m * TUNING_NUM_SEMITONE_STEPS] * exp(log(2) * ((cents * n) / 1200.0f));
-    }
-  }
-
-  /* compute phase increments in the highest octave (octave 9)            */
-  /* (the increments in other octaves can be obtained by right shifting)  */
-  for (n = 0; n < TUNING_TABLE_SIZE; n++)
-  {
-    G_tuning_phase_increment_table[n] = 
-      (int) (((S_tuning_freq_table[n] * 32) * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
-  }
-
-#if 0
-  printf("Frequency Table (Octave 4):\n");
-
-  for (m = 0; m < TUNING_TABLE_SIZE / 4; m++)
-  {
-    printf("%f %f %f %f\n", S_tuning_freq_table[4 * m + 0], 
-                            S_tuning_freq_table[4 * m + 1], 
-                            S_tuning_freq_table[4 * m + 2], 
-                            S_tuning_freq_table[4 * m + 3]);
-  }
-#endif
-
-#if 0
-  printf("Phase Increment Table (Octave 9):\n");
-
-  for (m = 0; m < TUNING_TABLE_SIZE / 4; m++)
-  {
-    printf("%d %d %d %d\n", G_tuning_phase_increment_table[4 * m + 0], 
-                            G_tuning_phase_increment_table[4 * m + 1], 
-                            G_tuning_phase_increment_table[4 * m + 2], 
-                            G_tuning_phase_increment_table[4 * m + 3]);
-  }
-#endif
+  tuning_generate_offsets();
 
   return 0;
 }

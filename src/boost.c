@@ -11,7 +11,7 @@
 #include "midicont.h"
 #include "patch.h"
 
-#define BOOST_AMOUNT_LEVEL_STEP 8
+#define BOOST_AMOUNT_LEVEL_STEP (1 * 32)
 
 /* boost amount table */
 static short int  S_boost_amount_table[PATCH_EFFECT_DEPTH_NUM_VALUES] = 
@@ -57,9 +57,11 @@ short int boost_reset_all()
 
     b->mod_wheel_effect = PATCH_CONTROLLER_EFFECT_DEFAULT;
     b->aftertouch_effect = PATCH_CONTROLLER_EFFECT_DEFAULT;
+    b->exp_pedal_effect = PATCH_CONTROLLER_EFFECT_DEFAULT;
 
     b->mod_wheel_input = 0;
     b->aftertouch_input = 0;
+    b->exp_pedal_input = 0;
 
     b->level = 0;
   }
@@ -115,6 +117,14 @@ short int boost_load_patch(int instrument_index, int patch_index)
   else
     b->aftertouch_effect = PATCH_CONTROLLER_EFFECT_DEFAULT;
 
+  if ((p->exp_pedal_effect >= PATCH_CONTROLLER_EFFECT_LOWER_BOUND) && 
+      (p->exp_pedal_effect <= PATCH_CONTROLLER_EFFECT_UPPER_BOUND))
+  {
+    b->exp_pedal_effect = p->exp_pedal_effect;
+  }
+  else
+    b->exp_pedal_effect = PATCH_CONTROLLER_EFFECT_DEFAULT;
+
   return 0;
 }
 
@@ -154,6 +164,16 @@ short int boost_update_all()
     {
       b->level += 
         (b->amount * b->aftertouch_input) / MIDI_CONT_AFTERTOUCH_UPPER_BOUND;
+    }
+
+    /* apply expression pedal effect */
+    if ((b->exp_pedal_effect == PATCH_CONTROLLER_EFFECT_BOOST)           || 
+        (b->exp_pedal_effect == PATCH_CONTROLLER_EFFECT_VIB_PLUS_BOOST)  || 
+        (b->exp_pedal_effect == PATCH_CONTROLLER_EFFECT_TREM_PLUS_BOOST) || 
+        (b->exp_pedal_effect == PATCH_CONTROLLER_EFFECT_ALL_THREE))
+    {
+      b->level += 
+        (b->amount * b->exp_pedal_input) / MIDI_CONT_EXP_PEDAL_UPPER_BOUND;
     }
 
     /* bound level */

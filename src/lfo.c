@@ -21,27 +21,27 @@
 
 #define LFO_BASE_NOISE_FREQUENCY 440.0f /* A-4 */
 
-#define LFO_TREMOLO_DEPTH_STEP 8
+#define LFO_TREMOLO_DEPTH_STEP (1 * 32)
 
 /* vibrato depth table */
 /* assuming 128 steps per semitone */
 static short int  S_lfo_vibrato_depth_table[PATCH_EFFECT_DEPTH_NUM_VALUES] = 
-                  { (  5.0f / 100.0f) * TUNING_NUM_SEMITONE_STEPS, 
-                    (  7.5f / 100.0f) * TUNING_NUM_SEMITONE_STEPS, 
-                    ( 10.0f / 100.0f) * TUNING_NUM_SEMITONE_STEPS, 
-                    ( 15.0f / 100.0f) * TUNING_NUM_SEMITONE_STEPS, 
-                    ( 20.0f / 100.0f) * TUNING_NUM_SEMITONE_STEPS, 
-                    ( 30.0f / 100.0f) * TUNING_NUM_SEMITONE_STEPS, 
-                    ( 40.0f / 100.0f) * TUNING_NUM_SEMITONE_STEPS, 
-                    ( 50.0f / 100.0f) * TUNING_NUM_SEMITONE_STEPS, 
-                    ( 60.0f / 100.0f) * TUNING_NUM_SEMITONE_STEPS, 
-                    ( 70.0f / 100.0f) * TUNING_NUM_SEMITONE_STEPS, 
-                    ( 80.0f / 100.0f) * TUNING_NUM_SEMITONE_STEPS, 
-                    ( 90.0f / 100.0f) * TUNING_NUM_SEMITONE_STEPS, 
-                    (100.0f / 100.0f) * TUNING_NUM_SEMITONE_STEPS, 
-                    (200.0f / 100.0f) * TUNING_NUM_SEMITONE_STEPS, 
-                    (400.0f / 100.0f) * TUNING_NUM_SEMITONE_STEPS, 
-                    (700.0f / 100.0f) * TUNING_NUM_SEMITONE_STEPS 
+                  { (  5 * TUNING_NUM_SEMITONE_STEPS) / 100, 
+                    (  7 * TUNING_NUM_SEMITONE_STEPS) / 100, 
+                    ( 10 * TUNING_NUM_SEMITONE_STEPS) / 100, 
+                    ( 14 * TUNING_NUM_SEMITONE_STEPS) / 100, 
+                    ( 20 * TUNING_NUM_SEMITONE_STEPS) / 100, 
+                    ( 30 * TUNING_NUM_SEMITONE_STEPS) / 100, 
+                    ( 40 * TUNING_NUM_SEMITONE_STEPS) / 100, 
+                    ( 50 * TUNING_NUM_SEMITONE_STEPS) / 100, 
+                    ( 60 * TUNING_NUM_SEMITONE_STEPS) / 100, 
+                    ( 70 * TUNING_NUM_SEMITONE_STEPS) / 100, 
+                    ( 80 * TUNING_NUM_SEMITONE_STEPS) / 100, 
+                    ( 90 * TUNING_NUM_SEMITONE_STEPS) / 100, 
+                    (100 * TUNING_NUM_SEMITONE_STEPS) / 100, 
+                    (200 * TUNING_NUM_SEMITONE_STEPS) / 100, 
+                    (400 * TUNING_NUM_SEMITONE_STEPS) / 100, 
+                    (700 * TUNING_NUM_SEMITONE_STEPS) / 100 
                   };
 
 /* tremolo depth table */
@@ -188,9 +188,11 @@ short int lfo_reset_all()
 
     l->mod_wheel_effect = PATCH_CONTROLLER_EFFECT_VIBRATO;
     l->aftertouch_effect = PATCH_CONTROLLER_EFFECT_VIBRATO;
+    l->exp_pedal_effect = PATCH_CONTROLLER_EFFECT_VIBRATO;
 
     l->mod_wheel_input = 0;
     l->aftertouch_input = 0;
+    l->exp_pedal_input = 0;
 
     l->vibrato_wave_value = 0;
     l->tremolo_wave_value = 0;
@@ -336,6 +338,14 @@ short int lfo_load_patch(int voice_index, int patch_index)
   }
   else
     l->aftertouch_effect = PATCH_CONTROLLER_EFFECT_LOWER_BOUND;
+
+  if ((p->exp_pedal_effect >= PATCH_CONTROLLER_EFFECT_LOWER_BOUND) && 
+      (p->exp_pedal_effect <= PATCH_CONTROLLER_EFFECT_UPPER_BOUND))
+  {
+    l->exp_pedal_effect = p->exp_pedal_effect;
+  }
+  else
+    l->exp_pedal_effect = PATCH_CONTROLLER_EFFECT_LOWER_BOUND;
 
   return 0;
 }
@@ -579,7 +589,7 @@ short int lfo_update_all()
     l->vibrato_level = (vibrato_bound * l->vibrato_base) / PATCH_EFFECT_BASE_NUM_VALUES;
     l->tremolo_level = (tremolo_bound * l->tremolo_base) / PATCH_EFFECT_BASE_NUM_VALUES;
 
-    /* apply mod wheel effect */
+    /* apply modulation wheel effect */
     if ((l->mod_wheel_effect == PATCH_CONTROLLER_EFFECT_VIBRATO)        || 
         (l->mod_wheel_effect == PATCH_CONTROLLER_EFFECT_VIB_PLUS_TREM)  || 
         (l->mod_wheel_effect == PATCH_CONTROLLER_EFFECT_VIB_PLUS_BOOST) || 
@@ -619,6 +629,27 @@ short int lfo_update_all()
       l->tremolo_level += 
         (tremolo_bound * (PATCH_EFFECT_BASE_UPPER_BOUND - l->tremolo_base) * l->aftertouch_input) / 
         (PATCH_EFFECT_BASE_NUM_VALUES * MIDI_CONT_AFTERTOUCH_UPPER_BOUND);
+    }
+
+    /* apply expression pedal effect */
+    if ((l->exp_pedal_effect == PATCH_CONTROLLER_EFFECT_VIBRATO)         || 
+        (l->exp_pedal_effect == PATCH_CONTROLLER_EFFECT_VIB_PLUS_TREM)   || 
+        (l->exp_pedal_effect == PATCH_CONTROLLER_EFFECT_VIB_PLUS_BOOST)  || 
+        (l->exp_pedal_effect == PATCH_CONTROLLER_EFFECT_ALL_THREE))
+    {
+      l->vibrato_level += 
+        (vibrato_bound * (PATCH_EFFECT_BASE_UPPER_BOUND - l->vibrato_base) * l->exp_pedal_input) / 
+        (PATCH_EFFECT_BASE_NUM_VALUES * MIDI_CONT_EXP_PEDAL_UPPER_BOUND);
+    }
+
+    if ((l->exp_pedal_effect == PATCH_CONTROLLER_EFFECT_TREMOLO)         || 
+        (l->exp_pedal_effect == PATCH_CONTROLLER_EFFECT_VIB_PLUS_TREM)   || 
+        (l->exp_pedal_effect == PATCH_CONTROLLER_EFFECT_TREM_PLUS_BOOST) || 
+        (l->exp_pedal_effect == PATCH_CONTROLLER_EFFECT_ALL_THREE))
+    {
+      l->tremolo_level += 
+        (tremolo_bound * (PATCH_EFFECT_BASE_UPPER_BOUND - l->tremolo_base) * l->exp_pedal_input) / 
+        (PATCH_EFFECT_BASE_NUM_VALUES * MIDI_CONT_EXP_PEDAL_UPPER_BOUND);
     }
 
     /* bound vibrato & tremolo levels */

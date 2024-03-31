@@ -18,7 +18,6 @@
 #include "global.h"
 #include "graphics.h"
 #include "hola.h"
-#include "import.h"
 #include "instrument.h"
 #include "layout.h"
 #include "palette.h"
@@ -148,14 +147,8 @@ int main(int argc, char *argv[])
   /* reset synth */
   synth_reset_banks();
 
-#if 0
   /* testing: load test cart file */
   fileio_cart_load(1, G_path_cart_test_1);
-#else
-  /* testing: load test .tfi files */
-  import_sbi_load(1,  1, G_path_import_sbi_2, 0, IMPORT_BATCHING_8);
-  import_opm_load(1,  9, G_path_import_opm_1, 0, IMPORT_BATCHING_8);
-#endif
 
   /* testing */
   instrument_load_patch(G_patch_edit_instrument_index, 1, 1);

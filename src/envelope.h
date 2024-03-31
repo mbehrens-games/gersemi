@@ -11,11 +11,11 @@ typedef struct envelope
 {
   /* keyscaling settings */
   short int ks_rate_fraction;
-  short int ks_level_fraction;
+  short int ks_left_fraction;
+  short int ks_right_fraction;
   short int ks_break_note;
 
   /* adjustments */
-  short int ampl_adjustment;
   short int rate_adjustment;
   short int level_adjustment;
 
@@ -25,21 +25,18 @@ typedef struct envelope
   /* sustain pedal state */
   short int sustain_pedal;
 
-  /* current note offset */
-  short int offset;
+  /* rates */
+  int a_rate;
+  int d1_rate;
+  int d2_rate;
+  int r_rate;
 
-  /* rows */
-  int a_row;
-  int d1_row;
-  int d2_row;
-  int r_row;
+  /* alternate rate (with sustain pedal) */
+  int pedal_rate;
 
-  /* alternate row (with sustain pedal) */
-  int pedal_row;
-
-  /* current state, row */
-  int state;
-  int row;
+  /* current stage, rate */
+  int stage;
+  int rate;
 
   /* phase increment, phase */
   unsigned int increment;
@@ -53,7 +50,7 @@ typedef struct envelope
 } envelope;
 
 /* envelope bank */
-extern envelope G_envelope_bank[BANK_NUM_ENVELOPES];
+extern envelope G_envelope_bank[BANK_NUM_AMPLITUDE_ENVELOPES];
 
 /* function declarations */
 short int envelope_reset_all();

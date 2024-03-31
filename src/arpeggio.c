@@ -20,22 +20,18 @@
 
 /* arpeggio speed table (in notes per beat) */
 static float  S_arpeggio_speed_table[PATCH_ARPEGGIO_SPEED_NUM_VALUES] = 
-              {  1.0f,  /*   4 notes in 4 beats (1 note  per beat)      */
-                 1.5f,  /*   6 notes in 4 beats                         */
-                 2.0f,  /*   8 notes in 4 beats (1 note  per eighth)    */
-                 2.5f,  /*  10 notes in 4 beats                         */
-                 3.0f,  /*  12 notes in 4 beats (3 notes per beat)      */
-                 3.5f,  /*  14 notes in 4 beats                         */
-                 4.0f,  /*  16 notes in 4 beats (1 note  per sixteenth) */
-                 5.0f,  /*  20 notes in 4 beats                         */
-                 6.0f,  /*  24 notes in 4 beats (3 notes per eighth)    */
-                 7.0f,  /*  28 notes in 4 beats                         */
-                 8.0f,  /*  32 notes in 4 beats (2 notes per sixteenth) */
-                10.0f,  /*  40 notes in 4 beats                         */
-                12.0f,  /*  48 notes in 4 beats (3 notes per sixteenth) */
-                14.0f,  /*  56 notes in 4 beats                         */
-                16.0f,  /*  64 notes in 4 beats (4 notes per sixteenth) */
-                24.0f   /*  96 notes in 4 beats (6 notes per sixteenth) */
+              {  1.0f,  /*   1 note  per beat                     */
+                 2.0f,  /*   2 notes per beat (1 note per 8th)    */
+                 3.0f,  /*   3 notes per beat                     */
+                 4.0f,  /*   4 notes per beat (2 notes per 8th)   */
+                 5.0f,  /*   5 notes per beat                     */
+                 6.0f,  /*   6 notes per beat (3 notes per 8th)   */
+                 8.0f,  /*   4 notes per  8th (2 notes per 16th)  */
+                10.0f,  /*   5 notes per  8th                     */
+                12.0f,  /*   6 notes per  8th (3 notes per 16th)  */
+                16.0f,  /*   4 notes per 16th                     */
+                20.0f,  /*   5 notes per 16th                     */
+                24.0f   /*   6 notes per 16th                     */
               };
 
 /* phase increment table */
@@ -66,19 +62,22 @@ short int arpeggio_reset_all()
     a->octaves = PATCH_ARPEGGIO_OCTAVES_DEFAULT;
     a->speed = PATCH_ARPEGGIO_SPEED_DEFAULT;
 
-    a->phase = 0;
     a->tempo = TEMPO_DEFAULT;
+    a->phase = 0;
 
     ARPEGGIO_SET_PHASE_INCREMENT()
-
-    a->step_index = 0;
 
     for (m = 0; m < ARPEGGIO_NUM_NOTES; m++)
       a->sorted_notes[m] = TUNING_NOTE_BLANK;
 
     a->num_notes = 0;
 
+    for (m = 0; m < ARPEGGIO_NUM_STEPS; m++)
+      a->pattern_steps[m] = TUNING_NOTE_BLANK;
+
     a->last_note = TUNING_NOTE_BLANK;
+
+    a->step_index = 0;
 
     a->on_switch = MIDI_CONT_ARPEGGIO_SWITCH_DEFAULT;
   }
@@ -112,37 +111,37 @@ short int arpeggio_load_patch(int instrument_index, int patch_index)
   if ((p->arpeggio_mode >= PATCH_ARPEGGIO_MODE_LOWER_BOUND) && 
       (p->arpeggio_mode <= PATCH_ARPEGGIO_MODE_UPPER_BOUND))
   {
-    a->mode = p->arpeggio_mode;
+    arpeggio_set_mode(instrument_index, p->arpeggio_mode);
   }
   else
-    a->mode = PATCH_ARPEGGIO_MODE_DEFAULT;
+    arpeggio_set_mode(instrument_index, PATCH_ARPEGGIO_MODE_DEFAULT);
 
   /* pattern */
   if ((p->arpeggio_pattern >= PATCH_ARPEGGIO_PATTERN_LOWER_BOUND) && 
       (p->arpeggio_pattern <= PATCH_ARPEGGIO_PATTERN_UPPER_BOUND))
   {
-    a->pattern = p->arpeggio_pattern;
+    arpeggio_set_pattern(instrument_index, p->arpeggio_pattern);
   }
   else
-    a->pattern = PATCH_ARPEGGIO_PATTERN_DEFAULT;
+    arpeggio_set_pattern(instrument_index, PATCH_ARPEGGIO_PATTERN_DEFAULT);
 
   /* octaves */
   if ((p->arpeggio_octaves >= PATCH_ARPEGGIO_OCTAVES_LOWER_BOUND) && 
       (p->arpeggio_octaves <= PATCH_ARPEGGIO_OCTAVES_UPPER_BOUND))
   {
-    a->octaves = p->arpeggio_octaves;
+    arpeggio_set_octaves(instrument_index, p->arpeggio_octaves);
   }
   else
-    a->octaves = PATCH_ARPEGGIO_OCTAVES_DEFAULT;
+    arpeggio_set_octaves(instrument_index, PATCH_ARPEGGIO_OCTAVES_DEFAULT);
 
   /* speed */
   if ((p->arpeggio_speed >= PATCH_ARPEGGIO_SPEED_LOWER_BOUND) && 
       (p->arpeggio_speed <= PATCH_ARPEGGIO_SPEED_UPPER_BOUND))
   {
-    a->speed = p->arpeggio_speed;
+    arpeggio_set_speed(instrument_index, p->arpeggio_speed);
   }
   else
-    a->speed = PATCH_ARPEGGIO_SPEED_DEFAULT;
+    arpeggio_set_speed(instrument_index, PATCH_ARPEGGIO_SPEED_DEFAULT);
 
   /* set phase increment */
   ARPEGGIO_SET_PHASE_INCREMENT()
@@ -201,6 +200,10 @@ short int arpeggio_set_pattern(int instrument_index, short int pattern)
   /* set the pattern */
   a->pattern = pattern;
 
+  /* generate pattern steps */
+  if (a->on_switch == MIDI_CONT_SWITCH_STATE_ON)
+    arpeggio_generate_pattern_steps(instrument_index);
+
   return 0;
 }
 
@@ -228,8 +231,9 @@ short int arpeggio_set_octaves(int instrument_index, short int octaves)
   /* set the octaves */
   a->octaves = octaves;
 
-  /* generate notes */
-  arpeggio_generate_notes(instrument_index);
+  /* generate pattern steps */
+  if (a->on_switch == MIDI_CONT_SWITCH_STATE_ON)
+    arpeggio_generate_pattern_steps(instrument_index);
 
   return 0;
 }
@@ -269,7 +273,11 @@ short int arpeggio_set_speed(int instrument_index, short int speed)
 *******************************************************************************/
 short int arpeggio_set_switch(int instrument_index, short int state)
 {
+  int m;
+
   arpeggio* a;
+
+  char new_note;
 
   /* make sure that the instrument index is valid */
   if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
@@ -294,7 +302,25 @@ short int arpeggio_set_switch(int instrument_index, short int state)
 
   /* reset the phase if necessary */
   if (a->on_switch == MIDI_CONT_SWITCH_STATE_ON)
+  {
     a->phase = 0;
+    a->step_index = 0;
+
+    arpeggio_generate_sorted_notes(instrument_index);
+    arpeggio_generate_pattern_steps(instrument_index);
+
+    new_note = a->pattern_steps[a->step_index];
+
+    instrument_note_on(instrument_index, new_note);
+
+    a->last_note = new_note;
+  }
+  /* send note-offs to all keys if the arpeggio is off */
+  else if (a->on_switch == MIDI_CONT_SWITCH_STATE_OFF)
+  {
+    for (m = 0; m < a->num_notes; m++)
+      instrument_note_off(instrument_index, a->sorted_notes[m]);
+  }
 
   return 0;
 }
@@ -328,9 +354,29 @@ short int arpeggio_set_tempo(int instrument_index, short int tempo)
 }
 
 /*******************************************************************************
-** arpeggio_generate_notes()
+** arpeggio_sync_to_tempo()
 *******************************************************************************/
-short int arpeggio_generate_notes(int instrument_index)
+short int arpeggio_sync_to_tempo(int instrument_index)
+{
+  arpeggio* a;
+
+  /* make sure that the instrument index is valid */
+  if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
+    return 1;
+
+  /* obtain arpeggio pointer */
+  a = &G_arpeggio_bank[instrument_index];
+
+  /* reset phase */
+  a->phase = 0;
+
+  return 0;
+}
+
+/*******************************************************************************
+** arpeggio_generate_sorted_notes()
+*******************************************************************************/
+short int arpeggio_generate_sorted_notes(int instrument_index)
 {
   int m;
   int n;
@@ -338,7 +384,6 @@ short int arpeggio_generate_notes(int instrument_index)
   arpeggio* a;
   instrument* ins;
 
-  int index;
   int val;
 
   /* make sure that the instrument index is valid */
@@ -368,15 +413,120 @@ short int arpeggio_generate_notes(int instrument_index)
   a->num_notes = ins->num_pressed * a->octaves;
 
   /* sort the notes! */
-  for (m = 0; m < a->num_notes; m++)
+  for (m = 1; m < a->num_notes; m++)
   {
-    for (n = m + 1; n < a->num_notes; n++)
+    for (n = m; n > 0; n--)
     {
-      
+      if (a->sorted_notes[n - 1] > a->sorted_notes[n])
+      {
+        val = a->sorted_notes[n - 1];
+        a->sorted_notes[n - 1] = a->sorted_notes[n];
+        a->sorted_notes[n] = val;
+      }
+      else
+        break;
     }
   }
 
   /* remove duplicates */
+  m = 0;
+
+  while (m < a->num_notes - 1)
+  {
+    if (a->sorted_notes[m] == TUNING_NOTE_BLANK)
+      break;
+
+    /* if a duplicate is found, shift the notes above this down one.  */
+    /* note that we continue to avoid iterating the index m, as the   */
+    /* next note should now be shifted down to the index m.           */
+    if (a->sorted_notes[m] == a->sorted_notes[m + 1])
+    {
+      for (n = m + 1; n < a->num_notes - 1; n++)
+        a->sorted_notes[n] = a->sorted_notes[n + 1];
+
+      a->sorted_notes[a->num_notes - 1] = TUNING_NOTE_BLANK;
+      a->num_notes -= 1;
+
+      continue;
+    }
+
+    /* otherwise, go to the next note! */
+    m += 1;
+  }
+
+  return 0;
+}
+
+/*******************************************************************************
+** arpeggio_generate_pattern_steps()
+*******************************************************************************/
+short int arpeggio_generate_pattern_steps(int instrument_index)
+{
+  int m;
+
+  arpeggio* a;
+
+  /* make sure that the instrument index is valid */
+  if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
+    return 1;
+
+  /* obtain arpeggio pointer */
+  a = &G_arpeggio_bank[instrument_index];
+
+  /* reset pattern steps */
+  for (m = 0; m < ARPEGGIO_NUM_STEPS; m++)
+    a->pattern_steps[m] = TUNING_NOTE_BLANK;
+
+  /* set the pattern steps based on the pattern! */
+  if (a->pattern == PATCH_ARPEGGIO_PATTERN_UP)
+  {
+    for (m = 0; m < a->num_notes; m++)
+      a->pattern_steps[m] = a->sorted_notes[m];
+
+    a->num_steps = a->num_notes;
+  }
+  else if (a->pattern == PATCH_ARPEGGIO_PATTERN_DOWN)
+  {
+    for (m = 0; m < a->num_notes; m++)
+      a->pattern_steps[m] = a->sorted_notes[a->num_notes - 1 - m];
+
+    a->num_steps = a->num_notes;
+  }
+  else if (a->pattern == PATCH_ARPEGGIO_PATTERN_UP_AND_DOWN)
+  {
+    for (m = 0; m < a->num_notes - 1; m++)
+      a->pattern_steps[m] = a->sorted_notes[m];
+
+    for (m = 0; m < a->num_notes - 1; m++)
+      a->pattern_steps[m + (a->num_notes - 1)] = a->sorted_notes[a->num_notes - 1 - m];
+
+    a->num_steps = 2 * (a->num_notes - 1);
+  }
+  else if (a->pattern == PATCH_ARPEGGIO_PATTERN_UP_AND_DOWN_ALT)
+  {
+    for (m = 0; m < a->num_notes; m++)
+      a->pattern_steps[m] = a->sorted_notes[m];
+
+    for (m = 0; m < a->num_notes; m++)
+      a->pattern_steps[m + a->num_notes] = a->sorted_notes[a->num_notes - 1 - m];
+
+    a->num_steps = 2 * a->num_notes;
+  }
+
+  return 0;
+}
+
+/*******************************************************************************
+** arpeggio_key_on_or_key_off()
+*******************************************************************************/
+short int arpeggio_key_on_or_key_off(int instrument_index)
+{
+  /* make sure that the instrument index is valid */
+  if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
+    return 1;
+
+  arpeggio_generate_sorted_notes(instrument_index);
+  arpeggio_generate_pattern_steps(instrument_index);
 
   return 0;
 }
@@ -414,18 +564,22 @@ short int arpeggio_update_all()
     {
       a->phase &= 0xFFFFFFF;
 
-      /* update pattern index */
-      a->step_index = (a->step_index + 1) % a->num_notes;
+      /* update step index and determine the new note */
+      a->step_index += 1;
 
-      /* determine the new note */
-      new_note = a->sorted_notes[a->step_index];
+      if (a->step_index >= a->num_steps)
+        a->step_index = 0;
+
+      new_note = a->pattern_steps[a->step_index];
 
       /* trigger next note, if necessary */
       if (new_note != TUNING_NOTE_BLANK)
       {
         instrument_note_on(k, new_note);
 
-        if (a->mode == PATCH_ARPEGGIO_MODE_HARP)
+        /* the note off for the previous note follows the note on   */
+        /* so that the portamento slide will trigger, if necessary  */
+        if ((a->mode == PATCH_ARPEGGIO_MODE_HARP) && (a->last_note != new_note))
           instrument_note_off(k, a->last_note);
       }
 

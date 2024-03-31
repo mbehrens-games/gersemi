@@ -9,13 +9,21 @@
 #include "clock.h"
 #include "filter.h"
 #include "patch.h"
+#include "tuning.h"
 
 #define PI      3.14159265358979323846f
 #define TWO_PI  6.28318530717958647693f
 
-/* filter coefficient tables */
-static int S_lowpass_filter_stage_multiplier_table[4];
-static int S_highpass_filter_stage_multiplier_table[4];
+/* filter coefficient table */
+static int S_filter_stage_multiplier_table[TUNING_NUM_INDICES];
+
+/* highpass cutoff table */
+static short int S_filter_highpass_cutoff_table[PATCH_HIGHPASS_CUTOFF_NUM_VALUES] = 
+  { TUNING_INDEX_A0, 
+    TUNING_INDEX_A0 + (1 * 12 + 0) * TUNING_NUM_SEMITONE_STEPS, /* A1 */
+    TUNING_INDEX_A0 + (2 * 12 + 0) * TUNING_NUM_SEMITONE_STEPS, /* A2 */
+    TUNING_INDEX_A0 + (3 * 12 + 0) * TUNING_NUM_SEMITONE_STEPS  /* A3 */
+  };
 
 /* filter bank */
 filter G_lowpass_filter_bank[BANK_NUM_LOWPASS_FILTERS];
@@ -31,6 +39,8 @@ short int filter_reset_all()
 
   filter* f;
 
+  int cutoff_index;
+
   /* reset all lowpass filters */
   for (k = 0; k < BANK_NUM_LOWPASS_FILTERS; k++)
   {
@@ -39,7 +49,7 @@ short int filter_reset_all()
 
     /* set cutoff */
     f->multiplier = 
-      S_lowpass_filter_stage_multiplier_table[PATCH_LOWPASS_CUTOFF_DEFAULT - PATCH_LOWPASS_CUTOFF_LOWER_BOUND];
+      S_filter_stage_multiplier_table[TUNING_INDEX_C8];
 
     /* reset state */
     f->input = 0;
@@ -61,8 +71,11 @@ short int filter_reset_all()
     f = &G_highpass_filter_bank[k];
 
     /* set cutoff */
+    cutoff_index = 
+      S_filter_highpass_cutoff_table[PATCH_HIGHPASS_CUTOFF_DEFAULT - PATCH_HIGHPASS_CUTOFF_LOWER_BOUND];
+
     f->multiplier = 
-      S_highpass_filter_stage_multiplier_table[PATCH_HIGHPASS_CUTOFF_DEFAULT - PATCH_HIGHPASS_CUTOFF_LOWER_BOUND];
+      S_filter_stage_multiplier_table[cutoff_index];
 
     /* reset state */
     f->input = 0;
@@ -88,6 +101,8 @@ short int filter_load_patch(int voice_index, int patch_index)
   filter* f;
   patch* p;
 
+  int cutoff_index;
+
   /* make sure that the voice index is valid */
   if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
     return 1;
@@ -102,18 +117,9 @@ short int filter_load_patch(int voice_index, int patch_index)
   /* obtain lowpass filter pointer */
   f = &G_lowpass_filter_bank[voice_index];
 
-  /* set lowpass cutoff */
-  if ((p->lowpass_cutoff >= PATCH_LOWPASS_CUTOFF_LOWER_BOUND) && 
-      (p->lowpass_cutoff <= PATCH_LOWPASS_CUTOFF_UPPER_BOUND))
-  {
-    f->multiplier = 
-      S_lowpass_filter_stage_multiplier_table[p->lowpass_cutoff - PATCH_LOWPASS_CUTOFF_LOWER_BOUND];
-  }
-  else
-  {
-    f->multiplier = 
-      S_lowpass_filter_stage_multiplier_table[PATCH_LOWPASS_CUTOFF_DEFAULT - PATCH_LOWPASS_CUTOFF_LOWER_BOUND];
-  }
+  /* set lowpass cutoff (update later!) */
+  f->multiplier = 
+    S_filter_stage_multiplier_table[TUNING_INDEX_C8];
 
   /* obtain highpass filter pointer */
   f = &G_highpass_filter_bank[voice_index];
@@ -122,14 +128,17 @@ short int filter_load_patch(int voice_index, int patch_index)
   if ((p->highpass_cutoff >= PATCH_HIGHPASS_CUTOFF_LOWER_BOUND) && 
       (p->highpass_cutoff <= PATCH_HIGHPASS_CUTOFF_UPPER_BOUND))
   {
-    f->multiplier = 
-      S_highpass_filter_stage_multiplier_table[p->highpass_cutoff - PATCH_HIGHPASS_CUTOFF_LOWER_BOUND];
+    cutoff_index = 
+      S_filter_highpass_cutoff_table[p->highpass_cutoff - PATCH_HIGHPASS_CUTOFF_LOWER_BOUND];
   }
   else
   {
-    f->multiplier = 
-      S_highpass_filter_stage_multiplier_table[PATCH_HIGHPASS_CUTOFF_DEFAULT - PATCH_HIGHPASS_CUTOFF_LOWER_BOUND];
+    cutoff_index = 
+      S_filter_highpass_cutoff_table[PATCH_HIGHPASS_CUTOFF_DEFAULT - PATCH_HIGHPASS_CUTOFF_LOWER_BOUND];
   }
+
+  f->multiplier = 
+    S_filter_stage_multiplier_table[cutoff_index];
 
   return 0;
 }
@@ -205,6 +214,9 @@ short int filter_update_highpass()
 *******************************************************************************/
 short int filter_generate_tables()
 {
+  int m;
+
+  double val;
   float omega_0_delta_t_over_2;
 
   /* compute filter coefficients */
@@ -217,65 +229,17 @@ short int filter_generate_tables()
   /* 1st order stage multiplier calculation (section 3.10, p. 76-77)              */
   /* multiplier = ((1/2) * omega_0 * delta_T) / [1 + ((1/2) * omega_0 * delta_T)] */
 
-  /* lowpass filter cutoffs */
+  /* note that we compute the lowpass filter coefficients at each index */
+  for (m = 0; m < TUNING_NUM_INDICES; m++)
+  {
+    val = 440.0f * exp(log(2) * ((m - TUNING_INDEX_A4) / 1200.0f));
 
-  /* E7 (2.6 khz) */
-  omega_0_delta_t_over_2 = 
-    tanf(0.5f * TWO_PI * 2600.0f * CLOCK_DELTA_T_SECONDS);
+    omega_0_delta_t_over_2 = 
+      tanf(0.5f * TWO_PI * val * CLOCK_DELTA_T_SECONDS);
 
-  S_lowpass_filter_stage_multiplier_table[0] = 
-    (int) (32768 * (omega_0_delta_t_over_2 / (1.0f + omega_0_delta_t_over_2)) + 0.5f);
-
-  /* G7 (3.2 khz) */
-  omega_0_delta_t_over_2 = 
-    tanf(0.5f * TWO_PI * 3200.0f * CLOCK_DELTA_T_SECONDS);
-
-  S_lowpass_filter_stage_multiplier_table[1] = 
-    (int) (32768 * (omega_0_delta_t_over_2 / (1.0f + omega_0_delta_t_over_2)) + 0.5f);
-
-  /* A7 (3.6 khz) */
-  omega_0_delta_t_over_2 = 
-    tanf(0.5f * TWO_PI * 3600.0f * CLOCK_DELTA_T_SECONDS);
-
-  S_lowpass_filter_stage_multiplier_table[2] = 
-    (int) (32768 * (omega_0_delta_t_over_2 / (1.0f + omega_0_delta_t_over_2)) + 0.5f);
-
-  /* C8 (4.2 khz) */
-  omega_0_delta_t_over_2 = 
-    tanf(0.5f * TWO_PI * 4200.0f * CLOCK_DELTA_T_SECONDS);
-
-  S_lowpass_filter_stage_multiplier_table[3] = 
-    (int) (32768 * (omega_0_delta_t_over_2 / (1.0f + omega_0_delta_t_over_2)) + 0.5f);
-
-  /* highpass filter cutoffs */
-
-  /* A0 (27.5 hz) */
-  omega_0_delta_t_over_2 = 
-    tanf(0.5f * TWO_PI * 27.5f * CLOCK_DELTA_T_SECONDS);
-
-  S_highpass_filter_stage_multiplier_table[0] = 
-    (int) (32768 * (omega_0_delta_t_over_2 / (1.0f + omega_0_delta_t_over_2)) + 0.5f);
-
-  /* A1 (55 hz) */
-  omega_0_delta_t_over_2 = 
-    tanf(0.5f * TWO_PI * 55.0f * CLOCK_DELTA_T_SECONDS);
-
-  S_highpass_filter_stage_multiplier_table[1] = 
-    (int) (32768 * (omega_0_delta_t_over_2 / (1.0f + omega_0_delta_t_over_2)) + 0.5f);
-
-  /* A2 (110 hz) */
-  omega_0_delta_t_over_2 = 
-    tanf(0.5f * TWO_PI * 110.0f * CLOCK_DELTA_T_SECONDS);
-
-  S_highpass_filter_stage_multiplier_table[2] = 
-    (int) (32768 * (omega_0_delta_t_over_2 / (1.0f + omega_0_delta_t_over_2)) + 0.5f);
-
-  /* A3 (220 hz) */
-  omega_0_delta_t_over_2 = 
-    tanf(0.5f * TWO_PI * 220.0f * CLOCK_DELTA_T_SECONDS);
-
-  S_highpass_filter_stage_multiplier_table[3] = 
-    (int) (32768 * (omega_0_delta_t_over_2 / (1.0f + omega_0_delta_t_over_2)) + 0.5f);
+    S_filter_stage_multiplier_table[m] = 
+      (int) (32768 * (omega_0_delta_t_over_2 / (1.0f + omega_0_delta_t_over_2)) + 0.5f);
+  }
 
   return 0;
 }

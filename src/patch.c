@@ -82,30 +82,58 @@ short int patch_reset_patch(int patch_index)
   for (m = 0; m < PATCH_PATCH_NAME_SIZE; m++)
     G_patch_names[patch_index][m] = '\0';
 
-  /* algorithm */
-  PATCH_RESET_PARAMETER(algorithm,          ALGORITHM)
+  /* program */
+  PATCH_RESET_PARAMETER(program,          PROGRAM)
 
-  /* oscillators and envelopes */
-  for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
-  {
-    PATCH_RESET_PARAMETER(osc_waveform[m],    OSC_WAVEFORM)
-    PATCH_RESET_PARAMETER(osc_feedback[m],    OSC_FEEDBACK)
-    PATCH_RESET_PARAMETER(osc_phi[m],         OSC_PHI)
-    PATCH_RESET_PARAMETER(osc_freq_mode[m],   OSC_FREQ_MODE)
-    PATCH_RESET_PARAMETER(osc_multiple[m],    OSC_MULTIPLE)
-    PATCH_RESET_PARAMETER(osc_divisor[m],     OSC_DIVISOR)
-    PATCH_RESET_PARAMETER(osc_detune[m],      OSC_DETUNE)
+  /* oscillators */
+  PATCH_RESET_PARAMETER(osc_1_waveform,   OSC_WAVEFORM)
+  PATCH_RESET_PARAMETER(osc_1_detune,     OSC_DETUNE)
 
-    PATCH_RESET_PARAMETER(env_attack[m],      ENV_RATE)
-    PATCH_RESET_PARAMETER(env_decay_1[m],     ENV_RATE)
-    PATCH_RESET_PARAMETER(env_decay_2[m],     ENV_RATE)
-    PATCH_RESET_PARAMETER(env_release[m],     ENV_RATE)
-    PATCH_RESET_PARAMETER(env_amplitude[m],   ENV_AMPLITUDE)
-    PATCH_RESET_PARAMETER(env_sustain[m],     ENV_SUSTAIN)
-    PATCH_RESET_PARAMETER(env_rate_ks[m],     ENV_KEYSCALING)
-    PATCH_RESET_PARAMETER(env_level_ks[m],    ENV_KEYSCALING)
-    PATCH_RESET_PARAMETER(env_break_point[m], ENV_BREAK_POINT)
-  }
+  PATCH_RESET_PARAMETER(osc_2_waveform,   OSC_WAVEFORM)
+  PATCH_RESET_PARAMETER(osc_2_detune,     OSC_DETUNE)
+  PATCH_RESET_PARAMETER(osc_2_multiple,   OSC_MULTIPLE)
+  PATCH_RESET_PARAMETER(osc_2_divisor,    OSC_DIVISOR)
+
+  /* lowpass filter */
+  PATCH_RESET_PARAMETER(lowpass_multiple,     LOWPASS_MULTIPLE)
+  PATCH_RESET_PARAMETER(lowpass_divisor,      LOWPASS_DIVISOR)
+  PATCH_RESET_PARAMETER(lowpass_keytracking,  LOWPASS_KEYTRACKING)
+
+  /* highpass filter */
+  PATCH_RESET_PARAMETER(highpass_cutoff,      HIGHPASS_CUTOFF)
+
+  /* amplitude envelope */
+  PATCH_RESET_PARAMETER(amp_env_attack,       ENV_TIME)
+  PATCH_RESET_PARAMETER(amp_env_decay_1,      ENV_TIME)
+  PATCH_RESET_PARAMETER(amp_env_decay_2,      ENV_TIME)
+  PATCH_RESET_PARAMETER(amp_env_release,      ENV_TIME)
+  PATCH_RESET_PARAMETER(amp_env_sustain,      ENV_LEVEL)
+  PATCH_RESET_PARAMETER(amp_env_rate_ks,      ENV_KEYSCALING)
+  PATCH_RESET_PARAMETER(amp_env_left_ks,      ENV_KEYSCALING)
+  PATCH_RESET_PARAMETER(amp_env_right_ks,     ENV_KEYSCALING)
+  PATCH_RESET_PARAMETER(amp_env_break_point,  ENV_BREAK_POINT)
+
+  /* filter envelope */
+  PATCH_RESET_PARAMETER(filt_peg_attack,      PEG_TIME)
+  PATCH_RESET_PARAMETER(filt_peg_decay_1,     PEG_TIME)
+  PATCH_RESET_PARAMETER(filt_peg_decay_2,     PEG_TIME)
+  PATCH_RESET_PARAMETER(filt_peg_release,     PEG_TIME)
+  PATCH_RESET_PARAMETER(filt_peg_amplitude,   PEG_LEVEL)
+  PATCH_RESET_PARAMETER(filt_peg_sustain,     PEG_LEVEL)
+  PATCH_RESET_PARAMETER(filt_peg_hold,        PEG_LEVEL)
+  PATCH_RESET_PARAMETER(filt_peg_finale,      PEG_LEVEL)
+  PATCH_RESET_PARAMETER(filt_peg_rate_ks,     PEG_KEYSCALING)
+
+  /* extra envelope */
+  PATCH_RESET_PARAMETER(ex_peg_attack,        PEG_TIME)
+  PATCH_RESET_PARAMETER(ex_peg_decay_1,       PEG_TIME)
+  PATCH_RESET_PARAMETER(ex_peg_decay_2,       PEG_TIME)
+  PATCH_RESET_PARAMETER(ex_peg_release,       PEG_TIME)
+  PATCH_RESET_PARAMETER(ex_peg_amplitude,     PEG_LEVEL)
+  PATCH_RESET_PARAMETER(ex_peg_sustain,       PEG_LEVEL)
+  PATCH_RESET_PARAMETER(ex_peg_hold,          PEG_LEVEL)
+  PATCH_RESET_PARAMETER(ex_peg_finale,        PEG_LEVEL)
+  PATCH_RESET_PARAMETER(ex_peg_rate_ks,       PEG_KEYSCALING)
 
   /* portamento */
   PATCH_RESET_PARAMETER(portamento_mode,    PORTAMENTO_MODE)
@@ -118,20 +146,6 @@ short int patch_reset_patch(int patch_index)
   PATCH_RESET_PARAMETER(arpeggio_pattern,   ARPEGGIO_PATTERN)
   PATCH_RESET_PARAMETER(arpeggio_octaves,   ARPEGGIO_OCTAVES)
   PATCH_RESET_PARAMETER(arpeggio_speed,     ARPEGGIO_SPEED)
-
-  /* pitch envelope rates */
-  PATCH_RESET_PARAMETER(peg_attack,         PEG_RATE)
-  PATCH_RESET_PARAMETER(peg_decay,          PEG_RATE)
-  PATCH_RESET_PARAMETER(peg_release,        PEG_RATE)
-
-  /* pitch envelope levels */
-  PATCH_RESET_PARAMETER(peg_amplitude,      PEG_LEVEL)
-  PATCH_RESET_PARAMETER(peg_sustain,        PEG_LEVEL)
-  PATCH_RESET_PARAMETER(peg_finale,         PEG_LEVEL)
-
-  /* pitch envelope settings */
-  PATCH_RESET_PARAMETER(peg_legato,         PEG_LEGATO)
-  PATCH_RESET_PARAMETER(peg_transpose,      PEG_TRANSPOSE)
 
   /* lfo */
   PATCH_RESET_PARAMETER(lfo_waveform,       LFO_WAVEFORM)
@@ -161,9 +175,9 @@ short int patch_reset_patch(int patch_index)
   PATCH_RESET_PARAMETER(velocity_mode,      VELOCITY_MODE)
   PATCH_RESET_PARAMETER(velocity_scaling,   VELOCITY_SCALING)
 
-  /* noise */
-  PATCH_RESET_PARAMETER(noise_mode,         NOISE_MODE)
-  PATCH_RESET_PARAMETER(noise_frequency,    NOISE_FREQUENCY)
+  /* sync */
+  PATCH_RESET_PARAMETER(sync_osc,           SYNC_OSC)
+  PATCH_RESET_PARAMETER(sync_lfo,           SYNC_LFO)
 
   /* boost */
   PATCH_RESET_PARAMETER(boost_mode,         BOOST_MODE)
@@ -172,18 +186,6 @@ short int patch_reset_patch(int patch_index)
   /* pitch wheel */
   PATCH_RESET_PARAMETER(pitch_wheel_mode,   PITCH_WHEEL_MODE)
   PATCH_RESET_PARAMETER(pitch_wheel_range,  PITCH_WHEEL_RANGE)
-
-  /* legacy */
-  PATCH_RESET_PARAMETER(legacy_multiple,    LEGACY_MULTIPLE)
-  PATCH_RESET_PARAMETER(legacy_keyscale,    LEGACY_KEYSCALE)
-
-  /* sync */
-  PATCH_RESET_PARAMETER(sync_osc,           SYNC)
-  PATCH_RESET_PARAMETER(sync_lfo,           SYNC)
-
-  /* filters */
-  PATCH_RESET_PARAMETER(highpass_cutoff,    HIGHPASS_CUTOFF)
-  PATCH_RESET_PARAMETER(lowpass_cutoff,     LOWPASS_CUTOFF)
 
   return 0;
 }
@@ -221,30 +223,58 @@ short int patch_validate_patch(int patch_index)
       G_patch_names[patch_index][m] = ' ';
   }
 
-  /* algorithm */
-  PATCH_BOUND_PARAMETER(algorithm,          ALGORITHM)
+  /* program */
+  PATCH_BOUND_PARAMETER(program,          PROGRAM)
 
-  /* oscillators and envelopes */
-  for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
-  {
-    PATCH_BOUND_PARAMETER(osc_waveform[m],    OSC_WAVEFORM)
-    PATCH_BOUND_PARAMETER(osc_feedback[m],    OSC_FEEDBACK)
-    PATCH_BOUND_PARAMETER(osc_phi[m],         OSC_PHI)
-    PATCH_BOUND_PARAMETER(osc_freq_mode[m],   OSC_FREQ_MODE)
-    PATCH_BOUND_PARAMETER(osc_multiple[m],    OSC_MULTIPLE)
-    PATCH_BOUND_PARAMETER(osc_divisor[m],     OSC_DIVISOR)
-    PATCH_BOUND_PARAMETER(osc_detune[m],      OSC_DETUNE)
+  /* oscillators */
+  PATCH_BOUND_PARAMETER(osc_1_waveform,   OSC_WAVEFORM)
+  PATCH_BOUND_PARAMETER(osc_1_detune,     OSC_DETUNE)
 
-    PATCH_BOUND_PARAMETER(env_attack[m],      ENV_RATE)
-    PATCH_BOUND_PARAMETER(env_decay_1[m],     ENV_RATE)
-    PATCH_BOUND_PARAMETER(env_decay_2[m],     ENV_RATE)
-    PATCH_BOUND_PARAMETER(env_release[m],     ENV_RATE)
-    PATCH_BOUND_PARAMETER(env_amplitude[m],   ENV_AMPLITUDE)
-    PATCH_BOUND_PARAMETER(env_sustain[m],     ENV_SUSTAIN)
-    PATCH_BOUND_PARAMETER(env_rate_ks[m],     ENV_KEYSCALING)
-    PATCH_BOUND_PARAMETER(env_level_ks[m],    ENV_KEYSCALING)
-    PATCH_BOUND_PARAMETER(env_break_point[m], ENV_BREAK_POINT)
-  }
+  PATCH_BOUND_PARAMETER(osc_2_waveform,   OSC_WAVEFORM)
+  PATCH_BOUND_PARAMETER(osc_2_detune,     OSC_DETUNE)
+  PATCH_BOUND_PARAMETER(osc_2_multiple,   OSC_MULTIPLE)
+  PATCH_BOUND_PARAMETER(osc_2_divisor,    OSC_DIVISOR)
+
+  /* lowpass filter */
+  PATCH_BOUND_PARAMETER(lowpass_multiple,     LOWPASS_MULTIPLE)
+  PATCH_BOUND_PARAMETER(lowpass_divisor,      LOWPASS_DIVISOR)
+  PATCH_BOUND_PARAMETER(lowpass_keytracking,  LOWPASS_KEYTRACKING)
+
+  /* highpass filter */
+  PATCH_BOUND_PARAMETER(highpass_cutoff,      HIGHPASS_CUTOFF)
+
+  /* amplitude envelope */
+  PATCH_BOUND_PARAMETER(amp_env_attack,       ENV_TIME)
+  PATCH_BOUND_PARAMETER(amp_env_decay_1,      ENV_TIME)
+  PATCH_BOUND_PARAMETER(amp_env_decay_2,      ENV_TIME)
+  PATCH_BOUND_PARAMETER(amp_env_release,      ENV_TIME)
+  PATCH_BOUND_PARAMETER(amp_env_sustain,      ENV_LEVEL)
+  PATCH_BOUND_PARAMETER(amp_env_rate_ks,      ENV_KEYSCALING)
+  PATCH_BOUND_PARAMETER(amp_env_left_ks,      ENV_KEYSCALING)
+  PATCH_BOUND_PARAMETER(amp_env_right_ks,     ENV_KEYSCALING)
+  PATCH_BOUND_PARAMETER(amp_env_break_point,  ENV_BREAK_POINT)
+
+  /* filter envelope */
+  PATCH_BOUND_PARAMETER(filt_peg_attack,      PEG_TIME)
+  PATCH_BOUND_PARAMETER(filt_peg_decay_1,     PEG_TIME)
+  PATCH_BOUND_PARAMETER(filt_peg_decay_2,     PEG_TIME)
+  PATCH_BOUND_PARAMETER(filt_peg_release,     PEG_TIME)
+  PATCH_BOUND_PARAMETER(filt_peg_amplitude,   PEG_LEVEL)
+  PATCH_BOUND_PARAMETER(filt_peg_sustain,     PEG_LEVEL)
+  PATCH_BOUND_PARAMETER(filt_peg_hold,        PEG_LEVEL)
+  PATCH_BOUND_PARAMETER(filt_peg_finale,      PEG_LEVEL)
+  PATCH_BOUND_PARAMETER(filt_peg_rate_ks,     PEG_KEYSCALING)
+
+  /* extra envelope */
+  PATCH_BOUND_PARAMETER(ex_peg_attack,        PEG_TIME)
+  PATCH_BOUND_PARAMETER(ex_peg_decay_1,       PEG_TIME)
+  PATCH_BOUND_PARAMETER(ex_peg_decay_2,       PEG_TIME)
+  PATCH_BOUND_PARAMETER(ex_peg_release,       PEG_TIME)
+  PATCH_BOUND_PARAMETER(ex_peg_amplitude,     PEG_LEVEL)
+  PATCH_BOUND_PARAMETER(ex_peg_sustain,       PEG_LEVEL)
+  PATCH_BOUND_PARAMETER(ex_peg_hold,          PEG_LEVEL)
+  PATCH_BOUND_PARAMETER(ex_peg_finale,        PEG_LEVEL)
+  PATCH_BOUND_PARAMETER(ex_peg_rate_ks,       PEG_KEYSCALING)
 
   /* portamento */
   PATCH_BOUND_PARAMETER(portamento_mode,    PORTAMENTO_MODE)
@@ -257,20 +287,6 @@ short int patch_validate_patch(int patch_index)
   PATCH_BOUND_PARAMETER(arpeggio_pattern,   ARPEGGIO_PATTERN)
   PATCH_BOUND_PARAMETER(arpeggio_octaves,   ARPEGGIO_OCTAVES)
   PATCH_BOUND_PARAMETER(arpeggio_speed,     ARPEGGIO_SPEED)
-
-  /* pitch envelope rates */
-  PATCH_BOUND_PARAMETER(peg_attack,         PEG_RATE)
-  PATCH_BOUND_PARAMETER(peg_decay,          PEG_RATE)
-  PATCH_BOUND_PARAMETER(peg_release,        PEG_RATE)
-
-  /* pitch envelope levels */
-  PATCH_BOUND_PARAMETER(peg_amplitude,      PEG_LEVEL)
-  PATCH_BOUND_PARAMETER(peg_sustain,        PEG_LEVEL)
-  PATCH_BOUND_PARAMETER(peg_finale,         PEG_LEVEL)
-
-  /* pitch envelope settings */
-  PATCH_BOUND_PARAMETER(peg_legato,         PEG_LEGATO)
-  PATCH_BOUND_PARAMETER(peg_transpose,      PEG_TRANSPOSE)
 
   /* lfo */
   PATCH_BOUND_PARAMETER(lfo_waveform,       LFO_WAVEFORM)
@@ -300,9 +316,9 @@ short int patch_validate_patch(int patch_index)
   PATCH_BOUND_PARAMETER(velocity_mode,      VELOCITY_MODE)
   PATCH_BOUND_PARAMETER(velocity_scaling,   VELOCITY_SCALING)
 
-  /* noise */
-  PATCH_BOUND_PARAMETER(noise_mode,         NOISE_MODE)
-  PATCH_BOUND_PARAMETER(noise_frequency,    NOISE_FREQUENCY)
+  /* sync */
+  PATCH_BOUND_PARAMETER(sync_osc,           SYNC_OSC)
+  PATCH_BOUND_PARAMETER(sync_lfo,           SYNC_LFO)
 
   /* boost */
   PATCH_BOUND_PARAMETER(boost_mode,         BOOST_MODE)
@@ -312,18 +328,6 @@ short int patch_validate_patch(int patch_index)
   PATCH_BOUND_PARAMETER(pitch_wheel_mode,   PITCH_WHEEL_MODE)
   PATCH_BOUND_PARAMETER(pitch_wheel_range,  PITCH_WHEEL_RANGE)
 
-  /* legacy */
-  PATCH_BOUND_PARAMETER(legacy_multiple,    LEGACY_MULTIPLE)
-  PATCH_BOUND_PARAMETER(legacy_keyscale,    LEGACY_KEYSCALE)
-
-  /* sync */
-  PATCH_BOUND_PARAMETER(sync_osc,           SYNC)
-  PATCH_BOUND_PARAMETER(sync_lfo,           SYNC)
-
-  /* filters */
-  PATCH_BOUND_PARAMETER(highpass_cutoff,    HIGHPASS_CUTOFF)
-  PATCH_BOUND_PARAMETER(lowpass_cutoff,     LOWPASS_CUTOFF)
-
   return 0;
 }
 
@@ -332,8 +336,6 @@ short int patch_validate_patch(int patch_index)
 *******************************************************************************/
 short int patch_copy_patch( int dest_patch_index, int src_patch_index)
 {
-  int m;
-
   patch* dest_p;
   patch* src_p;
 
@@ -362,30 +364,58 @@ short int patch_copy_patch( int dest_patch_index, int src_patch_index)
   /* copy patch name */
   strncpy(dest_name, src_name, PATCH_PATCH_NAME_SIZE);
 
-  /* algorithm */
-  PATCH_COPY_PARAMETER(algorithm)
+  /* program */
+  PATCH_COPY_PARAMETER(program)
 
-  /* oscillators and envelopes */
-  for (m = 0; m < BANK_OSCS_AND_ENVS_PER_VOICE; m++)
-  {
-    PATCH_COPY_PARAMETER(osc_waveform[m])
-    PATCH_COPY_PARAMETER(osc_feedback[m])
-    PATCH_COPY_PARAMETER(osc_phi[m])
-    PATCH_COPY_PARAMETER(osc_freq_mode[m])
-    PATCH_COPY_PARAMETER(osc_multiple[m])
-    PATCH_COPY_PARAMETER(osc_divisor[m])
-    PATCH_COPY_PARAMETER(osc_detune[m])
+  /* oscillators */
+  PATCH_COPY_PARAMETER(osc_1_waveform)
+  PATCH_COPY_PARAMETER(osc_1_detune)
 
-    PATCH_COPY_PARAMETER(env_attack[m])
-    PATCH_COPY_PARAMETER(env_decay_1[m])
-    PATCH_COPY_PARAMETER(env_decay_2[m])
-    PATCH_COPY_PARAMETER(env_release[m])
-    PATCH_COPY_PARAMETER(env_amplitude[m])
-    PATCH_COPY_PARAMETER(env_sustain[m])
-    PATCH_COPY_PARAMETER(env_rate_ks[m])
-    PATCH_COPY_PARAMETER(env_level_ks[m])
-    PATCH_COPY_PARAMETER(env_break_point[m])
-  }
+  PATCH_COPY_PARAMETER(osc_2_waveform)
+  PATCH_COPY_PARAMETER(osc_2_detune)
+  PATCH_COPY_PARAMETER(osc_2_multiple)
+  PATCH_COPY_PARAMETER(osc_2_divisor)
+
+  /* lowpass filter */
+  PATCH_COPY_PARAMETER(lowpass_multiple)
+  PATCH_COPY_PARAMETER(lowpass_divisor)
+  PATCH_COPY_PARAMETER(lowpass_keytracking)
+
+  /* highpass filter */
+  PATCH_COPY_PARAMETER(highpass_cutoff)
+
+  /* amplitude envelope */
+  PATCH_COPY_PARAMETER(amp_env_attack)
+  PATCH_COPY_PARAMETER(amp_env_decay_1)
+  PATCH_COPY_PARAMETER(amp_env_decay_2)
+  PATCH_COPY_PARAMETER(amp_env_release)
+  PATCH_COPY_PARAMETER(amp_env_sustain)
+  PATCH_COPY_PARAMETER(amp_env_rate_ks)
+  PATCH_COPY_PARAMETER(amp_env_left_ks)
+  PATCH_COPY_PARAMETER(amp_env_right_ks)
+  PATCH_COPY_PARAMETER(amp_env_break_point)
+
+  /* filter envelope */
+  PATCH_COPY_PARAMETER(filt_peg_attack)
+  PATCH_COPY_PARAMETER(filt_peg_decay_1)
+  PATCH_COPY_PARAMETER(filt_peg_decay_2)
+  PATCH_COPY_PARAMETER(filt_peg_release)
+  PATCH_COPY_PARAMETER(filt_peg_amplitude)
+  PATCH_COPY_PARAMETER(filt_peg_sustain)
+  PATCH_COPY_PARAMETER(filt_peg_hold)
+  PATCH_COPY_PARAMETER(filt_peg_finale)
+  PATCH_COPY_PARAMETER(filt_peg_rate_ks)
+
+  /* extra envelope */
+  PATCH_COPY_PARAMETER(ex_peg_attack)
+  PATCH_COPY_PARAMETER(ex_peg_decay_1)
+  PATCH_COPY_PARAMETER(ex_peg_decay_2)
+  PATCH_COPY_PARAMETER(ex_peg_release)
+  PATCH_COPY_PARAMETER(ex_peg_amplitude)
+  PATCH_COPY_PARAMETER(ex_peg_sustain)
+  PATCH_COPY_PARAMETER(ex_peg_hold)
+  PATCH_COPY_PARAMETER(ex_peg_finale)
+  PATCH_COPY_PARAMETER(ex_peg_rate_ks)
 
   /* portamento */
   PATCH_COPY_PARAMETER(portamento_mode)
@@ -398,20 +428,6 @@ short int patch_copy_patch( int dest_patch_index, int src_patch_index)
   PATCH_COPY_PARAMETER(arpeggio_pattern)
   PATCH_COPY_PARAMETER(arpeggio_octaves)
   PATCH_COPY_PARAMETER(arpeggio_speed)
-
-  /* pitch envelope rates */
-  PATCH_COPY_PARAMETER(peg_attack)
-  PATCH_COPY_PARAMETER(peg_decay)
-  PATCH_COPY_PARAMETER(peg_release)
-
-  /* pitch envelope levels */
-  PATCH_COPY_PARAMETER(peg_amplitude)
-  PATCH_COPY_PARAMETER(peg_sustain)
-  PATCH_COPY_PARAMETER(peg_finale)
-
-  /* pitch envelope settings */
-  PATCH_COPY_PARAMETER(peg_legato)
-  PATCH_COPY_PARAMETER(peg_transpose)
 
   /* lfo */
   PATCH_COPY_PARAMETER(lfo_waveform)
@@ -441,9 +457,9 @@ short int patch_copy_patch( int dest_patch_index, int src_patch_index)
   PATCH_COPY_PARAMETER(velocity_mode)
   PATCH_COPY_PARAMETER(velocity_scaling)
 
-  /* noise */
-  PATCH_COPY_PARAMETER(noise_mode)
-  PATCH_COPY_PARAMETER(noise_frequency)
+  /* sync */
+  PATCH_COPY_PARAMETER(sync_osc)
+  PATCH_COPY_PARAMETER(sync_lfo)
 
   /* boost */
   PATCH_COPY_PARAMETER(boost_mode)
@@ -452,18 +468,6 @@ short int patch_copy_patch( int dest_patch_index, int src_patch_index)
   /* pitch wheel */
   PATCH_COPY_PARAMETER(pitch_wheel_mode)
   PATCH_COPY_PARAMETER(pitch_wheel_range)
-
-  /* legacy */
-  PATCH_COPY_PARAMETER(legacy_multiple)
-  PATCH_COPY_PARAMETER(legacy_keyscale)
-
-  /* sync */
-  PATCH_COPY_PARAMETER(sync_osc)
-  PATCH_COPY_PARAMETER(sync_lfo)
-
-  /* filters */
-  PATCH_COPY_PARAMETER(highpass_cutoff)
-  PATCH_COPY_PARAMETER(lowpass_cutoff)
 
   return 0;
 }

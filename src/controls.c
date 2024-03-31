@@ -135,42 +135,42 @@ enum
   }
 
 /* screen regions */
-#define CONTROLS_MOUSE_CURSOR_IS_OVER_TOP_PANEL()                                                                                 \
-  ( (S_mouse_remapped_pos_x >= (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (LAYOUT_TOP_PANEL_AREA_X - LAYOUT_TOP_PANEL_AREA_WIDTH))   &&  \
-    (S_mouse_remapped_pos_x <  (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (LAYOUT_TOP_PANEL_AREA_X + LAYOUT_TOP_PANEL_AREA_WIDTH))   &&  \
-    (S_mouse_remapped_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (LAYOUT_TOP_PANEL_AREA_Y - LAYOUT_TOP_PANEL_AREA_HEIGHT)) &&  \
-    (S_mouse_remapped_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (LAYOUT_TOP_PANEL_AREA_Y + LAYOUT_TOP_PANEL_AREA_HEIGHT)))
+#define CONTROLS_MOUSE_CURSOR_IS_OVER_TOP_PANEL()                                                                                   \
+  ( (S_mouse_224p_remap_pos_x >= (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (LAYOUT_TOP_PANEL_AREA_X - LAYOUT_TOP_PANEL_AREA_WIDTH))   &&  \
+    (S_mouse_224p_remap_pos_x <  (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (LAYOUT_TOP_PANEL_AREA_X + LAYOUT_TOP_PANEL_AREA_WIDTH))   &&  \
+    (S_mouse_224p_remap_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (LAYOUT_TOP_PANEL_AREA_Y - LAYOUT_TOP_PANEL_AREA_HEIGHT)) &&  \
+    (S_mouse_224p_remap_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (LAYOUT_TOP_PANEL_AREA_Y + LAYOUT_TOP_PANEL_AREA_HEIGHT)))
 
-#define CONTROLS_MOUSE_CURSOR_IS_OVER_CART_MAIN_AREA()                                                                            \
-  ( (S_mouse_remapped_pos_x >= (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (LAYOUT_CART_MAIN_AREA_X - LAYOUT_CART_MAIN_AREA_WIDTH))   &&  \
-    (S_mouse_remapped_pos_x <  (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (LAYOUT_CART_MAIN_AREA_X + LAYOUT_CART_MAIN_AREA_WIDTH))   &&  \
-    (S_mouse_remapped_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (LAYOUT_CART_MAIN_AREA_Y - LAYOUT_CART_MAIN_AREA_HEIGHT)) &&  \
-    (S_mouse_remapped_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (LAYOUT_CART_MAIN_AREA_Y + LAYOUT_CART_MAIN_AREA_HEIGHT)))
+#define CONTROLS_MOUSE_CURSOR_IS_OVER_CART_MAIN_AREA()                                                                              \
+  ( (S_mouse_224p_remap_pos_x >= (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (LAYOUT_CART_MAIN_AREA_X - LAYOUT_CART_MAIN_AREA_WIDTH))   &&  \
+    (S_mouse_224p_remap_pos_x <  (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (LAYOUT_CART_MAIN_AREA_X + LAYOUT_CART_MAIN_AREA_WIDTH))   &&  \
+    (S_mouse_224p_remap_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (LAYOUT_CART_MAIN_AREA_Y - LAYOUT_CART_MAIN_AREA_HEIGHT)) &&  \
+    (S_mouse_224p_remap_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (LAYOUT_CART_MAIN_AREA_Y + LAYOUT_CART_MAIN_AREA_HEIGHT)))
 
-#define CONTROLS_MOUSE_CURSOR_IS_OVER_CART_AUDITION_PANEL()                                                                                 \
-  ( (S_mouse_remapped_pos_x >= (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (LAYOUT_CART_AUDITION_PANEL_X - LAYOUT_CART_AUDITION_PANEL_WIDTH))   &&  \
-    (S_mouse_remapped_pos_x <  (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (LAYOUT_CART_AUDITION_PANEL_X + LAYOUT_CART_AUDITION_PANEL_WIDTH))   &&  \
-    (S_mouse_remapped_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (LAYOUT_CART_AUDITION_PANEL_Y - LAYOUT_CART_AUDITION_PANEL_HEIGHT)) &&  \
-    (S_mouse_remapped_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (LAYOUT_CART_AUDITION_PANEL_Y + LAYOUT_CART_AUDITION_PANEL_HEIGHT)))
+#define CONTROLS_MOUSE_CURSOR_IS_OVER_CART_AUDITION_PANEL()                                                                                   \
+  ( (S_mouse_224p_remap_pos_x >= (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (LAYOUT_CART_AUDITION_PANEL_X - LAYOUT_CART_AUDITION_PANEL_WIDTH))   &&  \
+    (S_mouse_224p_remap_pos_x <  (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (LAYOUT_CART_AUDITION_PANEL_X + LAYOUT_CART_AUDITION_PANEL_WIDTH))   &&  \
+    (S_mouse_224p_remap_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (LAYOUT_CART_AUDITION_PANEL_Y - LAYOUT_CART_AUDITION_PANEL_HEIGHT)) &&  \
+    (S_mouse_224p_remap_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (LAYOUT_CART_AUDITION_PANEL_Y + LAYOUT_CART_AUDITION_PANEL_HEIGHT)))
 
 /* vertical scrollbar */
-#define CONTROLS_MOUSE_CURSOR_IS_OVER_VERTICAL_SCROLLBAR_UP_ARROW()                                                                 \
-  ( (S_mouse_remapped_pos_x >= (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (LAYOUT_SCROLLBAR_AREA_X - LAYOUT_SCROLLBAR_AREA_WIDTH))     &&  \
-    (S_mouse_remapped_pos_x <  (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (LAYOUT_SCROLLBAR_AREA_X + LAYOUT_SCROLLBAR_AREA_WIDTH))     &&  \
-    (S_mouse_remapped_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (LAYOUT_SCROLLBAR_AREA_Y - LAYOUT_SCROLLBAR_AREA_HEIGHT))   &&  \
-    (S_mouse_remapped_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (LAYOUT_SCROLLBAR_AREA_Y - LAYOUT_SCROLLBAR_AREA_HEIGHT + 2)))
+#define CONTROLS_MOUSE_CURSOR_IS_OVER_VERTICAL_SCROLLBAR_UP_ARROW()                                                                   \
+  ( (S_mouse_224p_remap_pos_x >= (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (LAYOUT_SCROLLBAR_AREA_X - LAYOUT_SCROLLBAR_AREA_WIDTH))     &&  \
+    (S_mouse_224p_remap_pos_x <  (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (LAYOUT_SCROLLBAR_AREA_X + LAYOUT_SCROLLBAR_AREA_WIDTH))     &&  \
+    (S_mouse_224p_remap_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (LAYOUT_SCROLLBAR_AREA_Y - LAYOUT_SCROLLBAR_AREA_HEIGHT))   &&  \
+    (S_mouse_224p_remap_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (LAYOUT_SCROLLBAR_AREA_Y - LAYOUT_SCROLLBAR_AREA_HEIGHT + 2)))
 
-#define CONTROLS_MOUSE_CURSOR_IS_OVER_VERTICAL_SCROLLBAR_DOWN_ARROW()                                                                 \
-  ( (S_mouse_remapped_pos_x >= (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (LAYOUT_SCROLLBAR_AREA_X - LAYOUT_SCROLLBAR_AREA_WIDTH))       &&  \
-    (S_mouse_remapped_pos_x <  (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (LAYOUT_SCROLLBAR_AREA_X + LAYOUT_SCROLLBAR_AREA_WIDTH))       &&  \
-    (S_mouse_remapped_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (LAYOUT_SCROLLBAR_AREA_Y + LAYOUT_SCROLLBAR_AREA_HEIGHT - 2)) &&  \
-    (S_mouse_remapped_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (LAYOUT_SCROLLBAR_AREA_Y + LAYOUT_SCROLLBAR_AREA_HEIGHT)))
+#define CONTROLS_MOUSE_CURSOR_IS_OVER_VERTICAL_SCROLLBAR_DOWN_ARROW()                                                                   \
+  ( (S_mouse_224p_remap_pos_x >= (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (LAYOUT_SCROLLBAR_AREA_X - LAYOUT_SCROLLBAR_AREA_WIDTH))       &&  \
+    (S_mouse_224p_remap_pos_x <  (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (LAYOUT_SCROLLBAR_AREA_X + LAYOUT_SCROLLBAR_AREA_WIDTH))       &&  \
+    (S_mouse_224p_remap_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (LAYOUT_SCROLLBAR_AREA_Y + LAYOUT_SCROLLBAR_AREA_HEIGHT - 2)) &&  \
+    (S_mouse_224p_remap_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (LAYOUT_SCROLLBAR_AREA_Y + LAYOUT_SCROLLBAR_AREA_HEIGHT)))
 
-#define CONTROLS_MOUSE_CURSOR_IS_OVER_VERTICAL_SCROLLBAR_TRACK()                                                                      \
-  ( (S_mouse_remapped_pos_x >= (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (LAYOUT_SCROLLBAR_AREA_X - LAYOUT_SCROLLBAR_AREA_WIDTH))       &&  \
-    (S_mouse_remapped_pos_x <  (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (LAYOUT_SCROLLBAR_AREA_X + LAYOUT_SCROLLBAR_AREA_WIDTH))       &&  \
-    (S_mouse_remapped_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (LAYOUT_SCROLLBAR_AREA_Y - LAYOUT_SCROLLBAR_AREA_HEIGHT + 2)) &&  \
-    (S_mouse_remapped_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (LAYOUT_SCROLLBAR_AREA_Y + LAYOUT_SCROLLBAR_AREA_HEIGHT - 2)))
+#define CONTROLS_MOUSE_CURSOR_IS_OVER_VERTICAL_SCROLLBAR_TRACK()                                                                        \
+  ( (S_mouse_224p_remap_pos_x >= (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (LAYOUT_SCROLLBAR_AREA_X - LAYOUT_SCROLLBAR_AREA_WIDTH))       &&  \
+    (S_mouse_224p_remap_pos_x <  (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (LAYOUT_SCROLLBAR_AREA_X + LAYOUT_SCROLLBAR_AREA_WIDTH))       &&  \
+    (S_mouse_224p_remap_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (LAYOUT_SCROLLBAR_AREA_Y - LAYOUT_SCROLLBAR_AREA_HEIGHT + 2)) &&  \
+    (S_mouse_224p_remap_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (LAYOUT_SCROLLBAR_AREA_Y + LAYOUT_SCROLLBAR_AREA_HEIGHT - 2)))
 
 #define CONTROLS_MOUSE_LAST_CLICK_WAS_OVER_VERTICAL_SCROLLBAR_TRACK()                                                                   \
   ( (S_mouse_last_click_pos_x >= (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (LAYOUT_SCROLLBAR_AREA_X - LAYOUT_SCROLLBAR_AREA_WIDTH))       &&  \
@@ -182,60 +182,60 @@ enum
   ((GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (LAYOUT_SCROLLBAR_AREA_Y - (LAYOUT_SCROLLBAR_AREA_HEIGHT - 3) + 1))
 
 /* buttons */
-#define CONTROLS_MOUSE_CURSOR_IS_OVER_BUTTON()                                                        \
-  ( (S_mouse_remapped_pos_x >= (GRAPHICS_OVERSCAN_WIDTH - 8 * b->width) / 2 + (4 * b->center_x))  &&  \
-    (S_mouse_remapped_pos_x <  (GRAPHICS_OVERSCAN_WIDTH + 8 * b->width) / 2 + (4 * b->center_x))  &&  \
-    (S_mouse_remapped_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT - 16 * 1) / 2 + (4 * b->center_y))       &&  \
-    (S_mouse_remapped_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT + 16 * 1) / 2 + (4 * b->center_y)))
+#define CONTROLS_MOUSE_CURSOR_IS_OVER_BUTTON()                                                          \
+  ( (S_mouse_224p_remap_pos_x >= (GRAPHICS_OVERSCAN_WIDTH - 8 * b->width) / 2 + (4 * b->center_x))  &&  \
+    (S_mouse_224p_remap_pos_x <  (GRAPHICS_OVERSCAN_WIDTH + 8 * b->width) / 2 + (4 * b->center_x))  &&  \
+    (S_mouse_224p_remap_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT - 16 * 1) / 2 + (4 * b->center_y))       &&  \
+    (S_mouse_224p_remap_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT + 16 * 1) / 2 + (4 * b->center_y)))
 
 /* patch edit parameter silders, adjustment arrows, and radio buttons */
-#define CONTROLS_MOUSE_CURSOR_IS_OVER_PATCH_PARAM_SLIDER()                                                                                                              \
-  ( (S_mouse_remapped_pos_x >= (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_CART_PARAM_SLIDER_TRACK_X - LAYOUT_CART_PARAM_SLIDER_WIDTH))  &&  \
-    (S_mouse_remapped_pos_x <  (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_CART_PARAM_SLIDER_TRACK_X + LAYOUT_CART_PARAM_SLIDER_WIDTH))  &&  \
-    (S_mouse_remapped_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (pos_y - 1))                                                                                    &&  \
-    (S_mouse_remapped_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (pos_y + 1)))
+#define CONTROLS_MOUSE_CURSOR_IS_OVER_PATCH_PARAM_SLIDER()                                                                                                    \
+  ( (S_mouse_224p_remap_pos_x >= (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_CART_PARAM_SLIDER_TRACK_X - LAYOUT_CART_PARAM_SLIDER_WIDTH))  &&  \
+    (S_mouse_224p_remap_pos_x <  (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_CART_PARAM_SLIDER_TRACK_X + LAYOUT_CART_PARAM_SLIDER_WIDTH))  &&  \
+    (S_mouse_224p_remap_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (pos_y - 1))                                                                        &&  \
+    (S_mouse_224p_remap_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (pos_y + 1)))
 
-#define CONTROLS_MOUSE_LAST_CLICK_WAS_OVER_PATCH_PARAM_SLIDER()                                                                                                           \
+#define CONTROLS_MOUSE_LAST_CLICK_WAS_OVER_PATCH_PARAM_SLIDER()                                                                                               \
   ( (S_mouse_last_click_pos_x >= (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_CART_PARAM_SLIDER_TRACK_X - LAYOUT_CART_PARAM_SLIDER_WIDTH))  &&  \
     (S_mouse_last_click_pos_x <  (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_CART_PARAM_SLIDER_TRACK_X + LAYOUT_CART_PARAM_SLIDER_WIDTH))  &&  \
-    (S_mouse_last_click_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (pos_y - 1))                                                                                    &&  \
+    (S_mouse_last_click_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (pos_y - 1))                                                                        &&  \
     (S_mouse_last_click_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (pos_y + 1)))
 
 #define CONTROLS_PATCH_PARAM_SLIDER_POS_X_LOWER_BOUND                          \
-  ((GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_CART_PARAM_SLIDER_TRACK_X - LAYOUT_CART_PARAM_SLIDER_WIDTH))
+  (2 * ((GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_CART_PARAM_SLIDER_TRACK_X - LAYOUT_CART_PARAM_SLIDER_WIDTH)))
 
-#define CONTROLS_MOUSE_CURSOR_IS_OVER_PATCH_PARAM_ARROWS_LEFT()                                                                     \
-  ( (S_mouse_remapped_pos_x >= (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_CART_PARAM_ARROWS_LEFT_X - 1))  &&  \
-    (S_mouse_remapped_pos_x <  (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_CART_PARAM_ARROWS_LEFT_X + 1))  &&  \
-    (S_mouse_remapped_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (pos_y - 1))                                                &&  \
-    (S_mouse_remapped_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (pos_y + 1)))
+#define CONTROLS_MOUSE_CURSOR_IS_OVER_PATCH_PARAM_ARROWS_LEFT()                                                                 \
+  ( (S_mouse_224p_remap_pos_x >= (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_CART_PARAM_ARROWS_LEFT_X - 1))  &&  \
+    (S_mouse_224p_remap_pos_x <  (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_CART_PARAM_ARROWS_LEFT_X + 1))  &&  \
+    (S_mouse_224p_remap_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (pos_y - 1))                                          &&  \
+    (S_mouse_224p_remap_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (pos_y + 1)))
 
-#define CONTROLS_MOUSE_CURSOR_IS_OVER_PATCH_PARAM_ARROWS_RIGHT()                                                                    \
-  ( (S_mouse_remapped_pos_x >= (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_CART_PARAM_ARROWS_RIGHT_X - 1)) &&  \
-    (S_mouse_remapped_pos_x <  (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_CART_PARAM_ARROWS_RIGHT_X + 1)) &&  \
-    (S_mouse_remapped_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (pos_y - 1))                                                &&  \
-    (S_mouse_remapped_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (pos_y + 1)))
+#define CONTROLS_MOUSE_CURSOR_IS_OVER_PATCH_PARAM_ARROWS_RIGHT()                                                                \
+  ( (S_mouse_224p_remap_pos_x >= (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_CART_PARAM_ARROWS_RIGHT_X - 1)) &&  \
+    (S_mouse_224p_remap_pos_x <  (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_CART_PARAM_ARROWS_RIGHT_X + 1)) &&  \
+    (S_mouse_224p_remap_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (pos_y - 1))                                          &&  \
+    (S_mouse_224p_remap_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (pos_y + 1)))
 
-#define CONTROLS_MOUSE_CURSOR_IS_OVER_PATCH_PARAM_RADIO_BUTTON()                                                                    \
-  ( (S_mouse_remapped_pos_x >= (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_CART_PARAM_RADIO_BUTTON_X - 1)) &&  \
-    (S_mouse_remapped_pos_x <  (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_CART_PARAM_RADIO_BUTTON_X + 1)) &&  \
-    (S_mouse_remapped_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (pos_y - 1))                                                &&  \
-    (S_mouse_remapped_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (pos_y + 1)))
+#define CONTROLS_MOUSE_CURSOR_IS_OVER_PATCH_PARAM_RADIO_BUTTON()                                                                \
+  ( (S_mouse_224p_remap_pos_x >= (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_CART_PARAM_RADIO_BUTTON_X - 1)) &&  \
+    (S_mouse_224p_remap_pos_x <  (GRAPHICS_OVERSCAN_WIDTH / 2) + 4 * (pr->center_x + LAYOUT_CART_PARAM_RADIO_BUTTON_X + 1)) &&  \
+    (S_mouse_224p_remap_pos_y >= (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (pos_y - 1))                                          &&  \
+    (S_mouse_224p_remap_pos_y <  (GRAPHICS_OVERSCAN_HEIGHT / 2) + 4 * (pos_y + 1)))
 
 /* parameter adjustment */
 #define CONTROLS_SET_PATCH_PARAMETER(param, name)                              \
-  if ((pr->type == LAYOUT_PARAM_TYPE_SLIDER) &&                     \
+  if ((pr->type == LAYOUT_PARAM_TYPE_SLIDER) &&                                \
       (param != value))                                                        \
   {                                                                            \
     param = value;                                                             \
     param_changed = 1;                                                         \
   }                                                                            \
-  else if (pr->type == LAYOUT_PARAM_TYPE_ARROWS)                    \
+  else if (pr->type == LAYOUT_PARAM_TYPE_ARROWS)                               \
   {                                                                            \
     param += value;                                                            \
     param_changed = 1;                                                         \
   }                                                                            \
-  else if (pr->type == LAYOUT_PARAM_TYPE_RADIO)                     \
+  else if (pr->type == LAYOUT_PARAM_TYPE_RADIO)                                \
   {                                                                            \
     if (param != name##_LOWER_BOUND)                                           \
       param = name##_LOWER_BOUND;                                              \
@@ -253,11 +253,14 @@ enum
 static int S_key_states[CONTROLS_NUM_KEY_INDICES];
 static int S_mouse_button_states[CONTROLS_NUM_MOUSE_BUTTON_INDICES];
 
-static int S_mouse_remapped_pos_x;
-static int S_mouse_remapped_pos_y;
+static int S_mouse_224p_remap_pos_x;
+static int S_mouse_224p_remap_pos_y;
 
 static int S_mouse_last_click_pos_x;
 static int S_mouse_last_click_pos_y;
+
+static int S_mouse_448p_remap_pos_x;
+static int S_mouse_448p_remap_pos_y;
 
 static int S_mouse_wheel_movement;
 
@@ -274,11 +277,14 @@ short int controls_setup()
   for (i = 0; i < CONTROLS_NUM_MOUSE_BUTTON_INDICES; i++)
     S_mouse_button_states[i] = CONTROLS_MOUSE_BUTTON_STATE_OFF;
 
-  S_mouse_remapped_pos_x = 0;
-  S_mouse_remapped_pos_y = 0;
+  S_mouse_224p_remap_pos_x = 0;
+  S_mouse_224p_remap_pos_y = 0;
 
   S_mouse_last_click_pos_x = 0;
   S_mouse_last_click_pos_y = 0;
+
+  S_mouse_448p_remap_pos_x = 0;
+  S_mouse_448p_remap_pos_y = 0;
 
   S_mouse_wheel_movement = 0;
 
@@ -319,7 +325,7 @@ short int controls_patch_parameter_adjust(int cart_num, int patch_num,
 
   /* determine value and adjustment mode */
   if (pr->type == LAYOUT_PARAM_TYPE_SLIDER)
-    value = (amount * (pr->upper_bound - pr->lower_bound)) / (8 * (LAYOUT_CART_PARAM_SLIDER_WIDTH - 1)) + pr->lower_bound;
+    value = (amount * (pr->upper_bound - pr->lower_bound)) / (2 * 8 * (LAYOUT_CART_PARAM_SLIDER_WIDTH - 1)) + pr->lower_bound;
   else if (pr->type == LAYOUT_PARAM_TYPE_ARROWS)
     value = amount;
   else if (pr->type == LAYOUT_PARAM_TYPE_RADIO)
@@ -340,76 +346,165 @@ short int controls_patch_parameter_adjust(int cart_num, int patch_num,
   {
     CONTROLS_SET_PATCH_PARAMETER(G_patch_edit_patch_number, PATCH_PATCH_NO)
   }
-  /* algorithm */
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ALGORITHM)
+  /* program */
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_PROGRAM)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->algorithm, PATCH_ALGORITHM)
+    CONTROLS_SET_PATCH_PARAMETER(pc->program, PATCH_PROGRAM)
   }
-  /* oscillator */
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_WAVEFORM)
+  /* oscillator 1 */
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_1_WAVEFORM)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->osc_waveform[pr->num], PATCH_OSC_WAVEFORM)
+    CONTROLS_SET_PATCH_PARAMETER(pc->osc_1_waveform, PATCH_OSC_WAVEFORM)
   }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_FEEDBACK)
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_1_DETUNE)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->osc_feedback[pr->num], PATCH_OSC_FEEDBACK)
+    CONTROLS_SET_PATCH_PARAMETER(pc->osc_1_detune, PATCH_OSC_DETUNE)
   }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_PHI)
+  /* oscillator 2 */
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_2_WAVEFORM)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->osc_phi[pr->num], PATCH_OSC_PHI)
+    CONTROLS_SET_PATCH_PARAMETER(pc->osc_2_waveform, PATCH_OSC_WAVEFORM)
   }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_FREQ_MODE)
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_2_DETUNE)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->osc_freq_mode[pr->num], PATCH_OSC_FREQ_MODE)
+    CONTROLS_SET_PATCH_PARAMETER(pc->osc_2_detune, PATCH_OSC_DETUNE)
   }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_MULTIPLE)
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_2_MULTIPLE)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->osc_multiple[pr->num], PATCH_OSC_MULTIPLE)
+    CONTROLS_SET_PATCH_PARAMETER(pc->osc_2_multiple, PATCH_OSC_MULTIPLE)
   }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_DIVISOR)
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_2_DIVISOR)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->osc_divisor[pr->num], PATCH_OSC_DIVISOR)
+    CONTROLS_SET_PATCH_PARAMETER(pc->osc_2_divisor, PATCH_OSC_DIVISOR)
   }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_DETUNE)
+  /* lowpass */
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_LOWPASS_MULTIPLE)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->osc_detune[pr->num], PATCH_OSC_DETUNE)
+    CONTROLS_SET_PATCH_PARAMETER(pc->lowpass_multiple, PATCH_LOWPASS_MULTIPLE)
   }
-  /* envelope */
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_ATTACK)
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_LOWPASS_DIVISOR)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->env_attack[pr->num], PATCH_ENV_RATE)
+    CONTROLS_SET_PATCH_PARAMETER(pc->lowpass_divisor, PATCH_LOWPASS_DIVISOR)
   }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_DECAY_1)
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_LOWPASS_KEYTRACKING)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->env_decay_1[pr->num], PATCH_ENV_RATE)
+    CONTROLS_SET_PATCH_PARAMETER(pc->lowpass_keytracking, PATCH_LOWPASS_KEYTRACKING)
   }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_DECAY_2)
+  /* highpass */
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_HIGHPASS_CUTOFF)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->env_decay_2[pr->num], PATCH_ENV_RATE)
+    CONTROLS_SET_PATCH_PARAMETER(pc->highpass_cutoff, PATCH_HIGHPASS_CUTOFF)
   }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_RELEASE)
+  /* amplitude envelope */
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_AMP_ENV_ATTACK)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->env_release[pr->num], PATCH_ENV_RATE)
+    CONTROLS_SET_PATCH_PARAMETER(pc->amp_env_attack, PATCH_ENV_TIME)
   }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_AMPLITUDE)
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_AMP_ENV_DECAY_1)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->env_amplitude[pr->num], PATCH_ENV_AMPLITUDE)
+    CONTROLS_SET_PATCH_PARAMETER(pc->amp_env_decay_1, PATCH_ENV_TIME)
   }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_SUSTAIN)
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_AMP_ENV_DECAY_2)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->env_sustain[pr->num], PATCH_ENV_SUSTAIN)
+    CONTROLS_SET_PATCH_PARAMETER(pc->amp_env_decay_2, PATCH_ENV_TIME)
   }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_RATE_KS)
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_AMP_ENV_RELEASE)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->env_rate_ks[pr->num], PATCH_ENV_KEYSCALING)
+    CONTROLS_SET_PATCH_PARAMETER(pc->amp_env_release, PATCH_ENV_TIME)
   }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_LEVEL_KS)
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_AMP_ENV_SUSTAIN)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->env_level_ks[pr->num], PATCH_ENV_KEYSCALING)
+    CONTROLS_SET_PATCH_PARAMETER(pc->amp_env_sustain, PATCH_ENV_LEVEL)
   }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_BREAK_POINT)
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_AMP_ENV_RATE_KS)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->env_break_point[pr->num], PATCH_ENV_BREAK_POINT)
+    CONTROLS_SET_PATCH_PARAMETER(pc->amp_env_rate_ks, PATCH_ENV_KEYSCALING)
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_AMP_ENV_LEFT_KS)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->amp_env_left_ks, PATCH_ENV_KEYSCALING)
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_AMP_ENV_RIGHT_KS)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->amp_env_right_ks, PATCH_ENV_KEYSCALING)
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_AMP_ENV_BREAK_POINT)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->amp_env_break_point, PATCH_ENV_BREAK_POINT)
+  }
+  /* filter envelope */
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_FILTER_ENV_ATTACK)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->filt_peg_attack, PATCH_PEG_TIME)
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_FILTER_ENV_DECAY_1)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->filt_peg_decay_1, PATCH_PEG_TIME)
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_FILTER_ENV_DECAY_2)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->filt_peg_decay_2, PATCH_PEG_TIME)
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_FILTER_ENV_RELEASE)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->filt_peg_release, PATCH_PEG_TIME)
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_FILTER_ENV_AMPLITUDE)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->filt_peg_amplitude, PATCH_PEG_LEVEL)
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_FILTER_ENV_SUSTAIN)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->filt_peg_sustain, PATCH_PEG_LEVEL)
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_FILTER_ENV_HOLD)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->filt_peg_hold, PATCH_PEG_LEVEL)
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_FILTER_ENV_FINALE)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->filt_peg_finale, PATCH_PEG_LEVEL)
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_FILTER_ENV_RATE_KS)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->filt_peg_rate_ks, PATCH_PEG_KEYSCALING)
+  }
+  /* extra envelope */
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_EXTRA_ENV_ATTACK)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->ex_peg_attack, PATCH_PEG_TIME)
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_EXTRA_ENV_DECAY_1)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->ex_peg_decay_1, PATCH_PEG_TIME)
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_EXTRA_ENV_DECAY_2)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->ex_peg_decay_2, PATCH_PEG_TIME)
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_EXTRA_ENV_RELEASE)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->ex_peg_release, PATCH_PEG_TIME)
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_EXTRA_ENV_AMPLITUDE)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->ex_peg_amplitude, PATCH_PEG_LEVEL)
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_EXTRA_ENV_SUSTAIN)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->ex_peg_sustain, PATCH_PEG_LEVEL)
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_EXTRA_ENV_HOLD)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->ex_peg_hold, PATCH_PEG_LEVEL)
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_EXTRA_ENV_FINALE)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->ex_peg_finale, PATCH_PEG_LEVEL)
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_EXTRA_ENV_RATE_KS)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->ex_peg_rate_ks, PATCH_PEG_KEYSCALING)
   }
   /* portamento */
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_PORTAMENTO_MODE)
@@ -444,40 +539,6 @@ short int controls_patch_parameter_adjust(int cart_num, int patch_num,
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_ARPEGGIO_SPEED)
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->arpeggio_speed, PATCH_ARPEGGIO_SPEED)
-  }
-  /* pitch envelope rates */
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_PEG_ATTACK)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->peg_attack, PATCH_PEG_RATE)
-  }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_PEG_DECAY)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->peg_decay, PATCH_PEG_RATE)
-  }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_PEG_RELEASE)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->peg_release, PATCH_PEG_RATE)
-  }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_PEG_LEGATO)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->peg_legato, PATCH_PEG_LEGATO)
-  }
-  /* pitch envelope levels */
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_PEG_AMPLITUDE)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->peg_amplitude, PATCH_PEG_LEVEL)
-  }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_PEG_SUSTAIN)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->peg_sustain, PATCH_PEG_LEVEL)
-  }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_PEG_FINALE)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->peg_finale, PATCH_PEG_LEVEL)
-  }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_PEG_TRANSPOSE)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->peg_transpose, PATCH_PEG_TRANSPOSE)
   }
   /* lfo */
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_LFO_WAVEFORM)
@@ -549,14 +610,14 @@ short int controls_patch_parameter_adjust(int cart_num, int patch_num,
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->velocity_scaling, PATCH_VELOCITY_SCALING)
   }
-  /* noise */
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_NOISE_MODE)
+  /* sync */
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_SYNC_OSC)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->noise_mode, PATCH_NOISE_MODE)
+    CONTROLS_SET_PATCH_PARAMETER(pc->sync_osc, PATCH_SYNC_OSC)
   }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_NOISE_FREQUENCY)
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_SYNC_LFO)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->noise_frequency, PATCH_NOISE_FREQUENCY)
+    CONTROLS_SET_PATCH_PARAMETER(pc->sync_lfo, PATCH_SYNC_LFO)
   }
   /* boost */
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_BOOST_MODE)
@@ -575,33 +636,6 @@ short int controls_patch_parameter_adjust(int cart_num, int patch_num,
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_PITCH_WHEEL_RANGE)
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->pitch_wheel_range, PATCH_PITCH_WHEEL_RANGE)
-  }
-  /* legacy */
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_LEGACY_MULTIPLE)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->legacy_multiple, PATCH_LEGACY_MULTIPLE)
-  }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_LEGACY_KEYSCALE)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->legacy_keyscale, PATCH_LEGACY_KEYSCALE)
-  }
-  /* sync */
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_SYNC_OSC)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->sync_osc, PATCH_SYNC)
-  }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_SYNC_LFO)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->sync_lfo, PATCH_SYNC)
-  }
-  /* filters */
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_HIGHPASS_CUTOFF)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->highpass_cutoff, PATCH_HIGHPASS_CUTOFF)
-  }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_LOWPASS_CUTOFF)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->lowpass_cutoff, PATCH_LOWPASS_CUTOFF)
   }
   /* audition */
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_AUDITION_VELOCITY)
@@ -965,8 +999,11 @@ short int controls_keyboard_key_released(SDL_Scancode code)
 short int controls_mouse_button_pressed(Uint8 button, Sint32 x, Sint32 y)
 {
   /* find the mouse button location in overscan coordinates */
-  S_mouse_remapped_pos_x = (x * GRAPHICS_OVERSCAN_WIDTH) / G_viewport_w;
-  S_mouse_remapped_pos_y = (y * GRAPHICS_OVERSCAN_HEIGHT) / G_viewport_h;
+  S_mouse_224p_remap_pos_x = (x * GRAPHICS_OVERSCAN_WIDTH) / G_viewport_w;
+  S_mouse_224p_remap_pos_y = (y * GRAPHICS_OVERSCAN_HEIGHT) / G_viewport_h;
+
+  S_mouse_448p_remap_pos_x = (x * 2 * GRAPHICS_OVERSCAN_WIDTH) / G_viewport_w;
+  S_mouse_448p_remap_pos_y = (y * 2 * GRAPHICS_OVERSCAN_HEIGHT) / G_viewport_h;
 
   /* left mouse button */
   if ((button == SDL_BUTTON_LEFT) && 
@@ -974,8 +1011,8 @@ short int controls_mouse_button_pressed(Uint8 button, Sint32 x, Sint32 y)
   {
     S_mouse_button_states[CONTROLS_MOUSE_BUTTON_INDEX_LEFT] = CONTROLS_MOUSE_BUTTON_STATE_PRESSED;
 
-    S_mouse_last_click_pos_x = S_mouse_remapped_pos_x;
-    S_mouse_last_click_pos_y = S_mouse_remapped_pos_y;
+    S_mouse_last_click_pos_x = S_mouse_224p_remap_pos_x;
+    S_mouse_last_click_pos_y = S_mouse_224p_remap_pos_y;
   }
 
   /* right mouse button */
@@ -1016,8 +1053,11 @@ short int controls_mouse_button_released(Uint8 button)
 short int controls_mouse_cursor_moved(Sint32 x, Sint32 y)
 {
   /* find the mouse button location in overscan coordinates */
-  S_mouse_remapped_pos_x = (x * GRAPHICS_OVERSCAN_WIDTH) / G_viewport_w;
-  S_mouse_remapped_pos_y = (y * GRAPHICS_OVERSCAN_HEIGHT) / G_viewport_h;
+  S_mouse_224p_remap_pos_x = (x * GRAPHICS_OVERSCAN_WIDTH) / G_viewport_w;
+  S_mouse_224p_remap_pos_y = (y * GRAPHICS_OVERSCAN_HEIGHT) / G_viewport_h;
+
+  S_mouse_448p_remap_pos_x = (x * 2 * GRAPHICS_OVERSCAN_WIDTH) / G_viewport_w;
+  S_mouse_448p_remap_pos_y = (y * 2 * GRAPHICS_OVERSCAN_HEIGHT) / G_viewport_h;
 
   return 0;
 }
@@ -1107,17 +1147,17 @@ short int controls_process_user_input_standard()
     if (CONTROLS_KEY_IS_ON_OR_PRESSED(CONTROLS_KEY_INDEX_PATCH_EDIT_MODIFIER_OCTAVE))
     {
       if (CONTROLS_KEY_IS_PRESSED(CONTROLS_KEY_INDEX_PATCH_EDIT_SET_OCTAVE_1))
-        G_patch_edit_octave = TUNING_MIDDLE_OCTAVE - 3;
+        G_patch_edit_octave = (TUNING_NOTE_C4 / 12) - 3;
       else if (CONTROLS_KEY_IS_PRESSED(CONTROLS_KEY_INDEX_PATCH_EDIT_SET_OCTAVE_2))
-        G_patch_edit_octave = TUNING_MIDDLE_OCTAVE - 2;
+        G_patch_edit_octave = (TUNING_NOTE_C4 / 12) - 2;
       else if (CONTROLS_KEY_IS_PRESSED(CONTROLS_KEY_INDEX_PATCH_EDIT_SET_OCTAVE_3))
-        G_patch_edit_octave = TUNING_MIDDLE_OCTAVE - 1;
+        G_patch_edit_octave = (TUNING_NOTE_C4 / 12) - 1;
       else if (CONTROLS_KEY_IS_PRESSED(CONTROLS_KEY_INDEX_PATCH_EDIT_SET_OCTAVE_4))
-        G_patch_edit_octave = TUNING_MIDDLE_OCTAVE + 0;
+        G_patch_edit_octave = (TUNING_NOTE_C4 / 12) + 0;
       else if (CONTROLS_KEY_IS_PRESSED(CONTROLS_KEY_INDEX_PATCH_EDIT_SET_OCTAVE_5))
-        G_patch_edit_octave = TUNING_MIDDLE_OCTAVE + 1;
+        G_patch_edit_octave = (TUNING_NOTE_C4 / 12) + 1;
       else if (CONTROLS_KEY_IS_PRESSED(CONTROLS_KEY_INDEX_PATCH_EDIT_SET_OCTAVE_6))
-        G_patch_edit_octave = TUNING_MIDDLE_OCTAVE + 2;
+        G_patch_edit_octave = (TUNING_NOTE_C4 / 12) + 2;
     }
 
     for ( k = CONTROLS_KEY_INDEX_PATCH_EDIT_NOTE_THIS_OCTAVE_C; 
@@ -1235,7 +1275,7 @@ short int controls_process_user_input_standard()
     {
       G_current_scroll_amount = G_max_scroll_amount;
 
-      G_current_scroll_amount *= S_mouse_remapped_pos_y - CONTROLS_VERTICAL_SCROLLBAR_POS_Y_LOWER_BOUND;
+      G_current_scroll_amount *= S_mouse_224p_remap_pos_y - CONTROLS_VERTICAL_SCROLLBAR_POS_Y_LOWER_BOUND;
       G_current_scroll_amount /= 8 * (LAYOUT_SCROLLBAR_AREA_HEIGHT - 4);
 
       if (G_current_scroll_amount < 0)
@@ -1313,7 +1353,7 @@ short int controls_process_user_input_standard()
               CONTROLS_MOUSE_BUTTON_IS_ON_OR_PRESSED(CONTROLS_MOUSE_BUTTON_INDEX_LEFT))
           {
             controls_patch_parameter_adjust(G_patch_edit_cart_number, G_patch_edit_patch_number, 
-                                            k, S_mouse_remapped_pos_x - CONTROLS_PATCH_PARAM_SLIDER_POS_X_LOWER_BOUND);
+                                            k, S_mouse_448p_remap_pos_x - CONTROLS_PATCH_PARAM_SLIDER_POS_X_LOWER_BOUND);
           }
         }
         else if (pr->type == LAYOUT_PARAM_TYPE_ARROWS)

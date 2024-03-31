@@ -91,6 +91,7 @@ short int instrument_reset_all()
     /* mod wheel, aftertouch, pitch wheel */
     ins->mod_wheel_pos = MIDI_CONT_MOD_WHEEL_DEFAULT;
     ins->aftertouch_pos = MIDI_CONT_AFTERTOUCH_DEFAULT;
+    ins->exp_pedal_pos = MIDI_CONT_EXP_PEDAL_DEFAULT;
     ins->pitch_wheel_pos = MIDI_CONT_PITCH_WHEEL_DEFAULT;
 
     /* portamento switch, arpeggio switch, sustain pedal */
@@ -463,6 +464,8 @@ short int instrument_key_pressed(int instrument_index, int note)
   /* send a note-on for this key */
   if (ins->arpeggio_switch == MIDI_CONT_SWITCH_STATE_OFF)
     instrument_note_on(instrument_index, note);
+  else
+    arpeggio_key_on_or_key_off(instrument_index);
 
   return 0;
 }
@@ -512,6 +515,8 @@ short int instrument_key_released(int instrument_index, int note)
 
     if (ins->arpeggio_switch == MIDI_CONT_SWITCH_STATE_OFF)
       instrument_note_off(instrument_index, note);
+    else
+      arpeggio_key_on_or_key_off(instrument_index);
   }
   /* if the sustain pedal is down,  */
   /* add this key to the held keys. */
@@ -695,6 +700,62 @@ short int instrument_set_aftertouch_position(int instrument_index, short int pos
 }
 
 /*******************************************************************************
+** instrument_set_exp_pedal_position()
+*******************************************************************************/
+short int instrument_set_exp_pedal_position(int instrument_index, short int pos)
+{
+  int k;
+
+  instrument* ins;
+  boost* b;
+  lfo* l;
+
+  /* make sure that the instrument index is valid */
+  if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
+    return 1;
+
+  /* make sure the expression pedal position is valid */
+  if ((pos < MIDI_CONT_EXP_PEDAL_LOWER_BOUND) || 
+      (pos > MIDI_CONT_EXP_PEDAL_UPPER_BOUND))
+  {
+    return 0;
+  }
+
+  /* obtain pointers */
+  ins = &G_instrument_bank[instrument_index];
+  b = &G_boost_bank[instrument_index];
+
+  /* if this new position is the same as the current position, return */
+  if (pos == ins->exp_pedal_pos)
+    return 0;
+
+  /* set the new expression pedal position */
+  ins->exp_pedal_pos = pos;
+
+  /* set the expression pedal input for this instrument's boost */
+  b->exp_pedal_input = pos;
+
+  /* set the expression pedal input for the lfos associated with this instrument */
+  if (ins->type == INSTRUMENT_TYPE_POLY)
+  {
+    for (k = 0; k < BANK_VOICES_PER_POLY_INSTRUMENT; k++)
+    {
+      l = &G_lfo_bank[ins->voice_index + k];
+
+      l->exp_pedal_input = pos;
+    }
+  }
+  else if (ins->type == INSTRUMENT_TYPE_MONO)
+  {
+    l = &G_lfo_bank[ins->voice_index];
+
+    l->exp_pedal_input = pos;
+  }
+
+  return 0;
+}
+
+/*******************************************************************************
 ** instrument_set_pitch_wheel_position()
 *******************************************************************************/
 short int instrument_set_pitch_wheel_position(int instrument_index, short int pos)
@@ -736,7 +797,6 @@ short int instrument_set_pitch_wheel_position(int instrument_index, short int po
 short int instrument_set_portamento_switch(int instrument_index, int state)
 {
   instrument* ins;
-  sweep* sw;
 
   /* make sure that the instrument index is valid */
   if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
@@ -751,7 +811,10 @@ short int instrument_set_portamento_switch(int instrument_index, int state)
 
   /* obtain pointers */
   ins = &G_instrument_bank[instrument_index];
-  sw = &G_sweep_bank[instrument_index];
+
+  /* if the switch is already set to this state, return */
+  if (ins->portamento_switch == state)
+    return 0;
 
   /* set the portamento switch in the instrument */
   ins->portamento_switch = state;
@@ -770,7 +833,6 @@ short int instrument_set_portamento_switch(int instrument_index, int state)
 short int instrument_set_arpeggio_switch(int instrument_index, int state)
 {
   instrument* ins;
-  arpeggio* a;
 
   /* make sure that the instrument index is valid */
   if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
@@ -785,13 +847,16 @@ short int instrument_set_arpeggio_switch(int instrument_index, int state)
 
   /* obtain pointers */
   ins = &G_instrument_bank[instrument_index];
-  a = &G_arpeggio_bank[instrument_index];
+
+  /* if the switch is already set to this state, return */
+  if (ins->arpeggio_switch == state)
+    return 0;
 
   /* set the arpeggio switch in the instrument */
   ins->arpeggio_switch = state;
 
   /* set the switch input for this instrument's arpeggio */
-  a->on_switch = ins->arpeggio_switch;
+  arpeggio_set_switch(instrument_index, state);
 
   return 0;
 }
@@ -867,6 +932,9 @@ short int instrument_set_sustain_pedal(int instrument_index, int state)
     }
 
     ins->num_held = 0;
+
+    if (ins->arpeggio_switch == MIDI_CONT_SWITCH_STATE_ON)
+      arpeggio_key_on_or_key_off(instrument_index);
   }
 
   return 0;

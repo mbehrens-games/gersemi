@@ -34,6 +34,7 @@ typedef struct instrument
 
   short int mod_wheel_pos;
   short int aftertouch_pos;
+  short int exp_pedal_pos;
   short int pitch_wheel_pos;
 
   short int portamento_switch;
@@ -60,6 +61,7 @@ short int instrument_set_note_velocity(int instrument_index, short int vel);
 
 short int instrument_set_mod_wheel_position(int instrument_index, short int pos);
 short int instrument_set_aftertouch_position(int instrument_index, short int pos);
+short int instrument_set_exp_pedal_position(int instrument_index, short int pos);
 short int instrument_set_pitch_wheel_position(int instrument_index, short int pos);
 
 short int instrument_set_portamento_switch(int instrument_index, int state);
