@@ -14,7 +14,7 @@
 #define BOOST_AMOUNT_LEVEL_STEP (1 * 32)
 
 /* boost amount table */
-static short int  S_boost_amount_table[PATCH_EFFECT_DEPTH_NUM_VALUES] = 
+static short int  S_boost_amount_table[PATCH_BOOST_DEPTH_NUM_VALUES] = 
                   { BOOST_AMOUNT_LEVEL_STEP * 1, 
                     BOOST_AMOUNT_LEVEL_STEP * 2, 
                     BOOST_AMOUNT_LEVEL_STEP * 3, 
@@ -53,11 +53,7 @@ short int boost_reset_all()
 
     /* initialize boost variables */
     b->amount = 
-      S_boost_amount_table[PATCH_EFFECT_DEPTH_DEFAULT - PATCH_EFFECT_DEPTH_LOWER_BOUND];
-
-    b->mod_wheel_effect = PATCH_CONTROLLER_EFFECT_DEFAULT;
-    b->aftertouch_effect = PATCH_CONTROLLER_EFFECT_DEFAULT;
-    b->exp_pedal_effect = PATCH_CONTROLLER_EFFECT_DEFAULT;
+      S_boost_amount_table[PATCH_BOOST_DEPTH_DEFAULT - PATCH_BOOST_DEPTH_LOWER_BOUND];
 
     b->mod_wheel_input = 0;
     b->aftertouch_input = 0;
@@ -92,38 +88,13 @@ short int boost_load_patch(int instrument_index, int patch_index)
   b = &G_boost_bank[instrument_index];
 
   /* depth */
-  if ((p->boost_depth >= PATCH_EFFECT_DEPTH_LOWER_BOUND) && 
-      (p->boost_depth <= PATCH_EFFECT_DEPTH_UPPER_BOUND))
+  if ((p->boost_depth >= PATCH_BOOST_DEPTH_LOWER_BOUND) && 
+      (p->boost_depth <= PATCH_BOOST_DEPTH_UPPER_BOUND))
   {
-    b->amount = S_boost_amount_table[p->boost_depth - PATCH_EFFECT_DEPTH_LOWER_BOUND];
+    b->amount = S_boost_amount_table[p->boost_depth - PATCH_BOOST_DEPTH_LOWER_BOUND];
   }
   else
-    b->amount = S_boost_amount_table[PATCH_EFFECT_DEPTH_DEFAULT - PATCH_EFFECT_DEPTH_LOWER_BOUND];
-
-  /* controller effects */
-  if ((p->mod_wheel_effect >= PATCH_CONTROLLER_EFFECT_LOWER_BOUND) && 
-      (p->mod_wheel_effect <= PATCH_CONTROLLER_EFFECT_UPPER_BOUND))
-  {
-    b->mod_wheel_effect = p->mod_wheel_effect;
-  }
-  else
-    b->mod_wheel_effect = PATCH_CONTROLLER_EFFECT_DEFAULT;
-
-  if ((p->aftertouch_effect >= PATCH_CONTROLLER_EFFECT_LOWER_BOUND) && 
-      (p->aftertouch_effect <= PATCH_CONTROLLER_EFFECT_UPPER_BOUND))
-  {
-    b->aftertouch_effect = p->aftertouch_effect;
-  }
-  else
-    b->aftertouch_effect = PATCH_CONTROLLER_EFFECT_DEFAULT;
-
-  if ((p->exp_pedal_effect >= PATCH_CONTROLLER_EFFECT_LOWER_BOUND) && 
-      (p->exp_pedal_effect <= PATCH_CONTROLLER_EFFECT_UPPER_BOUND))
-  {
-    b->exp_pedal_effect = p->exp_pedal_effect;
-  }
-  else
-    b->exp_pedal_effect = PATCH_CONTROLLER_EFFECT_DEFAULT;
+    b->amount = S_boost_amount_table[PATCH_BOOST_DEPTH_DEFAULT - PATCH_BOOST_DEPTH_LOWER_BOUND];
 
   return 0;
 }
@@ -146,6 +117,7 @@ short int boost_update_all()
     /* initialize level */
     b->level = 0;
 
+#if 0
     /* apply mod wheel effect */
     if ((b->mod_wheel_effect == PATCH_CONTROLLER_EFFECT_BOOST)            || 
         (b->mod_wheel_effect == PATCH_CONTROLLER_EFFECT_VIB_PLUS_BOOST)   || 
@@ -175,6 +147,7 @@ short int boost_update_all()
       b->level += 
         (b->amount * b->exp_pedal_input) / MIDI_CONT_EXP_PEDAL_UPPER_BOUND;
     }
+#endif
 
     /* bound level */
     if (b->level > b->amount)

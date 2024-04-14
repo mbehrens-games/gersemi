@@ -77,7 +77,7 @@ static short int  S_envelope_rate_table[PATCH_ENV_TIME_NUM_VALUES];
 /* for the level, the value is the number of semitones  */
 /* up from the break point at which the level halves    */
 static short int  S_envelope_keyscaling_fraction_table[PATCH_ENV_KEYSCALING_NUM_VALUES] = 
-                  { 192, 144, 96, 72, 48, 36, 24, 18, 12 };
+                  { 32767, 144, 96, 72, 48, 36, 24, 18, 12 };
 
 /* break point table */
 static short int  S_envelope_break_point_table[PATCH_ENV_BREAK_POINT_NUM_VALUES] = 
@@ -104,7 +104,7 @@ static short int  S_envelope_pedal_adjust_table[PATCH_PEDAL_ADJUST_NUM_VALUES] =
                   {  0,  6, 12, 18, 24, 30, 36, 42, 48 };
 
 /* envelope bank */
-envelope G_envelope_bank[BANK_NUM_AMPLITUDE_ENVELOPES];
+envelope G_envelope_bank[BANK_NUM_ENVELOPES];
 
 /*******************************************************************************
 ** envelope_reset_all()
@@ -116,7 +116,7 @@ short int envelope_reset_all()
   envelope* e;
 
   /* reset all envelopes */
-  for (k = 0; k < BANK_NUM_AMPLITUDE_ENVELOPES; k++)
+  for (k = 0; k < BANK_NUM_ENVELOPES; k++)
   {
     /* obtain envelope pointer */
     e = &G_envelope_bank[k];
@@ -124,9 +124,7 @@ short int envelope_reset_all()
     /* initialize envelope variables */
     e->ks_rate_fraction = 
       S_envelope_keyscaling_fraction_table[PATCH_ENV_KEYSCALING_DEFAULT - PATCH_ENV_KEYSCALING_LOWER_BOUND];
-    e->ks_left_fraction = 
-      S_envelope_keyscaling_fraction_table[PATCH_ENV_KEYSCALING_DEFAULT - PATCH_ENV_KEYSCALING_LOWER_BOUND];
-    e->ks_right_fraction = 
+    e->ks_level_fraction = 
       S_envelope_keyscaling_fraction_table[PATCH_ENV_KEYSCALING_DEFAULT - PATCH_ENV_KEYSCALING_LOWER_BOUND];
     e->ks_break_note = 
       S_envelope_break_point_table[PATCH_ENV_BREAK_POINT_DEFAULT - PATCH_ENV_BREAK_POINT_LOWER_BOUND];
@@ -184,37 +182,37 @@ short int envelope_load_patch(int voice_index, int patch_index)
   e = &G_envelope_bank[voice_index];
 
   /* attack rate */
-  if ((p->amp_env_attack >= PATCH_ENV_TIME_LOWER_BOUND) && 
-      (p->amp_env_attack <= PATCH_ENV_TIME_UPPER_BOUND))
+  if ((p->env_attack >= PATCH_ENV_TIME_LOWER_BOUND) && 
+      (p->env_attack <= PATCH_ENV_TIME_UPPER_BOUND))
   {
-    e->a_rate = S_envelope_rate_table[p->amp_env_attack - PATCH_ENV_TIME_LOWER_BOUND];
+    e->a_rate = S_envelope_rate_table[p->env_attack - PATCH_ENV_TIME_LOWER_BOUND];
   }
   else
     e->a_rate = S_envelope_rate_table[PATCH_ENV_TIME_DEFAULT - PATCH_ENV_TIME_LOWER_BOUND];
 
   /* decay 1 rate */
-  if ((p->amp_env_decay_1 >= PATCH_ENV_TIME_LOWER_BOUND) && 
-      (p->amp_env_decay_1 <= PATCH_ENV_TIME_UPPER_BOUND))
+  if ((p->env_decay_1 >= PATCH_ENV_TIME_LOWER_BOUND) && 
+      (p->env_decay_1 <= PATCH_ENV_TIME_UPPER_BOUND))
   {
-    e->d1_rate = S_envelope_rate_table[p->amp_env_decay_1 - PATCH_ENV_TIME_LOWER_BOUND];
+    e->d1_rate = S_envelope_rate_table[p->env_decay_1 - PATCH_ENV_TIME_LOWER_BOUND];
   }
   else
     e->d1_rate = S_envelope_rate_table[PATCH_ENV_TIME_DEFAULT - PATCH_ENV_TIME_LOWER_BOUND];
 
   /* decay 2 rate */
-  if ((p->amp_env_decay_2 >= PATCH_ENV_TIME_LOWER_BOUND) && 
-      (p->amp_env_decay_2 <= PATCH_ENV_TIME_UPPER_BOUND))
+  if ((p->env_decay_2 >= PATCH_ENV_TIME_LOWER_BOUND) && 
+      (p->env_decay_2 <= PATCH_ENV_TIME_UPPER_BOUND))
   {
-    e->d2_rate = S_envelope_rate_table[p->amp_env_decay_2 - PATCH_ENV_TIME_LOWER_BOUND];
+    e->d2_rate = S_envelope_rate_table[p->env_decay_2 - PATCH_ENV_TIME_LOWER_BOUND];
   }
   else
     e->d2_rate = S_envelope_rate_table[PATCH_ENV_TIME_DEFAULT - PATCH_ENV_TIME_LOWER_BOUND];
 
   /* release rate */
-  if ((p->amp_env_release >= PATCH_ENV_TIME_LOWER_BOUND) && 
-      (p->amp_env_release <= PATCH_ENV_TIME_UPPER_BOUND))
+  if ((p->env_release >= PATCH_ENV_TIME_LOWER_BOUND) && 
+      (p->env_release <= PATCH_ENV_TIME_UPPER_BOUND))
   {
-    e->r_rate = S_envelope_rate_table[p->amp_env_release - PATCH_ENV_TIME_LOWER_BOUND];
+    e->r_rate = S_envelope_rate_table[p->env_release - PATCH_ENV_TIME_LOWER_BOUND];
   }
   else
     e->r_rate = S_envelope_rate_table[PATCH_ENV_TIME_DEFAULT - PATCH_ENV_TIME_LOWER_BOUND];
@@ -224,7 +222,7 @@ short int envelope_load_patch(int voice_index, int patch_index)
       (p->pedal_adjust <= PATCH_PEDAL_ADJUST_UPPER_BOUND))
   {
     /* set sustained rate */
-    shifted_time = p->amp_env_decay_2 + S_envelope_pedal_adjust_table[p->pedal_adjust - PATCH_PEDAL_ADJUST_LOWER_BOUND];
+    shifted_time = p->env_decay_2 + S_envelope_pedal_adjust_table[p->pedal_adjust - PATCH_PEDAL_ADJUST_LOWER_BOUND];
 
     if (shifted_time < PATCH_ENV_TIME_LOWER_BOUND)
       shifted_time = PATCH_ENV_TIME_LOWER_BOUND;
@@ -237,46 +235,37 @@ short int envelope_load_patch(int voice_index, int patch_index)
     e->pedal_rate = e->d2_rate;
 
   /* sustain level */
-  if ((p->amp_env_sustain >= PATCH_ENV_LEVEL_LOWER_BOUND) && 
-      (p->amp_env_sustain <= PATCH_ENV_LEVEL_UPPER_BOUND))
+  if ((p->env_sustain >= PATCH_ENV_LEVEL_LOWER_BOUND) && 
+      (p->env_sustain <= PATCH_ENV_LEVEL_UPPER_BOUND))
   {
-    e->transition_level = S_envelope_sustain_table[p->amp_env_sustain - PATCH_ENV_LEVEL_LOWER_BOUND];
+    e->transition_level = S_envelope_sustain_table[p->env_sustain - PATCH_ENV_LEVEL_LOWER_BOUND];
   }
   else
     e->transition_level = S_envelope_sustain_table[PATCH_ENV_LEVEL_DEFAULT - PATCH_ENV_LEVEL_LOWER_BOUND];
 
   /* rate keyscaling depth */
-  if ((p->amp_env_rate_ks >= PATCH_ENV_KEYSCALING_LOWER_BOUND) && 
-      (p->amp_env_rate_ks <= PATCH_ENV_KEYSCALING_UPPER_BOUND))
+  if ((p->env_rate_ks >= PATCH_ENV_KEYSCALING_LOWER_BOUND) && 
+      (p->env_rate_ks <= PATCH_ENV_KEYSCALING_UPPER_BOUND))
   {
-    e->ks_rate_fraction = S_envelope_keyscaling_fraction_table[p->amp_env_rate_ks - PATCH_ENV_KEYSCALING_LOWER_BOUND];
+    e->ks_rate_fraction = S_envelope_keyscaling_fraction_table[p->env_rate_ks - PATCH_ENV_KEYSCALING_LOWER_BOUND];
   }
   else
     e->ks_rate_fraction = S_envelope_keyscaling_fraction_table[PATCH_ENV_KEYSCALING_DEFAULT - PATCH_ENV_KEYSCALING_LOWER_BOUND];
 
-  /* left level keyscaling depth */
-  if ((p->amp_env_left_ks >= PATCH_ENV_KEYSCALING_LOWER_BOUND) && 
-      (p->amp_env_left_ks <= PATCH_ENV_KEYSCALING_UPPER_BOUND))
+  /* level keyscaling depth */
+  if ((p->env_level_ks >= PATCH_ENV_KEYSCALING_LOWER_BOUND) && 
+      (p->env_level_ks <= PATCH_ENV_KEYSCALING_UPPER_BOUND))
   {
-    e->ks_left_fraction = S_envelope_keyscaling_fraction_table[p->amp_env_left_ks - PATCH_ENV_KEYSCALING_LOWER_BOUND];
+    e->ks_level_fraction = S_envelope_keyscaling_fraction_table[p->env_level_ks - PATCH_ENV_KEYSCALING_LOWER_BOUND];
   }
   else
-    e->ks_left_fraction = S_envelope_keyscaling_fraction_table[PATCH_ENV_KEYSCALING_DEFAULT - PATCH_ENV_KEYSCALING_LOWER_BOUND];
-
-  /* right level keyscaling depth */
-  if ((p->amp_env_right_ks >= PATCH_ENV_KEYSCALING_LOWER_BOUND) && 
-      (p->amp_env_right_ks <= PATCH_ENV_KEYSCALING_UPPER_BOUND))
-  {
-    e->ks_right_fraction = S_envelope_keyscaling_fraction_table[p->amp_env_right_ks - PATCH_ENV_KEYSCALING_LOWER_BOUND];
-  }
-  else
-    e->ks_right_fraction = S_envelope_keyscaling_fraction_table[PATCH_ENV_KEYSCALING_DEFAULT - PATCH_ENV_KEYSCALING_LOWER_BOUND];
+    e->ks_level_fraction = S_envelope_keyscaling_fraction_table[PATCH_ENV_KEYSCALING_DEFAULT - PATCH_ENV_KEYSCALING_LOWER_BOUND];
 
   /* break point */
-  if ((p->amp_env_break_point >= PATCH_ENV_BREAK_POINT_LOWER_BOUND) && 
-      (p->amp_env_break_point <= PATCH_ENV_BREAK_POINT_UPPER_BOUND))
+  if ((p->env_break_point >= PATCH_ENV_BREAK_POINT_LOWER_BOUND) && 
+      (p->env_break_point <= PATCH_ENV_BREAK_POINT_UPPER_BOUND))
   {
-    e->ks_break_note = S_envelope_break_point_table[p->amp_env_break_point - PATCH_ENV_BREAK_POINT_LOWER_BOUND];
+    e->ks_break_note = S_envelope_break_point_table[p->env_break_point - PATCH_ENV_BREAK_POINT_LOWER_BOUND];
   }
   else
     e->ks_break_note = S_envelope_break_point_table[PATCH_ENV_BREAK_POINT_DEFAULT - PATCH_ENV_BREAK_POINT_LOWER_BOUND];
@@ -361,11 +350,7 @@ short int envelope_set_note(int voice_index, int note)
   /* the same as multiplying it by 1/2 (once    */
   /* converted back to linear instead of db).   */
   e->rate_adjustment = (12 * (adjusted_note - TUNING_NOTE_C0)) / e->ks_rate_fraction;
-
-  if (adjusted_note < e->ks_break_note)
-    e->level_adjustment = (256 * (adjusted_note - e->ks_break_note)) / e->ks_left_fraction;
-  else
-    e->level_adjustment = (256 * (adjusted_note - e->ks_break_note)) / e->ks_right_fraction;
+  e->level_adjustment = (256 * (adjusted_note - e->ks_break_note)) / e->ks_level_fraction;
 
   return 0;
 }
@@ -438,7 +423,7 @@ short int envelope_update_all()
   short int periods;
 
   /* update all envelopes */
-  for (k = 0; k < BANK_NUM_AMPLITUDE_ENVELOPES; k++)
+  for (k = 0; k < BANK_NUM_ENVELOPES; k++)
   {
     /* obtain envelope pointer */
     e = &G_envelope_bank[k];

@@ -11,7 +11,6 @@ typedef struct sweep
 {
   /* sweep parameters */
   short int mode;
-  short int legato;
   short int speed;
 
   /* phase, phase increment */

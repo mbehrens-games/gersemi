@@ -11,8 +11,7 @@ typedef struct envelope
 {
   /* keyscaling settings */
   short int ks_rate_fraction;
-  short int ks_left_fraction;
-  short int ks_right_fraction;
+  short int ks_level_fraction;
   short int ks_break_note;
 
   /* adjustments */
@@ -50,7 +49,7 @@ typedef struct envelope
 } envelope;
 
 /* envelope bank */
-extern envelope G_envelope_bank[BANK_NUM_AMPLITUDE_ENVELOPES];
+extern envelope G_envelope_bank[BANK_NUM_ENVELOPES];
 
 /* function declarations */
 short int envelope_reset_all();

@@ -113,7 +113,7 @@ short int tuning_generate_offsets()
   else
     freq_fork = 440.0f;
 
-  offset = (short int) (1200 * ((log(freq_fork) - log(440)) / log(2)) + 0.5f);
+  offset = (short int) (12 * TUNING_NUM_SEMITONE_STEPS * ((log(freq_fork) - log(440)) / log(2)) + 0.5f);
 
   for (m = 0; m < 12; m++)
     G_tuning_offset_table[m] += offset;
@@ -132,7 +132,7 @@ short int tuning_generate_offsets()
 
   for (m = 0; m < 12; m++)
   {
-    offset = (short int) (1200 * ((log(mult_table[m]) - log(S_tuning_mult_12_equal_temperament[m])) / log(2)) + 0.5f);
+    offset = (short int) (12 * TUNING_NUM_SEMITONE_STEPS * ((log(mult_table[m]) - log(S_tuning_mult_12_equal_temperament[m])) / log(2)) + 0.5f);
 
     G_tuning_offset_table[m] += offset;
   }

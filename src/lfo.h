@@ -18,10 +18,6 @@ typedef struct lfo
   int delay_cycles;
   int delay_period;
 
-  /* quantize (sample and hold) */
-  unsigned int quantize_phase;
-  unsigned int quantize_overflow;
-
   /* phase, phase increment */
   unsigned int phase;
   unsigned int increment;
@@ -32,19 +28,9 @@ typedef struct lfo
   /* tempo */
   short int tempo;
 
-  /* vibrato */
-  short int vibrato_depth;
-  short int vibrato_base;
-  short int vibrato_mode;
-
-  /* tremolo */
-  short int tremolo_depth;
-  short int tremolo_base;
-
-  /* controller effects */
-  short int mod_wheel_effect;
-  short int aftertouch_effect;
-  short int exp_pedal_effect;
+  /* depth, base */
+  short int depth;
+  short int base;
 
   /* controller inputs */
   short int mod_wheel_input;
@@ -53,11 +39,13 @@ typedef struct lfo
 
   /* wave values (unadjusted levels) */
   short int vibrato_wave_value;
-  short int tremolo_wave_value;
+  short int env_tremolo_wave_value;
+  short int peg_tremolo_wave_value;
 
   /* levels */
   short int vibrato_level;
-  short int tremolo_level;
+  short int env_tremolo_level;
+  short int peg_tremolo_level;
 } lfo;
 
 /* lfo bank */

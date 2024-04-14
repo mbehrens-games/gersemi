@@ -48,7 +48,6 @@ short int sweep_reset_all()
 
     /* initialize sweep variables */
     sw->mode = PATCH_PORTAMENTO_MODE_DEFAULT;
-    sw->legato = PATCH_PORTAMENTO_LEGATO_DEFAULT;
     sw->speed = PATCH_PORTAMENTO_SPEED_DEFAULT;
 
     sw->phase = 0;
@@ -97,15 +96,6 @@ short int sweep_load_patch(int instrument_index, int patch_index)
   }
   else
     sw->mode = PATCH_PORTAMENTO_MODE_LOWER_BOUND;
-
-  /* legato */
-  if ((p->portamento_legato >= PATCH_PORTAMENTO_LEGATO_LOWER_BOUND) && 
-      (p->portamento_legato <= PATCH_PORTAMENTO_LEGATO_UPPER_BOUND))
-  {
-    sw->legato = p->portamento_legato;
-  }
-  else
-    sw->legato = PATCH_PORTAMENTO_LEGATO_LOWER_BOUND;
 
   /* speed */
   if ((p->portamento_speed >= PATCH_PORTAMENTO_SPEED_LOWER_BOUND) && 

@@ -11,7 +11,10 @@
 
 typedef struct filter
 {
-  int multiplier;
+  short int base_note;
+  short int offset;
+
+  int cutoff_index;
 
   int input;
 
@@ -23,16 +26,18 @@ typedef struct filter
 } filter;
 
 /* filter bank */
-extern filter G_lowpass_filter_bank[BANK_NUM_LOWPASS_FILTERS];
 extern filter G_highpass_filter_bank[BANK_NUM_HIGHPASS_FILTERS];
+extern filter G_lowpass_filter_bank[BANK_NUM_LOWPASS_FILTERS];
 
 /* function declarations */
 short int filter_reset_all();
 
 short int filter_load_patch(int voice_index, int patch_index);
 
-short int filter_update_lowpass();
+short int filter_set_note(int voice_index, int note);
+
 short int filter_update_highpass();
+short int filter_update_lowpass();
 
 short int filter_generate_tables();
 

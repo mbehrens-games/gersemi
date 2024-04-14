@@ -9,31 +9,28 @@
 
 typedef struct voice
 {
-  /* program, sync */
-  short int program;
+  /* mode, sync */
+  short int mode;
   short int sync;
 
   /* currently playing notes, pitch indices */
-  int base_note;
+  short int base_note;
 
-  int osc_1_pitch_index;
-  int osc_2_pitch_index;
+  int wave_osc_1_pitch_index;
+  int wave_osc_2_pitch_index;
+  int extra_osc_pitch_index;
 
   /* phases */
-  unsigned int osc_1_phase;
-  unsigned int osc_2_phase;
+  unsigned int wave_osc_1_phase;
+  unsigned int wave_osc_2_phase;
+  unsigned int extra_osc_phase;
 
   /* voice parameters */
-  short int osc_1_waveform;
-  short int osc_2_waveform;
+  short int wave_osc_1_waveform;
+  short int wave_osc_2_waveform;
 
-  short int osc_1_offset;
-  short int osc_2_offset;
-
-  /* amplitude effect modes */
-  short int tremolo_mode;
-  short int boost_mode;
-  short int velocity_mode;
+  short int wave_osc_1_mix_adjustment;
+  short int wave_osc_2_mix_adjustment;
 
   /* velocity scaling, adjustment */
   short int velocity_scaling_amount;
@@ -43,8 +40,6 @@ typedef struct voice
   short int env_input;
 
   /* lfo levels */
-  short int lfo_input_vibrato;
-  short int lfo_input_tremolo;
 
   /* boost level */
   short int boost_input;

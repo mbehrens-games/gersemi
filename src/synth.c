@@ -96,8 +96,10 @@ short int synth_update()
       {
         v = &G_voice_bank[ins->voice_index + m];
 
+#if 0
         v->lfo_input_vibrato = G_lfo_bank[ins->voice_index + m].vibrato_level;
         v->lfo_input_tremolo = G_lfo_bank[ins->voice_index + m].tremolo_level;
+#endif
 
         v->env_input = G_envelope_bank[ins->voice_index + m].level;
 
@@ -110,8 +112,10 @@ short int synth_update()
     {
       v = &G_voice_bank[ins->voice_index];
 
+#if 0
       v->lfo_input_vibrato = G_lfo_bank[ins->voice_index].vibrato_level;
       v->lfo_input_tremolo = G_lfo_bank[ins->voice_index].tremolo_level;
+#endif
 
       v->env_input = G_envelope_bank[ins->voice_index].level;
 
@@ -134,6 +138,7 @@ short int synth_update()
   printf("\n");
 #endif
 
+#if 0
   /* copy voice levels to lowpass filter inputs */
   for (k = 0; k < BANK_NUM_VOICES; k++)
     G_lowpass_filter_bank[k].input = G_voice_bank[k].level;
@@ -147,12 +152,27 @@ short int synth_update()
 
   /* update highpass filters */
   filter_update_highpass();
+#endif
+
+  /* copy voice levels to highpass filter inputs */
+  for (k = 0; k < BANK_NUM_VOICES; k++)
+    G_highpass_filter_bank[k].input = G_voice_bank[k].level;
+
+  /* update highpass filters */
+  filter_update_highpass();
+
+  /* copy highpass filter outputs to lowpass filter inputs */
+  for (k = 0; k < BANK_NUM_VOICES; k++)
+    G_lowpass_filter_bank[k].input = G_highpass_filter_bank[k].level;
+
+  /* update lowpass filters */
+  filter_update_lowpass();
 
   /* compute overall level */
   level = 0;
 
   for (k = 0; k < BANK_NUM_VOICES; k++)
-    level += G_highpass_filter_bank[k].level;
+    level += G_lowpass_filter_bank[k].level;
 
   /* clipping */
   if (level > 32767)

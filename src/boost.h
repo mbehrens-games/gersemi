@@ -12,11 +12,6 @@ typedef struct boost
   /* boost parameters */
   short int amount;
 
-  /* controller effects */
-  short int mod_wheel_effect;
-  short int aftertouch_effect;
-  short int exp_pedal_effect;
-
   /* controller inputs */
   short int mod_wheel_input;
   short int aftertouch_input;
