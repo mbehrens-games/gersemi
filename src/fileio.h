@@ -7,74 +7,78 @@
 
 #include "bank.h"
 
-/* 52 bytes */
+/* 53 bytes */
 enum
 {
-  /* oscillators (4 bytes) */
-  FILEIO_PATCH_BYTE_OSC_MODE_WAVEFORMS = 0,         /* mode (3 bits), wave osc waveforms (2 bits), blend/detune switch (1 bit) */
-  FILEIO_PATCH_BYTE_OSC_BLEND_OR_DETUNE,            /* wave osc blend or detune (7 bits) */
-  FILEIO_PATCH_BYTE_OSC_SPECIAL_1,                  /* special (1-8 bits) */
-  FILEIO_PATCH_BYTE_OSC_SPECIAL_2,                  /* special (1-8 bits) */
+  /* osc waveform, detune (3 bytes) */
+  FILEIO_PATCH_BYTE_OSC_1_WAVEFORM_DETUNE = 0,      /* waveform (4 bits), detune (3 bits) */
+  FILEIO_PATCH_BYTE_OSC_2_WAVEFORM_DETUNE,          /* waveform (4 bits), detune (3 bits) */
+  FILEIO_PATCH_BYTE_OSC_3_WAVEFORM_DETUNE,          /* waveform (4 bits), detune (3 bits) */
+  /* osc frequency mode, multiple, divisor (2 bytes) */
+  FILEIO_PATCH_BYTE_OSC_1_FREQ_MODE_MUL_DIV,        /* frequency mode (1 bit), multiple (4 bits), divisor (3 bits) */
+  FILEIO_PATCH_BYTE_OSC_2_FREQ_MODE_MUL_DIV,        /* frequency mode (1 bit), multiple (4 bits), divisor (3 bits) */
+  /* algorithm, phi (1 byte) */
+  FILEIO_PATCH_BYTE_OSC_ALGORITHM_PHI,              /* algorithm (2 bits), phi (2 bits each, 6 bits total) */
   /* filters (2 bytes) */
-  FILEIO_PATCH_BYTE_LP_MULTIPLE_RESONANCE,          /* lowpass multiple (4 bits), resonance (4 bits) */
-  FILEIO_PATCH_BYTE_HP_CUTOFF_LP_KEYTRACKING,       /* highpass cutoff (3 bits), lowpass keytracking (4 bits) */
-  /* amplitude envelope (5 bytes) */
-  FILEIO_PATCH_BYTE_AMP_ENV_ATTACK,                 /* attack (7 bits) */
-  FILEIO_PATCH_BYTE_AMP_ENV_DECAY_1,                /* decay 1 (7 bits) */
-  FILEIO_PATCH_BYTE_AMP_ENV_DECAY_2,                /* decay 2 (7 bits) */
-  FILEIO_PATCH_BYTE_AMP_ENV_RELEASE,                /* release (7 bits) */
-  FILEIO_PATCH_BYTE_AMP_ENV_SUSTAIN,                /* sustain (7 bits) */
-  /* filter envelope (6 bytes) */
-  FILEIO_PATCH_BYTE_FILTER_ENV_ATTACK,              /* attack (7 bits) */
-  FILEIO_PATCH_BYTE_FILTER_ENV_DECAY,               /* decay (7 bits) */
-  FILEIO_PATCH_BYTE_FILTER_ENV_RELEASE,             /* release (7 bits) */
-  FILEIO_PATCH_BYTE_FILTER_ENV_LEVEL,               /* level (7 bits) */
-  FILEIO_PATCH_BYTE_FILTER_ENV_HOLD,                /* hold (7 bits) */
-  FILEIO_PATCH_BYTE_FILTER_ENV_FINALE,              /* finale (7 bits) */
-  /* pitch envelope (6 bytes) */
-  FILEIO_PATCH_BYTE_PITCH_ENV_ATTACK,               /* attack (7 bits) */
-  FILEIO_PATCH_BYTE_PITCH_ENV_DECAY,                /* decay 1 (7 bits) */
-  FILEIO_PATCH_BYTE_PITCH_ENV_RELEASE,              /* release (7 bits) */
-  FILEIO_PATCH_BYTE_PITCH_ENV_LEVEL,                /* level (7 bits) */
-  FILEIO_PATCH_BYTE_PITCH_ENV_HOLD,                 /* hold (7 bits) */
-  FILEIO_PATCH_BYTE_PITCH_ENV_FINALE,               /* finale (7 bits) */
-  /* extra envelope (6 bytes) */
-  FILEIO_PATCH_BYTE_EXTRA_ENV_ATTACK,               /* attack (7 bits) */
-  FILEIO_PATCH_BYTE_EXTRA_ENV_DECAY,                /* decay 1 (7 bits) */
-  FILEIO_PATCH_BYTE_EXTRA_ENV_RELEASE,              /* release (7 bits) */
-  FILEIO_PATCH_BYTE_EXTRA_ENV_LEVEL,                /* level (7 bits) */
-  FILEIO_PATCH_BYTE_EXTRA_ENV_HOLD,                 /* hold (7 bits) */
-  FILEIO_PATCH_BYTE_EXTRA_ENV_FINALE,               /* finale (7 bits) */
-  /* keyscaling (3 bytes) */
-  FILEIO_PATCH_BYTE_AMP_ENV_LEVEL_KS_BREAK_POINT,   /* level keyscaling for amplitude env (4 bits), break point (4 bits) */
-  FILEIO_PATCH_BYTE_AMP_FILTER_ENV_RATE_KS,         /* rate keyscaling for amplitude env (4 bits), filter env (4 bits) */
-  FILEIO_PATCH_BYTE_PITCH_EXTRA_ENV_RATE_KS,        /* rate keyscaling for pitch env (4 bits), extra env (4 bits) */
-  /* lfo 1 (3 bytes) */
-  FILEIO_PATCH_BYTE_LFO_1_WAVEFORM_DELAY,           /* lfo 1 waveform (3 bits), delay (5 bits) */
-  FILEIO_PATCH_BYTE_LFO_1_POLARITY_FREQUENCY,       /* lfo 1 polarity (1 bit), frequency (5 bits) */
-  FILEIO_PATCH_BYTE_LFO_1_BASE,                     /* lfo 1 base (7 bits) */
-  /* lfo 2 (3 bytes) */
-  FILEIO_PATCH_BYTE_LFO_2_WAVEFORM_DELAY,           /* lfo 2 waveform (3 bits), delay (5 bits) */
-  FILEIO_PATCH_BYTE_LFO_2_POLARITY_FREQUENCY,       /* lfo 2 polarity (1 bit), frequency (5 bits) */
-  FILEIO_PATCH_BYTE_LFO_2_BASE,                     /* lfo 2 base (7 bits) */
+  FILEIO_PATCH_BYTE_LOWPASS_MULTIPLE_KEYTRACKING,   /* lowpass multiple (4 bits), keytracking (4 bits) */
+  FILEIO_PATCH_BYTE_HIGHPASS_CUTOFF_SYNC,           /* highpass cutoff (2 bits), sync (4 bits) */
+  /* envelope 1 (6 bytes) */
+  FILEIO_PATCH_BYTE_ENV_1_ATTACK,                   /* attack time (7 bits) */
+  FILEIO_PATCH_BYTE_ENV_1_DECAY,                    /* decay time (7 bits) */
+  FILEIO_PATCH_BYTE_ENV_1_RELEASE,                  /* release time (7 bits) */
+  FILEIO_PATCH_BYTE_ENV_1_LEVEL,                    /* max level (7 bits) */
+  FILEIO_PATCH_BYTE_ENV_1_SUSTAIN,                  /* sustain level (7 bits) */
+  FILEIO_PATCH_BYTE_ENV_1_HOLD_PEDAL,               /* sustain shift (4 bits), pedal shift (4 bits) */
+  /* envelope 2 (6 bytes) */
+  FILEIO_PATCH_BYTE_ENV_2_ATTACK,                   /* attack time (7 bits) */
+  FILEIO_PATCH_BYTE_ENV_2_DECAY,                    /* decay time (7 bits) */
+  FILEIO_PATCH_BYTE_ENV_2_RELEASE,                  /* release time (7 bits) */
+  FILEIO_PATCH_BYTE_ENV_2_LEVEL,                    /* max level (7 bits) */
+  FILEIO_PATCH_BYTE_ENV_2_SUSTAIN,                  /* sustain level (7 bits) */
+  FILEIO_PATCH_BYTE_ENV_2_HOLD_PEDAL,               /* sustain shift (4 bits), pedal shift (4 bits) */
+  /* envelope 3 (6 bytes) */
+  FILEIO_PATCH_BYTE_ENV_3_ATTACK,                   /* attack time (7 bits) */
+  FILEIO_PATCH_BYTE_ENV_3_DECAY,                    /* decay time (7 bits) */
+  FILEIO_PATCH_BYTE_ENV_3_RELEASE,                  /* release time (7 bits) */
+  FILEIO_PATCH_BYTE_ENV_3_LEVEL,                    /* max level (7 bits) */
+  FILEIO_PATCH_BYTE_ENV_3_SUSTAIN,                  /* sustain level (7 bits) */
+  FILEIO_PATCH_BYTE_ENV_3_HOLD_PEDAL,               /* sustain shift (4 bits), pedal shift (4 bits) */
+  /* level keyscaling (3 bytes) */
+  FILEIO_PATCH_BYTE_ENV_1_LEVEL_KS,                 /* level keyscaling (7 bits) */
+  FILEIO_PATCH_BYTE_ENV_2_LEVEL_KS,                 /* level keyscaling (7 bits) */
+  FILEIO_PATCH_BYTE_ENV_3_LEVEL_KS,                 /* level keyscaling (7 bits) */
+  /* rate keyscaling, chorus sensitivity (2 bytes) */
+  FILEIO_PATCH_BYTE_ENV_1_2_RATE_KS,                /* env 1 rate keyscaling (4 bits), env 2 rate keyscaling (4 bits) */
+  FILEIO_PATCH_BYTE_ENV_3_RATE_KS_CHORUS_SENS,      /* env 3 rate keyscaling (4 bits), chorus sensitivity (4 bits) */
   /* chorus (3 bytes) */
-  FILEIO_PATCH_BYTE_CHORUS_WAVEFORM_FREQUENCY,      /* chorus waveform (2 bits), frequency (5 bits) */
-  FILEIO_PATCH_BYTE_CHORUS_DRY_WET,                 /* chorus dry/wet mix (7 bits) */
-  FILEIO_PATCH_BYTE_CHORUS_BASE,                    /* chorus base (7 bits) */
-  /* depths (3 bytes) */
-  FILEIO_PATCH_BYTE_LFO_1_LFO_2_DEPTH,              /* depths (4 bits each, 8 bits total) */
-  FILEIO_PATCH_BYTE_BOOST_VELOCITY_DEPTH,           /* depths (4 bits each, 8 bits total) */
-  FILEIO_PATCH_BYTE_CHORUS_DEPTH,                   /* chorus depth (4 bits) */
-  /* various things (5 bytes) */
-  FILEIO_PATCH_BYTE_BITCRUSH,                       /* envelope levels (4 bits), oscillator levels (4 bits) */
-  FILEIO_PATCH_BYTE_SYNC_SUSTAIN_PEDAL,             /* osc sync (1 bit), lfo sync (1 bit), pedal adjust (4 bits) */
-  FILEIO_PATCH_BYTE_PITCH_WHEEL,                    /* arpeggio mode (1 bit), pitch wheel mode (1 bit), range (4 bits) */
+  FILEIO_PATCH_BYTE_CHORUS_MODE_SPEED,              /* mode (1 bit), speed (4 bits) */
+  FILEIO_PATCH_BYTE_CHORUS_DELAY,                   /* delay (6 bits) */
+  FILEIO_PATCH_BYTE_CHORUS_DEPTH,                   /* depth (8 bits) */
+  /* vibrato lfo (3 bytes) */
+  FILEIO_PATCH_BYTE_VIBRATO_WAVEFORM_SPEED,         /* waveform (3 bits), speed (4 bits) */
+  FILEIO_PATCH_BYTE_VIBRATO_DELAY,                  /* delay (6 bits) */
+  FILEIO_PATCH_BYTE_VIBRATO_DEPTH,                  /* depth (8 bits) */
+  /* tremolo lfo (3 bytes) */
+  FILEIO_PATCH_BYTE_TREMOLO_WAVEFORM_SPEED,         /* waveform (3 bits), speed (4 bits) */
+  FILEIO_PATCH_BYTE_TREMOLO_DELAY,                  /* delay (6 bits) */
+  FILEIO_PATCH_BYTE_TREMOLO_DEPTH,                  /* depth (8 bits) */
+  /* sensitivities (2 bytes) */
+  FILEIO_PATCH_BYTE_VIBRATO_TREMOLO_SENS,           /* sensitivities (4 bits each, 8 bits total) */
+  FILEIO_PATCH_BYTE_BOOST_VELOCITY_SENS,            /* sensitivities (4 bits each, 8 bits total) */
+  /* pitch envelope (5 bytes) */
+  FILEIO_PATCH_BYTE_PITCH_ENV_ATTACK,               /* attack time (7 bits) */
+  FILEIO_PATCH_BYTE_PITCH_ENV_DECAY,                /* decay time (7 bits) */
+  FILEIO_PATCH_BYTE_PITCH_ENV_RELEASE,              /* release time (7 bits) */
+  FILEIO_PATCH_BYTE_PITCH_ENV_MAXIMUM,              /* max level (7 bits) */
+  FILEIO_PATCH_BYTE_PITCH_ENV_FINALE,               /* finale level (7 bits) */
+  /* pitch wheel, arpeggio, portamento (3 bytes) */
+  FILEIO_PATCH_BYTE_PITCH_WHEEL,                    /* pitch wheel mode (1 bit), range (4 bits) */
   FILEIO_PATCH_BYTE_ARPEGGIO,                       /* arpeggio pattern (2 bits), octaves (2 bits), speed (4 bits) */
-  FILEIO_PATCH_BYTE_PORTAMENTO,                     /* portamento mode (1 bit), follow (1 bit), legato (1 bit), speed (4 bits) */
-  /* lfo & midi controller routing (3 bytes) */
-  FILEIO_PATCH_BYTE_ROUTING_LFO_EXPRESSION_PEDAL,   /* lfo routing (4 bits), exp pedal routing (4 bits) */
-  FILEIO_PATCH_BYTE_ROUTING_MOD_WHEEL_AFTERTOUCH,   /* mod wheel routing (4 bits), aftertouch routing (4 bits) */
-  FILEIO_PATCH_BYTE_ROUTING_ENV_PEG_ADJUST,         /* amp / filter / extra env adjustment (2 bits each, 6 bits total) */
+  FILEIO_PATCH_BYTE_PORTAMENTO,                     /* arpeggio mode (1 bit), portamento mode (1 bit), follow/legato (2 bits), speed (4 bits) */
+  /* midi controller routing (3 bytes) */
+  FILEIO_PATCH_BYTE_ROUTING_TREMOLO_MOD_WHEEL,      /* tremolo routing (3 bits), mod wheel routing (4 bits) */
+  FILEIO_PATCH_BYTE_ROUTING_BOOST_AFTERTOUCH,       /* boost routing (3 bits), aftertouch routing (4 bits) */
+  FILEIO_PATCH_BYTE_ROUTING_VELOCITY_EXP_PEDAL,     /* velocity routing (3 bits), exp pedal routing (4 bits) */
   FILEIO_PATCH_NUM_DATA_BYTES
 };
 

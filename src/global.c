@@ -62,11 +62,11 @@ short int globals_init_variables()
 
   G_patch_edit_octave = (TUNING_NOTE_C4 / 12);
   G_patch_edit_note_velocity = MIDI_CONT_NOTE_VELOCITY_DEFAULT;
-  G_patch_edit_pitch_wheel_pos = MIDI_CONT_PITCH_WHEEL_DEFAULT;
+  G_patch_edit_pitch_wheel_pos = MIDI_CONT_BI_WHEEL_DEFAULT;
 
-  G_patch_edit_mod_wheel_pos = MIDI_CONT_MOD_WHEEL_DEFAULT;
-  G_patch_edit_aftertouch_pos = MIDI_CONT_AFTERTOUCH_DEFAULT;
-  G_patch_edit_exp_pedal_pos = MIDI_CONT_EXP_PEDAL_DEFAULT;
+  G_patch_edit_mod_wheel_pos = MIDI_CONT_UNI_WHEEL_DEFAULT;
+  G_patch_edit_aftertouch_pos = MIDI_CONT_UNI_WHEEL_DEFAULT;
+  G_patch_edit_exp_pedal_pos = MIDI_CONT_UNI_WHEEL_DEFAULT;
 
   /* generate non-synth (gui related) tables */
   /*key_generate_tables();*/

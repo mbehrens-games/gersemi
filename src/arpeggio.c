@@ -79,7 +79,7 @@ short int arpeggio_reset_all()
 
     a->step_index = 0;
 
-    a->on_switch = MIDI_CONT_ARPEGGIO_SWITCH_DEFAULT;
+    a->on_switch = MIDI_CONT_SWITCH_DEFAULT;
   }
 
   return 0;
@@ -284,8 +284,8 @@ short int arpeggio_set_switch(int instrument_index, short int state)
     return 1;
 
   /* make sure the switch state is valid */
-  if ((state < MIDI_CONT_ARPEGGIO_SWITCH_LOWER_BOUND) || 
-      (state > MIDI_CONT_ARPEGGIO_SWITCH_UPPER_BOUND))
+  if ((state < MIDI_CONT_SWITCH_LOWER_BOUND) || 
+      (state > MIDI_CONT_SWITCH_UPPER_BOUND))
   {
     return 0;
   }

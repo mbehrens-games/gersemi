@@ -7,12 +7,11 @@
 
 #include "arpeggio.h"
 #include "bank.h"
-#include "bender.h"
-#include "boost.h"
 #include "envelope.h"
-#include "filter.h"
+#include "highpass.h"
 #include "instrument.h"
 #include "lfo.h"
+#include "lowpass.h"
 #include "midicont.h"
 #include "patch.h"
 #include "sweep.h"
@@ -89,15 +88,15 @@ short int instrument_reset_all()
     ins->note_velocity = MIDI_CONT_NOTE_VELOCITY_DEFAULT;
 
     /* mod wheel, aftertouch, pitch wheel */
-    ins->mod_wheel_pos = MIDI_CONT_MOD_WHEEL_DEFAULT;
-    ins->aftertouch_pos = MIDI_CONT_AFTERTOUCH_DEFAULT;
-    ins->exp_pedal_pos = MIDI_CONT_EXP_PEDAL_DEFAULT;
-    ins->pitch_wheel_pos = MIDI_CONT_PITCH_WHEEL_DEFAULT;
+    ins->mod_wheel_pos = MIDI_CONT_UNI_WHEEL_DEFAULT;
+    ins->aftertouch_pos = MIDI_CONT_UNI_WHEEL_DEFAULT;
+    ins->exp_pedal_pos = MIDI_CONT_UNI_WHEEL_DEFAULT;
+    ins->pitch_wheel_pos = MIDI_CONT_BI_WHEEL_DEFAULT;
 
     /* portamento switch, arpeggio switch, sustain pedal */
-    ins->portamento_switch = MIDI_CONT_PORTAMENTO_SWITCH_DEFAULT;
-    ins->arpeggio_switch = MIDI_CONT_ARPEGGIO_SWITCH_DEFAULT;
-    ins->sustain_pedal = MIDI_CONT_SUSTAIN_PEDAL_DEFAULT;
+    ins->portamento_switch = MIDI_CONT_SWITCH_DEFAULT;
+    ins->arpeggio_switch = MIDI_CONT_SWITCH_DEFAULT;
+    ins->sustain_pedal = MIDI_CONT_SWITCH_DEFAULT;
   }
 
   return 0;
@@ -136,8 +135,6 @@ short int instrument_load_patch(int instrument_index,
   ins = &G_instrument_bank[instrument_index];
 
   /* load patch to this instrument's midi controllers */
-  boost_load_patch(instrument_index, patch_index);
-  bender_load_patch(instrument_index, patch_index);
   sweep_load_patch(instrument_index, patch_index);
   arpeggio_load_patch(instrument_index, patch_index);
 
@@ -148,16 +145,18 @@ short int instrument_load_patch(int instrument_index,
     {
       voice_load_patch(ins->voice_index + k, patch_index);
       envelope_load_patch(ins->voice_index + k, patch_index);
+      highpass_load_patch(ins->voice_index + k, patch_index);
       lfo_load_patch(ins->voice_index + k, patch_index);
-      filter_load_patch(ins->voice_index + k, patch_index);
+      lowpass_load_patch(ins->voice_index + k, patch_index);
     }
   }
   else if (ins->type == INSTRUMENT_TYPE_MONO)
   {
     voice_load_patch(ins->voice_index, patch_index);
     envelope_load_patch(ins->voice_index, patch_index);
+    highpass_load_patch(ins->voice_index, patch_index);
     lfo_load_patch(ins->voice_index, patch_index);
-    filter_load_patch(ins->voice_index, patch_index);
+    lowpass_load_patch(ins->voice_index, patch_index);
   }
 
   return 0;
@@ -302,8 +301,8 @@ short int instrument_note_on(int instrument_index, int note)
     return 0;
 
   /* send note on to the selected voice associated with this instrument */
-  voice_set_note(selected_voice_index, note, ins->note_velocity);
-  envelope_set_note(selected_voice_index, note);
+  voice_set_note(selected_voice_index, note);
+  envelope_set_note(selected_voice_index, note, ins->note_velocity);
 
 #if 0
   if ((ins->portamento_switch == MIDI_CONT_SWITCH_STATE_ON) && 
@@ -496,7 +495,7 @@ short int instrument_key_released(int instrument_index, int note)
   /* if the sustain pedal is up, remove   */
   /* this key from the pressed keys, and  */
   /* then send a note-off for this key.   */
-  if (ins->sustain_pedal == MIDI_CONT_PEDAL_STATE_UP)
+  if (ins->sustain_pedal == MIDI_CONT_SWITCH_STATE_OFF)
   {
     /* remove this key from the pressed keys */
     for (m = 0; m < ins->num_pressed; m++)
@@ -520,7 +519,7 @@ short int instrument_key_released(int instrument_index, int note)
   }
   /* if the sustain pedal is down,  */
   /* add this key to the held keys. */
-  else if (ins->sustain_pedal == MIDI_CONT_PEDAL_STATE_DOWN)
+  else if (ins->sustain_pedal == MIDI_CONT_SWITCH_STATE_ON)
   {
     /* if this key is already in the held keys, move it to the front */
     present_flag = 0;
@@ -593,25 +592,23 @@ short int instrument_set_note_velocity(int instrument_index, short int vel)
 short int instrument_set_mod_wheel_position(int instrument_index, short int pos)
 {
   int k;
+  int m;
 
   instrument* ins;
-  boost* b;
-  lfo* l;
 
   /* make sure that the instrument index is valid */
   if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
     return 1;
 
   /* make sure the mod wheel position is valid */
-  if ((pos < MIDI_CONT_MOD_WHEEL_LOWER_BOUND) || 
-      (pos > MIDI_CONT_MOD_WHEEL_UPPER_BOUND))
+  if ((pos < MIDI_CONT_UNI_WHEEL_LOWER_BOUND) || 
+      (pos > MIDI_CONT_UNI_WHEEL_UPPER_BOUND))
   {
     return 0;
   }
 
   /* obtain pointers */
   ins = &G_instrument_bank[instrument_index];
-  b = &G_boost_bank[instrument_index];
 
   /* if this new position is the same as the current position, return */
   if (pos == ins->mod_wheel_pos)
@@ -620,24 +617,17 @@ short int instrument_set_mod_wheel_position(int instrument_index, short int pos)
   /* set the new mod wheel position */
   ins->mod_wheel_pos = pos;
 
-  /* set the mod wheel input for this instrument's boost */
-  b->mod_wheel_input = pos;
-
-  /* set the mod wheel input for the lfos associated with this instrument */
+  /* set the mod wheel input for other units associated with this instrument */
   if (ins->type == INSTRUMENT_TYPE_POLY)
   {
     for (k = 0; k < BANK_VOICES_PER_POLY_INSTRUMENT; k++)
     {
-      l = &G_lfo_bank[ins->voice_index + k];
-
-      l->mod_wheel_input = pos;
+      envelope_set_mod_wheel_position(ins->voice_index + k, pos);
     }
   }
   else if (ins->type == INSTRUMENT_TYPE_MONO)
   {
-    l = &G_lfo_bank[ins->voice_index];
-
-    l->mod_wheel_input = pos;
+    envelope_set_mod_wheel_position(ins->voice_index, pos);
   }
 
   return 0;
@@ -649,25 +639,23 @@ short int instrument_set_mod_wheel_position(int instrument_index, short int pos)
 short int instrument_set_aftertouch_position(int instrument_index, short int pos)
 {
   int k;
+  int m;
 
   instrument* ins;
-  boost* b;
-  lfo* l;
 
   /* make sure that the instrument index is valid */
   if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
     return 1;
 
   /* make sure the aftertouch position is valid */
-  if ((pos < MIDI_CONT_AFTERTOUCH_LOWER_BOUND) || 
-      (pos > MIDI_CONT_AFTERTOUCH_UPPER_BOUND))
+  if ((pos < MIDI_CONT_UNI_WHEEL_LOWER_BOUND) || 
+      (pos > MIDI_CONT_UNI_WHEEL_UPPER_BOUND))
   {
     return 0;
   }
 
   /* obtain pointers */
   ins = &G_instrument_bank[instrument_index];
-  b = &G_boost_bank[instrument_index];
 
   /* if this new position is the same as the current position, return */
   if (pos == ins->aftertouch_pos)
@@ -676,24 +664,17 @@ short int instrument_set_aftertouch_position(int instrument_index, short int pos
   /* set the new aftertouch position */
   ins->aftertouch_pos = pos;
 
-  /* set the aftertouch input for this instrument's boost */
-  b->aftertouch_input = pos;
-
-  /* set the aftertouch input for the lfos associated with this instrument */
+  /* set the aftertouch input for other units associated with this instrument */
   if (ins->type == INSTRUMENT_TYPE_POLY)
   {
     for (k = 0; k < BANK_VOICES_PER_POLY_INSTRUMENT; k++)
     {
-      l = &G_lfo_bank[ins->voice_index + k];
-
-      l->aftertouch_input = pos;
+      envelope_set_aftertouch_position(ins->voice_index + k, pos);
     }
   }
   else if (ins->type == INSTRUMENT_TYPE_MONO)
   {
-    l = &G_lfo_bank[ins->voice_index];
-
-    l->aftertouch_input = pos;
+    envelope_set_aftertouch_position(ins->voice_index, pos);
   }
 
   return 0;
@@ -705,51 +686,42 @@ short int instrument_set_aftertouch_position(int instrument_index, short int pos
 short int instrument_set_exp_pedal_position(int instrument_index, short int pos)
 {
   int k;
+  int m;
 
   instrument* ins;
-  boost* b;
-  lfo* l;
 
   /* make sure that the instrument index is valid */
   if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
     return 1;
 
-  /* make sure the expression pedal position is valid */
-  if ((pos < MIDI_CONT_EXP_PEDAL_LOWER_BOUND) || 
-      (pos > MIDI_CONT_EXP_PEDAL_UPPER_BOUND))
+  /* make sure the exp pedal position is valid */
+  if ((pos < MIDI_CONT_UNI_WHEEL_LOWER_BOUND) || 
+      (pos > MIDI_CONT_UNI_WHEEL_UPPER_BOUND))
   {
     return 0;
   }
 
   /* obtain pointers */
   ins = &G_instrument_bank[instrument_index];
-  b = &G_boost_bank[instrument_index];
 
   /* if this new position is the same as the current position, return */
   if (pos == ins->exp_pedal_pos)
     return 0;
 
-  /* set the new expression pedal position */
+  /* set the new exp pedal position */
   ins->exp_pedal_pos = pos;
 
-  /* set the expression pedal input for this instrument's boost */
-  b->exp_pedal_input = pos;
-
-  /* set the expression pedal input for the lfos associated with this instrument */
+  /* set the exp pedal input for other units associated with this instrument */
   if (ins->type == INSTRUMENT_TYPE_POLY)
   {
     for (k = 0; k < BANK_VOICES_PER_POLY_INSTRUMENT; k++)
     {
-      l = &G_lfo_bank[ins->voice_index + k];
-
-      l->exp_pedal_input = pos;
+      envelope_set_exp_pedal_position(ins->voice_index + k, pos);
     }
   }
   else if (ins->type == INSTRUMENT_TYPE_MONO)
   {
-    l = &G_lfo_bank[ins->voice_index];
-
-    l->exp_pedal_input = pos;
+    envelope_set_exp_pedal_position(ins->voice_index, pos);
   }
 
   return 0;
@@ -761,22 +733,20 @@ short int instrument_set_exp_pedal_position(int instrument_index, short int pos)
 short int instrument_set_pitch_wheel_position(int instrument_index, short int pos)
 {
   instrument* ins;
-  bender* b;
 
   /* make sure that the instrument index is valid */
   if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
     return 1;
 
   /* make sure the pitch wheel position is valid */
-  if ((pos < MIDI_CONT_PITCH_WHEEL_LOWER_BOUND) || 
-      (pos > MIDI_CONT_PITCH_WHEEL_UPPER_BOUND))
+  if ((pos < MIDI_CONT_BI_WHEEL_LOWER_BOUND) || 
+      (pos > MIDI_CONT_BI_WHEEL_UPPER_BOUND))
   {
     return 0;
   }
 
   /* obtain pointers */
   ins = &G_instrument_bank[instrument_index];
-  b = &G_bender_bank[instrument_index];
 
   /* if this new position is the same as the current position, return */
   if (pos == ins->pitch_wheel_pos)
@@ -784,9 +754,6 @@ short int instrument_set_pitch_wheel_position(int instrument_index, short int po
 
   /* set the new pitch wheel position */
   ins->pitch_wheel_pos = pos;
-
-  /* set the pitch wheel input for this instrument's bender */
-  b->pitch_wheel_input = ins->pitch_wheel_pos;
 
   return 0;
 }
@@ -803,8 +770,8 @@ short int instrument_set_portamento_switch(int instrument_index, int state)
     return 1;
 
   /* make sure the switch state is valid */
-  if ((state < MIDI_CONT_PORTAMENTO_SWITCH_LOWER_BOUND) || 
-      (state > MIDI_CONT_PORTAMENTO_SWITCH_UPPER_BOUND))
+  if ((state < MIDI_CONT_SWITCH_LOWER_BOUND) || 
+      (state > MIDI_CONT_SWITCH_UPPER_BOUND))
   {
     return 0;
   }
@@ -839,8 +806,8 @@ short int instrument_set_arpeggio_switch(int instrument_index, int state)
     return 1;
 
   /* make sure the switch state is valid */
-  if ((state < MIDI_CONT_ARPEGGIO_SWITCH_LOWER_BOUND) || 
-      (state > MIDI_CONT_ARPEGGIO_SWITCH_UPPER_BOUND))
+  if ((state < MIDI_CONT_SWITCH_LOWER_BOUND) || 
+      (state > MIDI_CONT_SWITCH_UPPER_BOUND))
   {
     return 0;
   }
@@ -877,8 +844,8 @@ short int instrument_set_sustain_pedal(int instrument_index, int state)
     return 1;
 
   /* make sure the pedal state is valid */
-  if ((state < MIDI_CONT_SUSTAIN_PEDAL_LOWER_BOUND) || 
-      (state > MIDI_CONT_SUSTAIN_PEDAL_UPPER_BOUND))
+  if ((state < MIDI_CONT_SWITCH_LOWER_BOUND) || 
+      (state > MIDI_CONT_SWITCH_UPPER_BOUND))
   {
     return 0;
   }
@@ -893,19 +860,8 @@ short int instrument_set_sustain_pedal(int instrument_index, int state)
   /* set the sustain pedal in the instrument */
   ins->sustain_pedal = state;
 
-  /* set the sustain pedal for each voice associated with this instrument */
-  if (ins->type == INSTRUMENT_TYPE_POLY)
-  {
-    for (k = 0; k < BANK_VOICES_PER_POLY_INSTRUMENT; k++)
-      envelope_set_sustain_pedal(ins->voice_index + k, ins->sustain_pedal);
-  }
-  else if (ins->type == INSTRUMENT_TYPE_MONO)
-  {
-    envelope_set_sustain_pedal(ins->voice_index, ins->sustain_pedal);
-  }
-
   /* if the sustain pedal is now up, release all held keys */
-  if (ins->sustain_pedal == MIDI_CONT_PEDAL_STATE_UP)
+  if (ins->sustain_pedal == MIDI_CONT_SWITCH_STATE_OFF)
   {
     for (k = 0; k < ins->num_held; k++)
     {

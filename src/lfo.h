@@ -28,28 +28,18 @@ typedef struct lfo
   /* tempo */
   short int tempo;
 
-  /* depth, base */
+  /* depth, sensitivity */
   short int depth;
-  short int base;
-
-  /* controller inputs */
-  short int mod_wheel_input;
-  short int aftertouch_input;
-  short int exp_pedal_input;
-
-  /* wave values (unadjusted levels) */
-  short int vibrato_wave_value;
-  short int env_tremolo_wave_value;
-  short int peg_tremolo_wave_value;
+  short int max;
 
   /* levels */
-  short int vibrato_level;
-  short int env_tremolo_level;
-  short int peg_tremolo_level;
+  short int level_base;
+  short int level_extra;
 } lfo;
 
 /* lfo bank */
-extern lfo G_lfo_bank[BANK_NUM_LFOS];
+extern lfo G_vibrato_bank[BANK_NUM_VIBRATOS];
+extern lfo G_tremolo_bank[BANK_NUM_TREMOLOS];
 
 /* function declarations */
 short int lfo_reset_all();

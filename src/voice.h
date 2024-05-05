@@ -9,46 +9,63 @@
 
 typedef struct voice
 {
-  /* mode, sync */
-  short int mode;
+  /* algorithm, sync */
+  short int algorithm;
   short int sync;
+
+  /* oscillator 1 */
+  short int osc_1_waveform;
+  short int osc_1_phi;
+  short int osc_1_pitch_offset;
+
+  /* oscillator 2 */
+  short int osc_2_waveform;
+  short int osc_2_phi;
+  short int osc_2_pitch_offset;
+
+  /* oscillator 3 */
+  short int osc_3_waveform;
+  short int osc_3_phi;
+  short int osc_3_pitch_offset;
 
   /* currently playing notes, pitch indices */
   short int base_note;
 
-  int wave_osc_1_pitch_index;
-  int wave_osc_2_pitch_index;
-  int extra_osc_pitch_index;
+  short int osc_1_pitch_index;
+  short int osc_2_pitch_index;
+  short int osc_3_pitch_index;
 
   /* phases */
-  unsigned int wave_osc_1_phase;
-  unsigned int wave_osc_2_phase;
-  unsigned int extra_osc_phase;
+  unsigned int osc_1_phase;
+  unsigned int osc_2_phase;
+  unsigned int osc_3_phase;
 
-  /* voice parameters */
-  short int wave_osc_1_waveform;
-  short int wave_osc_2_waveform;
+  unsigned int chorus_1_phase;
+  unsigned int chorus_2_phase;
+  unsigned int chorus_3_phase;
 
-  short int wave_osc_1_mix_adjustment;
-  short int wave_osc_2_mix_adjustment;
+  /* noise lfsrs */
+  unsigned int osc_1_lfsr;
+  unsigned int osc_2_lfsr;
+  unsigned int osc_3_lfsr;
 
-  /* velocity scaling, adjustment */
-  short int velocity_scaling_amount;
-  short int velocity_adjustment;
+  /* envelope input levels */
+  short int env_1_input;
+  short int env_2_input;
+  short int env_3_input;
 
-  /* envelope level */
-  short int env_input;
-
-  /* lfo levels */
-
-  /* boost level */
-  short int boost_input;
-
-  /* sweep level */
+  /* vibrato, sweep */
+  short int vibrato_input;
+  short int chorus_input;
   short int sweep_input;
 
-  /* bender level */
-  short int bender_input;
+  short int vibrato_adjustment;
+
+  /* midi controller positions */
+  short int mod_wheel_pos;
+  short int aftertouch_pos;
+  short int exp_pedal_pos;
+  short int pitch_wheel_pos;
 
   /* output level */
   int level;
@@ -62,7 +79,7 @@ short int voice_reset_all();
 
 short int voice_load_patch(int voice_index, int patch_index);
 
-short int voice_set_note(int voice_index, int note, int vel);
+short int voice_set_note(int voice_index, int note);
 short int voice_sync_to_key(int voice_index);
 
 short int voice_update_all();
