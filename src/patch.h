@@ -57,30 +57,10 @@ enum
 
 enum
 {
-  PATCH_VIBRATO_WAVEFORM_TRIANGLE = 1, 
-  PATCH_VIBRATO_WAVEFORM_SQUARE, 
-  PATCH_VIBRATO_WAVEFORM_SAW_UP, 
-  PATCH_VIBRATO_WAVEFORM_SAW_DOWN, 
-  PATCH_VIBRATO_WAVEFORM_UPWARD_TRIANGLE, 
-  PATCH_VIBRATO_WAVEFORM_UPWARD_SQUARE, 
-  PATCH_VIBRATO_WAVEFORM_UPWARD_SAW_UP, 
-  PATCH_VIBRATO_WAVEFORM_UPWARD_SAW_DOWN 
-};
-
-enum
-{
-  PATCH_TREMOLO_WAVEFORM_TRIANGLE = 1, 
-  PATCH_TREMOLO_WAVEFORM_SQUARE, 
-  PATCH_TREMOLO_WAVEFORM_SAW_UP, 
-  PATCH_TREMOLO_WAVEFORM_SAW_DOWN, 
-  PATCH_TREMOLO_WAVEFORM_NOISE_SQUARE, 
-  PATCH_TREMOLO_WAVEFORM_NOISE_SAW 
-};
-
-enum
-{
-  PATCH_CHORUS_MODE_CHORUS = 1, 
-  PATCH_CHORUS_MODE_DETUNE 
+  PATCH_LFO_WAVEFORM_TRIANGLE = 1, 
+  PATCH_LFO_WAVEFORM_SQUARE, 
+  PATCH_LFO_WAVEFORM_SAW_UP, 
+  PATCH_LFO_WAVEFORM_SAW_DOWN 
 };
 
 enum
@@ -157,16 +137,17 @@ enum
 #define PATCH_ALGORITHM_UPPER_BOUND PATCH_ALGORITHM_1_ADD_2_ADD_3
 #define PATCH_ALGORITHM_NUM_VALUES  (PATCH_ALGORITHM_UPPER_BOUND - PATCH_ALGORITHM_LOWER_BOUND + 1)
 
+/* sync */
+#define PATCH_SYNC_DEFAULT          PATCH_SYNC_ON
+#define PATCH_SYNC_LOWER_BOUND      PATCH_SYNC_OFF
+#define PATCH_SYNC_UPPER_BOUND      PATCH_SYNC_ON
+#define PATCH_SYNC_NUM_VALUES       (PATCH_SYNC_UPPER_BOUND - PATCH_SYNC_LOWER_BOUND + 1)
+
 /* oscillators */
 #define PATCH_OSC_WAVEFORM_DEFAULT      PATCH_OSC_WAVEFORM_SINE
 #define PATCH_OSC_WAVEFORM_LOWER_BOUND  PATCH_OSC_WAVEFORM_SINE
 #define PATCH_OSC_WAVEFORM_UPPER_BOUND  PATCH_OSC_WAVEFORM_NOISE_SAW
 #define PATCH_OSC_WAVEFORM_NUM_VALUES   (PATCH_OSC_WAVEFORM_UPPER_BOUND - PATCH_OSC_WAVEFORM_LOWER_BOUND + 1)
-
-#define PATCH_OSC_DETUNE_DEFAULT        0
-#define PATCH_OSC_DETUNE_LOWER_BOUND   -3
-#define PATCH_OSC_DETUNE_UPPER_BOUND    3
-#define PATCH_OSC_DETUNE_NUM_VALUES     (PATCH_OSC_DETUNE_UPPER_BOUND - PATCH_OSC_DETUNE_LOWER_BOUND + 1)
 
 #define PATCH_OSC_PHI_DEFAULT           PATCH_OSC_PHI_0
 #define PATCH_OSC_PHI_LOWER_BOUND       PATCH_OSC_PHI_0
@@ -188,22 +169,10 @@ enum
 #define PATCH_OSC_DIVISOR_UPPER_BOUND   8
 #define PATCH_OSC_DIVISOR_NUM_VALUES    (PATCH_OSC_DIVISOR_UPPER_BOUND - PATCH_OSC_DIVISOR_LOWER_BOUND + 1)
 
-/* lowpass filter */
-#define PATCH_LOWPASS_MULTIPLE_DEFAULT      16
-#define PATCH_LOWPASS_MULTIPLE_LOWER_BOUND  1
-#define PATCH_LOWPASS_MULTIPLE_UPPER_BOUND  16
-#define PATCH_LOWPASS_MULTIPLE_NUM_VALUES   (PATCH_LOWPASS_MULTIPLE_UPPER_BOUND - PATCH_LOWPASS_MULTIPLE_LOWER_BOUND + 1)
-
-#define PATCH_LOWPASS_KEYTRACKING_DEFAULT     0
-#define PATCH_LOWPASS_KEYTRACKING_LOWER_BOUND 0
-#define PATCH_LOWPASS_KEYTRACKING_UPPER_BOUND 8
-#define PATCH_LOWPASS_KEYTRACKING_NUM_VALUES  (PATCH_LOWPASS_KEYTRACKING_UPPER_BOUND - PATCH_LOWPASS_KEYTRACKING_LOWER_BOUND + 1)
-
-/* highpass filter */
-#define PATCH_HIGHPASS_CUTOFF_DEFAULT     1
-#define PATCH_HIGHPASS_CUTOFF_LOWER_BOUND 1
-#define PATCH_HIGHPASS_CUTOFF_UPPER_BOUND 4
-#define PATCH_HIGHPASS_CUTOFF_NUM_VALUES  (PATCH_HIGHPASS_CUTOFF_UPPER_BOUND - PATCH_HIGHPASS_CUTOFF_LOWER_BOUND + 1)
+#define PATCH_OSC_DETUNE_DEFAULT        0
+#define PATCH_OSC_DETUNE_LOWER_BOUND   -3
+#define PATCH_OSC_DETUNE_UPPER_BOUND    3
+#define PATCH_OSC_DETUNE_NUM_VALUES     (PATCH_OSC_DETUNE_UPPER_BOUND - PATCH_OSC_DETUNE_LOWER_BOUND + 1)
 
 /* amplitude envelope */
 #define PATCH_ENV_TIME_DEFAULT      1
@@ -216,69 +185,42 @@ enum
 #define PATCH_ENV_LEVEL_UPPER_BOUND 100
 #define PATCH_ENV_LEVEL_NUM_VALUES  (PATCH_ENV_LEVEL_UPPER_BOUND - PATCH_ENV_LEVEL_LOWER_BOUND + 1)
 
-#define PATCH_ENV_KEYSCALING_DEFAULT      2
-#define PATCH_ENV_KEYSCALING_LOWER_BOUND  0
-#define PATCH_ENV_KEYSCALING_UPPER_BOUND  8
-#define PATCH_ENV_KEYSCALING_NUM_VALUES   (PATCH_ENV_KEYSCALING_UPPER_BOUND - PATCH_ENV_KEYSCALING_LOWER_BOUND + 1)
-
-#define PATCH_ENV_HOLD_DEFAULT      0
-#define PATCH_ENV_HOLD_LOWER_BOUND -8
-#define PATCH_ENV_HOLD_UPPER_BOUND  0
+#define PATCH_ENV_HOLD_DEFAULT      8
+#define PATCH_ENV_HOLD_LOWER_BOUND  0
+#define PATCH_ENV_HOLD_UPPER_BOUND  8
 #define PATCH_ENV_HOLD_NUM_VALUES   (PATCH_ENV_HOLD_UPPER_BOUND - PATCH_ENV_HOLD_LOWER_BOUND + 1)
 
-/* lfo / chorus */
-#define PATCH_VIBRATO_WAVEFORM_DEFAULT      PATCH_VIBRATO_WAVEFORM_TRIANGLE
-#define PATCH_VIBRATO_WAVEFORM_LOWER_BOUND  PATCH_VIBRATO_WAVEFORM_TRIANGLE
-#define PATCH_VIBRATO_WAVEFORM_UPPER_BOUND  PATCH_VIBRATO_WAVEFORM_UPWARD_SAW_DOWN
-#define PATCH_VIBRATO_WAVEFORM_NUM_VALUES   (PATCH_VIBRATO_WAVEFORM_UPPER_BOUND - PATCH_VIBRATO_WAVEFORM_LOWER_BOUND + 1)
+#define PATCH_ENV_KEYSCALING_DEFAULT      4
+#define PATCH_ENV_KEYSCALING_LOWER_BOUND  1
+#define PATCH_ENV_KEYSCALING_UPPER_BOUND  16
+#define PATCH_ENV_KEYSCALING_NUM_VALUES   (PATCH_ENV_KEYSCALING_UPPER_BOUND - PATCH_ENV_KEYSCALING_LOWER_BOUND + 1)
 
-#define PATCH_TREMOLO_WAVEFORM_DEFAULT      PATCH_TREMOLO_WAVEFORM_TRIANGLE
-#define PATCH_TREMOLO_WAVEFORM_LOWER_BOUND  PATCH_TREMOLO_WAVEFORM_TRIANGLE
-#define PATCH_TREMOLO_WAVEFORM_UPPER_BOUND  PATCH_TREMOLO_WAVEFORM_NOISE_SAW
-#define PATCH_TREMOLO_WAVEFORM_NUM_VALUES   (PATCH_TREMOLO_WAVEFORM_UPPER_BOUND - PATCH_TREMOLO_WAVEFORM_LOWER_BOUND + 1)
+/* lfo */
+#define PATCH_LFO_WAVEFORM_DEFAULT      PATCH_LFO_WAVEFORM_TRIANGLE
+#define PATCH_LFO_WAVEFORM_LOWER_BOUND  PATCH_LFO_WAVEFORM_TRIANGLE
+#define PATCH_LFO_WAVEFORM_UPPER_BOUND  PATCH_LFO_WAVEFORM_SAW_DOWN
+#define PATCH_LFO_WAVEFORM_NUM_VALUES   (PATCH_LFO_WAVEFORM_UPPER_BOUND - PATCH_LFO_WAVEFORM_LOWER_BOUND + 1)
 
-#define PATCH_CHORUS_MODE_DEFAULT           PATCH_CHORUS_MODE_CHORUS
-#define PATCH_CHORUS_MODE_LOWER_BOUND       PATCH_CHORUS_MODE_CHORUS
-#define PATCH_CHORUS_MODE_UPPER_BOUND       PATCH_CHORUS_MODE_DETUNE
-#define PATCH_CHORUS_MODE_NUM_VALUES        (PATCH_CHORUS_MODE_UPPER_BOUND - PATCH_CHORUS_MODE_LOWER_BOUND + 1)
+#define PATCH_LFO_DELAY_DEFAULT         0
+#define PATCH_LFO_DELAY_LOWER_BOUND     0
+#define PATCH_LFO_DELAY_UPPER_BOUND     48
+#define PATCH_LFO_DELAY_NUM_VALUES      (PATCH_LFO_DELAY_UPPER_BOUND - PATCH_LFO_DELAY_LOWER_BOUND + 1)
 
-#define PATCH_LFO_DELAY_DEFAULT             0
-#define PATCH_LFO_DELAY_LOWER_BOUND         0
-#define PATCH_LFO_DELAY_UPPER_BOUND         48
-#define PATCH_LFO_DELAY_NUM_VALUES          (PATCH_LFO_DELAY_UPPER_BOUND - PATCH_LFO_DELAY_LOWER_BOUND + 1)
+#define PATCH_LFO_SPEED_DEFAULT         8
+#define PATCH_LFO_SPEED_LOWER_BOUND     1
+#define PATCH_LFO_SPEED_UPPER_BOUND     16
+#define PATCH_LFO_SPEED_NUM_VALUES      (PATCH_LFO_SPEED_UPPER_BOUND - PATCH_LFO_SPEED_LOWER_BOUND + 1)
 
-#define PATCH_LFO_SPEED_DEFAULT             8
-#define PATCH_LFO_SPEED_LOWER_BOUND         1
-#define PATCH_LFO_SPEED_UPPER_BOUND         16
-#define PATCH_LFO_SPEED_NUM_VALUES          (PATCH_LFO_SPEED_UPPER_BOUND - PATCH_LFO_SPEED_LOWER_BOUND + 1)
-
-#define PATCH_LFO_DEPTH_DEFAULT             0
-#define PATCH_LFO_DEPTH_LOWER_BOUND         0
-#define PATCH_LFO_DEPTH_UPPER_BOUND         100
-#define PATCH_LFO_DEPTH_NUM_VALUES          (PATCH_LFO_DEPTH_UPPER_BOUND - PATCH_LFO_DEPTH_LOWER_BOUND + 1)
-
-/* sync */
-#define PATCH_SYNC_DEFAULT      PATCH_SYNC_ON
-#define PATCH_SYNC_LOWER_BOUND  PATCH_SYNC_OFF
-#define PATCH_SYNC_UPPER_BOUND  PATCH_SYNC_ON
-#define PATCH_SYNC_NUM_VALUES   (PATCH_SYNC_UPPER_BOUND - PATCH_SYNC_LOWER_BOUND + 1)
+#define PATCH_LFO_DEPTH_DEFAULT         0
+#define PATCH_LFO_DEPTH_LOWER_BOUND     0
+#define PATCH_LFO_DEPTH_UPPER_BOUND     100
+#define PATCH_LFO_DEPTH_NUM_VALUES      (PATCH_LFO_DEPTH_UPPER_BOUND - PATCH_LFO_DEPTH_LOWER_BOUND + 1)
 
 /* sensitivity */
 #define PATCH_SENSITIVITY_DEFAULT       8
 #define PATCH_SENSITIVITY_LOWER_BOUND   1
 #define PATCH_SENSITIVITY_UPPER_BOUND   16
 #define PATCH_SENSITIVITY_NUM_VALUES    (PATCH_SENSITIVITY_UPPER_BOUND - PATCH_SENSITIVITY_LOWER_BOUND + 1)
-
-/* pitch envelope */
-#define PATCH_PEG_TIME_DEFAULT      1
-#define PATCH_PEG_TIME_LOWER_BOUND  1
-#define PATCH_PEG_TIME_UPPER_BOUND  100
-#define PATCH_PEG_TIME_NUM_VALUES   (PATCH_PEG_TIME_UPPER_BOUND - PATCH_PEG_TIME_LOWER_BOUND + 1)
-
-#define PATCH_PEG_LEVEL_DEFAULT     0
-#define PATCH_PEG_LEVEL_LOWER_BOUND 0
-#define PATCH_PEG_LEVEL_UPPER_BOUND 100
-#define PATCH_PEG_LEVEL_NUM_VALUES  (PATCH_PEG_LEVEL_UPPER_BOUND - PATCH_PEG_LEVEL_LOWER_BOUND + 1)
 
 /* arpeggio */
 #define PATCH_ARPEGGIO_MODE_DEFAULT         PATCH_ARPEGGIO_MODE_HARP
@@ -300,6 +242,17 @@ enum
 #define PATCH_ARPEGGIO_SPEED_LOWER_BOUND    1
 #define PATCH_ARPEGGIO_SPEED_UPPER_BOUND    12
 #define PATCH_ARPEGGIO_SPEED_NUM_VALUES     (PATCH_ARPEGGIO_SPEED_UPPER_BOUND - PATCH_ARPEGGIO_SPEED_LOWER_BOUND + 1)
+
+/* pitch envelope */
+#define PATCH_PEG_TIME_DEFAULT      1
+#define PATCH_PEG_TIME_LOWER_BOUND  1
+#define PATCH_PEG_TIME_UPPER_BOUND  100
+#define PATCH_PEG_TIME_NUM_VALUES   (PATCH_PEG_TIME_UPPER_BOUND - PATCH_PEG_TIME_LOWER_BOUND + 1)
+
+#define PATCH_PEG_LEVEL_DEFAULT     0
+#define PATCH_PEG_LEVEL_LOWER_BOUND 0
+#define PATCH_PEG_LEVEL_UPPER_BOUND 100
+#define PATCH_PEG_LEVEL_NUM_VALUES  (PATCH_PEG_LEVEL_UPPER_BOUND - PATCH_PEG_LEVEL_LOWER_BOUND + 1)
 
 /* portamento */
 #define PATCH_PORTAMENTO_MODE_DEFAULT       PATCH_PORTAMENTO_MODE_BEND
@@ -328,6 +281,17 @@ enum
 #define PATCH_PITCH_WHEEL_RANGE_UPPER_BOUND 12
 #define PATCH_PITCH_WHEEL_RANGE_NUM_VALUES  (PATCH_PITCH_WHEEL_RANGE_UPPER_BOUND - PATCH_PITCH_WHEEL_RANGE_LOWER_BOUND + 1)
 
+/* filters */
+#define PATCH_HIGHPASS_CUTOFF_DEFAULT     1
+#define PATCH_HIGHPASS_CUTOFF_LOWER_BOUND 1
+#define PATCH_HIGHPASS_CUTOFF_UPPER_BOUND 4
+#define PATCH_HIGHPASS_CUTOFF_NUM_VALUES  (PATCH_HIGHPASS_CUTOFF_UPPER_BOUND - PATCH_HIGHPASS_CUTOFF_LOWER_BOUND + 1)
+
+#define PATCH_LOWPASS_CUTOFF_DEFAULT      4
+#define PATCH_LOWPASS_CUTOFF_LOWER_BOUND  1
+#define PATCH_LOWPASS_CUTOFF_UPPER_BOUND  4
+#define PATCH_LOWPASS_CUTOFF_NUM_VALUES   (PATCH_LOWPASS_CUTOFF_UPPER_BOUND - PATCH_LOWPASS_CUTOFF_LOWER_BOUND + 1)
+
 /* routing parameter flags */
 #define PATCH_ENV_ADJUST_ROUTING_CLEAR        0x00
 #define PATCH_ENV_ADJUST_ROUTING_MASK         0x07
@@ -349,35 +313,17 @@ typedef struct patch
   /* algorithm */
   short int algorithm;
 
-  /* oscillator 1 */
-  short int osc_1_waveform;
-  short int osc_1_phi;
+  /* oscillator sync */
+  short int osc_sync;
 
-  short int osc_1_freq_mode;
-  short int osc_1_multiple;
-  short int osc_1_divisor;
-  short int osc_1_detune;
+  /* oscillators */
+  short int osc_waveform[BANK_OSCILLATORS_PER_VOICE];
+  short int osc_phi[BANK_OSCILLATORS_PER_VOICE];
 
-  /* oscillator 2 */
-  short int osc_2_waveform;
-  short int osc_2_phi;
-
-  short int osc_2_freq_mode;
-  short int osc_2_multiple;
-  short int osc_2_divisor;
-  short int osc_2_detune;
-
-  /* oscillator 3 */
-  short int osc_3_waveform;
-  short int osc_3_phi;
-  short int osc_3_detune;
-
-  /* lowpass filter */
-  short int lowpass_multiple;
-  short int lowpass_keytracking;
-
-  /* highpass filter */
-  short int highpass_cutoff;
+  short int osc_freq_mode[BANK_OSCILLATORS_PER_VOICE];
+  short int osc_multiple[BANK_OSCILLATORS_PER_VOICE];
+  short int osc_divisor[BANK_OSCILLATORS_PER_VOICE];
+  short int osc_detune[BANK_OSCILLATORS_PER_VOICE];
 
   /* amplitude envelopes */
   short int env_attack[BANK_ENVELOPES_PER_VOICE];
@@ -390,36 +336,25 @@ typedef struct patch
   short int env_rate_ks[BANK_ENVELOPES_PER_VOICE];
   short int env_level_ks[BANK_ENVELOPES_PER_VOICE];
 
-  /* vibrato lfo */
-  short int vibrato_waveform;
-  short int vibrato_delay;
-  short int vibrato_speed;
-  short int vibrato_depth;
+  /* lfos */
+  short int lfo_waveform[BANK_LFOS_PER_VOICE];
+  short int lfo_delay[BANK_LFOS_PER_VOICE];
+  short int lfo_speed[BANK_LFOS_PER_VOICE];
+  short int lfo_depth[BANK_LFOS_PER_VOICE];
+  short int lfo_sensitivity[BANK_LFOS_PER_VOICE];
+  short int lfo_sync[BANK_LFOS_PER_VOICE];
 
-  /* tremolo lfo */
-  short int tremolo_waveform;
-  short int tremolo_delay;
-  short int tremolo_speed;
-  short int tremolo_depth;
+  /* arpeggio */
+  short int arpeggio_mode;
+  short int arpeggio_pattern;
+  short int arpeggio_octaves;
+  short int arpeggio_speed;
 
-  /* chorus */
-  short int chorus_mode;
-  short int chorus_delay;
-  short int chorus_speed;
-  short int chorus_depth;
+  /* boost */
+  short int boost_sensitivity;
 
-  /* sync */
-  short int sync_vibrato;
-  short int sync_tremolo;
-  short int sync_chorus;
-  short int sync_osc;
-
-  /* sensitivity */
-  short int sensitivity_vibrato;
-  short int sensitivity_tremolo;
-  short int sensitivity_chorus;
-  short int sensitivity_boost;
-  short int sensitivity_velocity;
+  /* velocity */
+  short int velocity_sensitivity;
 
   /* pitch envelope */
   short int peg_attack;
@@ -427,12 +362,6 @@ typedef struct patch
   short int peg_release;
   short int peg_maximum;
   short int peg_finale;
-
-  /* arpeggio */
-  short int arpeggio_mode;
-  short int arpeggio_pattern;
-  short int arpeggio_octaves;
-  short int arpeggio_speed;
 
   /* portamento */
   short int portamento_mode;
@@ -442,6 +371,10 @@ typedef struct patch
   /* pitch wheel */
   short int pitch_wheel_mode;
   short int pitch_wheel_range;
+
+  /* filters */
+  short int highpass_cutoff;
+  short int lowpass_cutoff;
 
   /* envelope adjustment routing */
   short int tremolo_routing;

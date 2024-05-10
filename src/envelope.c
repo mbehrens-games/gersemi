@@ -47,7 +47,7 @@ enum
 #define ENVELOPE_BOOST_MAX_STEP       (1 * 32)
 #define ENVELOPE_VELOCITY_MAX_STEP    (4 * 32)
 
-#define ENVELOPE_NUM_OCTAVES      15
+#define ENVELOPE_NUM_OCTAVES      13
 #define ENVELOPE_RATES_PER_OCTAVE 12
 
 #define ENVELOPE_NUM_RATES (ENVELOPE_NUM_OCTAVES * ENVELOPE_RATES_PER_OCTAVE)
@@ -65,7 +65,7 @@ enum
     e->rate = S_envelope_rate_table[0];                                        \
                                                                                \
   /* apply rate keyscaling */                                                  \
-  e->rate += e->ks_rate_adjustment;                                               \
+  e->rate += e->ks_rate_adjustment;                                            \
                                                                                \
   /* bound rate */                                                             \
   if (e->rate < 0)                                                             \
@@ -74,7 +74,16 @@ enum
     e->rate = ENVELOPE_NUM_RATES - 1;                                          \
                                                                                \
   /* set the phase increment */                                                \
-  e->increment = S_envelope_phase_increment_table[e->rate];
+  if (e->stage == ENVELOPE_STAGE_ATTACK)                                       \
+    e->increment = S_envelope_attack_phase_increment_table[e->rate];           \
+  else                                                                         \
+    e->increment = S_envelope_decay_phase_increment_table[e->rate];
+
+#define ENVELOPE_BOUND_LEVEL()                                                 \
+  if (e->level < 0)                                                            \
+    e->level = 0;                                                              \
+  else if (e->level > ENVELOPE_MAX_ATTENUATION)                                \
+    e->level = ENVELOPE_MAX_ATTENUATION;
 
 #define ENVELOPE_COMPUTE_COMBINED_POSITION(effect)                             \
   combined_pos = 0;                                                            \
@@ -93,20 +102,30 @@ enum
   else if (combined_pos > MIDI_CONT_UNI_WHEEL_UPPER_BOUND)                     \
     MIDI_CONT_UNI_WHEEL_UPPER_BOUND;
 
-#define ENVELOPE_COMPUTE_TREMOLO_ADJUSTMENT()                                  \
-  ENVELOPE_COMPUTE_COMBINED_POSITION(TREMOLO)                                  \
-                                                                               \
-  e->tremolo_adjustment =                                                      \
-    (e->tremolo_input * combined_pos) / MIDI_CONT_UNI_WHEEL_DIVISOR;
+/* multiple table */
+/* the values form the harmonic series! */
+static int  S_envelope_multiple_table[PATCH_OSC_MULTIPLE_NUM_VALUES] = 
+            { 0 * 12 + 0,   /*  1x  */
+              1 * 12 + 0,   /*  2x  */
+              1 * 12 + 7,   /*  3x  */
+              2 * 12 + 0,   /*  4x  */
+              2 * 12 + 4,   /*  5x  */
+              2 * 12 + 7,   /*  6x  */
+              2 * 12 + 10,  /*  7x  */
+              3 * 12 + 0,   /*  8x  */
+              3 * 12 + 2,   /*  9x  */
+              3 * 12 + 4,   /* 10x  */
+              3 * 12 + 6,   /* 11x  */
+              3 * 12 + 7,   /* 12x  */
+              3 * 12 + 8,   /* 13x  */
+              3 * 12 + 10,  /* 14x  */
+              3 * 12 + 11,  /* 15x  */
+              4 * 12 + 0    /* 16x  */
+            };
 
-#define ENVELOPE_COMPUTE_BOOST_ADJUSTMENT()                                    \
-  ENVELOPE_COMPUTE_COMBINED_POSITION(BOOST)                                    \
-                                                                               \
-  e->boost_adjustment =                                                        \
-    -((e->boost_max * combined_pos) / MIDI_CONT_UNI_WHEEL_DIVISOR);
-
-/* envelope phase increment table */
-static unsigned int S_envelope_phase_increment_table[ENVELOPE_NUM_RATES];
+/* envelope phase increment tables */
+static unsigned int S_envelope_attack_phase_increment_table[ENVELOPE_NUM_RATES];
+static unsigned int S_envelope_decay_phase_increment_table[ENVELOPE_NUM_RATES];
 
 /* amplitude, sustain table */
 static short int  S_envelope_amplitude_table[PATCH_ENV_LEVEL_NUM_VALUES];
@@ -115,7 +134,7 @@ static short int  S_envelope_sustain_table[PATCH_ENV_LEVEL_NUM_VALUES];
 /* rate table */
 static short int  S_envelope_rate_table[PATCH_ENV_TIME_NUM_VALUES];
 
-/* keyscaling depth table */
+/* keyscaling fraction tables */
 
 /* for the rate, the value is the number of semitones */
 /* up from the base note at which the rate doubles    */
@@ -124,7 +143,11 @@ static short int  S_envelope_rate_table[PATCH_ENV_TIME_NUM_VALUES];
 /* for the level, the value is the number of semitones  */
 /* up from the break point at which the level halves    */
 static short int  S_envelope_keyscaling_fraction_table[PATCH_ENV_KEYSCALING_NUM_VALUES] = 
-                  { 32767, 144, 96, 72, 48, 36, 24, 18, 12 };
+                  { 8 * (12 + 10), 8 * (12 + 7), 8 * (12 + 4), (8 * 12 + 0), 
+                    4 * (12 + 10), 4 * (12 + 7), 4 * (12 + 4), (4 * 12 + 0), 
+                    2 * (12 + 10), 2 * (12 + 7), 2 * (12 + 4), (2 * 12 + 0), 
+                    1 * (12 + 10), 1 * (12 + 7), 1 * (12 + 4), (1 * 12 + 0) 
+                  };
 
 /* boost & velocity tables */
 static short int  S_envelope_boost_max_table[PATCH_SENSITIVITY_NUM_VALUES];
@@ -157,6 +180,8 @@ short int envelope_reset_all()
     e->ks_rate_adjustment = 0;
     e->ks_level_adjustment = 0;
 
+    e->note_offset = 0;
+
     e->sustain_level = S_envelope_sustain_table[PATCH_ENV_LEVEL_DEFAULT - PATCH_ENV_LEVEL_LOWER_BOUND];
 
     e->a_rate = S_envelope_rate_table[PATCH_ENV_TIME_DEFAULT - PATCH_ENV_TIME_LOWER_BOUND];
@@ -171,7 +196,8 @@ short int envelope_reset_all()
 
     e->attenuation = ENVELOPE_MAX_ATTENUATION;
 
-    e->tremolo_input = 0;
+    e->tremolo_base = 0;
+    e->tremolo_extra = 0;
 
     e->boost_max = S_envelope_boost_max_table[PATCH_SENSITIVITY_DEFAULT - PATCH_SENSITIVITY_LOWER_BOUND];
     e->velocity_max = S_envelope_velocity_max_table[PATCH_SENSITIVITY_DEFAULT - PATCH_SENSITIVITY_LOWER_BOUND];
@@ -204,8 +230,6 @@ short int envelope_load_patch(int voice_index, int patch_index)
 
   envelope* e;
   patch* p;
-
-  short int combined_pos;
 
   /* make sure that the voice index is valid */
   if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
@@ -286,20 +310,39 @@ short int envelope_load_patch(int voice_index, int patch_index)
     else
       e->ks_level_fraction = S_envelope_keyscaling_fraction_table[PATCH_ENV_KEYSCALING_DEFAULT - PATCH_ENV_KEYSCALING_LOWER_BOUND];
 
-    /* boost sensitivity */
-    if ((p->sensitivity_boost >= PATCH_SENSITIVITY_LOWER_BOUND) && 
-        (p->sensitivity_boost <= PATCH_SENSITIVITY_UPPER_BOUND))
+    /* note offset */
+    e->note_offset = 0;
+
+    if ((p->osc_multiple[m] >= PATCH_OSC_MULTIPLE_LOWER_BOUND) && 
+        (p->osc_multiple[m] <= PATCH_OSC_MULTIPLE_UPPER_BOUND))
     {
-      e->boost_max = S_envelope_boost_max_table[p->sensitivity_boost - PATCH_SENSITIVITY_LOWER_BOUND];
+      e->note_offset += S_envelope_multiple_table[p->osc_multiple[m] - PATCH_OSC_MULTIPLE_LOWER_BOUND];
+    }
+    else
+      e->note_offset += S_envelope_multiple_table[PATCH_OSC_MULTIPLE_DEFAULT - PATCH_OSC_MULTIPLE_LOWER_BOUND];
+
+    if ((p->osc_divisor[m] >= PATCH_OSC_DIVISOR_LOWER_BOUND) && 
+        (p->osc_divisor[m] <= PATCH_OSC_DIVISOR_UPPER_BOUND))
+    {
+      e->note_offset -= S_envelope_multiple_table[p->osc_divisor[m] - PATCH_OSC_DIVISOR_LOWER_BOUND];
+    }
+    else
+      e->note_offset -= S_envelope_multiple_table[PATCH_OSC_DIVISOR_DEFAULT - PATCH_OSC_DIVISOR_LOWER_BOUND];
+
+    /* boost sensitivity */
+    if ((p->boost_sensitivity >= PATCH_SENSITIVITY_LOWER_BOUND) && 
+        (p->boost_sensitivity <= PATCH_SENSITIVITY_UPPER_BOUND))
+    {
+      e->boost_max = S_envelope_boost_max_table[p->boost_sensitivity - PATCH_SENSITIVITY_LOWER_BOUND];
     }
     else
       e->boost_max = S_envelope_boost_max_table[PATCH_SENSITIVITY_DEFAULT - PATCH_SENSITIVITY_LOWER_BOUND];
 
     /* velocity sensitivity */
-    if ((p->sensitivity_velocity >= PATCH_SENSITIVITY_LOWER_BOUND) && 
-        (p->sensitivity_velocity <= PATCH_SENSITIVITY_UPPER_BOUND))
+    if ((p->velocity_sensitivity >= PATCH_SENSITIVITY_LOWER_BOUND) && 
+        (p->velocity_sensitivity <= PATCH_SENSITIVITY_UPPER_BOUND))
     {
-      e->velocity_max = S_envelope_velocity_max_table[p->sensitivity_velocity - PATCH_SENSITIVITY_LOWER_BOUND];
+      e->velocity_max = S_envelope_velocity_max_table[p->velocity_sensitivity - PATCH_SENSITIVITY_LOWER_BOUND];
     }
     else
       e->velocity_max = S_envelope_velocity_max_table[PATCH_SENSITIVITY_DEFAULT - PATCH_SENSITIVITY_LOWER_BOUND];
@@ -370,124 +413,6 @@ short int envelope_load_patch(int voice_index, int patch_index)
     }
     else
       e->routing &= ~ENVELOPE_ROUTING_FLAG_NOTE_VELOCITY;
-
-    /* determine the tremolo and boost adjustments */
-    ENVELOPE_COMPUTE_TREMOLO_ADJUSTMENT()
-    ENVELOPE_COMPUTE_BOOST_ADJUSTMENT()
-  }
-
-  return 0;
-}
-
-/*******************************************************************************
-** envelope_set_mod_wheel_position()
-*******************************************************************************/
-short int envelope_set_mod_wheel_position(int voice_index, int pos)
-{
-  int m;
-
-  envelope* e;
-
-  short int combined_pos;
-
-  /* make sure that the voice index is valid */
-  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
-    return 1;
-
-  /* if position is out of range, ignore */
-  if ((pos < MIDI_CONT_UNI_WHEEL_LOWER_BOUND) || 
-      (pos > MIDI_CONT_UNI_WHEEL_UPPER_BOUND))
-  {
-    return 1;
-  }
-
-  for (m = 0; m < BANK_ENVELOPES_PER_VOICE; m++)
-  {
-    /* obtain envelope pointer */
-    e = &G_envelope_bank[voice_index * BANK_ENVELOPES_PER_VOICE + m];
-
-    /* set the mod wheel position */
-    e->mod_wheel_pos = pos;
-
-    /* determine the tremolo and boost adjustments */
-    ENVELOPE_COMPUTE_TREMOLO_ADJUSTMENT()
-    ENVELOPE_COMPUTE_BOOST_ADJUSTMENT()
-  }
-
-  return 0;
-}
-
-/*******************************************************************************
-** envelope_set_aftertouch_position()
-*******************************************************************************/
-short int envelope_set_aftertouch_position(int voice_index, int pos)
-{
-  int m;
-
-  envelope* e;
-
-  short int combined_pos;
-
-  /* make sure that the voice index is valid */
-  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
-    return 1;
-
-  /* if position is out of range, ignore */
-  if ((pos < MIDI_CONT_UNI_WHEEL_LOWER_BOUND) || 
-      (pos > MIDI_CONT_UNI_WHEEL_UPPER_BOUND))
-  {
-    return 1;
-  }
-
-  for (m = 0; m < BANK_ENVELOPES_PER_VOICE; m++)
-  {
-    /* obtain envelope pointer */
-    e = &G_envelope_bank[voice_index * BANK_ENVELOPES_PER_VOICE + m];
-
-    /* set the aftertouch position */
-    e->aftertouch_pos = pos;
-
-    /* determine the tremolo and boost adjustments */
-    ENVELOPE_COMPUTE_TREMOLO_ADJUSTMENT()
-    ENVELOPE_COMPUTE_BOOST_ADJUSTMENT()
-  }
-
-  return 0;
-}
-
-/*******************************************************************************
-** envelope_set_exp_pedal_position()
-*******************************************************************************/
-short int envelope_set_exp_pedal_position(int voice_index, int pos)
-{
-  int m;
-
-  envelope* e;
-
-  short int combined_pos;
-
-  /* make sure that the voice index is valid */
-  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
-    return 1;
-
-  /* if position is out of range, ignore */
-  if ((pos < MIDI_CONT_UNI_WHEEL_LOWER_BOUND) || 
-      (pos > MIDI_CONT_UNI_WHEEL_UPPER_BOUND))
-  {
-    return 1;
-  }
-
-  for (m = 0; m < BANK_ENVELOPES_PER_VOICE; m++)
-  {
-    /* obtain envelope pointer */
-    e = &G_envelope_bank[voice_index * BANK_ENVELOPES_PER_VOICE + m];
-
-    /* set the exp pedal position */
-    e->exp_pedal_pos = pos;
-
-    /* determine the tremolo and boost adjustments */
-    ENVELOPE_COMPUTE_TREMOLO_ADJUSTMENT()
-    ENVELOPE_COMPUTE_BOOST_ADJUSTMENT()
   }
 
   return 0;
@@ -501,6 +426,8 @@ short int envelope_set_note(int voice_index, int note, int vel)
   int m;
 
   envelope* e;
+
+  short int shifted_note;
 
   /* make sure that the voice index is valid */
   if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
@@ -522,13 +449,21 @@ short int envelope_set_note(int voice_index, int note, int vel)
     /* obtain envelope pointer */
     e = &G_envelope_bank[voice_index * BANK_ENVELOPES_PER_VOICE + m];
 
+    /* compute shifted note */
+    shifted_note = note + e->note_offset;
+
+    if (shifted_note < TUNING_NOTE_C0)
+      shifted_note = TUNING_NOTE_C0;
+    else if (shifted_note > TUNING_NOTE_B9)
+      shifted_note = TUNING_NOTE_B9;
+
     /* compute rate & level adjustments based on note */
 
     /* note that adding 256 to the base level is  */
     /* the same as multiplying it by 1/2 (once    */
     /* converted back to linear instead of db).   */
-    e->ks_rate_adjustment = (12 * (note - TUNING_NOTE_C0)) / e->ks_rate_fraction;
-    e->ks_level_adjustment = (256 * (note - TUNING_NOTE_A2)) / e->ks_level_fraction;
+    e->ks_rate_adjustment = (12 * (shifted_note - TUNING_NOTE_C0)) / e->ks_rate_fraction;
+    e->ks_level_adjustment = (256 * (shifted_note - TUNING_NOTE_A2)) / e->ks_level_fraction;
 
     /* set the velocity adjustment */
     if (e->routing & ENVELOPE_ROUTING_FLAG_NOTE_VELOCITY)
@@ -575,10 +510,7 @@ short int envelope_trigger(int voice_index)
     e->level = e->attenuation + e->ks_level_adjustment;
 
     /* bound level */
-    if (e->level < 0)
-      e->level = 0;
-    else if (e->level > ENVELOPE_MAX_ATTENUATION)
-      e->level = ENVELOPE_MAX_ATTENUATION;
+    ENVELOPE_BOUND_LEVEL()
 
     /* set the envelope to its initial stage */
     ENVELOPE_SET_STAGE(ATTACK)
@@ -628,6 +560,7 @@ short int envelope_update_all()
 
   envelope* e;
 
+  short int combined_pos;
   short int periods;
 
   /* update all envelopes */
@@ -659,15 +592,15 @@ short int envelope_update_all()
       {
         /*e->attenuation = (15 * e->attenuation - 1) / 16;*/
 
-        e->attenuation = (11 * e->attenuation) / 12;
+        e->attenuation = (127 * e->attenuation) / 128;
       }
       /* falling stages */
       else if (e->stage == ENVELOPE_STAGE_DECAY)
-        e->attenuation += 4;
+        e->attenuation += 1;
       else if (e->stage == ENVELOPE_STAGE_SUSTAIN)
         e->attenuation += 0;
       else if (e->stage == ENVELOPE_STAGE_RELEASE)
-        e->attenuation += 4;
+        e->attenuation += 1;
 
       /* bound attenuation */
       if (e->attenuation < 0)
@@ -686,24 +619,33 @@ short int envelope_update_all()
       {
         ENVELOPE_SET_STAGE(SUSTAIN)
       }
-
-      /* update level */
-      e->level = e->attenuation;
-      e->level += e->ks_level_adjustment;
-
-      e->level += e->tremolo_adjustment;
-      e->level += e->boost_adjustment;
-      e->level += e->velocity_adjustment;
-
-      e->level += e->volume_adjustment;
-      e->level += e->amplitude_adjustment;
-
-      /* bound level */
-      if (e->level < 0)
-        e->level = 0;
-      else if (e->level > ENVELOPE_MAX_ATTENUATION)
-        e->level = ENVELOPE_MAX_ATTENUATION;
     }
+
+    /* compute tremolo & boost adjustments */
+    ENVELOPE_COMPUTE_COMBINED_POSITION(TREMOLO)
+
+    e->tremolo_adjustment = e->tremolo_base;
+    e->tremolo_adjustment += 
+      (e->tremolo_extra * combined_pos) / MIDI_CONT_UNI_WHEEL_DIVISOR;
+
+    ENVELOPE_COMPUTE_COMBINED_POSITION(BOOST)
+
+    e->boost_adjustment = 
+      -((e->boost_max * combined_pos) / MIDI_CONT_UNI_WHEEL_DIVISOR);
+
+    /* update level */
+    e->level = e->attenuation;
+    e->level += e->ks_level_adjustment;
+
+    e->level += e->tremolo_adjustment;
+    e->level += e->boost_adjustment;
+    e->level += e->velocity_adjustment;
+
+    e->level += e->volume_adjustment;
+    e->level += e->amplitude_adjustment;
+
+    /* bound level */
+    ENVELOPE_BOUND_LEVEL()
   }
 
   return 0;
@@ -719,6 +661,9 @@ short int envelope_generate_tables()
 
   int quotient;
   int remainder;
+
+  float base;
+  float freq;
 
   /* amplitude table */
   S_envelope_amplitude_table[0] = ENVELOPE_MAX_ATTENUATION;
@@ -747,13 +692,13 @@ short int envelope_generate_tables()
         m <= PATCH_ENV_TIME_UPPER_BOUND; 
         m++)
   {
-    /* there are 7 times for each octave.     */
-    /* the octaves are numbered from 0 to 14. */
+    /* there are 8 times for each octave.     */
+    /* the octaves are numbered from 0 to 12. */
 
-    /* we set up the calculation here so that   */
-    /* times 1-7 map to the highest octave, 14. */
-    quotient =  (PATCH_ENV_TIME_UPPER_BOUND - m + 5) / 7;
-    remainder = (PATCH_ENV_TIME_UPPER_BOUND - m + 5) % 7;
+    /* we set up the calculation here so that the */
+    /* times 1-8 map to the highest octave, 12.  */
+    quotient =  (PATCH_ENV_TIME_UPPER_BOUND - m + 4) / 8;
+    remainder = (PATCH_ENV_TIME_UPPER_BOUND - m + 4) % 8;
 
     S_envelope_rate_table[m - PATCH_ENV_TIME_LOWER_BOUND] = 12 * quotient;
 
@@ -764,24 +709,79 @@ short int envelope_generate_tables()
     else if (remainder == 2)
       S_envelope_rate_table[m - PATCH_ENV_TIME_LOWER_BOUND] += 4;
     else if (remainder == 3)
-      S_envelope_rate_table[m - PATCH_ENV_TIME_LOWER_BOUND] += 5;
+      S_envelope_rate_table[m - PATCH_ENV_TIME_LOWER_BOUND] += 6;
     else if (remainder == 4)
       S_envelope_rate_table[m - PATCH_ENV_TIME_LOWER_BOUND] += 7;
     else if (remainder == 5)
-      S_envelope_rate_table[m - PATCH_ENV_TIME_LOWER_BOUND] += 9;
+      S_envelope_rate_table[m - PATCH_ENV_TIME_LOWER_BOUND] += 8;
+    else if (remainder == 6)
+      S_envelope_rate_table[m - PATCH_ENV_TIME_LOWER_BOUND] += 10;
     else
       S_envelope_rate_table[m - PATCH_ENV_TIME_LOWER_BOUND] += 11;
   }
 
-  /* phase increment table  */
+  /* phase increment tables  */
+
+  /* for the decay stage, the fastest rate should have a fall time    */
+  /* of ~32 ms. so, the frequency is (1 / 32 ms) * 4095, where 4095   */
+  /* is the number of updates per fall time (with a 12 bit envelope). */
+  base = ENVELOPE_MAX_ATTENUATION / 256.0f;
+
   for (n = 0; n < ENVELOPE_NUM_OCTAVES; n++)
   {
     for (m = 0; m < ENVELOPE_RATES_PER_OCTAVE; m++)
     {
-      S_envelope_phase_increment_table[ n * ENVELOPE_RATES_PER_OCTAVE + m] = 
-        (int) ((8.0f * pow(2, (12 * n + m) / 12.0f) * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
+      freq = base * pow(2, (12 * n + m) / 12.0f);
+
+      S_envelope_decay_phase_increment_table[ n * ENVELOPE_RATES_PER_OCTAVE + m] = 
+        (int) ((freq * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
+
+#if 0
+      printf( "Decay Time %d: %f, %f (%u)\n", 
+              (n * ENVELOPE_RATES_PER_OCTAVE + m), freq, (ENVELOPE_MAX_ATTENUATION / freq), 
+              S_envelope_decay_phase_increment_table[ n * ENVELOPE_RATES_PER_OCTAVE + m]);
+#endif
     }
   }
+
+  /* for the attack stage, the fastest rate should have a rise time */
+  /* of ~8 ms. the attack phase has 518 updates per rise time.      */
+  base = 518.0f / 32.0f;
+
+  for (n = 0; n < ENVELOPE_NUM_OCTAVES; n++)
+  {
+    for (m = 0; m < ENVELOPE_RATES_PER_OCTAVE; m++)
+    {
+      freq = base * pow(2, (12 * n + m) / 12.0f);
+
+      S_envelope_attack_phase_increment_table[ n * ENVELOPE_RATES_PER_OCTAVE + m] = 
+        (int) ((freq * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
+
+#if 0
+      printf( "Attack Time %d: %f, %f (%u)\n", 
+              (n * ENVELOPE_RATES_PER_OCTAVE + m), freq, (518 / freq), 
+              S_envelope_attack_phase_increment_table[ n * ENVELOPE_RATES_PER_OCTAVE + m]);
+#endif
+    }
+  }
+
+#if 0
+  /* testing */
+  int count;
+  int att;
+
+  count = 0;
+  att = ENVELOPE_MAX_ATTENUATION;
+
+  while (att > 0)
+  {
+    att = (127 * att) / 128;
+
+    count += 1;
+  }
+
+  printf("Envelope Attack Stage Number of Updates: %d\n", count);
+#endif
 
   /* boost max table */
   for (m = 0; m < PATCH_SENSITIVITY_NUM_VALUES; m++)

@@ -16,6 +16,9 @@ typedef struct envelope
   short int ks_rate_adjustment;
   short int ks_level_adjustment;
 
+  /* note offset */
+  short int note_offset;
+
   /* sustain level */
   short int sustain_level;
 
@@ -36,7 +39,8 @@ typedef struct envelope
   short int attenuation;
 
   /* tremolo, boost, velocity */
-  short int tremolo_input;
+  short int tremolo_base;
+  short int tremolo_extra;
 
   short int boost_max;
   short int velocity_max;
@@ -68,10 +72,6 @@ extern envelope G_envelope_bank[BANK_NUM_ENVELOPES];
 short int envelope_reset_all();
 
 short int envelope_load_patch(int voice_index, int patch_index);
-
-short int envelope_set_mod_wheel_position(int voice_index, int pos);
-short int envelope_set_aftertouch_position(int voice_index, int pos);
-short int envelope_set_exp_pedal_position(int voice_index, int pos);
 
 short int envelope_set_note(int voice_index, int note, int vel);
 

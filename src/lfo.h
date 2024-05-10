@@ -11,7 +11,7 @@ typedef struct lfo
 {
   /* lfo parameters */
   short int waveform;
-  short int frequency;
+  short int speed;
   short int sync;
 
   /* delay */
@@ -21,9 +21,6 @@ typedef struct lfo
   /* phase, phase increment */
   unsigned int phase;
   unsigned int increment;
-
-  /* noise lfsr */
-  unsigned int lfsr;
 
   /* tempo */
   short int tempo;
@@ -38,8 +35,7 @@ typedef struct lfo
 } lfo;
 
 /* lfo bank */
-extern lfo G_vibrato_bank[BANK_NUM_VIBRATOS];
-extern lfo G_tremolo_bank[BANK_NUM_TREMOLOS];
+extern lfo G_lfo_bank[BANK_NUM_LFOS];
 
 /* function declarations */
 short int lfo_reset_all();

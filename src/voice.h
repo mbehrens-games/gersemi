@@ -7,59 +7,50 @@
 
 #include "bank.h"
 
+#define VOICE_NUM_OSCILLATOR_SETS 2
+
 typedef struct voice
 {
   /* algorithm, sync */
   short int algorithm;
   short int sync;
 
-  /* oscillator 1 */
-  short int osc_1_waveform;
-  short int osc_1_phi;
-  short int osc_1_pitch_offset;
-
-  /* oscillator 2 */
-  short int osc_2_waveform;
-  short int osc_2_phi;
-  short int osc_2_pitch_offset;
-
-  /* oscillator 3 */
-  short int osc_3_waveform;
-  short int osc_3_phi;
-  short int osc_3_pitch_offset;
+  /* oscillators */
+  short int osc_waveform[BANK_OSCILLATORS_PER_VOICE];
+  short int osc_phi[BANK_OSCILLATORS_PER_VOICE];
+  short int osc_pitch_offset[BANK_OSCILLATORS_PER_VOICE];
 
   /* currently playing notes, pitch indices */
   short int base_note;
 
-  short int osc_1_pitch_index;
-  short int osc_2_pitch_index;
-  short int osc_3_pitch_index;
+  short int osc_pitch_index[BANK_OSCILLATORS_PER_VOICE];
 
   /* phases */
-  unsigned int osc_1_phase;
-  unsigned int osc_2_phase;
-  unsigned int osc_3_phase;
-
-  unsigned int chorus_1_phase;
-  unsigned int chorus_2_phase;
-  unsigned int chorus_3_phase;
+  unsigned int osc_phase[BANK_OSCILLATORS_PER_VOICE][VOICE_NUM_OSCILLATOR_SETS];
 
   /* noise lfsrs */
-  unsigned int osc_1_lfsr;
-  unsigned int osc_2_lfsr;
-  unsigned int osc_3_lfsr;
+  unsigned int osc_lfsr[BANK_OSCILLATORS_PER_VOICE];
 
   /* envelope input levels */
-  short int env_1_input;
-  short int env_2_input;
-  short int env_3_input;
+  short int env_input[BANK_ENVELOPES_PER_VOICE];
 
-  /* vibrato, sweep */
-  short int vibrato_input;
-  short int chorus_input;
-  short int sweep_input;
+  /* vibrato, chorus */
+  short int vibrato_base;
+  short int vibrato_extra;
+
+  short int chorus_base;
+  short int chorus_extra;
 
   short int vibrato_adjustment;
+  short int chorus_adjustment;
+
+  /* pitch wheel, sweep */
+  short int pitch_wheel_max;
+
+  short int sweep_input;
+
+  /* routing */
+  unsigned char routing;
 
   /* midi controller positions */
   short int mod_wheel_pos;
