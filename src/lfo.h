@@ -10,9 +10,11 @@
 typedef struct lfo
 {
   /* lfo parameters */
+  short int type;
   short int waveform;
   short int speed;
   short int sync;
+  short int polarity;
 
   /* delay */
   int delay_cycles;

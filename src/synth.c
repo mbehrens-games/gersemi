@@ -12,6 +12,7 @@
 #include "instrument.h"
 #include "lfo.h"
 #include "patch.h"
+#include "peg.h"
 #include "sequence.h"
 #include "sweep.h"
 #include "synth.h"
@@ -30,6 +31,7 @@ short int synth_reset_banks()
   envelope_reset_all();
   filter_reset_all();
   lfo_reset_all();
+  peg_reset_all();
   voice_reset_all();
 
   arpeggio_reset_all();
@@ -65,6 +67,7 @@ short int synth_update()
 
   envelope* e;
   lfo* l;
+  peg* pg;
   sweep* sw;
 
   filter* hpf;
@@ -78,6 +81,9 @@ short int synth_update()
   /* update lfos */
   lfo_update_all();
 
+  /* update pitch envelopes */
+  peg_update_all();
+
   /* copy lfo & sweep levels to envelope & voice inputs */
   for (k = 0; k < BANK_NUM_INSTRUMENTS; k++)
   {
@@ -90,7 +96,7 @@ short int synth_update()
         v = &G_voice_bank[ins->voice_index + m];
 
         /* tremolo */
-        l = &G_lfo_bank[(ins->voice_index + m) * BANK_LFOS_PER_VOICE + BANK_LFO_INDEX_TREMOLO];
+        l = &G_lfo_bank[(ins->voice_index + m) * BANK_LFOS_PER_VOICE + 1];
 
         for (n = 0; n < BANK_ENVELOPES_PER_VOICE; n++)
         {
@@ -101,13 +107,13 @@ short int synth_update()
         }
 
         /* vibrato */
-        l = &G_lfo_bank[(ins->voice_index + m) * BANK_LFOS_PER_VOICE + BANK_LFO_INDEX_VIBRATO];
+        l = &G_lfo_bank[(ins->voice_index + m) * BANK_LFOS_PER_VOICE + 0];
 
         v->vibrato_base = l->level_base;
         v->vibrato_extra = l->level_extra;
 
         /* chorus */
-        l = &G_lfo_bank[(ins->voice_index + m) * BANK_LFOS_PER_VOICE + BANK_LFO_INDEX_CHORUS];
+        l = &G_lfo_bank[(ins->voice_index + m) * BANK_LFOS_PER_VOICE + 2];
 
         v->chorus_base = l->level_base;
         v->chorus_extra = l->level_extra;
@@ -116,6 +122,11 @@ short int synth_update()
         sw = &G_sweep_bank[ins->voice_index + m];
 
         v->sweep_input = sw->level;
+
+        /* pitch envelope */
+        pg = &G_peg_bank[ins->voice_index + m];
+
+        v->peg_input = pg->level;
       }
     }
     else if (ins->type == INSTRUMENT_TYPE_MONO)
@@ -123,7 +134,7 @@ short int synth_update()
       v = &G_voice_bank[ins->voice_index];
 
       /* tremolo */
-      l = &G_lfo_bank[ins->voice_index * BANK_LFOS_PER_VOICE + BANK_LFO_INDEX_TREMOLO];
+      l = &G_lfo_bank[ins->voice_index * BANK_LFOS_PER_VOICE + 1];
 
       for (n = 0; n < BANK_ENVELOPES_PER_VOICE; n++)
       {
@@ -134,13 +145,13 @@ short int synth_update()
       }
 
       /* vibrato */
-      l = &G_lfo_bank[ins->voice_index * BANK_LFOS_PER_VOICE + BANK_LFO_INDEX_VIBRATO];
+      l = &G_lfo_bank[ins->voice_index * BANK_LFOS_PER_VOICE + 0];
 
       v->vibrato_base = l->level_base;
       v->vibrato_extra = l->level_extra;
 
       /* chorus */
-      l = &G_lfo_bank[ins->voice_index * BANK_LFOS_PER_VOICE + BANK_LFO_INDEX_CHORUS];
+      l = &G_lfo_bank[ins->voice_index * BANK_LFOS_PER_VOICE + 2];
 
       v->chorus_base = l->level_base;
       v->chorus_extra = l->level_extra;
@@ -149,6 +160,11 @@ short int synth_update()
       sw = &G_sweep_bank[ins->voice_index];
 
       v->sweep_input = sw->level;
+
+      /* pitch envelope */
+      pg = &G_peg_bank[ins->voice_index];
+
+      v->peg_input = pg->level;
     }
   }
 
@@ -233,10 +249,6 @@ short int synth_update()
   G_synth_level_left = level;
   G_synth_level_right = level;
 
-#if 0
-  printf("Synth Level: %d %d\n", G_synth_level_left, G_synth_level_right);
-#endif
-
   return 0;
 }
 
@@ -250,6 +262,7 @@ short int synth_generate_tables()
   filter_generate_tables();
   sweep_generate_tables();
   lfo_generate_tables();
+  peg_generate_tables();
   voice_generate_tables();
 
   return 0;

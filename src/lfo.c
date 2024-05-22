@@ -17,6 +17,13 @@
 #define PI      3.14159265358979323846f
 #define TWO_PI  6.28318530717958647693f
 
+enum
+{
+  LFO_TYPE_VIBRATO = 1, 
+  LFO_TYPE_TREMOLO, 
+  LFO_TYPE_CHORUS 
+};
+
 #define LFO_TREMOLO_SENSITIVITY_STEP  (1 * 32)
 
 #define LFO_WAVE_AMPLITUDE  512
@@ -99,11 +106,11 @@ static short int  S_lfo_chorus_max_table[PATCH_SENSITIVITY_NUM_VALUES] =
                   };
 
 /* wavetables */
-static short int  S_lfo_vib_wavetable_tri[LFO_WAVETABLE_SIZE_FULL];
-static short int  S_lfo_vib_wavetable_saw[LFO_WAVETABLE_SIZE_FULL];
+static short int  S_lfo_bi_wavetable_tri[LFO_WAVETABLE_SIZE_FULL];
+static short int  S_lfo_bi_wavetable_saw[LFO_WAVETABLE_SIZE_FULL];
 
-static short int  S_lfo_trem_wavetable_tri[LFO_WAVETABLE_SIZE_FULL];
-static short int  S_lfo_trem_wavetable_saw[LFO_WAVETABLE_SIZE_FULL];
+static short int  S_lfo_uni_wavetable_tri[LFO_WAVETABLE_SIZE_FULL];
+static short int  S_lfo_uni_wavetable_saw[LFO_WAVETABLE_SIZE_FULL];
 
 /* delay table */
 static int S_lfo_delay_period_table[TEMPO_NUM_VALUES];
@@ -131,9 +138,27 @@ short int lfo_reset_all()
     l = &G_lfo_bank[k];
 
     /* initialize lfo variables */
+    if ((k % BANK_LFOS_PER_VOICE) == 0)
+      l->type = LFO_TYPE_VIBRATO; 
+    else if ((k % BANK_LFOS_PER_VOICE) == 1)
+      l->type = LFO_TYPE_TREMOLO;
+    else if ((k % BANK_LFOS_PER_VOICE) == 2)
+      l->type = LFO_TYPE_CHORUS;
+    else
+      l->type = LFO_TYPE_VIBRATO;
+
     l->waveform = PATCH_LFO_WAVEFORM_DEFAULT;
     l->speed = PATCH_LFO_SPEED_DEFAULT;
     l->sync = PATCH_SYNC_DEFAULT;
+
+    if (l->type == LFO_TYPE_VIBRATO)
+      l->polarity = PATCH_LFO_POLARITY_DEFAULT;
+    else if (l->type == LFO_TYPE_TREMOLO)
+      l->polarity = PATCH_LFO_POLARITY_UNI;
+    else if (l->type == LFO_TYPE_CHORUS)
+      l->polarity = PATCH_LFO_POLARITY_BI;
+    else
+      l->polarity = PATCH_LFO_POLARITY_DEFAULT;
 
     l->delay_cycles = 0;
     l->delay_period = 
@@ -141,13 +166,13 @@ short int lfo_reset_all()
 
     l->phase = 0;
 
-    if (((k % BANK_LFOS_PER_VOICE) == BANK_LFO_INDEX_VIBRATO) || 
-        ((k % BANK_LFOS_PER_VOICE) == BANK_LFO_INDEX_TREMOLO))
+    if ((l->type == LFO_TYPE_VIBRATO) || 
+        (l->type == LFO_TYPE_TREMOLO))
     {
       l->increment = 
         S_lfo_vib_trem_phase_increment_table[TEMPO_DEFAULT - TEMPO_LOWER_BOUND] * PATCH_LFO_SPEED_DEFAULT;
     }
-    else if ((k % BANK_LFOS_PER_VOICE) == BANK_LFO_INDEX_CHORUS)
+    else if (l->type == LFO_TYPE_CHORUS)
     {
       l->increment = 
         S_lfo_chorus_phase_increment_table[TEMPO_DEFAULT - TEMPO_LOWER_BOUND] * PATCH_LFO_SPEED_DEFAULT;
@@ -159,11 +184,11 @@ short int lfo_reset_all()
 
     l->depth = PATCH_LFO_DEPTH_DEFAULT;
 
-    if ((k % BANK_LFOS_PER_VOICE) == BANK_LFO_INDEX_VIBRATO)
+    if (l->type == LFO_TYPE_VIBRATO)
       l->max = S_lfo_vibrato_max_table[PATCH_SENSITIVITY_DEFAULT - PATCH_SENSITIVITY_LOWER_BOUND];
-    else if ((k % BANK_LFOS_PER_VOICE) == BANK_LFO_INDEX_TREMOLO)
+    else if (l->type == LFO_TYPE_TREMOLO)
       l->max = S_lfo_tremolo_max_table[PATCH_SENSITIVITY_DEFAULT - PATCH_SENSITIVITY_LOWER_BOUND];
-    else if ((k % BANK_LFOS_PER_VOICE) == BANK_LFO_INDEX_CHORUS)
+    else if (l->type == LFO_TYPE_CHORUS)
       l->max = S_lfo_chorus_max_table[PATCH_SENSITIVITY_DEFAULT - PATCH_SENSITIVITY_LOWER_BOUND];
     else
       l->max = 0;
@@ -238,38 +263,29 @@ short int lfo_load_patch(int voice_index, int patch_index)
       l->depth = PATCH_LFO_DEPTH_DEFAULT;
 
     /* sensitivity */
-    if (m == BANK_LFO_INDEX_VIBRATO)
+    if ((p->lfo_sensitivity[m] >= PATCH_SENSITIVITY_LOWER_BOUND) && 
+        (p->lfo_sensitivity[m] <= PATCH_SENSITIVITY_UPPER_BOUND))
     {
-      if ((p->lfo_sensitivity[m] >= PATCH_SENSITIVITY_LOWER_BOUND) && 
-          (p->lfo_sensitivity[m] <= PATCH_SENSITIVITY_UPPER_BOUND))
-      {
+      if (l->type == LFO_TYPE_VIBRATO)
         l->max = S_lfo_vibrato_max_table[p->lfo_sensitivity[m] - PATCH_SENSITIVITY_LOWER_BOUND];
-      }
+      else if (l->type == LFO_TYPE_TREMOLO)
+        l->max = S_lfo_tremolo_max_table[p->lfo_sensitivity[m] - PATCH_SENSITIVITY_LOWER_BOUND];
+      else if (l->type == LFO_TYPE_CHORUS)
+        l->max = S_lfo_chorus_max_table[p->lfo_sensitivity[m] - PATCH_SENSITIVITY_LOWER_BOUND];
+      else
+        l->max = S_lfo_vibrato_max_table[p->lfo_sensitivity[m] - PATCH_SENSITIVITY_LOWER_BOUND];
+    }
+    else
+    {
+      if (l->type == LFO_TYPE_VIBRATO)
+        l->max = S_lfo_vibrato_max_table[PATCH_SENSITIVITY_DEFAULT - PATCH_SENSITIVITY_LOWER_BOUND];
+      else if (l->type == LFO_TYPE_TREMOLO)
+        l->max = S_lfo_tremolo_max_table[PATCH_SENSITIVITY_DEFAULT - PATCH_SENSITIVITY_LOWER_BOUND];
+      else if (l->type == LFO_TYPE_CHORUS)
+        l->max = S_lfo_chorus_max_table[PATCH_SENSITIVITY_DEFAULT - PATCH_SENSITIVITY_LOWER_BOUND];
       else
         l->max = S_lfo_vibrato_max_table[PATCH_SENSITIVITY_DEFAULT - PATCH_SENSITIVITY_LOWER_BOUND];
     }
-    else if (m == BANK_LFO_INDEX_TREMOLO)
-    {
-      if ((p->lfo_sensitivity[m] >= PATCH_SENSITIVITY_LOWER_BOUND) && 
-          (p->lfo_sensitivity[m] <= PATCH_SENSITIVITY_UPPER_BOUND))
-      {
-        l->max = S_lfo_tremolo_max_table[p->lfo_sensitivity[m] - PATCH_SENSITIVITY_LOWER_BOUND];
-      }
-      else
-        l->max = S_lfo_tremolo_max_table[PATCH_SENSITIVITY_DEFAULT - PATCH_SENSITIVITY_LOWER_BOUND];
-    }
-    else if (m == BANK_LFO_INDEX_CHORUS)
-    {
-      if ((p->lfo_sensitivity[m] >= PATCH_SENSITIVITY_LOWER_BOUND) && 
-          (p->lfo_sensitivity[m] <= PATCH_SENSITIVITY_UPPER_BOUND))
-      {
-        l->max = S_lfo_chorus_max_table[p->lfo_sensitivity[m] - PATCH_SENSITIVITY_LOWER_BOUND];
-      }
-      else
-        l->max = S_lfo_chorus_max_table[PATCH_SENSITIVITY_DEFAULT - PATCH_SENSITIVITY_LOWER_BOUND];
-    }
-    else
-      l->max = 0;
 
     /* sync */
     if ((p->lfo_sync[m] >= PATCH_SYNC_LOWER_BOUND) && 
@@ -280,11 +296,30 @@ short int lfo_load_patch(int voice_index, int patch_index)
     else
       l->sync = PATCH_SYNC_DEFAULT;
 
+    /* polarity */
+    if (l->type == LFO_TYPE_VIBRATO)
+    {
+      if ((p->lfo_polarity[m] >= PATCH_LFO_POLARITY_LOWER_BOUND) && 
+          (p->lfo_polarity[m] <= PATCH_LFO_POLARITY_UPPER_BOUND))
+      {
+        l->polarity = p->lfo_polarity[m];
+      }
+      else
+        l->polarity = PATCH_SYNC_DEFAULT;
+    }
+
     /* set increment based on speed */
-    if ((m == BANK_LFO_INDEX_VIBRATO) || (m == BANK_LFO_INDEX_TREMOLO))
-      l->increment = S_lfo_vib_trem_phase_increment_table[l->tempo - TEMPO_LOWER_BOUND] * l->speed;
-    else if (m == BANK_LFO_INDEX_CHORUS)
-      l->increment = S_lfo_chorus_phase_increment_table[l->tempo - TEMPO_LOWER_BOUND] * l->speed;
+    if ((l->type == LFO_TYPE_VIBRATO) || 
+        (l->type == LFO_TYPE_TREMOLO))
+    {
+      l->increment = 
+        S_lfo_vib_trem_phase_increment_table[l->tempo - TEMPO_LOWER_BOUND] * l->speed;
+    }
+    else if (l->type == LFO_TYPE_CHORUS)
+    {
+      l->increment = 
+        S_lfo_chorus_phase_increment_table[l->tempo - TEMPO_LOWER_BOUND] * l->speed;
+    }
     else
       l->increment = 0;
   }
@@ -319,10 +354,19 @@ short int lfo_set_tempo(int voice_index, short int tempo)
       l->tempo = tempo;
 
     /* adjust phase increment based on tempo */
-    if ((m == BANK_LFO_INDEX_VIBRATO) || (m == BANK_LFO_INDEX_TREMOLO))
-      l->increment = S_lfo_vib_trem_phase_increment_table[l->tempo - TEMPO_LOWER_BOUND] * l->speed;
-    else if (m == BANK_LFO_INDEX_CHORUS)
-      l->increment = S_lfo_chorus_phase_increment_table[l->tempo - TEMPO_LOWER_BOUND] * l->speed;
+    if ((l->type == LFO_TYPE_VIBRATO) || 
+        (l->type == LFO_TYPE_TREMOLO))
+    {
+      l->increment = 
+        S_lfo_vib_trem_phase_increment_table[l->tempo - TEMPO_LOWER_BOUND] * l->speed;
+    }
+    else if (l->type == LFO_TYPE_CHORUS)
+    {
+      l->increment = 
+        S_lfo_chorus_phase_increment_table[l->tempo - TEMPO_LOWER_BOUND] * l->speed;
+    }
+    else
+      l->increment = 0;
   }
 
   return 0;
@@ -453,11 +497,10 @@ short int lfo_update_all()
     masked_phase = ((l->phase >> 20) & 0xFF);
 
     /* determine wave level */
-    if (((k % BANK_LFOS_PER_VOICE) == BANK_LFO_INDEX_VIBRATO) || 
-        ((k % BANK_LFOS_PER_VOICE) == BANK_LFO_INDEX_CHORUS))
+    if (l->polarity == PATCH_LFO_POLARITY_BI)
     {
       if (l->waveform == PATCH_LFO_WAVEFORM_TRIANGLE)
-        wave_level = S_lfo_vib_wavetable_tri[masked_phase];
+        wave_level = S_lfo_bi_wavetable_tri[masked_phase];
       else if (l->waveform == PATCH_LFO_WAVEFORM_SQUARE)
       {
         if (masked_phase < LFO_WAVETABLE_SIZE_HALF)
@@ -466,16 +509,16 @@ short int lfo_update_all()
           wave_level = -LFO_WAVE_AMPLITUDE;
       }
       else if (l->waveform == PATCH_LFO_WAVEFORM_SAW_UP)
-        wave_level = LFO_WAVE_AMPLITUDE - S_lfo_vib_wavetable_saw[masked_phase];
+        wave_level = LFO_WAVE_AMPLITUDE - S_lfo_bi_wavetable_saw[masked_phase];
       else if (l->waveform == PATCH_LFO_WAVEFORM_SAW_DOWN)
-        wave_level = S_lfo_vib_wavetable_saw[masked_phase];
+        wave_level = S_lfo_bi_wavetable_saw[masked_phase];
       else
         wave_level = 0;
     }
-    else if ((k % BANK_LFOS_PER_VOICE) == BANK_LFO_INDEX_TREMOLO)
+    else if (l->polarity == PATCH_LFO_POLARITY_UNI)
     {
       if (l->waveform == PATCH_LFO_WAVEFORM_TRIANGLE)
-        wave_level = S_lfo_trem_wavetable_tri[masked_phase];
+        wave_level = S_lfo_uni_wavetable_tri[masked_phase];
       else if (l->waveform == PATCH_LFO_WAVEFORM_SQUARE)
       {
         if (masked_phase < LFO_WAVETABLE_SIZE_HALF)
@@ -484,9 +527,9 @@ short int lfo_update_all()
           wave_level = LFO_WAVE_AMPLITUDE;
       }
       else if (l->waveform == PATCH_LFO_WAVEFORM_SAW_UP)
-        wave_level = LFO_WAVE_AMPLITUDE - S_lfo_trem_wavetable_saw[masked_phase];
+        wave_level = LFO_WAVE_AMPLITUDE - S_lfo_uni_wavetable_saw[masked_phase];
       else if (l->waveform == PATCH_LFO_WAVEFORM_SAW_DOWN)
-        wave_level = S_lfo_trem_wavetable_saw[masked_phase];
+        wave_level = S_lfo_uni_wavetable_saw[masked_phase];
       else
         wave_level = 0;
     }
@@ -516,46 +559,46 @@ short int lfo_generate_tables()
   /* the lfo wavetables have 256 entries per period */
 
   /* vibrato wavetable (triangle) */
-  S_lfo_vib_wavetable_tri[0] = 0;
-  S_lfo_vib_wavetable_tri[LFO_WAVETABLE_SIZE_QUARTER] = LFO_WAVE_AMPLITUDE;
-  S_lfo_vib_wavetable_tri[LFO_WAVETABLE_SIZE_HALF] = 0;
-  S_lfo_vib_wavetable_tri[3 * LFO_WAVETABLE_SIZE_QUARTER] = -LFO_WAVE_AMPLITUDE;
+  S_lfo_bi_wavetable_tri[0] = 0;
+  S_lfo_bi_wavetable_tri[LFO_WAVETABLE_SIZE_QUARTER] = LFO_WAVE_AMPLITUDE;
+  S_lfo_bi_wavetable_tri[LFO_WAVETABLE_SIZE_HALF] = 0;
+  S_lfo_bi_wavetable_tri[3 * LFO_WAVETABLE_SIZE_QUARTER] = -LFO_WAVE_AMPLITUDE;
 
   for (m = 1; m < LFO_WAVETABLE_SIZE_QUARTER; m++)
   {
-    S_lfo_vib_wavetable_tri[m] = (short int) (((LFO_WAVE_AMPLITUDE * m) / ((float) LFO_WAVETABLE_SIZE_QUARTER)) + 0.5f);
-    S_lfo_vib_wavetable_tri[LFO_WAVETABLE_SIZE_HALF - m] = S_lfo_vib_wavetable_tri[m];
+    S_lfo_bi_wavetable_tri[m] = (short int) (((LFO_WAVE_AMPLITUDE * m) / ((float) LFO_WAVETABLE_SIZE_QUARTER)) + 0.5f);
+    S_lfo_bi_wavetable_tri[LFO_WAVETABLE_SIZE_HALF - m] = S_lfo_bi_wavetable_tri[m];
 
-    S_lfo_vib_wavetable_tri[LFO_WAVETABLE_SIZE_HALF + m] = -S_lfo_vib_wavetable_tri[m];
-    S_lfo_vib_wavetable_tri[LFO_WAVETABLE_SIZE_FULL - m] = -S_lfo_vib_wavetable_tri[m];
+    S_lfo_bi_wavetable_tri[LFO_WAVETABLE_SIZE_HALF + m] = -S_lfo_bi_wavetable_tri[m];
+    S_lfo_bi_wavetable_tri[LFO_WAVETABLE_SIZE_FULL - m] = -S_lfo_bi_wavetable_tri[m];
   }
 
   /* vibrato wavetable (sawtooth) */
-  S_lfo_vib_wavetable_saw[0] = 0;
-  S_lfo_vib_wavetable_saw[LFO_WAVETABLE_SIZE_HALF] = LFO_WAVE_AMPLITUDE;
+  S_lfo_bi_wavetable_saw[0] = 0;
+  S_lfo_bi_wavetable_saw[LFO_WAVETABLE_SIZE_HALF] = LFO_WAVE_AMPLITUDE;
 
   for (m = 1; m < LFO_WAVETABLE_SIZE_HALF; m++)
   {
-    S_lfo_vib_wavetable_saw[m] = (short int) (((LFO_WAVE_AMPLITUDE * m) / ((float) LFO_WAVETABLE_SIZE_HALF)) + 0.5f);
-    S_lfo_vib_wavetable_saw[LFO_WAVETABLE_SIZE_FULL - m] = -S_lfo_vib_wavetable_saw[m];
+    S_lfo_bi_wavetable_saw[m] = (short int) (((LFO_WAVE_AMPLITUDE * m) / ((float) LFO_WAVETABLE_SIZE_HALF)) + 0.5f);
+    S_lfo_bi_wavetable_saw[LFO_WAVETABLE_SIZE_FULL - m] = -S_lfo_bi_wavetable_saw[m];
   }
 
   /* tremolo wavetable (triangle) */
-  S_lfo_trem_wavetable_tri[0] = 0;
-  S_lfo_trem_wavetable_tri[LFO_WAVETABLE_SIZE_HALF] = LFO_WAVE_AMPLITUDE;
+  S_lfo_uni_wavetable_tri[0] = 0;
+  S_lfo_uni_wavetable_tri[LFO_WAVETABLE_SIZE_HALF] = LFO_WAVE_AMPLITUDE;
 
   for (m = 1; m < LFO_WAVETABLE_SIZE_HALF; m++)
   {
-    S_lfo_trem_wavetable_tri[m] = (short int) (((LFO_WAVE_AMPLITUDE * m) / ((float) LFO_WAVETABLE_SIZE_HALF)) + 0.5f);
-    S_lfo_trem_wavetable_tri[LFO_WAVETABLE_SIZE_FULL - m] = S_lfo_trem_wavetable_tri[m];
+    S_lfo_uni_wavetable_tri[m] = (short int) (((LFO_WAVE_AMPLITUDE * m) / ((float) LFO_WAVETABLE_SIZE_HALF)) + 0.5f);
+    S_lfo_uni_wavetable_tri[LFO_WAVETABLE_SIZE_FULL - m] = S_lfo_uni_wavetable_tri[m];
   }
 
   /* tremolo wavetable (sawtooth) */
-  S_lfo_trem_wavetable_saw[0] = 0;
+  S_lfo_uni_wavetable_saw[0] = 0;
 
   for (m = 1; m < LFO_WAVETABLE_SIZE_FULL; m++)
   {
-    S_lfo_trem_wavetable_saw[m] = (short int) (((LFO_WAVE_AMPLITUDE * m) / ((float) LFO_WAVETABLE_SIZE_FULL)) + 0.5f);
+    S_lfo_uni_wavetable_saw[m] = (short int) (((LFO_WAVE_AMPLITUDE * m) / ((float) LFO_WAVETABLE_SIZE_FULL)) + 0.5f);
   }
 
   /* delay period table */
@@ -580,14 +623,14 @@ short int lfo_generate_tables()
   for (m = 0; m < LFO_VIBRATO_WAVETABLE_SIZE_FULL; m++)
   {
     printf( "Vibrato Triangle Wavetable Index %d: %d \n", 
-            m, S_lfo_vib_wavetable_tri[m]);
+            m, S_lfo_bi_wavetable_tri[m]);
   }
 
   /* print out vibrato sawtooth wavetable */
   for (m = 0; m < LFO_VIBRATO_WAVETABLE_SIZE_FULL; m++)
   {
     printf( "Vibrato Sawtooth Wavetable Index %d: %d \n", 
-            m, S_lfo_vib_wavetable_saw[m]);
+            m, S_lfo_bi_wavetable_saw[m]);
   }
 #endif
 

@@ -9,11 +9,6 @@
 
 typedef struct peg
 {
-  /* attack, hold, finale levels */
-  short int turn_level;
-  short int hold_level;
-  short int finale_level;
-
   /* rates */
   int a_rate;
   int d_rate;
@@ -27,8 +22,15 @@ typedef struct peg
   unsigned int increment;
   unsigned int phase;
 
+  /* max levels */
+  short int attack_max;
+  short int finale_max;
+
+  /* current index */
+  int index;
+
   /* level */
-  short int level;
+  int level;
 } peg;
 
 /* peg bank */

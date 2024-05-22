@@ -18,7 +18,12 @@ typedef struct voice
   /* oscillators */
   short int osc_waveform[BANK_OSCILLATORS_PER_VOICE];
   short int osc_phi[BANK_OSCILLATORS_PER_VOICE];
-  short int osc_pitch_offset[BANK_OSCILLATORS_PER_VOICE];
+  short int osc_freq_mode[BANK_OSCILLATORS_PER_VOICE];
+
+  short int osc_note_offset[BANK_OSCILLATORS_PER_VOICE];
+  short int osc_detune_offset[BANK_OSCILLATORS_PER_VOICE];
+
+  unsigned char osc_routing[BANK_OSCILLATORS_PER_VOICE];
 
   /* currently playing notes, pitch indices */
   short int base_note;
@@ -41,16 +46,18 @@ typedef struct voice
   short int chorus_base;
   short int chorus_extra;
 
-  short int vibrato_adjustment;
-  short int chorus_adjustment;
-
-  /* pitch wheel, sweep */
+  /* pitch wheel */
+  short int pitch_wheel_mode;
   short int pitch_wheel_max;
 
+  /* pitch envelope, sweep */
+  short int peg_input;
   short int sweep_input;
 
-  /* routing */
-  unsigned char routing;
+  /* midi controller routing */
+  unsigned char mod_wheel_routing;
+  unsigned char aftertouch_routing;
+  unsigned char exp_pedal_routing;
 
   /* midi controller positions */
   short int mod_wheel_pos;

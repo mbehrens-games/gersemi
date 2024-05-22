@@ -16,15 +16,22 @@ typedef struct envelope
   short int ks_rate_adjustment;
   short int ks_level_adjustment;
 
-  /* note offset */
+  /* frequency mode, note offset */
+  short int freq_mode;
   short int note_offset;
 
-  /* sustain level */
-  short int sustain_level;
+  /* transition level, hold mode */
+  short int transition_level;
+  short int hold_mode;
+  short int hold_switch;
+
+  /* routing */
+  unsigned char env_routing;
 
   /* rates */
   int a_rate;
   int d_rate;
+  int s_rate;
   int r_rate;
 
   /* current stage, rate */
@@ -45,21 +52,20 @@ typedef struct envelope
   short int boost_max;
   short int velocity_max;
 
-  short int tremolo_adjustment;
-  short int boost_adjustment;
-  short int velocity_adjustment;
-
-  /* routing */
-  unsigned char routing;
+  /* midi controller routing */
+  unsigned char mod_wheel_routing;
+  unsigned char aftertouch_routing;
+  unsigned char exp_pedal_routing;
 
   /* midi controller positions */
   short int mod_wheel_pos;
   short int aftertouch_pos;
   short int exp_pedal_pos;
 
-  /* volume, amplitude */
+  /* volume, amplitude, velocity */
   short int volume_adjustment;
   short int amplitude_adjustment;
+  short int velocity_adjustment;
 
   /* level (current attenuation + adjustments) */
   short int level;
@@ -75,7 +81,7 @@ short int envelope_load_patch(int voice_index, int patch_index);
 
 short int envelope_set_note(int voice_index, int note, int vel);
 
-short int envelope_trigger(int voice_index);
+short int envelope_trigger(int voice_index, int pedal_state);
 short int envelope_release(int voice_index);
 
 short int envelope_update_all();

@@ -13,6 +13,7 @@
 #include "lfo.h"
 #include "midicont.h"
 #include "patch.h"
+#include "peg.h"
 #include "sweep.h"
 #include "tuning.h"
 #include "voice.h"
@@ -146,6 +147,7 @@ short int instrument_load_patch(int instrument_index,
       envelope_load_patch(ins->voice_index + k, patch_index);
       lfo_load_patch(ins->voice_index + k, patch_index);
       filter_load_patch(ins->voice_index + k, patch_index);
+      peg_load_patch(ins->voice_index + k, patch_index);
     }
   }
   else if (ins->type == INSTRUMENT_TYPE_MONO)
@@ -154,6 +156,7 @@ short int instrument_load_patch(int instrument_index,
     envelope_load_patch(ins->voice_index, patch_index);
     lfo_load_patch(ins->voice_index, patch_index);
     filter_load_patch(ins->voice_index, patch_index);
+    peg_load_patch(ins->voice_index, patch_index);
   }
 
   return 0;
@@ -325,7 +328,8 @@ short int instrument_note_on(int instrument_index, int note)
 #endif
 
   voice_sync_to_key(selected_voice_index);
-  envelope_trigger(selected_voice_index);
+  envelope_trigger(selected_voice_index, ins->sustain_pedal);
+  peg_trigger(selected_voice_index);
 
   lfo_sync_to_key(selected_voice_index);
   lfo_trigger(selected_voice_index);
@@ -385,6 +389,7 @@ short int instrument_note_off(int instrument_index, int note)
 
   /* send note-off to the selected voice associated with this instrument */
   envelope_release(selected_voice_index);
+  peg_release(selected_voice_index);
 
   return 0;
 }
@@ -592,6 +597,7 @@ short int instrument_set_mod_wheel_position(int instrument_index, short int pos)
   int n;
 
   instrument* ins;
+  voice* v;
   envelope* e;
 
   /* make sure that the instrument index is valid */
@@ -620,6 +626,10 @@ short int instrument_set_mod_wheel_position(int instrument_index, short int pos)
   {
     for (m = 0; m < BANK_VOICES_PER_POLY_INSTRUMENT; m++)
     {
+      v = &G_voice_bank[ins->voice_index + m];
+
+      v->mod_wheel_pos = pos;
+
       for (n = 0; n < BANK_ENVELOPES_PER_VOICE; n++)
       {
         e = &G_envelope_bank[(ins->voice_index + m) * BANK_ENVELOPES_PER_VOICE + n];
@@ -630,6 +640,10 @@ short int instrument_set_mod_wheel_position(int instrument_index, short int pos)
   }
   else if (ins->type == INSTRUMENT_TYPE_MONO)
   {
+    v = &G_voice_bank[ins->voice_index];
+
+    v->mod_wheel_pos = pos;
+
     for (n = 0; n < BANK_ENVELOPES_PER_VOICE; n++)
     {
       e = &G_envelope_bank[ins->voice_index * BANK_ENVELOPES_PER_VOICE + n];
@@ -650,6 +664,7 @@ short int instrument_set_aftertouch_position(int instrument_index, short int pos
   int n;
 
   instrument* ins;
+  voice* v;
   envelope* e;
 
   /* make sure that the instrument index is valid */
@@ -678,6 +693,10 @@ short int instrument_set_aftertouch_position(int instrument_index, short int pos
   {
     for (m = 0; m < BANK_VOICES_PER_POLY_INSTRUMENT; m++)
     {
+      v = &G_voice_bank[ins->voice_index + m];
+
+      v->aftertouch_pos = pos;
+
       for (n = 0; n < BANK_ENVELOPES_PER_VOICE; n++)
       {
         e = &G_envelope_bank[(ins->voice_index + m) * BANK_ENVELOPES_PER_VOICE + n];
@@ -688,6 +707,10 @@ short int instrument_set_aftertouch_position(int instrument_index, short int pos
   }
   else if (ins->type == INSTRUMENT_TYPE_MONO)
   {
+    v = &G_voice_bank[ins->voice_index];
+
+    v->aftertouch_pos = pos;
+
     for (n = 0; n < BANK_ENVELOPES_PER_VOICE; n++)
     {
       e = &G_envelope_bank[ins->voice_index * BANK_ENVELOPES_PER_VOICE + n];
@@ -708,6 +731,7 @@ short int instrument_set_exp_pedal_position(int instrument_index, short int pos)
   int n;
 
   instrument* ins;
+  voice* v;
   envelope* e;
 
   /* make sure that the instrument index is valid */
@@ -736,6 +760,10 @@ short int instrument_set_exp_pedal_position(int instrument_index, short int pos)
   {
     for (m = 0; m < BANK_VOICES_PER_POLY_INSTRUMENT; m++)
     {
+      v = &G_voice_bank[ins->voice_index + m];
+
+      v->exp_pedal_pos = pos;
+
       for (n = 0; n < BANK_ENVELOPES_PER_VOICE; n++)
       {
         e = &G_envelope_bank[(ins->voice_index + m) * BANK_ENVELOPES_PER_VOICE + n];
@@ -746,6 +774,10 @@ short int instrument_set_exp_pedal_position(int instrument_index, short int pos)
   }
   else if (ins->type == INSTRUMENT_TYPE_MONO)
   {
+    v = &G_voice_bank[ins->voice_index];
+
+    v->exp_pedal_pos = pos;
+
     for (n = 0; n < BANK_ENVELOPES_PER_VOICE; n++)
     {
       e = &G_envelope_bank[ins->voice_index * BANK_ENVELOPES_PER_VOICE + n];
@@ -762,7 +794,10 @@ short int instrument_set_exp_pedal_position(int instrument_index, short int pos)
 *******************************************************************************/
 short int instrument_set_pitch_wheel_position(int instrument_index, short int pos)
 {
+  int m;
+
   instrument* ins;
+  voice* v;
 
   /* make sure that the instrument index is valid */
   if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
@@ -784,6 +819,23 @@ short int instrument_set_pitch_wheel_position(int instrument_index, short int po
 
   /* set the new pitch wheel position */
   ins->pitch_wheel_pos = pos;
+
+  /* set the pitch wheel input for other units associated with this instrument */
+  if (ins->type == INSTRUMENT_TYPE_POLY)
+  {
+    for (m = 0; m < BANK_VOICES_PER_POLY_INSTRUMENT; m++)
+    {
+      v = &G_voice_bank[ins->voice_index + m];
+
+      v->pitch_wheel_pos = pos;
+    }
+  }
+  else if (ins->type == INSTRUMENT_TYPE_MONO)
+  {
+    v = &G_voice_bank[ins->voice_index];
+
+    v->pitch_wheel_pos = pos;
+  }
 
   return 0;
 }

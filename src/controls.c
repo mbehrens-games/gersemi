@@ -362,6 +362,60 @@ short int controls_patch_parameter_adjust(int cart_num, int patch_num,
   else
     return 0;
 
+  /* skip oscillator 1 multiple/divisor or octave/note based on frequency mode */
+  if (pc->osc_freq_mode[0] == PATCH_OSC_FREQ_MODE_FIXED)
+  {
+    if ((pr->label == LAYOUT_CART_PARAM_LABEL_OSC_1_MULTIPLE) || 
+        (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_1_DIVISOR))
+    {
+      return 0;
+    }
+  }
+  else
+  {
+    if ((pr->label == LAYOUT_CART_PARAM_LABEL_OSC_1_OCTAVE) || 
+        (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_1_NOTE))
+    {
+      return 0;
+    }
+  }
+
+  /* skip oscillator 2 multiple/divisor or octave/note based on frequency mode */
+  if (pc->osc_freq_mode[1] == PATCH_OSC_FREQ_MODE_FIXED)
+  {
+    if ((pr->label == LAYOUT_CART_PARAM_LABEL_OSC_2_MULTIPLE) || 
+        (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_2_DIVISOR))
+    {
+      return 0;
+    }
+  }
+  else
+  {
+    if ((pr->label == LAYOUT_CART_PARAM_LABEL_OSC_2_OCTAVE) || 
+        (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_2_NOTE))
+    {
+      return 0;
+    }
+  }
+
+  /* skip oscillator 3 multiple/divisor or octave/note based on frequency mode */
+  if (pc->osc_freq_mode[2] == PATCH_OSC_FREQ_MODE_FIXED)
+  {
+    if ((pr->label == LAYOUT_CART_PARAM_LABEL_OSC_3_MULTIPLE) || 
+        (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_3_DIVISOR))
+    {
+      return 0;
+    }
+  }
+  else
+  {
+    if ((pr->label == LAYOUT_CART_PARAM_LABEL_OSC_3_OCTAVE) || 
+        (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_3_NOTE))
+    {
+      return 0;
+    }
+  }
+
   /* initialize change flag */
   param_changed = 0;
 
@@ -406,9 +460,29 @@ short int controls_patch_parameter_adjust(int cart_num, int patch_num,
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->osc_divisor[0])
   }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_1_OCTAVE)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->osc_octave[0])
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_1_NOTE)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->osc_note[0])
+  }
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_1_DETUNE)
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->osc_detune[0])
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_1_ROUTING_VIBRATO)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->osc_routing[0])
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_1_ROUTING_PITCH_ENV)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->osc_routing[0])
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_1_ROUTING_PITCH_WHEEL)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->osc_routing[0])
   }
   /* oscillator 2 */
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_2_WAVEFORM)
@@ -431,9 +505,29 @@ short int controls_patch_parameter_adjust(int cart_num, int patch_num,
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->osc_divisor[1])
   }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_2_OCTAVE)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->osc_octave[1])
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_2_NOTE)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->osc_note[1])
+  }
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_2_DETUNE)
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->osc_detune[1])
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_2_ROUTING_VIBRATO)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->osc_routing[1])
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_2_ROUTING_PITCH_ENV)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->osc_routing[1])
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_2_ROUTING_PITCH_WHEEL)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->osc_routing[1])
   }
   /* oscillator 3 */
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_3_WAVEFORM)
@@ -456,9 +550,29 @@ short int controls_patch_parameter_adjust(int cart_num, int patch_num,
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->osc_divisor[2])
   }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_3_OCTAVE)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->osc_octave[2])
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_3_NOTE)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->osc_note[2])
+  }
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_3_DETUNE)
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->osc_detune[2])
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_3_ROUTING_VIBRATO)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->osc_routing[2])
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_3_ROUTING_PITCH_ENV)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->osc_routing[2])
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_OSC_3_ROUTING_PITCH_WHEEL)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->osc_routing[2])
   }
   /* amplitude envelope 1 */
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_1_ATTACK)
@@ -469,6 +583,10 @@ short int controls_patch_parameter_adjust(int cart_num, int patch_num,
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->env_decay[0])
   }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_1_SUSTAIN)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->env_sustain[0])
+  }
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_1_RELEASE)
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->env_release[0])
@@ -477,17 +595,13 @@ short int controls_patch_parameter_adjust(int cart_num, int patch_num,
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->env_amplitude[0])
   }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_1_SUSTAIN)
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_1_TRANSITION)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->env_sustain[0])
+    CONTROLS_SET_PATCH_PARAMETER(pc->env_transition[0])
   }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_1_HOLD)
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_1_HOLD_MODE)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->env_hold[0])
-  }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_1_PEDAL)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->env_pedal[0])
+    CONTROLS_SET_PATCH_PARAMETER(pc->env_hold_mode[0])
   }
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_1_RATE_KS)
   {
@@ -496,6 +610,18 @@ short int controls_patch_parameter_adjust(int cart_num, int patch_num,
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_1_LEVEL_KS)
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->env_level_ks[0])
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_1_ROUTING_TREMOLO)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->env_routing[0])
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_1_ROUTING_BOOST)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->env_routing[0])
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_1_ROUTING_VELOCITY)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->env_routing[0])
   }
   /* amplitude envelope 2 */
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_2_ATTACK)
@@ -506,6 +632,10 @@ short int controls_patch_parameter_adjust(int cart_num, int patch_num,
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->env_decay[1])
   }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_2_SUSTAIN)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->env_sustain[1])
+  }
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_2_RELEASE)
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->env_release[1])
@@ -514,17 +644,13 @@ short int controls_patch_parameter_adjust(int cart_num, int patch_num,
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->env_amplitude[1])
   }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_2_SUSTAIN)
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_2_TRANSITION)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->env_sustain[1])
+    CONTROLS_SET_PATCH_PARAMETER(pc->env_transition[1])
   }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_2_HOLD)
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_2_HOLD_MODE)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->env_hold[1])
-  }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_2_PEDAL)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->env_pedal[1])
+    CONTROLS_SET_PATCH_PARAMETER(pc->env_hold_mode[1])
   }
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_2_RATE_KS)
   {
@@ -533,6 +659,18 @@ short int controls_patch_parameter_adjust(int cart_num, int patch_num,
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_2_LEVEL_KS)
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->env_level_ks[1])
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_2_ROUTING_TREMOLO)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->env_routing[1])
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_2_ROUTING_BOOST)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->env_routing[1])
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_2_ROUTING_VELOCITY)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->env_routing[1])
   }
   /* amplitude envelope 3 */
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_3_ATTACK)
@@ -543,6 +681,10 @@ short int controls_patch_parameter_adjust(int cart_num, int patch_num,
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->env_decay[2])
   }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_3_SUSTAIN)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->env_sustain[2])
+  }
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_3_RELEASE)
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->env_release[2])
@@ -551,17 +693,13 @@ short int controls_patch_parameter_adjust(int cart_num, int patch_num,
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->env_amplitude[2])
   }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_3_SUSTAIN)
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_3_TRANSITION)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->env_sustain[2])
+    CONTROLS_SET_PATCH_PARAMETER(pc->env_transition[2])
   }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_3_HOLD)
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_3_HOLD_MODE)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->env_hold[2])
-  }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_3_PEDAL)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->env_pedal[2])
+    CONTROLS_SET_PATCH_PARAMETER(pc->env_hold_mode[2])
   }
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_3_RATE_KS)
   {
@@ -571,97 +709,96 @@ short int controls_patch_parameter_adjust(int cart_num, int patch_num,
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->env_level_ks[2])
   }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_3_ROUTING_TREMOLO)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->env_routing[2])
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_3_ROUTING_BOOST)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->env_routing[2])
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ENV_3_ROUTING_VELOCITY)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->env_routing[2])
+  }
   /* vibrato lfo */
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_VIBRATO_WAVEFORM)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->lfo_waveform[BANK_LFO_INDEX_VIBRATO])
+    CONTROLS_SET_PATCH_PARAMETER(pc->lfo_waveform[0])
   }
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_VIBRATO_DELAY)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->lfo_delay[BANK_LFO_INDEX_VIBRATO])
+    CONTROLS_SET_PATCH_PARAMETER(pc->lfo_delay[0])
   }
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_VIBRATO_SPEED)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->lfo_speed[BANK_LFO_INDEX_VIBRATO])
+    CONTROLS_SET_PATCH_PARAMETER(pc->lfo_speed[0])
   }
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_VIBRATO_DEPTH)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->lfo_depth[BANK_LFO_INDEX_VIBRATO])
+    CONTROLS_SET_PATCH_PARAMETER(pc->lfo_depth[0])
   }
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_VIBRATO_SENSITIVITY)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->lfo_sensitivity[BANK_LFO_INDEX_VIBRATO])
+    CONTROLS_SET_PATCH_PARAMETER(pc->lfo_sensitivity[0])
   }
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_VIBRATO_SYNC)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->lfo_sync[BANK_LFO_INDEX_VIBRATO])
+    CONTROLS_SET_PATCH_PARAMETER(pc->lfo_sync[0])
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_VIBRATO_POLARITY)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->lfo_polarity[0])
   }
   /* tremolo lfo */
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_TREMOLO_WAVEFORM)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->lfo_waveform[BANK_LFO_INDEX_TREMOLO])
+    CONTROLS_SET_PATCH_PARAMETER(pc->lfo_waveform[1])
   }
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_TREMOLO_DELAY)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->lfo_delay[BANK_LFO_INDEX_TREMOLO])
+    CONTROLS_SET_PATCH_PARAMETER(pc->lfo_delay[1])
   }
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_TREMOLO_SPEED)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->lfo_speed[BANK_LFO_INDEX_TREMOLO])
+    CONTROLS_SET_PATCH_PARAMETER(pc->lfo_speed[1])
   }
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_TREMOLO_DEPTH)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->lfo_depth[BANK_LFO_INDEX_TREMOLO])
+    CONTROLS_SET_PATCH_PARAMETER(pc->lfo_depth[1])
   }
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_TREMOLO_SENSITIVITY)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->lfo_sensitivity[BANK_LFO_INDEX_TREMOLO])
+    CONTROLS_SET_PATCH_PARAMETER(pc->lfo_sensitivity[1])
   }
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_TREMOLO_SYNC)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->lfo_sync[BANK_LFO_INDEX_TREMOLO])
+    CONTROLS_SET_PATCH_PARAMETER(pc->lfo_sync[1])
   }
   /* chorus */
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_CHORUS_WAVEFORM)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->lfo_waveform[BANK_LFO_INDEX_CHORUS])
+    CONTROLS_SET_PATCH_PARAMETER(pc->lfo_waveform[2])
   }
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_CHORUS_DELAY)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->lfo_delay[BANK_LFO_INDEX_CHORUS])
+    CONTROLS_SET_PATCH_PARAMETER(pc->lfo_delay[2])
   }
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_CHORUS_SPEED)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->lfo_speed[BANK_LFO_INDEX_CHORUS])
+    CONTROLS_SET_PATCH_PARAMETER(pc->lfo_speed[2])
   }
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_CHORUS_DEPTH)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->lfo_depth[BANK_LFO_INDEX_CHORUS])
+    CONTROLS_SET_PATCH_PARAMETER(pc->lfo_depth[2])
   }
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_CHORUS_SENSITIVITY)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->lfo_sensitivity[BANK_LFO_INDEX_CHORUS])
+    CONTROLS_SET_PATCH_PARAMETER(pc->lfo_sensitivity[2])
   }
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_CHORUS_SYNC)
   {
-    CONTROLS_SET_PATCH_PARAMETER(pc->lfo_sync[BANK_LFO_INDEX_CHORUS])
-  }
-  /* arpeggio */
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ARPEGGIO_MODE)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->arpeggio_mode)
-  }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ARPEGGIO_PATTERN)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->arpeggio_pattern)
-  }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ARPEGGIO_OCTAVES)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->arpeggio_octaves)
-  }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ARPEGGIO_SPEED)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->arpeggio_speed)
+    CONTROLS_SET_PATCH_PARAMETER(pc->lfo_sync[2])
   }
   /* boost */
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_BOOST_SENSITIVITY)
@@ -672,6 +809,15 @@ short int controls_patch_parameter_adjust(int cart_num, int patch_num,
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_VELOCITY_SENSITIVITY)
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->velocity_sensitivity)
+  }
+  /* filters */
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_HIGHPASS_CUTOFF)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->highpass_cutoff)
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_LOWPASS_CUTOFF)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->lowpass_cutoff)
   }
   /* pitch envelope */
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_PITCH_ENV_ATTACK)
@@ -694,6 +840,32 @@ short int controls_patch_parameter_adjust(int cart_num, int patch_num,
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->peg_finale)
   }
+  /* pitch wheel */
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_PITCH_WHEEL_MODE)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->pitch_wheel_mode)
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_PITCH_WHEEL_RANGE)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->pitch_wheel_range)
+  }
+  /* arpeggio */
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ARPEGGIO_MODE)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->arpeggio_mode)
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ARPEGGIO_PATTERN)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->arpeggio_pattern)
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ARPEGGIO_OCTAVES)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->arpeggio_octaves)
+  }
+  else if (pr->label == LAYOUT_CART_PARAM_LABEL_ARPEGGIO_SPEED)
+  {
+    CONTROLS_SET_PATCH_PARAMETER(pc->arpeggio_speed)
+  }
   /* portamento */
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_PORTAMENTO_MODE)
   {
@@ -707,64 +879,7 @@ short int controls_patch_parameter_adjust(int cart_num, int patch_num,
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->portamento_speed)
   }
-  /* pitch wheel */
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_PITCH_WHEEL_MODE)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->pitch_wheel_mode)
-  }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_PITCH_WHEEL_RANGE)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->pitch_wheel_range)
-  }
-  /* filters */
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_HIGHPASS_CUTOFF)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->highpass_cutoff)
-  }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_LOWPASS_CUTOFF)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->lowpass_cutoff)
-  }
-  /* tremolo routing */
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_TREMOLO_ROUTING_ENV_1)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->tremolo_routing)
-  }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_TREMOLO_ROUTING_ENV_2)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->tremolo_routing)
-  }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_TREMOLO_ROUTING_ENV_3)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->tremolo_routing)
-  }
-  /* boost routing */
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_BOOST_ROUTING_ENV_1)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->boost_routing)
-  }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_BOOST_ROUTING_ENV_2)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->boost_routing)
-  }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_BOOST_ROUTING_ENV_3)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->boost_routing)
-  }
-  /* velocity routing */
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_VELOCITY_ROUTING_ENV_1)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->velocity_routing)
-  }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_VELOCITY_ROUTING_ENV_2)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->velocity_routing)
-  }
-  else if (pr->label == LAYOUT_CART_PARAM_LABEL_VELOCITY_ROUTING_ENV_3)
-  {
-    CONTROLS_SET_PATCH_PARAMETER(pc->velocity_routing)
-  }
-  /* mod wheel routing */
+  /* mod wheel */
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_MOD_WHEEL_ROUTING_VIBRATO)
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->mod_wheel_routing)
@@ -781,7 +896,7 @@ short int controls_patch_parameter_adjust(int cart_num, int patch_num,
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->mod_wheel_routing)
   }
-  /* aftertouch routing */
+  /* aftertouch */
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_AFTERTOUCH_ROUTING_VIBRATO)
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->aftertouch_routing)
@@ -798,7 +913,7 @@ short int controls_patch_parameter_adjust(int cart_num, int patch_num,
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->aftertouch_routing)
   }
-  /* exp pedal routing */
+  /* exp pedal */
   else if (pr->label == LAYOUT_CART_PARAM_LABEL_EXP_PEDAL_ROUTING_VIBRATO)
   {
     CONTROLS_SET_PATCH_PARAMETER(pc->exp_pedal_routing)

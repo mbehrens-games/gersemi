@@ -16,17 +16,6 @@
 #define PI      3.14159265358979323846f
 #define TWO_PI  6.28318530717958647693f
 
-/* routing */
-#define VOICE_ROUTING_CLEAR  0x00
-#define VOICE_ROUTING_MASK   0xFF
-
-#define VOICE_ROUTING_FLAG_MOD_WHEEL_VIBRATO    0x01
-#define VOICE_ROUTING_FLAG_MOD_WHEEL_CHORUS     0x02
-#define VOICE_ROUTING_FLAG_AFTERTOUCH_VIBRATO   0x04
-#define VOICE_ROUTING_FLAG_AFTERTOUCH_CHORUS    0x08
-#define VOICE_ROUTING_FLAG_EXP_PEDAL_VIBRATO    0x10
-#define VOICE_ROUTING_FLAG_EXP_PEDAL_CHORUS     0x20
-
 /* 12 bit db levels */
 #define VOICE_DB_STEP_12_BIT 0.01171875f
 
@@ -43,9 +32,18 @@
 #define VOICE_WAVETABLE_SIZE_QUARTER  (VOICE_WAVETABLE_SIZE_FULL / 4)
 
 #define VOICE_COMPUTE_PITCH_INDEX(num)                                         \
-  v->osc_pitch_index[num] = v->base_note * TUNING_NUM_SEMITONE_STEPS;          \
+  if (v->osc_freq_mode[num] == PATCH_OSC_FREQ_MODE_FIXED)                      \
+  {                                                                            \
+    v->osc_pitch_index[num] =                                                  \
+      (TUNING_NOTE_C0 + v->osc_note_offset[num]) * TUNING_NUM_SEMITONE_STEPS;  \
+  }                                                                            \
+  else                                                                         \
+  {                                                                            \
+    v->osc_pitch_index[num] =                                                  \
+      (v->base_note + v->osc_note_offset[num]) * TUNING_NUM_SEMITONE_STEPS;    \
+  }                                                                            \
                                                                                \
-  v->osc_pitch_index[num] += v->osc_pitch_offset[num];                         \
+  v->osc_pitch_index[num] += v->osc_detune_offset[num];                        \
   v->osc_pitch_index[num] +=                                                   \
     G_tuning_offset_table[(v->base_note - TUNING_NOTE_C0) % 12];               \
                                                                                \
@@ -57,13 +55,13 @@
 #define VOICE_COMPUTE_COMBINED_POSITION(effect)                                \
   combined_pos = 0;                                                            \
                                                                                \
-  if (v->routing & VOICE_ROUTING_FLAG_MOD_WHEEL_##effect)                      \
+  if (v->mod_wheel_routing & PATCH_MIDI_CONT_ROUTING_FLAG_##effect)            \
     combined_pos += v->mod_wheel_pos;                                          \
                                                                                \
-  if (v->routing & VOICE_ROUTING_FLAG_AFTERTOUCH_##effect)                     \
+  if (v->aftertouch_routing & PATCH_MIDI_CONT_ROUTING_FLAG_##effect)           \
     combined_pos += v->aftertouch_pos;                                         \
                                                                                \
-  if (v->routing & VOICE_ROUTING_FLAG_EXP_PEDAL_##effect)                      \
+  if (v->exp_pedal_routing & PATCH_MIDI_CONT_ROUTING_FLAG_##effect)            \
     combined_pos += v->exp_pedal_pos;                                          \
                                                                                \
   if (combined_pos < MIDI_CONT_UNI_WHEEL_LOWER_BOUND)                          \
@@ -74,34 +72,37 @@
 /* multiple table */
 /* the values form the harmonic series! */
 static int  S_voice_multiple_table[PATCH_OSC_MULTIPLE_NUM_VALUES] = 
-            { (0 * 12 + 0)  * TUNING_NUM_SEMITONE_STEPS,  /*  1x  */
-              (1 * 12 + 0)  * TUNING_NUM_SEMITONE_STEPS,  /*  2x  */
-              (1 * 12 + 7)  * TUNING_NUM_SEMITONE_STEPS,  /*  3x  */
-              (2 * 12 + 0)  * TUNING_NUM_SEMITONE_STEPS,  /*  4x  */
-              (2 * 12 + 4)  * TUNING_NUM_SEMITONE_STEPS,  /*  5x  */
-              (2 * 12 + 7)  * TUNING_NUM_SEMITONE_STEPS,  /*  6x  */
-              (2 * 12 + 10) * TUNING_NUM_SEMITONE_STEPS,  /*  7x  */
-              (3 * 12 + 0)  * TUNING_NUM_SEMITONE_STEPS,  /*  8x  */
-              (3 * 12 + 2)  * TUNING_NUM_SEMITONE_STEPS,  /*  9x  */
-              (3 * 12 + 4)  * TUNING_NUM_SEMITONE_STEPS,  /* 10x  */
-              (3 * 12 + 6)  * TUNING_NUM_SEMITONE_STEPS,  /* 11x  */
-              (3 * 12 + 7)  * TUNING_NUM_SEMITONE_STEPS,  /* 12x  */
-              (3 * 12 + 8)  * TUNING_NUM_SEMITONE_STEPS,  /* 13x  */
-              (3 * 12 + 10) * TUNING_NUM_SEMITONE_STEPS,  /* 14x  */
-              (3 * 12 + 11) * TUNING_NUM_SEMITONE_STEPS,  /* 15x  */
-              (4 * 12 + 0)  * TUNING_NUM_SEMITONE_STEPS   /* 16x  */
+            { 0 * 12 + 0,   /*  1x  */
+              1 * 12 + 0,   /*  2x  */
+              1 * 12 + 7,   /*  3x  */
+              2 * 12 + 0,   /*  4x  */
+              2 * 12 + 4,   /*  5x  */
+              2 * 12 + 7,   /*  6x  */
+              2 * 12 + 10,  /*  7x  */
+              3 * 12 + 0,   /*  8x  */
+              3 * 12 + 2,   /*  9x  */
+              3 * 12 + 4,   /* 10x  */
+              3 * 12 + 6,   /* 11x  */
+              3 * 12 + 7,   /* 12x  */
+              3 * 12 + 8,   /* 13x  */
+              3 * 12 + 10,  /* 14x  */
+              3 * 12 + 11,  /* 15x  */
+              4 * 12 + 0    /* 16x  */
             };
 
 /* detune table */
 static int  S_voice_detune_table[PATCH_OSC_DETUNE_NUM_VALUES] = 
-            {-(9  * TUNING_NUM_SEMITONE_STEPS) / 100, 
-             -(6  * TUNING_NUM_SEMITONE_STEPS) / 100, 
-             -(3  * TUNING_NUM_SEMITONE_STEPS) / 100, 
-              (0  * TUNING_NUM_SEMITONE_STEPS) / 100, 
-              (3  * TUNING_NUM_SEMITONE_STEPS) / 100, 
-              (6  * TUNING_NUM_SEMITONE_STEPS) / 100, 
-              (9  * TUNING_NUM_SEMITONE_STEPS) / 100 
+            { (-12 * TUNING_NUM_SEMITONE_STEPS) / 128, 
+              (-8  * TUNING_NUM_SEMITONE_STEPS) / 128, 
+              (-4  * TUNING_NUM_SEMITONE_STEPS) / 128, 
+              ( 0  * TUNING_NUM_SEMITONE_STEPS) / 128, 
+              ( 4  * TUNING_NUM_SEMITONE_STEPS) / 128, 
+              ( 8  * TUNING_NUM_SEMITONE_STEPS) / 128, 
+              ( 12 * TUNING_NUM_SEMITONE_STEPS) / 128 
             };
+
+/* pitch wheel range table */
+static int  S_voice_pitch_wheel_max_table[PATCH_PITCH_WHEEL_RANGE_NUM_VALUES];
 
 /* phase increment table */
 static unsigned int S_voice_wave_phase_increment_table[TUNING_NUM_INDICES];
@@ -143,12 +144,16 @@ short int voice_reset_all()
     {
       v->osc_waveform[m] = PATCH_OSC_WAVEFORM_DEFAULT;
       v->osc_phi[m] = PATCH_OSC_PHI_DEFAULT;
+      v->osc_freq_mode[m] = PATCH_OSC_FREQ_MODE_DEFAULT;
 
-      v->osc_pitch_offset[m] = 0;
+      v->osc_note_offset[m] = 0;
 
-      v->osc_pitch_offset[m] += S_voice_multiple_table[PATCH_OSC_MULTIPLE_DEFAULT - PATCH_OSC_MULTIPLE_LOWER_BOUND];
-      v->osc_pitch_offset[m] -= S_voice_multiple_table[PATCH_OSC_DIVISOR_DEFAULT - PATCH_OSC_DIVISOR_LOWER_BOUND];
-      v->osc_pitch_offset[m] += S_voice_detune_table[PATCH_OSC_DETUNE_DEFAULT - PATCH_OSC_DETUNE_LOWER_BOUND];
+      v->osc_note_offset[m] += S_voice_multiple_table[PATCH_OSC_MULTIPLE_DEFAULT - PATCH_OSC_MULTIPLE_LOWER_BOUND];
+      v->osc_note_offset[m] -= S_voice_multiple_table[PATCH_OSC_DIVISOR_DEFAULT - PATCH_OSC_DIVISOR_LOWER_BOUND];
+
+      v->osc_detune_offset[m] = S_voice_detune_table[PATCH_OSC_DETUNE_DEFAULT - PATCH_OSC_DETUNE_LOWER_BOUND];
+
+      v->osc_routing[m] = PATCH_OSC_ROUTING_CLEAR;
     }
 
     /* currently playing note, pitch indices */
@@ -179,22 +184,25 @@ short int voice_reset_all()
     v->chorus_base = 0;
     v->chorus_extra = 0;
 
-    v->vibrato_adjustment = 0;
-    v->chorus_adjustment = 0;
+    /* pitch wheel */
+    v->pitch_wheel_mode = PATCH_PITCH_WHEEL_MODE_BEND;
+    v->pitch_wheel_max = 
+      S_voice_pitch_wheel_max_table[PATCH_PITCH_WHEEL_RANGE_DEFAULT - PATCH_PITCH_WHEEL_RANGE_LOWER_BOUND];
 
-    /* pitch wheel, sweep */
-    v->pitch_wheel_max = 0;
-
+    /* pitch envelope, sweep */
+    v->peg_input = 0;
     v->sweep_input = 0;
 
-    /* routing */
-    v->routing = VOICE_ROUTING_CLEAR;
+    /* midi controller routing */
+    v->mod_wheel_routing = PATCH_MIDI_CONT_ROUTING_CLEAR;
+    v->aftertouch_routing = PATCH_MIDI_CONT_ROUTING_CLEAR;
+    v->exp_pedal_routing = PATCH_MIDI_CONT_ROUTING_CLEAR;
 
     /* midi controller positions */
-    v->mod_wheel_pos = 0;
-    v->aftertouch_pos = 0;
-    v->exp_pedal_pos = 0;
-    v->pitch_wheel_pos = 0;
+    v->mod_wheel_pos = MIDI_CONT_UNI_WHEEL_DEFAULT;
+    v->aftertouch_pos = MIDI_CONT_UNI_WHEEL_DEFAULT;
+    v->exp_pedal_pos = MIDI_CONT_UNI_WHEEL_DEFAULT;
+    v->pitch_wheel_pos = MIDI_CONT_BI_WHEEL_DEFAULT;
 
     /* output level */
     v->level = 0;
@@ -263,32 +271,56 @@ short int voice_load_patch(int voice_index, int patch_index)
     else
       v->osc_phi[m] = PATCH_OSC_PHI_DEFAULT;
 
-    /* oscillator pitch index */
-    v->osc_pitch_offset[m] = 0;
-
-    if ((p->osc_multiple[m] >= PATCH_OSC_MULTIPLE_LOWER_BOUND) && 
-        (p->osc_multiple[m] <= PATCH_OSC_MULTIPLE_UPPER_BOUND))
+    /* oscillator frequency mode */
+    if ((p->osc_freq_mode[m] >= PATCH_OSC_FREQ_MODE_LOWER_BOUND) && 
+        (p->osc_freq_mode[m] <= PATCH_OSC_FREQ_MODE_UPPER_BOUND))
     {
-      v->osc_pitch_offset[m] += S_voice_multiple_table[p->osc_multiple[m] - PATCH_OSC_MULTIPLE_LOWER_BOUND];
+      v->osc_freq_mode[m] = p->osc_freq_mode[m];
     }
     else
-      v->osc_pitch_offset[m] += S_voice_multiple_table[PATCH_OSC_MULTIPLE_DEFAULT - PATCH_OSC_MULTIPLE_LOWER_BOUND];
+      v->osc_freq_mode[m] = PATCH_OSC_FREQ_MODE_DEFAULT;
 
-    if ((p->osc_divisor[m] >= PATCH_OSC_DIVISOR_LOWER_BOUND) && 
-        (p->osc_divisor[m] <= PATCH_OSC_DIVISOR_UPPER_BOUND))
+    /* oscillator pitch offset (in semitones) */
+    if (v->osc_freq_mode[m] == PATCH_OSC_FREQ_MODE_FIXED)
     {
-      v->osc_pitch_offset[m] -= S_voice_multiple_table[p->osc_divisor[m] - PATCH_OSC_DIVISOR_LOWER_BOUND];
+      v->osc_note_offset[m] = TUNING_NOTE_C0;
+
+      if ((p->osc_octave[m] >= PATCH_OSC_OCTAVE_LOWER_BOUND) && 
+          (p->osc_octave[m] <= PATCH_OSC_OCTAVE_UPPER_BOUND))
+      {
+        v->osc_note_offset[m] += 12 * (p->osc_octave[m] - PATCH_OSC_OCTAVE_LOWER_BOUND);
+      }
+      else
+        v->osc_note_offset[m] += 12 * (PATCH_OSC_OCTAVE_DEFAULT - PATCH_OSC_OCTAVE_LOWER_BOUND);
+
+      if ((p->osc_note[m] >= PATCH_OSC_NOTE_LOWER_BOUND) && 
+          (p->osc_note[m] <= PATCH_OSC_NOTE_UPPER_BOUND))
+      {
+        v->osc_note_offset[m] += p->osc_note[m] - PATCH_OSC_NOTE_LOWER_BOUND;
+      }
+      else
+        v->osc_note_offset[m] += PATCH_OSC_NOTE_DEFAULT - PATCH_OSC_NOTE_LOWER_BOUND;
     }
     else
-      v->osc_pitch_offset[m] -= S_voice_multiple_table[PATCH_OSC_DIVISOR_DEFAULT - PATCH_OSC_DIVISOR_LOWER_BOUND];
-
-    if ((p->osc_detune[m] >= PATCH_OSC_DETUNE_LOWER_BOUND) && 
-        (p->osc_detune[m] <= PATCH_OSC_DETUNE_UPPER_BOUND))
     {
-      v->osc_pitch_offset[m] += S_voice_detune_table[p->osc_detune[m] - PATCH_OSC_DETUNE_LOWER_BOUND];
+      v->osc_note_offset[m] = 0;
+
+      if ((p->osc_multiple[m] >= PATCH_OSC_MULTIPLE_LOWER_BOUND) && 
+          (p->osc_multiple[m] <= PATCH_OSC_MULTIPLE_UPPER_BOUND))
+      {
+        v->osc_note_offset[m] += S_voice_multiple_table[p->osc_multiple[m] - PATCH_OSC_MULTIPLE_LOWER_BOUND];
+      }
+      else
+        v->osc_note_offset[m] += S_voice_multiple_table[PATCH_OSC_MULTIPLE_DEFAULT - PATCH_OSC_MULTIPLE_LOWER_BOUND];
+
+      if ((p->osc_divisor[m] >= PATCH_OSC_DIVISOR_LOWER_BOUND) && 
+          (p->osc_divisor[m] <= PATCH_OSC_DIVISOR_UPPER_BOUND))
+      {
+        v->osc_note_offset[m] -= S_voice_multiple_table[p->osc_divisor[m] - PATCH_OSC_DIVISOR_LOWER_BOUND];
+      }
+      else
+        v->osc_note_offset[m] -= S_voice_multiple_table[PATCH_OSC_DIVISOR_DEFAULT - PATCH_OSC_DIVISOR_LOWER_BOUND];
     }
-    else
-      v->osc_pitch_offset[m] += S_voice_detune_table[PATCH_OSC_DETUNE_DEFAULT - PATCH_OSC_DETUNE_LOWER_BOUND];
 
     /* for even periods only waveforms, apply an extra shift down by 1 octave */
     if ((p->osc_waveform[m] == PATCH_OSC_WAVEFORM_EPO_SINE)       || 
@@ -298,47 +330,50 @@ short int voice_load_patch(int voice_index, int patch_index)
         (p->osc_waveform[m] == PATCH_OSC_WAVEFORM_EPO_SAW_UP)     || 
         (p->osc_waveform[m] == PATCH_OSC_WAVEFORM_EPO_TRIANGLE))
     {
-      v->osc_pitch_offset[m] -= (1 * 12) * TUNING_NUM_SEMITONE_STEPS;
+      v->osc_note_offset[m] -= 1 * 12;
     }
+
+    /* oscillator detune */
+    if ((p->osc_detune[m] >= PATCH_OSC_DETUNE_LOWER_BOUND) && 
+        (p->osc_detune[m] <= PATCH_OSC_DETUNE_UPPER_BOUND))
+    {
+      v->osc_detune_offset[m] = S_voice_detune_table[p->osc_detune[m] - PATCH_OSC_DETUNE_LOWER_BOUND];
+    }
+    else
+      v->osc_detune_offset[m] = S_voice_detune_table[PATCH_OSC_DETUNE_DEFAULT - PATCH_OSC_DETUNE_LOWER_BOUND];
 
     /* determine oscillator notes and pitch indices */
     VOICE_COMPUTE_PITCH_INDEX(m)
 
-    /* routing */
-    v->routing = VOICE_ROUTING_CLEAR;
-
-    /* vibrato routing */
-    if (p->mod_wheel_routing & PATCH_MIDI_CONT_ROUTING_FLAG_VIBRATO)
-      v->routing |= VOICE_ROUTING_FLAG_MOD_WHEEL_VIBRATO;
-    else
-      v->routing &= ~VOICE_ROUTING_FLAG_MOD_WHEEL_VIBRATO;
-
-    if (p->aftertouch_routing & PATCH_MIDI_CONT_ROUTING_FLAG_VIBRATO)
-      v->routing |= VOICE_ROUTING_FLAG_AFTERTOUCH_VIBRATO;
-    else
-      v->routing &= ~VOICE_ROUTING_FLAG_AFTERTOUCH_VIBRATO;
-
-    if (p->exp_pedal_routing & PATCH_MIDI_CONT_ROUTING_FLAG_VIBRATO)
-      v->routing |= VOICE_ROUTING_FLAG_EXP_PEDAL_VIBRATO;
-    else
-      v->routing &= ~VOICE_ROUTING_FLAG_EXP_PEDAL_VIBRATO;
-
-    /* chorus routing */
-    if (p->mod_wheel_routing & PATCH_MIDI_CONT_ROUTING_FLAG_CHORUS)
-      v->routing |= VOICE_ROUTING_FLAG_MOD_WHEEL_CHORUS;
-    else
-      v->routing &= ~VOICE_ROUTING_FLAG_MOD_WHEEL_CHORUS;
-
-    if (p->aftertouch_routing & PATCH_MIDI_CONT_ROUTING_FLAG_CHORUS)
-      v->routing |= VOICE_ROUTING_FLAG_AFTERTOUCH_CHORUS;
-    else
-      v->routing &= ~VOICE_ROUTING_FLAG_AFTERTOUCH_CHORUS;
-
-    if (p->exp_pedal_routing & PATCH_MIDI_CONT_ROUTING_FLAG_CHORUS)
-      v->routing |= VOICE_ROUTING_FLAG_EXP_PEDAL_CHORUS;
-    else
-      v->routing &= ~VOICE_ROUTING_FLAG_EXP_PEDAL_CHORUS;
+    /* oscillator routing */
+    v->osc_routing[m] = p->osc_routing[m] & PATCH_OSC_ROUTING_MASK;
   }
+
+  /* pitch wheel */
+  if ((p->pitch_wheel_mode >= PATCH_PITCH_WHEEL_MODE_LOWER_BOUND) && 
+      (p->pitch_wheel_mode <= PATCH_PITCH_WHEEL_MODE_UPPER_BOUND))
+  {
+    v->pitch_wheel_mode = p->pitch_wheel_mode;
+  }
+  else
+    v->pitch_wheel_mode = PATCH_PITCH_WHEEL_MODE_DEFAULT;
+
+  if ((p->pitch_wheel_range >= PATCH_PITCH_WHEEL_RANGE_LOWER_BOUND) && 
+      (p->pitch_wheel_range <= PATCH_PITCH_WHEEL_RANGE_UPPER_BOUND))
+  {
+    v->pitch_wheel_max = 
+      S_voice_pitch_wheel_max_table[p->pitch_wheel_range - PATCH_PITCH_WHEEL_RANGE_LOWER_BOUND];
+  }
+  else
+  {
+    v->pitch_wheel_max = 
+      S_voice_pitch_wheel_max_table[PATCH_PITCH_WHEEL_RANGE_DEFAULT - PATCH_PITCH_WHEEL_RANGE_LOWER_BOUND];
+  }
+
+  /* midi controller routing */
+  v->mod_wheel_routing = p->mod_wheel_routing & PATCH_MIDI_CONT_ROUTING_MASK;
+  v->aftertouch_routing = p->aftertouch_routing & PATCH_MIDI_CONT_ROUTING_MASK;
+  v->exp_pedal_routing = p->exp_pedal_routing & PATCH_MIDI_CONT_ROUTING_MASK;
 
   return 0;
 }
@@ -423,7 +458,10 @@ short int voice_update_all()
 
   short int combined_pos;
 
-  int pitch_adjustment;
+  int vibrato_adjustment;
+  int pitch_env_adjustment;
+  int pitch_wheel_adjustment;
+  int chorus_adjustment;
 
   int adjusted_pitch_index[VOICE_NUM_OSCILLATOR_SETS];
 
@@ -436,42 +474,66 @@ short int voice_update_all()
   {
     v = &G_voice_bank[k];
 
-    /* compute vibrato & chorus adjustments */
-    VOICE_COMPUTE_COMBINED_POSITION(VIBRATO)
-
-    v->vibrato_adjustment = v->vibrato_base;
-    v->vibrato_adjustment += 
-      (v->vibrato_extra * combined_pos) / MIDI_CONT_UNI_WHEEL_DIVISOR;
-
-    VOICE_COMPUTE_COMBINED_POSITION(CHORUS)
-
-    v->chorus_adjustment = v->chorus_base;
-    v->chorus_adjustment += 
-      (v->chorus_extra * combined_pos) / MIDI_CONT_UNI_WHEEL_DIVISOR;
-
-    /* update adjustments */
-    pitch_adjustment = 0;
-
-    pitch_adjustment += v->vibrato_adjustment;
-
-#if 0
-    pitch_adjustment += v->sweep_input;
-    pitch_adjustment += v->pitch_wheel_pos;
-#endif
-
     /* update phases */
     for (m = 0; m < BANK_OSCILLATORS_PER_VOICE; m++)
     {
-      if ((v->osc_waveform[m] == PATCH_OSC_WAVEFORM_NOISE_SQUARE) || 
-          (v->osc_waveform[m] == PATCH_OSC_WAVEFORM_NOISE_SAW))
+      /* compute vibrato adjustment */
+      if (v->osc_routing[m] & PATCH_OSC_ROUTING_FLAG_VIBRATO)
       {
-        adjusted_pitch_index[0] = v->osc_pitch_index[m];
-        adjusted_pitch_index[1] = v->osc_pitch_index[m];
+        VOICE_COMPUTE_COMBINED_POSITION(VIBRATO)
+
+        vibrato_adjustment = v->vibrato_base;
+        vibrato_adjustment += 
+          (v->vibrato_extra * combined_pos) / MIDI_CONT_UNI_WHEEL_DIVISOR;
       }
       else
+        vibrato_adjustment = 0;
+
+      /* compute pitch envelope adjustment */
+      if (v->osc_routing[m] & PATCH_OSC_ROUTING_FLAG_PITCH_ENV)
+        pitch_env_adjustment = v->peg_input;
+      else
+        pitch_env_adjustment = 0;
+
+      /* compute pitch wheel adjustment */
+      if (v->osc_routing[m] & PATCH_OSC_ROUTING_FLAG_PITCH_WHEEL)
       {
-        adjusted_pitch_index[0] = v->osc_pitch_index[m] + pitch_adjustment + v->chorus_adjustment;
-        adjusted_pitch_index[1] = v->osc_pitch_index[m] + pitch_adjustment - v->chorus_adjustment;
+        pitch_wheel_adjustment = 
+          (v->pitch_wheel_max * v->pitch_wheel_pos) / MIDI_CONT_BI_WHEEL_RADIUS;
+
+        if (v->pitch_wheel_mode == PATCH_PITCH_WHEEL_MODE_SEMITONES)
+        {
+          pitch_wheel_adjustment = 
+            (pitch_wheel_adjustment / TUNING_NUM_SEMITONE_STEPS) * TUNING_NUM_SEMITONE_STEPS;
+        }
+      }
+      else
+        pitch_wheel_adjustment = 0;
+
+      /* compute chorus adjustment */
+      VOICE_COMPUTE_COMBINED_POSITION(CHORUS)
+
+      chorus_adjustment = v->chorus_base;
+      chorus_adjustment += 
+        (v->chorus_extra * combined_pos) / MIDI_CONT_UNI_WHEEL_DIVISOR;
+
+      /* determine adjusted pitch indices */
+      adjusted_pitch_index[0] = v->osc_pitch_index[m];
+
+      adjusted_pitch_index[0] += vibrato_adjustment;
+      adjusted_pitch_index[0] += pitch_env_adjustment;
+      adjusted_pitch_index[0] += pitch_wheel_adjustment;
+
+      if (v->osc_freq_mode[m] != PATCH_OSC_FREQ_MODE_FIXED)
+        adjusted_pitch_index[0] += v->sweep_input;
+
+      adjusted_pitch_index[1] = adjusted_pitch_index[0];
+
+      if ((v->osc_waveform[m] != PATCH_OSC_WAVEFORM_NOISE_SQUARE) && 
+          (v->osc_waveform[m] != PATCH_OSC_WAVEFORM_NOISE_SAW))
+      {
+        adjusted_pitch_index[0] += chorus_adjustment;
+        adjusted_pitch_index[1] -= chorus_adjustment;
       }
 
       for (n = 0; n < VOICE_NUM_OSCILLATOR_SETS; n++)
@@ -770,6 +832,12 @@ short int voice_generate_tables()
 
     S_voice_wave_phase_increment_table[m] = 
       (unsigned int) ((val * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
+  }
+
+  /* pitch wheel range table */
+  for (m = 0; m < PATCH_PITCH_WHEEL_RANGE_NUM_VALUES; m++)
+  {
+    S_voice_pitch_wheel_max_table[m] = (m + 1) * TUNING_NUM_SEMITONE_STEPS;
   }
 
 #if 0
