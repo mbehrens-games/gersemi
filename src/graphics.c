@@ -24,10 +24,6 @@ int G_viewport_h;
 static int S_window_w;
 static int S_window_h;
 
-/* vbo size variables */
-int G_tile_layer_counts[GRAPHICS_NUM_TILE_LAYERS];
-int G_sprite_layer_counts[GRAPHICS_NUM_SPRITE_LAYERS];
-
 /* opengl vbo ids */
 GLuint G_vertex_array_id;
 
@@ -81,6 +77,15 @@ unsigned short    G_index_buffer_postprocessing_all[6];
 GLfloat           G_mvp_matrix_overscan[16];
 GLfloat           G_mvp_matrix_intermediate[16];
 GLfloat           G_mvp_matrix_window[16];
+
+/* tiles & sprites vbo index tables */
+int G_tile_layer_index[GRAPHICS_NUM_TILE_LAYERS];
+int G_tile_layer_count[GRAPHICS_NUM_TILE_LAYERS];
+int G_tile_layer_max[GRAPHICS_NUM_TILE_LAYERS];
+
+int G_sprite_layer_index[GRAPHICS_NUM_SPRITE_LAYERS];
+int G_sprite_layer_count[GRAPHICS_NUM_SPRITE_LAYERS];
+int G_sprite_layer_max[GRAPHICS_NUM_SPRITE_LAYERS];
 
 /*******************************************************************************
 ** graphics_create_opengl_objects()
@@ -319,13 +324,6 @@ short int graphics_create_opengl_objects()
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, G_index_buffer_id_sprites);
   glBufferData( GL_ELEMENT_ARRAY_BUFFER, GRAPHICS_MAX_SPRITES * 6 * sizeof(unsigned short),
                 G_index_buffer_sprites, GL_DYNAMIC_DRAW);
-
-  /* initialize vbo counts */
-  for (i = 0; i < GRAPHICS_NUM_TILE_LAYERS; i++)
-    G_tile_layer_counts[i] = 0;
-
-  for (i = 0; i < GRAPHICS_NUM_SPRITE_LAYERS; i++)
-    G_sprite_layer_counts[i] = 0;
 
   /* set up postprocessing overscan vertex & texture coordinate buffers */
   G_vertex_buffer_postprocessing_overscan[0] = 0.0f;
@@ -703,6 +701,46 @@ short int graphics_decrease_window_size()
   if (G_graphics_resolution > 0)
   {
     graphics_set_window_size(G_graphics_resolution - 1);
+  }
+
+  return 0;
+}
+
+/*******************************************************************************
+** graphics_generate_tables()
+*******************************************************************************/
+short int graphics_generate_tables()
+{
+  int m;
+
+  int index;
+
+  /* tile layers */
+  index = 0;
+
+  for (m = 0; m < GRAPHICS_NUM_TILE_LAYERS; m++)
+  {
+    G_tile_layer_index[m] = index;
+    G_tile_layer_count[m] = 0;
+
+    if (m == GRAPHICS_TILE_LAYER_BACKGROUND)
+      index += GRAPHICS_MAX_BACKGROUND_TILES;
+  }
+
+  /* sprite layers */
+  index = 0;
+
+  for (m = 0; m < GRAPHICS_NUM_SPRITE_LAYERS; m++)
+  {
+    G_sprite_layer_index[m] = index;
+    G_sprite_layer_count[m] = 0;
+
+    if (m == GRAPHICS_SPRITE_LAYER_PANELS)
+      index += GRAPHICS_MAX_PANELS_SPRITES;
+    else if (m == GRAPHICS_SPRITE_LAYER_WIDGETS)
+      index += GRAPHICS_MAX_WIDGETS_SPRITES;
+    else if (m == GRAPHICS_SPRITE_LAYER_TEXT)
+      index += GRAPHICS_MAX_TEXT_SPRITES;
   }
 
   return 0;

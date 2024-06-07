@@ -122,7 +122,9 @@ short int program_loop_change_screen(int screen)
     G_timer_count = 0;
 
     G_current_scroll_amount = 0;
-    G_max_scroll_amount = LAYOUT_BAR_MAX_SCROLL_AMOUNT;
+    G_max_scroll_amount = 0;
+
+    /*G_max_scroll_amount = LAYOUT_BAR_MAX_SCROLL_AMOUNT;*/
 
     render_reset_vbos();
 

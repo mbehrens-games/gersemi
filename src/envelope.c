@@ -116,9 +116,9 @@ static int  S_envelope_multiple_table[PATCH_OSC_MULTIPLE_NUM_VALUES] =
 static unsigned int S_envelope_attack_phase_increment_table[ENVELOPE_NUM_RATES];
 static unsigned int S_envelope_decay_phase_increment_table[ENVELOPE_NUM_RATES];
 
-/* amplitude, transition table */
+/* amplitude, hold level table */
 static short int  S_envelope_amplitude_table[PATCH_ENV_LEVEL_NUM_VALUES];
-static short int  S_envelope_transition_table[PATCH_ENV_LEVEL_NUM_VALUES];
+static short int  S_envelope_hold_level_table[PATCH_ENV_LEVEL_NUM_VALUES];
 
 /* rate table */
 static short int  S_envelope_rate_table[PATCH_ENV_TIME_NUM_VALUES];
@@ -173,10 +173,10 @@ short int envelope_reset_all()
     e->freq_mode = PATCH_OSC_FREQ_MODE_DEFAULT;
     e->note_offset = 0;
 
-    /* transition level, hold mode */
-    e->transition_level = S_envelope_transition_table[PATCH_ENV_LEVEL_DEFAULT - PATCH_ENV_LEVEL_LOWER_BOUND];
+    /* hold parameters */
+    e->hold_level = S_envelope_hold_level_table[PATCH_ENV_LEVEL_DEFAULT - PATCH_ENV_LEVEL_LOWER_BOUND];
     e->hold_mode = PATCH_ENV_HOLD_MODE_DEFAULT;
-    e->hold_switch = MIDI_CONT_SWITCH_DEFAULT;
+    e->hold_switch = MIDI_CONT_TOGGLE_SWITCH_OFF;
 
     /* routing */
     e->env_routing = PATCH_ENV_ROUTING_CLEAR;
@@ -230,23 +230,30 @@ short int envelope_reset_all()
 /*******************************************************************************
 ** envelope_load_patch()
 *******************************************************************************/
-short int envelope_load_patch(int voice_index, int patch_index)
+short int envelope_load_patch(int voice_index, 
+                              int cart_index, int patch_index)
 {
   int m;
 
   envelope* e;
+
+  cart* c;
   patch* p;
 
   /* make sure that the voice index is valid */
   if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
     return 1;
 
-  /* make sure that the patch index is valid */
+  /* make sure that the cart & patch indices are valid */
+  if (BANK_CART_INDEX_IS_NOT_VALID(cart_index))
+    return 1;
+
   if (BANK_PATCH_INDEX_IS_NOT_VALID(patch_index))
     return 1;
 
-  /* obtain patch pointer */
-  p = &G_patch_bank[patch_index];
+  /* obtain cart & patch pointers */
+  c = &G_cart_bank[cart_index];
+  p = &(c->patches[patch_index]);
 
   for (m = 0; m < BANK_ENVELOPES_PER_VOICE; m++)
   {
@@ -298,14 +305,14 @@ short int envelope_load_patch(int voice_index, int patch_index)
     else
       e->amplitude_adjustment = S_envelope_amplitude_table[PATCH_ENV_LEVEL_DEFAULT - PATCH_ENV_LEVEL_LOWER_BOUND];
 
-    /* transition level */
-    if ((p->env_transition[m] >= PATCH_ENV_LEVEL_LOWER_BOUND) && 
-        (p->env_transition[m] <= PATCH_ENV_LEVEL_UPPER_BOUND))
+    /* hold level */
+    if ((p->env_hold_level[m] >= PATCH_ENV_LEVEL_LOWER_BOUND) && 
+        (p->env_hold_level[m] <= PATCH_ENV_LEVEL_UPPER_BOUND))
     {
-      e->transition_level = S_envelope_transition_table[p->env_transition[m] - PATCH_ENV_LEVEL_LOWER_BOUND];
+      e->hold_level = S_envelope_hold_level_table[p->env_hold_level[m] - PATCH_ENV_LEVEL_LOWER_BOUND];
     }
     else
-      e->transition_level = S_envelope_transition_table[PATCH_ENV_LEVEL_DEFAULT - PATCH_ENV_LEVEL_LOWER_BOUND];
+      e->hold_level = S_envelope_hold_level_table[PATCH_ENV_LEVEL_DEFAULT - PATCH_ENV_LEVEL_LOWER_BOUND];
 
     /* hold mode */
     if ((p->env_hold_mode[m] >= PATCH_ENV_HOLD_MODE_LOWER_BOUND) && 
@@ -416,9 +423,9 @@ short int envelope_load_patch(int voice_index, int patch_index)
 }
 
 /*******************************************************************************
-** envelope_set_note()
+** envelope_note_on()
 *******************************************************************************/
-short int envelope_set_note(int voice_index, int note, int vel)
+short int envelope_note_on(int voice_index, int note, int vel, int pedal_state)
 {
   int m;
 
@@ -483,46 +490,24 @@ short int envelope_set_note(int voice_index, int note, int vel)
     }
     else
       e->velocity_adjustment = 0;
-  }
-
-  return 0;
-}
-
-/*******************************************************************************
-** envelope_trigger()
-*******************************************************************************/
-short int envelope_trigger(int voice_index, int pedal_state)
-{
-  int m;
-
-  envelope* e;
-
-  /* make sure that the voice index is valid */
-  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
-    return 1;
-
-  for (m = 0; m < BANK_ENVELOPES_PER_VOICE; m++)
-  {
-    /* obtain envelope pointer */
-    e = &G_envelope_bank[voice_index * BANK_ENVELOPES_PER_VOICE + m];
 
     /* set the envelope to its initial stage */
     ENVELOPE_SET_STAGE(ATTACK)
 
     /* set the hold switch */
-    if (pedal_state == MIDI_CONT_SWITCH_STATE_ON)
-      e->hold_switch = MIDI_CONT_SWITCH_STATE_ON;
+    if (pedal_state == MIDI_CONT_SUSTAIN_PEDAL_DOWN)
+      e->hold_switch = MIDI_CONT_TOGGLE_SWITCH_ON;
     else
-      e->hold_switch = MIDI_CONT_SWITCH_STATE_OFF;
+      e->hold_switch = MIDI_CONT_TOGGLE_SWITCH_OFF;
   }
 
   return 0;
 }
 
 /*******************************************************************************
-** envelope_release()
+** envelope_note_off()
 *******************************************************************************/
-short int envelope_release(int voice_index)
+short int envelope_note_off(int voice_index)
 {
   int m;
 
@@ -537,12 +522,15 @@ short int envelope_release(int voice_index)
     /* obtain envelope pointer */
     e = &G_envelope_bank[voice_index * BANK_ENVELOPES_PER_VOICE + m];
 
-    /* if this envelope is already released, continue */
+    /* if this envelope is already note_offd, continue */
     if (e->stage == ENVELOPE_STAGE_RELEASE)
       continue;
 
-    /* set envelope to the release stage */
+    /* set envelope to the note_off stage */
     ENVELOPE_SET_STAGE(RELEASE)
+
+    /* reset the hold switch */
+    e->hold_switch = MIDI_CONT_TOGGLE_SWITCH_OFF;
   }
 
   return 0;
@@ -603,14 +591,14 @@ short int envelope_update_all()
           e->attenuation += 1;
         else if (e->hold_mode == PATCH_ENV_HOLD_MODE_WITH_PEDAL)
         {
-          if (e->hold_switch == MIDI_CONT_SWITCH_STATE_ON)
+          if (e->hold_switch == MIDI_CONT_TOGGLE_SWITCH_ON)
             e->attenuation += 0;
           else
             e->attenuation += 1;
         }
         else if (e->hold_mode == PATCH_ENV_HOLD_MODE_WITHOUT_PEDAL)
         {
-          if (e->hold_switch == MIDI_CONT_SWITCH_STATE_OFF)
+          if (e->hold_switch == MIDI_CONT_TOGGLE_SWITCH_OFF)
             e->attenuation += 0;
           else
             e->attenuation += 1;
@@ -636,7 +624,7 @@ short int envelope_update_all()
         ENVELOPE_SET_STAGE(DECAY)
       }
       else if ( (e->stage == ENVELOPE_STAGE_DECAY) && 
-                (e->attenuation >= e->transition_level))
+                (e->attenuation >= e->hold_level))
       {
         ENVELOPE_SET_STAGE(SUSTAIN)
       }
@@ -714,14 +702,14 @@ short int envelope_generate_tables()
       ENVELOPE_AMPLITUDE_STEP * (PATCH_ENV_LEVEL_UPPER_BOUND - m);
   }
 
-  /* transition table */
-  S_envelope_transition_table[0] = ENVELOPE_MAX_ATTENUATION;
+  /* hold level table */
+  S_envelope_hold_level_table[0] = ENVELOPE_MAX_ATTENUATION;
 
   for ( m = PATCH_ENV_LEVEL_LOWER_BOUND + 1; 
         m <= PATCH_ENV_LEVEL_UPPER_BOUND; 
         m++)
   {
-    S_envelope_transition_table[m - PATCH_ENV_LEVEL_LOWER_BOUND] = 
+    S_envelope_hold_level_table[m - PATCH_ENV_LEVEL_LOWER_BOUND] = 
       ENVELOPE_TRANSITION_STEP * (PATCH_ENV_LEVEL_UPPER_BOUND - m);
   }
 

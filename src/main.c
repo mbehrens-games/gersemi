@@ -125,6 +125,9 @@ int main(int argc, char *argv[])
     goto cleanup_textures;
   }
 
+  /* generate vbo index tables */
+  graphics_generate_tables();
+
   /* initialize sample frame */
   frame_reset_buffer();
 
@@ -148,10 +151,10 @@ int main(int argc, char *argv[])
   synth_reset_banks();
 
   /* testing: load test cart file */
-  fileio_cart_load(1, G_path_cart_test_1);
+  fileio_cart_load(0, G_path_cart_test_1);
 
   /* testing */
-  instrument_load_patch(G_patch_edit_instrument_index, 1, 1);
+  instrument_load_patch(G_patch_edit_instrument_index, 0, 0);
 
   /* initialize program screen */
   program_loop_change_screen(PROGRAM_SCREEN_CART);
@@ -285,7 +288,7 @@ int main(int argc, char *argv[])
   /* cleanup window and quit */
 cleanup_all:
   /* testing: save test patch set file */
-  fileio_cart_save(1, G_path_cart_test_1);
+  fileio_cart_save(0, G_path_cart_test_1);
 
   audio_deinit();
 cleanup_textures:

@@ -118,9 +118,9 @@
 #define RENDER_DRAW_BACKGROUND()                                               \
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, G_index_buffer_id_tiles);              \
   glDrawElements( GL_TRIANGLES,                                                \
-                  6 * G_tile_layer_counts[GRAPHICS_TILE_LAYER_BACKGROUND],     \
+                  6 * G_tile_layer_count[GRAPHICS_TILE_LAYER_BACKGROUND],      \
                   GL_UNSIGNED_SHORT,                                           \
-                  (void *) (sizeof(unsigned short) * 6 * GRAPHICS_BACKGROUND_TILES_START_INDEX));
+                  (void *) (sizeof(unsigned short) * 6 * G_tile_layer_index[GRAPHICS_TILE_LAYER_BACKGROUND]));
 
 /* sprites */
 #define RENDER_BEGIN_SPRITE_RENDERING()                                        \
@@ -144,23 +144,23 @@
 #define RENDER_DRAW_PANELS()                                                   \
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, G_index_buffer_id_sprites);            \
   glDrawElements( GL_TRIANGLES,                                                \
-                  6 * G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_PANELS],     \
+                  6 * G_sprite_layer_count[GRAPHICS_SPRITE_LAYER_PANELS],      \
                   GL_UNSIGNED_SHORT,                                           \
-                  (void *) (sizeof(unsigned short) * 6 * GRAPHICS_PANELS_SPRITES_START_INDEX));
+                  (void *) (sizeof(unsigned short) * 6 * G_sprite_layer_index[GRAPHICS_SPRITE_LAYER_PANELS]));
 
 #define RENDER_DRAW_WIDGETS()                                                  \
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, G_index_buffer_id_sprites);            \
   glDrawElements( GL_TRIANGLES,                                                \
-                  6 * G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_WIDGETS],    \
+                  6 * G_sprite_layer_count[GRAPHICS_SPRITE_LAYER_WIDGETS],     \
                   GL_UNSIGNED_SHORT,                                           \
-                  (void *) (sizeof(unsigned short) * 6 * GRAPHICS_WIDGETS_SPRITES_START_INDEX));
+                  (void *) (sizeof(unsigned short) * 6 * G_sprite_layer_index[GRAPHICS_SPRITE_LAYER_WIDGETS]));
 
 #define RENDER_DRAW_TEXT()                                                     \
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, G_index_buffer_id_sprites);            \
   glDrawElements( GL_TRIANGLES,                                                \
-                  6 * G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_TEXT],       \
+                  6 * G_sprite_layer_count[GRAPHICS_SPRITE_LAYER_TEXT],        \
                   GL_UNSIGNED_SHORT,                                           \
-                  (void *) (sizeof(unsigned short) * 6 * GRAPHICS_TEXT_SPRITES_START_INDEX));
+                  (void *) (sizeof(unsigned short) * 6 * G_sprite_layer_index[GRAPHICS_SPRITE_LAYER_TEXT]));
 
 /* postprocessing */
 #define RENDER_BEGIN_POSTPROCESSING_OVERSCAN_TO_OVERSCAN()                          \
@@ -240,13 +240,13 @@
 *******************************************************************************/
 short int render_reset_vbos()
 {
-  int k;
+  int m;
 
-  for (k = 0; k < GRAPHICS_NUM_TILE_LAYERS; k++)
-    G_tile_layer_counts[k] = 0;
+  for (m = 0; m < GRAPHICS_NUM_TILE_LAYERS; m++)
+    G_tile_layer_count[m] = 0;
 
-  for (k = 0; k < GRAPHICS_NUM_SPRITE_LAYERS; k++)
-    G_sprite_layer_counts[k] = 0;
+  for (m = 0; m < GRAPHICS_NUM_SPRITE_LAYERS; m++)
+    G_sprite_layer_count[m] = 0;
 
   return 0;
 }
@@ -262,7 +262,7 @@ short int render_all()
   RENDER_SET_SHADER_A()
   RENDER_BEGIN_TILE_RENDERING()
 
-  if (G_tile_layer_counts[GRAPHICS_TILE_LAYER_BACKGROUND] > 0)
+  if (G_tile_layer_count[GRAPHICS_TILE_LAYER_BACKGROUND] > 0)
   {
     RENDER_DRAW_BACKGROUND()
   }
@@ -275,17 +275,17 @@ short int render_all()
   RENDER_SET_SHADER_B()
   RENDER_BEGIN_SPRITE_RENDERING()
 
-  if (G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_PANELS] > 0)
+  if (G_sprite_layer_count[GRAPHICS_SPRITE_LAYER_PANELS] > 0)
   {
     RENDER_DRAW_PANELS()
   }
 
-  if (G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_WIDGETS] > 0)
+  if (G_sprite_layer_count[GRAPHICS_SPRITE_LAYER_WIDGETS] > 0)
   {
     RENDER_DRAW_WIDGETS()
   }
 
-  if (G_sprite_layer_counts[GRAPHICS_SPRITE_LAYER_TEXT] > 0)
+  if (G_sprite_layer_count[GRAPHICS_SPRITE_LAYER_TEXT] > 0)
   {
     RENDER_DRAW_TEXT()
   }

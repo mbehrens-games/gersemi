@@ -45,10 +45,6 @@ enum
 
 #define GRAPHICS_MAX_TILES  GRAPHICS_MAX_BACKGROUND_TILES
 
-#define GRAPHICS_BACKGROUND_TILES_START_INDEX 0
-#define GRAPHICS_BACKGROUND_TILES_END_INDEX   ( GRAPHICS_BACKGROUND_TILES_START_INDEX + \
-                                                GRAPHICS_MAX_BACKGROUND_TILES)
-
 /* the maximum number of sprites is determined as follows:  */
 /*   number of 8x8  (1 screen): 50 * 28 = 1400              */
 /* overall, this is 3 * 1400 = 4200                         */
@@ -59,18 +55,6 @@ enum
 #define GRAPHICS_MAX_SPRITES  ( GRAPHICS_MAX_PANELS_SPRITES +                  \
                                 GRAPHICS_MAX_WIDGETS_SPRITES +                 \
                                 GRAPHICS_MAX_TEXT_SPRITES)
-
-#define GRAPHICS_PANELS_SPRITES_START_INDEX   0
-#define GRAPHICS_PANELS_SPRITES_END_INDEX     ( GRAPHICS_PANELS_SPRITES_START_INDEX + \
-                                                GRAPHICS_MAX_PANELS_SPRITES)
-
-#define GRAPHICS_WIDGETS_SPRITES_START_INDEX  GRAPHICS_PANELS_SPRITES_END_INDEX
-#define GRAPHICS_WIDGETS_SPRITES_END_INDEX    ( GRAPHICS_WIDGETS_SPRITES_START_INDEX + \
-                                                GRAPHICS_MAX_WIDGETS_SPRITES)
-
-#define GRAPHICS_TEXT_SPRITES_START_INDEX   GRAPHICS_WIDGETS_SPRITES_END_INDEX
-#define GRAPHICS_TEXT_SPRITES_END_INDEX     ( GRAPHICS_TEXT_SPRITES_START_INDEX + \
-                                              GRAPHICS_MAX_TEXT_SPRITES)
 
 /* the near and far planes are from 0.125 (near) to 1.375 (far)   */
 #define GRAPHICS_Z_LEVEL_BACKGROUND 1.25f
@@ -93,10 +77,6 @@ extern int G_graphics_resolution;
 
 extern int G_viewport_w;
 extern int G_viewport_h;
-
-/* vbo size variables */
-extern int G_tile_layer_counts[GRAPHICS_NUM_TILE_LAYERS];
-extern int G_sprite_layer_counts[GRAPHICS_NUM_SPRITE_LAYERS];
 
 /* opengl vbo ids */
 extern GLuint G_vertex_array_id;
@@ -152,6 +132,13 @@ extern GLfloat          G_mvp_matrix_overscan[16];
 extern GLfloat          G_mvp_matrix_intermediate[16];
 extern GLfloat          G_mvp_matrix_window[16];
 
+/* tiles & sprites vbo index tables */
+extern int G_tile_layer_index[GRAPHICS_NUM_TILE_LAYERS];
+extern int G_tile_layer_count[GRAPHICS_NUM_TILE_LAYERS];
+
+extern int G_sprite_layer_index[GRAPHICS_NUM_SPRITE_LAYERS];
+extern int G_sprite_layer_count[GRAPHICS_NUM_SPRITE_LAYERS];
+
 /* function declarations */
 short int graphics_create_opengl_objects();
 short int graphics_destroy_opengl_objects();
@@ -159,11 +146,11 @@ short int graphics_destroy_opengl_objects();
 short int graphics_set_graphics_resolution(int resolution);
 short int graphics_read_desktop_dimensions();
 
-short int graphics_setup_viewport_mvp_matrix_and_buffers();
-
 short int graphics_set_window_size(int res);
 short int graphics_increase_window_size();
 short int graphics_decrease_window_size();
+
+short int graphics_generate_tables();
 
 #endif
 

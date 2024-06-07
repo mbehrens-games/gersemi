@@ -39,10 +39,11 @@ extern peg G_peg_bank[BANK_NUM_PEGS];
 /* function declarations */
 short int peg_reset_all();
 
-short int peg_load_patch(int voice_index, int patch_index);
+short int peg_load_patch( int voice_index, 
+                          int cart_index, int patch_index);
 
-short int peg_trigger(int voice_index);
-short int peg_release(int voice_index);
+short int peg_note_on(int voice_index);
+short int peg_note_off(int voice_index);
 
 short int peg_update_all();
 

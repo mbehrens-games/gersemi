@@ -108,21 +108,28 @@ short int peg_reset_all()
 /*******************************************************************************
 ** peg_load_patch()
 *******************************************************************************/
-short int peg_load_patch(int voice_index, int patch_index)
+short int peg_load_patch( int voice_index, 
+                          int cart_index, int patch_index)
 {
   peg* e;
+
+  cart* c;
   patch* p;
 
   /* make sure that the voice index is valid */
   if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
     return 1;
 
-  /* make sure that the patch index is valid */
+  /* make sure that the cart & patch indices are valid */
+  if (BANK_CART_INDEX_IS_NOT_VALID(cart_index))
+    return 1;
+
   if (BANK_PATCH_INDEX_IS_NOT_VALID(patch_index))
     return 1;
 
-  /* obtain patch pointer */
-  p = &G_patch_bank[patch_index];
+  /* obtain cart & patch pointers */
+  c = &G_cart_bank[cart_index];
+  p = &(c->patches[patch_index]);
 
   /* obtain peg pointer */
   e = &G_peg_bank[voice_index];
@@ -176,9 +183,9 @@ short int peg_load_patch(int voice_index, int patch_index)
 }
 
 /*******************************************************************************
-** peg_trigger()
+** peg_note_on()
 *******************************************************************************/
-short int peg_trigger(int voice_index)
+short int peg_note_on(int voice_index)
 {
   peg* e;
 
@@ -196,9 +203,9 @@ short int peg_trigger(int voice_index)
 }
 
 /*******************************************************************************
-** peg_release()
+** peg_note_off()
 *******************************************************************************/
-short int peg_release(int voice_index)
+short int peg_note_off(int voice_index)
 {
   peg* e;
 

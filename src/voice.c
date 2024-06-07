@@ -214,24 +214,33 @@ short int voice_reset_all()
 /*******************************************************************************
 ** voice_load_patch()
 *******************************************************************************/
-short int voice_load_patch(int voice_index, int patch_index)
+short int voice_load_patch( int voice_index, 
+                            int cart_index, int patch_index)
 {
   int m;
 
   voice* v;
+
+  cart* c;
   patch* p;
 
   /* make sure that the voice index is valid */
   if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
     return 1;
 
-  /* make sure that the patch index is valid */
+  /* make sure that the cart & patch indices are valid */
+  if (BANK_CART_INDEX_IS_NOT_VALID(cart_index))
+    return 1;
+
   if (BANK_PATCH_INDEX_IS_NOT_VALID(patch_index))
     return 1;
 
-  /* obtain voice and patch pointers */
+  /* obtain cart & patch pointers */
+  c = &G_cart_bank[cart_index];
+  p = &(c->patches[patch_index]);
+
+  /* obtain voice pointer */
   v = &G_voice_bank[voice_index];
-  p = &G_patch_bank[patch_index];
 
   /* algorithm */
   if ((p->algorithm >= PATCH_ALGORITHM_LOWER_BOUND) && 
@@ -379,11 +388,12 @@ short int voice_load_patch(int voice_index, int patch_index)
 }
 
 /*******************************************************************************
-** voice_set_note()
+** voice_note_on()
 *******************************************************************************/
-short int voice_set_note(int voice_index, int note)
+short int voice_note_on(int voice_index, int note)
 {
   int m;
+  int n;
 
   voice* v;
 
@@ -401,36 +411,12 @@ short int voice_set_note(int voice_index, int note)
   /* set base note */
   v->base_note = note;
 
-  /* determine notes & pitch indices */
+  /* compute pitch indices & reset phases if necessary */
   for (m = 0; m < BANK_OSCILLATORS_PER_VOICE; m++)
   {
     VOICE_COMPUTE_PITCH_INDEX(m)
-  }
 
-  return 0;
-}
-
-/*******************************************************************************
-** voice_sync_to_key()
-*******************************************************************************/
-short int voice_sync_to_key(int voice_index)
-{
-  int m;
-  int n;
-
-  voice* v;
-
-  /* make sure that the voice index is valid */
-  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
-    return 1;
-
-  /* obtain voice pointer */
-  v = &G_voice_bank[voice_index];
-
-  /* reset phases if necessary */
-  if (v->sync == PATCH_SYNC_ON)
-  {
-    for (m = 0; m < BANK_OSCILLATORS_PER_VOICE; m++)
+    if (v->sync == PATCH_SYNC_ON)
     {
       for (n = 0; n < VOICE_NUM_OSCILLATOR_SETS; n++)
         v->osc_phase[m][n] = 0;
@@ -474,55 +460,56 @@ short int voice_update_all()
   {
     v = &G_voice_bank[k];
 
+    /* compute vibrato adjustment */
+    VOICE_COMPUTE_COMBINED_POSITION(VIBRATO)
+
+    vibrato_adjustment = v->vibrato_base;
+    vibrato_adjustment += 
+      (v->vibrato_extra * combined_pos) / MIDI_CONT_UNI_WHEEL_DIVISOR;
+
+    /* compute pitch envelope adjustment */
+    pitch_env_adjustment = v->peg_input;
+
+    /* compute pitch wheel adjustment */
+    pitch_wheel_adjustment = 
+      (v->pitch_wheel_max * v->pitch_wheel_pos) / MIDI_CONT_BI_WHEEL_RADIUS;
+
+    if (v->pitch_wheel_mode == PATCH_PITCH_WHEEL_MODE_SEMITONES)
+    {
+      if (pitch_wheel_adjustment >= 0)
+      {
+        pitch_wheel_adjustment /= TUNING_NUM_SEMITONE_STEPS;
+        pitch_wheel_adjustment *= TUNING_NUM_SEMITONE_STEPS;
+      }
+      else
+      {
+        pitch_wheel_adjustment *= -1;
+        pitch_wheel_adjustment /= TUNING_NUM_SEMITONE_STEPS;
+        pitch_wheel_adjustment *= -TUNING_NUM_SEMITONE_STEPS;
+      }
+    }
+
+    /* compute chorus adjustment */
+    VOICE_COMPUTE_COMBINED_POSITION(CHORUS)
+
+    chorus_adjustment = v->chorus_base;
+    chorus_adjustment += 
+      (v->chorus_extra * combined_pos) / MIDI_CONT_UNI_WHEEL_DIVISOR;
+
     /* update phases */
     for (m = 0; m < BANK_OSCILLATORS_PER_VOICE; m++)
     {
-      /* compute vibrato adjustment */
-      if (v->osc_routing[m] & PATCH_OSC_ROUTING_FLAG_VIBRATO)
-      {
-        VOICE_COMPUTE_COMBINED_POSITION(VIBRATO)
-
-        vibrato_adjustment = v->vibrato_base;
-        vibrato_adjustment += 
-          (v->vibrato_extra * combined_pos) / MIDI_CONT_UNI_WHEEL_DIVISOR;
-      }
-      else
-        vibrato_adjustment = 0;
-
-      /* compute pitch envelope adjustment */
-      if (v->osc_routing[m] & PATCH_OSC_ROUTING_FLAG_PITCH_ENV)
-        pitch_env_adjustment = v->peg_input;
-      else
-        pitch_env_adjustment = 0;
-
-      /* compute pitch wheel adjustment */
-      if (v->osc_routing[m] & PATCH_OSC_ROUTING_FLAG_PITCH_WHEEL)
-      {
-        pitch_wheel_adjustment = 
-          (v->pitch_wheel_max * v->pitch_wheel_pos) / MIDI_CONT_BI_WHEEL_RADIUS;
-
-        if (v->pitch_wheel_mode == PATCH_PITCH_WHEEL_MODE_SEMITONES)
-        {
-          pitch_wheel_adjustment = 
-            (pitch_wheel_adjustment / TUNING_NUM_SEMITONE_STEPS) * TUNING_NUM_SEMITONE_STEPS;
-        }
-      }
-      else
-        pitch_wheel_adjustment = 0;
-
-      /* compute chorus adjustment */
-      VOICE_COMPUTE_COMBINED_POSITION(CHORUS)
-
-      chorus_adjustment = v->chorus_base;
-      chorus_adjustment += 
-        (v->chorus_extra * combined_pos) / MIDI_CONT_UNI_WHEEL_DIVISOR;
-
       /* determine adjusted pitch indices */
       adjusted_pitch_index[0] = v->osc_pitch_index[m];
 
-      adjusted_pitch_index[0] += vibrato_adjustment;
-      adjusted_pitch_index[0] += pitch_env_adjustment;
-      adjusted_pitch_index[0] += pitch_wheel_adjustment;
+      if (v->osc_routing[m] & PATCH_OSC_ROUTING_FLAG_VIBRATO)
+        adjusted_pitch_index[0] += vibrato_adjustment;
+
+      if (v->osc_routing[m] & PATCH_OSC_ROUTING_FLAG_PITCH_ENV)
+        adjusted_pitch_index[0] += pitch_env_adjustment;
+
+      if (v->osc_routing[m] & PATCH_OSC_ROUTING_FLAG_PITCH_WHEEL)
+        adjusted_pitch_index[0] += pitch_wheel_adjustment;
 
       if (v->osc_freq_mode[m] != PATCH_OSC_FREQ_MODE_FIXED)
         adjusted_pitch_index[0] += v->sweep_input;

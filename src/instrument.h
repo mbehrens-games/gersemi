@@ -8,19 +8,8 @@
 #include "bank.h"
 #include "tuning.h"
 
-enum
-{
-  INSTRUMENT_TYPE_POLY = 0, 
-  INSTRUMENT_TYPE_MONO, 
-  INSTRUMENT_NUM_TYPES
-};
-
 typedef struct instrument
 {
-  int type;
-
-  int voice_index;
-
   char pressed_keys[TUNING_NUM_PLAYABLE_NOTES];
   char held_keys[TUNING_NUM_PLAYABLE_NOTES];
 
@@ -37,10 +26,13 @@ typedef struct instrument
   short int exp_pedal_pos;
   short int pitch_wheel_pos;
 
-  short int portamento_switch;
-  short int arpeggio_switch;
+  short int port_arp_switch;
   short int sustain_pedal;
 } instrument;
+
+/* voice indices & polyphony */
+extern short int G_instrument_voice_index[BANK_NUM_INSTRUMENTS];
+extern short int G_instrument_polyphony[BANK_NUM_INSTRUMENTS];
 
 /* instrument bank */
 extern instrument G_instrument_bank[BANK_NUM_INSTRUMENTS];
@@ -49,7 +41,7 @@ extern instrument G_instrument_bank[BANK_NUM_INSTRUMENTS];
 short int instrument_reset_all();
 
 short int instrument_load_patch(int instrument_index, 
-                                int cart_number, int patch_number);
+                                int cart_index, int patch_index);
 
 short int instrument_note_on(int instrument_index, int note);
 short int instrument_note_off(int instrument_index, int note);
@@ -64,8 +56,9 @@ short int instrument_set_aftertouch_position(int instrument_index, short int pos
 short int instrument_set_exp_pedal_position(int instrument_index, short int pos);
 short int instrument_set_pitch_wheel_position(int instrument_index, short int pos);
 
-short int instrument_set_portamento_switch(int instrument_index, int state);
-short int instrument_set_arpeggio_switch(int instrument_index, int state);
+short int instrument_set_port_arp_switch(int instrument_index, int state);
 short int instrument_set_sustain_pedal(int instrument_index, int state);
+
+short int instrument_generate_tables();
 
 #endif

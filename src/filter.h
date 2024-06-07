@@ -29,7 +29,8 @@ extern filter G_lowpass_filter_bank[BANK_NUM_FILTER_SETS];
 /* function declarations */
 short int filter_reset_all();
 
-short int filter_load_patch(int voice_index, int patch_index);
+short int filter_load_patch(int voice_index, 
+                            int cart_index, int patch_index);
 
 short int filter_update_all();
 

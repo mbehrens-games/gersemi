@@ -30,43 +30,19 @@
 #define PATCH_COPY_FLAGS(param)                                                \
   dest_p->param = src_p->param;
 
-/* name & patch banks */
-char  G_cart_names[BANK_NUM_CARTS][PATCH_CART_NAME_SIZE];
-char  G_patch_names[BANK_NUM_PATCHES][PATCH_PATCH_NAME_SIZE];
-
-patch G_patch_bank[BANK_NUM_PATCHES];
+/* cart bank */
+cart G_cart_bank[BANK_NUM_CARTS];
 
 /*******************************************************************************
 ** patch_reset_all()
 *******************************************************************************/
 short int patch_reset_all()
 {
-  int k;
   int m;
 
-  /* reset cart names */
-  for (k = 0; k < BANK_NUM_CARTS; k++)
-  {
-    for (m = 0; m < PATCH_CART_NAME_SIZE; m++)
-    {
-      G_cart_names[k][m] = '\0';
-    }
-  }
-
-  /* reset patch names */
-  for (k = 0; k < BANK_NUM_PATCHES; k++)
-  {
-    for (m = 0; m < PATCH_PATCH_NAME_SIZE; m++)
-    {
-      G_patch_names[k][m] = '\0';
-    }
-  }
-
-  /* reset patches */
-  for (k = 0; k < BANK_NUM_PATCHES; k++)
-  {
-    patch_reset_patch(k);
-  }
+  /* reset carts */
+  for (m = 0; m < BANK_NUM_CARTS; m++)
+    patch_reset_cart(m);
 
   return 0;
 }
@@ -74,22 +50,27 @@ short int patch_reset_all()
 /*******************************************************************************
 ** patch_reset_patch()
 *******************************************************************************/
-short int patch_reset_patch(int patch_index)
+short int patch_reset_patch(int cart_index, int patch_index)
 {
   int m;
 
+  cart* c;
   patch* p;
 
-  /* make sure that the patch index is valid */
+  /* make sure that the cart & patch indices are valid */
+  if (BANK_CART_INDEX_IS_NOT_VALID(cart_index))
+    return 1;
+
   if (BANK_PATCH_INDEX_IS_NOT_VALID(patch_index))
     return 1;
 
-  /* obtain patch pointer */
-  p = &G_patch_bank[patch_index];
+  /* obtain cart & patch pointers */
+  c = &G_cart_bank[cart_index];
+  p = &(c->patches[patch_index]);
 
   /* reset patch name */
   for (m = 0; m < PATCH_PATCH_NAME_SIZE; m++)
-    G_patch_names[patch_index][m] = '\0';
+    p->name[m] = '\0';
 
   /* algorithm */
   PATCH_RESET_PARAMETER(algorithm,            ALGORITHM)
@@ -121,7 +102,7 @@ short int patch_reset_patch(int patch_index)
     PATCH_RESET_PARAMETER(env_sustain[m],     ENV_TIME)
     PATCH_RESET_PARAMETER(env_release[m],     ENV_TIME)
     PATCH_RESET_PARAMETER(env_amplitude[m],   ENV_LEVEL)
-    PATCH_RESET_PARAMETER(env_transition[m],  ENV_LEVEL)
+    PATCH_RESET_PARAMETER(env_hold_level[m],  ENV_LEVEL)
     PATCH_RESET_PARAMETER(env_hold_mode[m],   ENV_HOLD_MODE)
     PATCH_RESET_PARAMETER(env_rate_ks[m],     ENV_KEYSCALING)
     PATCH_RESET_PARAMETER(env_level_ks[m],    ENV_KEYSCALING)
@@ -184,34 +165,39 @@ short int patch_reset_patch(int patch_index)
 /*******************************************************************************
 ** patch_validate_patch()
 *******************************************************************************/
-short int patch_validate_patch(int patch_index)
+short int patch_validate_patch(int cart_index, int patch_index)
 {
   int m;
 
+  cart* c;
   patch* p;
 
-  /* make sure that the patch index is valid */
+  /* make sure that the cart & patch indices are valid */
+  if (BANK_CART_INDEX_IS_NOT_VALID(cart_index))
+    return 1;
+
   if (BANK_PATCH_INDEX_IS_NOT_VALID(patch_index))
     return 1;
 
-  /* obtain patch pointer */
-  p = &G_patch_bank[patch_index];
+  /* obtain cart & patch pointers */
+  c = &G_cart_bank[cart_index];
+  p = &(c->patches[patch_index]);
 
   /* validate patch name */
-  G_patch_names[patch_index][PATCH_PATCH_NAME_SIZE - 1] = '\0';
+  p->name[PATCH_PATCH_NAME_SIZE - 1] = '\0';
 
   for (m = PATCH_PATCH_NAME_SIZE - 2; m >= 0; m--)
   {
-    if ((G_patch_names[patch_index][m] == ' ') || (G_patch_names[patch_index][m] == '\0'))
-      G_patch_names[patch_index][m] = '\0';
+    if ((p->name[m] == ' ') || (p->name[m] == '\0'))
+      p->name[m] = '\0';
     else
       break;
   }
 
   for (m = 0; m < PATCH_PATCH_NAME_SIZE; m++)
   {
-    if (!(TEXT_CHARACTER_IS_VALID_IN_PATCH_NAME(G_patch_names[patch_index][m])))
-      G_patch_names[patch_index][m] = ' ';
+    if (!(TEXT_CHARACTER_IS_VALID_IN_PATCH_NAME(p->name[m])))
+      p->name[m] = ' ';
   }
 
   /* algorithm */
@@ -244,7 +230,7 @@ short int patch_validate_patch(int patch_index)
     PATCH_BOUND_PARAMETER(env_sustain[m],     ENV_TIME)
     PATCH_BOUND_PARAMETER(env_release[m],     ENV_TIME)
     PATCH_BOUND_PARAMETER(env_amplitude[m],   ENV_LEVEL)
-    PATCH_BOUND_PARAMETER(env_transition[m],  ENV_LEVEL)
+    PATCH_BOUND_PARAMETER(env_hold_level[m],  ENV_LEVEL)
     PATCH_BOUND_PARAMETER(env_hold_mode[m],   ENV_HOLD_MODE)
     PATCH_BOUND_PARAMETER(env_rate_ks[m],     ENV_KEYSCALING)
     PATCH_BOUND_PARAMETER(env_level_ks[m],    ENV_KEYSCALING)
@@ -307,37 +293,47 @@ short int patch_validate_patch(int patch_index)
 /*******************************************************************************
 ** patch_copy_patch()
 *******************************************************************************/
-short int patch_copy_patch( int dest_patch_index, int src_patch_index)
+short int patch_copy_patch( int dest_cart_index,  int dest_patch_index, 
+                            int src_cart_index,   int src_patch_index)
 {
   int m;
 
+  cart* dest_c;
   patch* dest_p;
+
+  cart* src_c;
   patch* src_p;
 
-  char* dest_name;
-  char* src_name;
-
   /* make sure the destination and source indices are different */
-  if (dest_patch_index == src_patch_index)
+  if ((dest_cart_index == src_cart_index) && 
+      (dest_patch_index == src_patch_index))
+  {
+    return 1;
+  }
+
+  /* make sure that the cart & patch indices are valid */
+  if (BANK_CART_INDEX_IS_NOT_VALID(dest_cart_index))
     return 1;
 
-  /* make sure that the patch indices is valid */
   if (BANK_PATCH_INDEX_IS_NOT_VALID(dest_patch_index))
+    return 1;
+
+  if (BANK_CART_INDEX_IS_NOT_VALID(src_cart_index))
     return 1;
 
   if (BANK_PATCH_INDEX_IS_NOT_VALID(src_patch_index))
     return 1;
 
   /* obtain destination pointers */
-  dest_p = &G_patch_bank[dest_patch_index];
-  dest_name = &G_patch_names[dest_patch_index][0];
+  dest_c = &G_cart_bank[dest_cart_index];
+  dest_p = &(dest_c->patches[dest_patch_index]);
 
   /* obtain source pointers */
-  src_p = &G_patch_bank[src_patch_index];
-  src_name = &G_patch_names[src_patch_index][0];
+  src_c = &G_cart_bank[src_cart_index];
+  src_p = &(src_c->patches[src_patch_index]);
 
   /* copy patch name */
-  strncpy(dest_name, src_name, PATCH_PATCH_NAME_SIZE);
+  strncpy(dest_p->name, src_p->name, PATCH_PATCH_NAME_SIZE);
 
   /* algorithm */
   PATCH_COPY_PARAMETER(algorithm)
@@ -369,7 +365,7 @@ short int patch_copy_patch( int dest_patch_index, int src_patch_index)
     PATCH_COPY_PARAMETER(env_sustain[m])
     PATCH_COPY_PARAMETER(env_release[m])
     PATCH_COPY_PARAMETER(env_amplitude[m])
-    PATCH_COPY_PARAMETER(env_transition[m])
+    PATCH_COPY_PARAMETER(env_hold_level[m])
     PATCH_COPY_PARAMETER(env_hold_mode[m])
     PATCH_COPY_PARAMETER(env_rate_ks[m])
     PATCH_COPY_PARAMETER(env_level_ks[m])
@@ -436,23 +432,22 @@ short int patch_reset_cart(int cart_index)
 {
   int m;
 
-  int patch_index;
+  cart* c;
 
   /* make sure that the cart index is valid */
   if (BANK_CART_INDEX_IS_NOT_VALID(cart_index))
     return 1;
 
+  /* obtain cart pointer */
+  c = &G_cart_bank[cart_index];
+
   /* reset cart name */
   for (m = 0; m < PATCH_CART_NAME_SIZE; m++)
-    G_cart_names[cart_index][m] = '\0';
+    c->name[m] = '\0';
 
   /* reset all patches in cart */
   for (m = 0; m < BANK_PATCHES_PER_CART; m++)
-  {
-    patch_index = (cart_index * BANK_PATCHES_PER_CART) + m;
-
-    patch_reset_patch(patch_index);
-  }
+    patch_reset_patch(cart_index, m);
 
   return 0;
 }
@@ -464,36 +459,35 @@ short int patch_validate_cart(int cart_index)
 {
   int m;
 
-  int patch_index;
+  cart* c;
 
   /* make sure that the cart index is valid */
   if (BANK_CART_INDEX_IS_NOT_VALID(cart_index))
     return 1;
 
+  /* obtain cart pointer */
+  c = &G_cart_bank[cart_index];
+
   /* validate cart name */
-  G_cart_names[cart_index][PATCH_CART_NAME_SIZE - 1] = '\0';
+  c->name[PATCH_CART_NAME_SIZE - 1] = '\0';
 
   for (m = PATCH_CART_NAME_SIZE - 2; m >= 0; m--)
   {
-    if ((G_cart_names[cart_index][m] == ' ') || (G_cart_names[cart_index][m] == '\0'))
-      G_cart_names[cart_index][m] = '\0';
+    if ((c->name[m] == ' ') || (c->name[m] == '\0'))
+      c->name[m] = '\0';
     else
       break;
   }
 
   for (m = 0; m < PATCH_CART_NAME_SIZE; m++)
   {
-    if (!(TEXT_CHARACTER_IS_VALID_IN_CART_NAME(G_cart_names[cart_index][m])))
-      G_cart_names[cart_index][m] = ' ';
+    if (!(TEXT_CHARACTER_IS_VALID_IN_CART_NAME(c->name[m])))
+      c->name[m] = ' ';
   }
 
   /* validate all patches in cart */
   for (m = 0; m < BANK_PATCHES_PER_CART; m++)
-  {
-    patch_index = (cart_index * BANK_PATCHES_PER_CART) + m;
-
-    patch_validate_patch(patch_index);
-  }
+    patch_validate_patch(cart_index, m);
 
   return 0;
 }
@@ -505,38 +499,30 @@ short int patch_copy_cart(int dest_cart_index, int src_cart_index)
 {
   int m;
 
-  char* dest_name;
-  char* src_name;
-
-  int dest_patch_index;
-  int src_patch_index;
+  cart* dest_c;
+  cart* src_c;
 
   /* make sure the destination and source indices are different */
   if (dest_cart_index == src_cart_index)
     return 1;
 
-  /* make sure the cart indices are valid */
+  /* make sure that the cart indices are valid */
   if (BANK_CART_INDEX_IS_NOT_VALID(dest_cart_index))
     return 1;
 
   if (BANK_CART_INDEX_IS_NOT_VALID(src_cart_index))
     return 1;
 
-  /* determine cart name pointers */
-  dest_name = &G_cart_names[dest_cart_index][0];
-  src_name = &G_cart_names[src_cart_index][0];
+  /* obtain source & destination pointers */
+  dest_c = &G_cart_bank[dest_cart_index];
+  src_c = &G_cart_bank[src_cart_index];
 
   /* copy cart name */
-  strncpy(dest_name, src_name, PATCH_CART_NAME_SIZE);
+  strncpy(dest_c->name, src_c->name, PATCH_CART_NAME_SIZE);
 
   /* copy all patches in cart */
   for (m = 0; m < BANK_PATCHES_PER_CART; m++)
-  {
-    dest_patch_index = (dest_cart_index * BANK_PATCHES_PER_CART) + m;
-    src_patch_index = (src_cart_index * BANK_PATCHES_PER_CART) + m;
-
-    patch_copy_patch(dest_patch_index, src_patch_index);
-  }
+    patch_copy_patch(dest_cart_index, m, src_cart_index, m);
 
   return 0;
 }

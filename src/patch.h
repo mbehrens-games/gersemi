@@ -111,36 +111,18 @@ enum
 };
 
 /* cart parameters */
-#define PATCH_CART_NO_DEFAULT     1
-#define PATCH_CART_NO_LOWER_BOUND 1
-#define PATCH_CART_NO_UPPER_BOUND BANK_NUM_CARTS
-#define PATCH_CART_NO_NUM_VALUES  (PATCH_CART_NO_UPPER_BOUND - PATCH_CART_NO_LOWER_BOUND + 1)
+#define PATCH_CART_NUMBER_DEFAULT       1
+#define PATCH_CART_NUMBER_LOWER_BOUND   1
+#define PATCH_CART_NUMBER_UPPER_BOUND   BANK_NUM_CARTS
+#define PATCH_CART_NUMBER_NUM_VALUES    (PATCH_CART_NUMBER_UPPER_BOUND - PATCH_CART_NUMBER_LOWER_BOUND + 1)
 
-#define PATCH_CART_NO_IS_VALID(num)                                            \
-  ((num >= PATCH_CART_NO_LOWER_BOUND) && (num <= PATCH_CART_NO_UPPER_BOUND))
-
-#define PATCH_CART_NO_IS_NOT_VALID(num)                                        \
-  (!(PATCH_CART_NO_IS_VALID(num)))
-
-#define PATCH_PATCH_NO_DEFAULT      1
-#define PATCH_PATCH_NO_LOWER_BOUND  1
-#define PATCH_PATCH_NO_UPPER_BOUND  BANK_PATCHES_PER_CART
-#define PATCH_PATCH_NO_NUM_VALUES   (PATCH_PATCH_NO_UPPER_BOUND - PATCH_PATCH_NO_LOWER_BOUND + 1)
-
-#define PATCH_PATCH_NO_IS_VALID(num)                                           \
-  ((num >= PATCH_PATCH_NO_LOWER_BOUND) && (num <= PATCH_PATCH_NO_UPPER_BOUND))
-
-#define PATCH_PATCH_NO_IS_NOT_VALID(num)                                       \
-  (!(PATCH_PATCH_NO_IS_VALID(num)))
-
-#define PATCH_COMPUTE_CART_INDEX(cart_num)                                     \
-  cart_index = cart_num - PATCH_CART_NO_LOWER_BOUND;
-
-#define PATCH_COMPUTE_PATCH_INDEX(cart_num, patch_num)                         \
-  patch_index = ((cart_num - PATCH_CART_NO_LOWER_BOUND) * BANK_PATCHES_PER_CART) + (patch_num - PATCH_PATCH_NO_LOWER_BOUND);
+#define PATCH_PATCH_NUMBER_DEFAULT      1
+#define PATCH_PATCH_NUMBER_LOWER_BOUND  1
+#define PATCH_PATCH_NUMBER_UPPER_BOUND  BANK_PATCHES_PER_CART
+#define PATCH_PATCH_NUMBER_NUM_VALUES   (PATCH_PATCH_NUMBER_UPPER_BOUND - PATCH_PATCH_NUMBER_LOWER_BOUND + 1)
 
 /* name strings: x characters + 1 null terminator */
-#define PATCH_CART_NAME_SIZE  (8 + 1)
+#define PATCH_CART_NAME_SIZE  (10 + 1)
 #define PATCH_PATCH_NAME_SIZE (10 + 1)
 
 /* patch parameters */
@@ -344,8 +326,12 @@ enum
 #define PATCH_MIDI_CONT_ROUTING_FLAG_BOOST    0x04
 #define PATCH_MIDI_CONT_ROUTING_FLAG_CHORUS   0x08
 
+/* patch */
 typedef struct patch
 {
+  /* name */
+  char name[PATCH_PATCH_NAME_SIZE];
+
   /* algorithm */
   short int algorithm;
 
@@ -370,7 +356,7 @@ typedef struct patch
   short int env_sustain[BANK_ENVELOPES_PER_VOICE];
   short int env_release[BANK_ENVELOPES_PER_VOICE];
   short int env_amplitude[BANK_ENVELOPES_PER_VOICE];
-  short int env_transition[BANK_ENVELOPES_PER_VOICE];
+  short int env_hold_level[BANK_ENVELOPES_PER_VOICE];
   short int env_hold_mode[BANK_ENVELOPES_PER_VOICE];
   short int env_rate_ks[BANK_ENVELOPES_PER_VOICE];
   short int env_level_ks[BANK_ENVELOPES_PER_VOICE];
@@ -423,18 +409,24 @@ typedef struct patch
   short int exp_pedal_routing;
 } patch;
 
-/* name & patch banks */
-extern char   G_cart_names[BANK_NUM_CARTS][PATCH_CART_NAME_SIZE];
-extern char   G_patch_names[BANK_NUM_PATCHES][PATCH_PATCH_NAME_SIZE];
+/* cart */
+typedef struct cart
+{
+  char name[PATCH_CART_NAME_SIZE];
 
-extern patch  G_patch_bank[BANK_NUM_PATCHES];
+  patch patches[BANK_PATCHES_PER_CART];
+} cart;
+
+/* cart bank */
+extern cart G_cart_bank[BANK_NUM_CARTS];
 
 /* function declarations */
 short int patch_reset_all();
 
-short int patch_reset_patch(int patch_index);
-short int patch_validate_patch(int patch_index);
-short int patch_copy_patch(int dest_patch_index, int src_patch_index);
+short int patch_reset_patch(int cart_index, int patch_index);
+short int patch_validate_patch(int cart_index, int patch_index);
+short int patch_copy_patch( int dest_cart_index,  int dest_patch_index, 
+                            int src_cart_index,   int src_patch_index);
 
 short int patch_reset_cart(int cart_index);
 short int patch_validate_cart(int cart_index);

@@ -96,22 +96,29 @@ short int filter_reset_all()
 /*******************************************************************************
 ** filter_load_patch()
 *******************************************************************************/
-short int filter_load_patch(int voice_index, int patch_index)
+short int filter_load_patch(int voice_index, 
+                            int cart_index, int patch_index)
 {
   filter* hpf;
   filter* lpf;
+
+  cart* c;
   patch* p;
 
   /* make sure that the voice index is valid */
   if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
     return 1;
 
-  /* make sure that the patch index is valid */
+  /* make sure that the cart & patch indices are valid */
+  if (BANK_CART_INDEX_IS_NOT_VALID(cart_index))
+    return 1;
+
   if (BANK_PATCH_INDEX_IS_NOT_VALID(patch_index))
     return 1;
 
-  /* obtain patch pointer */
-  p = &G_patch_bank[patch_index];
+  /* obtain cart & patch pointers */
+  c = &G_cart_bank[cart_index];
+  p = &(c->patches[patch_index]);
 
   /* obtain filter pointers */
   hpf = &G_highpass_filter_bank[voice_index];

@@ -75,10 +75,10 @@ extern voice G_voice_bank[BANK_NUM_VOICES];
 /* function declarations */
 short int voice_reset_all();
 
-short int voice_load_patch(int voice_index, int patch_index);
+short int voice_load_patch( int voice_index, 
+                            int cart_index, int patch_index);
 
-short int voice_set_note(int voice_index, int note);
-short int voice_sync_to_key(int voice_index);
+short int voice_note_on(int voice_index, int note);
 
 short int voice_update_all();
 

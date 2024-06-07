@@ -203,23 +203,30 @@ short int lfo_reset_all()
 /*******************************************************************************
 ** lfo_load_patch()
 *******************************************************************************/
-short int lfo_load_patch(int voice_index, int patch_index)
+short int lfo_load_patch( int voice_index, 
+                          int cart_index, int patch_index)
 {
   int m;
 
   lfo* l;
+
+  cart* c;
   patch* p;
 
   /* make sure that the voice index is valid */
   if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
     return 1;
 
-  /* make sure that the patch index is valid */
+  /* make sure that the cart & patch indices are valid */
+  if (BANK_CART_INDEX_IS_NOT_VALID(cart_index))
+    return 1;
+
   if (BANK_PATCH_INDEX_IS_NOT_VALID(patch_index))
     return 1;
 
-  /* obtain patch pointer */
-  p = &G_patch_bank[patch_index];
+  /* obtain cart & patch pointers */
+  c = &G_cart_bank[cart_index];
+  p = &(c->patches[patch_index]);
 
   for (m = 0; m < BANK_LFOS_PER_VOICE; m++)
   {
@@ -373,37 +380,9 @@ short int lfo_set_tempo(int voice_index, short int tempo)
 }
 
 /*******************************************************************************
-** lfo_sync_to_key()
+** lfo_tempo_sync()
 *******************************************************************************/
-short int lfo_sync_to_key(int voice_index)
-{
-  int m;
-
-  lfo* l;
-
-  /* make sure that the voice index is valid */
-  if (BANK_VOICE_INDEX_IS_NOT_VALID(voice_index))
-    return 1;
-
-  for (m = 0; m < BANK_LFOS_PER_VOICE; m++)
-  {
-    /* obtain lfo pointer */
-    l = &G_lfo_bank[voice_index * BANK_LFOS_PER_VOICE + m];
-
-    /* reset phase if necessary */
-    if (l->sync == PATCH_SYNC_ON)
-    {
-      l->phase = 0;
-    }
-  }
-
-  return 0;
-}
-
-/*******************************************************************************
-** lfo_sync_to_tempo()
-*******************************************************************************/
-short int lfo_sync_to_tempo(int voice_index)
+short int lfo_tempo_sync(int voice_index)
 {
   int m;
 
@@ -420,18 +399,16 @@ short int lfo_sync_to_tempo(int voice_index)
 
     /* reset phase if necessary */
     if (l->sync == PATCH_SYNC_OFF)
-    {
       l->phase = 0;
-    }
   }
 
   return 0;
 }
 
 /*******************************************************************************
-** lfo_trigger()
+** lfo_note_on()
 *******************************************************************************/
-short int lfo_trigger(int voice_index)
+short int lfo_note_on(int voice_index)
 {
   int m;
 
@@ -449,9 +426,16 @@ short int lfo_trigger(int voice_index)
     /* set delay cycles */
     l->delay_cycles = l->delay_period;
 
-    /* initialize levels */
-    l->level_base = 0;
-    l->level_extra = 0;
+    /* reset levels during the delay */
+    if (l->delay_cycles > 0)
+    {
+      l->level_base = 0;
+      l->level_extra = 0;
+    }
+
+    /* reset phase if necessary */
+    if (l->sync == PATCH_SYNC_ON)
+      l->phase = 0;
   }
 
   return 0;
@@ -476,21 +460,22 @@ short int lfo_update_all()
     /* obtain lfo pointer */
     l = &G_lfo_bank[k];
 
-    /* update delay cycles if necessary */
-    if (l->delay_cycles > 0)
-    {
-      l->delay_cycles -= 1;
-
-      continue;
-    }
-
     /* update phase */
     l->phase += l->increment;
 
     /* wraparound phase register (28 bits) */
     if (l->phase > 0xFFFFFFF)
-    {
       l->phase &= 0xFFFFFFF;
+
+    /* update delay cycles if necessary */
+    if (l->delay_cycles > 0)
+    {
+      l->delay_cycles -= 1;
+
+      if ((l->delay_cycles == 0) && (l->sync == PATCH_SYNC_ON))
+        l->phase = 0;
+
+      continue;
     }
 
     /* determine base wave indices */

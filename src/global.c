@@ -24,18 +24,18 @@ unsigned int G_saved_timer_count;
 int G_current_scroll_amount;
 int G_max_scroll_amount;
 
-int G_patch_edit_cart_number;
-int G_patch_edit_patch_number;
+short int G_patch_edit_cart_number;
+short int G_patch_edit_patch_number;
 
-int G_patch_edit_instrument_index;
+short int G_patch_edit_instrument_index;
 
-int G_patch_edit_octave;
-int G_patch_edit_note_velocity;
-int G_patch_edit_pitch_wheel_pos;
+short int G_patch_edit_octave;
+short int G_patch_edit_note_velocity;
+short int G_patch_edit_pitch_wheel_pos;
 
-int G_patch_edit_mod_wheel_pos;
-int G_patch_edit_aftertouch_pos;
-int G_patch_edit_exp_pedal_pos;
+short int G_patch_edit_mod_wheel_pos;
+short int G_patch_edit_aftertouch_pos;
+short int G_patch_edit_exp_pedal_pos;
 
 /*******************************************************************************
 ** globals_init_variables()
@@ -55,8 +55,8 @@ short int globals_init_variables()
   G_current_scroll_amount = 0;
   G_max_scroll_amount = 0;
 
-  G_patch_edit_cart_number = PATCH_CART_NO_DEFAULT;
-  G_patch_edit_patch_number = PATCH_PATCH_NO_DEFAULT;
+  G_patch_edit_cart_number = PATCH_CART_NUMBER_DEFAULT;
+  G_patch_edit_patch_number = PATCH_PATCH_NUMBER_DEFAULT;
 
   G_patch_edit_instrument_index = 0;
 

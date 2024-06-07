@@ -20,8 +20,8 @@ typedef struct envelope
   short int freq_mode;
   short int note_offset;
 
-  /* transition level, hold mode */
-  short int transition_level;
+  /* hold parameters */
+  short int hold_level;
   short int hold_mode;
   short int hold_switch;
 
@@ -77,12 +77,11 @@ extern envelope G_envelope_bank[BANK_NUM_ENVELOPES];
 /* function declarations */
 short int envelope_reset_all();
 
-short int envelope_load_patch(int voice_index, int patch_index);
+short int envelope_load_patch(int voice_index, 
+                              int cart_index, int patch_index);
 
-short int envelope_set_note(int voice_index, int note, int vel);
-
-short int envelope_trigger(int voice_index, int pedal_state);
-short int envelope_release(int voice_index);
+short int envelope_note_on(int voice_index, int note, int vel, int pedal_state);
+short int envelope_note_off(int voice_index);
 
 short int envelope_update_all();
 
