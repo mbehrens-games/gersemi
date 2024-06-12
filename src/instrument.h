@@ -10,6 +10,10 @@
 
 typedef struct instrument
 {
+  short int voice_index;
+  short int last_offset;
+  short int polyphony;
+
   char pressed_keys[TUNING_NUM_PLAYABLE_NOTES];
   char held_keys[TUNING_NUM_PLAYABLE_NOTES];
 
@@ -29,10 +33,6 @@ typedef struct instrument
   short int port_arp_switch;
   short int sustain_pedal;
 } instrument;
-
-/* voice indices & polyphony */
-extern short int G_instrument_voice_index[BANK_NUM_INSTRUMENTS];
-extern short int G_instrument_polyphony[BANK_NUM_INSTRUMENTS];
 
 /* instrument bank */
 extern instrument G_instrument_bank[BANK_NUM_INSTRUMENTS];
@@ -58,7 +58,5 @@ short int instrument_set_pitch_wheel_position(int instrument_index, short int po
 
 short int instrument_set_port_arp_switch(int instrument_index, int state);
 short int instrument_set_sustain_pedal(int instrument_index, int state);
-
-short int instrument_generate_tables();
 
 #endif

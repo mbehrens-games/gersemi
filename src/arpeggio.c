@@ -365,10 +365,7 @@ short int arpeggio_load_patch(int instrument_index,
     S_arpeggio_speed_table[a->speed - PATCH_ARPEGGIO_SPEED_LOWER_BOUND];
 
   /* restart arpeggio if necessary */
-  if (a->on_switch == MIDI_CONT_TOGGLE_SWITCH_ON)
-  {
-    ARPEGGIO_RESTART()
-  }
+  ARPEGGIO_RESTART()
 
   return 0;
 }
@@ -427,10 +424,7 @@ short int arpeggio_set_pattern(int instrument_index, short int pattern)
   a->pattern = pattern;
 
   /* restart arpeggio if necessary */
-  if (a->on_switch == MIDI_CONT_TOGGLE_SWITCH_ON)
-  {
-    ARPEGGIO_RESTART()
-  }
+  ARPEGGIO_RESTART()
 
   return 0;
 }
@@ -462,10 +456,7 @@ short int arpeggio_set_octaves(int instrument_index, short int octaves)
   a->octaves = octaves;
 
   /* restart arpeggio if necessary */
-  if (a->on_switch == MIDI_CONT_TOGGLE_SWITCH_ON)
-  {
-    ARPEGGIO_RESTART()
-  }
+  ARPEGGIO_RESTART()
 
   return 0;
 }
@@ -534,10 +525,7 @@ short int arpeggio_set_switch(int instrument_index, short int state)
   a->on_switch = state;
 
   /* restart arpeggio if necessary */
-  if (a->on_switch == MIDI_CONT_TOGGLE_SWITCH_ON)
-  {
-    ARPEGGIO_RESTART()
-  }
+  ARPEGGIO_RESTART()
 
   return 0;
 }

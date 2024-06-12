@@ -61,6 +61,7 @@ short int synth_update()
   int m;
   int n;
 
+  instrument* ins;
   voice* v;
 
   envelope* e;
@@ -89,9 +90,11 @@ short int synth_update()
   /* copy lfo & sweep levels to envelope & voice inputs */
   for (k = 0; k < BANK_NUM_INSTRUMENTS; k++)
   {
-    for (m = 0; m < G_instrument_polyphony[k]; m++)
+    ins = &G_instrument_bank[k];
+
+    for (m = 0; m < ins->polyphony; m++)
     {
-      voice_index = G_instrument_voice_index[k] + m;
+      voice_index = ins->voice_index + m;
 
       v = &G_voice_bank[voice_index];
 
@@ -136,9 +139,11 @@ short int synth_update()
   /* copy envelope levels to voice inputs */
   for (k = 0; k < BANK_NUM_INSTRUMENTS; k++)
   {
-    for (m = 0; m < G_instrument_polyphony[k]; m++)
+    ins = &G_instrument_bank[k];
+
+    for (m = 0; m < ins->polyphony; m++)
     {
-      voice_index = G_instrument_voice_index[k] + m;
+      voice_index = ins->voice_index + m;
 
       v = &G_voice_bank[voice_index];
 
@@ -157,9 +162,11 @@ short int synth_update()
   /* copy voice levels to highpass filter inputs */
   for (k = 0; k < BANK_NUM_INSTRUMENTS; k++)
   {
-    for (m = 0; m < G_instrument_polyphony[k]; m++)
+    ins = &G_instrument_bank[k];
+
+    for (m = 0; m < ins->polyphony; m++)
     {
-      voice_index = G_instrument_voice_index[k] + m;
+      voice_index = ins->voice_index + m;
 
       v = &G_voice_bank[voice_index];
       hpf = &G_highpass_filter_bank[voice_index];
@@ -195,7 +202,6 @@ short int synth_update()
 *******************************************************************************/
 short int synth_generate_tables()
 {
-  instrument_generate_tables();
   sweep_generate_tables();
   arpeggio_generate_tables();
 

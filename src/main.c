@@ -20,11 +20,11 @@
 #include "hola.h"
 #include "instrument.h"
 #include "layout.h"
+#include "loop.h"
 #include "palette.h"
 #include "path.h"
-#include "progloop.h"
+#include "program.h"
 #include "render.h"
-#include "screen.h"
 #include "texture.h"
 
 #include "frame.h"
@@ -54,6 +54,7 @@ int main(int argc, char *argv[])
   }
 
   /* initialize global variables */
+  program_reset();
   globals_init_variables();
 
   /* initialize paths */
@@ -125,9 +126,6 @@ int main(int argc, char *argv[])
     goto cleanup_textures;
   }
 
-  /* generate vbo index tables */
-  graphics_generate_tables();
-
   /* initialize sample frame */
   frame_reset_buffer();
 
@@ -157,14 +155,14 @@ int main(int argc, char *argv[])
   instrument_load_patch(G_patch_edit_instrument_index, 0, 0);
 
   /* initialize program screen */
-  program_loop_change_screen(PROGRAM_SCREEN_CART);
+  program_set_screen(PROGRAM_SCREEN_CART);
 
   /* initialize ticks */
   ticks_current = SDL_GetTicks();
   ticks_last_update = ticks_current;
 
   /* initialize minimization flag */
-  G_flag_window_minimized = 0;
+  G_program_flags &= ~PROGRAM_FLAG_WINDOW_MINIMIZED;
 
   /* main loop */
   while (1)
@@ -191,7 +189,7 @@ int main(int argc, char *argv[])
         if ((event.window.event == SDL_WINDOWEVENT_MINIMIZED) ||
             (event.window.event == SDL_WINDOWEVENT_FOCUS_LOST))
         {
-          G_flag_window_minimized = 1;
+          G_program_flags |= PROGRAM_FLAG_WINDOW_MINIMIZED;
           audio_pause();
         }
 
@@ -199,7 +197,7 @@ int main(int argc, char *argv[])
         if ((event.window.event == SDL_WINDOWEVENT_RESTORED) ||
             (event.window.event == SDL_WINDOWEVENT_FOCUS_GAINED))
         {
-          G_flag_window_minimized = 0;
+          G_program_flags &= ~PROGRAM_FLAG_WINDOW_MINIMIZED;
           audio_unpause();
           ticks_last_update = SDL_GetTicks();
         }
@@ -249,7 +247,7 @@ int main(int argc, char *argv[])
     }
 
     /* make sure the window is not minimized */
-    if (G_flag_window_minimized == 1)
+    if (G_program_flags & PROGRAM_FLAG_WINDOW_MINIMIZED)
       continue;
 
     /* update ticks */
@@ -263,7 +261,7 @@ int main(int argc, char *argv[])
     if ((ticks_current - ticks_last_update) >= (1000 / 60))
     {
       /* advance frame */
-      program_loop_advance_frame();
+      loop_advance_frame();
 
       /* generate samples for this frame */
       frame_generate(ticks_current - ticks_last_update);
@@ -272,7 +270,7 @@ int main(int argc, char *argv[])
       audio_queue_frame();
 
       /* quit */
-      if (G_flag_quit_program == 1)
+      if (G_program_flags & PROGRAM_FLAG_QUIT)
       {
         goto cleanup_all;
       }

@@ -5,21 +5,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "bank.h"
 #include "global.h"
 #include "midicont.h"
 #include "patch.h"
-#include "screen.h"
-#include "tuning.h"
-
-int G_prog_screen;
-int G_last_screen;
-
-int G_flag_window_minimized;
-int G_flag_quit_program;
-
-unsigned int G_timer_count;
-unsigned int G_saved_timer_count;
 
 int G_current_scroll_amount;
 int G_max_scroll_amount;
@@ -43,15 +31,6 @@ short int G_patch_edit_exp_pedal_pos;
 short int globals_init_variables()
 {
   /* initialize variables */
-  G_prog_screen = PROGRAM_SCREEN_CART;
-  G_last_screen = PROGRAM_SCREEN_CART;
-
-  G_flag_window_minimized = 0;
-  G_flag_quit_program = 0;
-
-  G_timer_count = 0;
-  G_saved_timer_count = 0;
-
   G_current_scroll_amount = 0;
   G_max_scroll_amount = 0;
 
@@ -60,16 +39,13 @@ short int globals_init_variables()
 
   G_patch_edit_instrument_index = 0;
 
-  G_patch_edit_octave = (TUNING_NOTE_C4 / 12);
+  G_patch_edit_octave = MIDI_CONT_OCTAVE_DEFAULT;
   G_patch_edit_note_velocity = MIDI_CONT_NOTE_VELOCITY_DEFAULT;
   G_patch_edit_pitch_wheel_pos = MIDI_CONT_BI_WHEEL_DEFAULT;
 
   G_patch_edit_mod_wheel_pos = MIDI_CONT_UNI_WHEEL_DEFAULT;
   G_patch_edit_aftertouch_pos = MIDI_CONT_UNI_WHEEL_DEFAULT;
   G_patch_edit_exp_pedal_pos = MIDI_CONT_UNI_WHEEL_DEFAULT;
-
-  /* generate non-synth (gui related) tables */
-  /*key_generate_tables();*/
 
   return 0;
 }

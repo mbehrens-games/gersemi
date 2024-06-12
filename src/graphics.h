@@ -20,6 +20,20 @@ enum
 
 enum
 {
+  GRAPHICS_INTERMEDIATE_SET_1 = 0, 
+  GRAPHICS_INTERMEDIATE_SET_2, 
+  GRAPHICS_NUM_INTERMEDIATE_SETS 
+};
+
+enum
+{
+  GRAPHICS_BUFFER_SET_TILES = 0, 
+  GRAPHICS_BUFFER_SET_SPRITES, 
+  GRAPHICS_NUM_BUFFER_SETS 
+};
+
+enum
+{
   GRAPHICS_TILE_LAYER_BACKGROUND = 0, 
   GRAPHICS_NUM_TILE_LAYERS 
 };
@@ -43,8 +57,6 @@ enum
 /* overall, this is 350                                         */
 #define GRAPHICS_MAX_BACKGROUND_TILES 350
 
-#define GRAPHICS_MAX_TILES  GRAPHICS_MAX_BACKGROUND_TILES
-
 /* the maximum number of sprites is determined as follows:  */
 /*   number of 8x8  (1 screen): 50 * 28 = 1400              */
 /* overall, this is 3 * 1400 = 4200                         */
@@ -52,11 +64,10 @@ enum
 #define GRAPHICS_MAX_WIDGETS_SPRITES  1400
 #define GRAPHICS_MAX_TEXT_SPRITES     1400
 
-#define GRAPHICS_MAX_SPRITES  ( GRAPHICS_MAX_PANELS_SPRITES +                  \
-                                GRAPHICS_MAX_WIDGETS_SPRITES +                 \
-                                GRAPHICS_MAX_TEXT_SPRITES)
+/* z levels for each layer */
+#define GRAPHICS_Z_LEVEL_FAR_PLANE  1.375f
+#define GRAPHICS_Z_LEVEL_NEAR_PLANE 0.125f
 
-/* the near and far planes are from 0.125 (near) to 1.375 (far)   */
 #define GRAPHICS_Z_LEVEL_BACKGROUND 1.25f
 
 /* the z levels for the sprites shouldn't matter, */
@@ -78,66 +89,52 @@ extern int G_graphics_resolution;
 extern int G_viewport_w;
 extern int G_viewport_h;
 
-/* opengl vbo ids */
+/* intermediate set ids  */
+extern GLuint G_texture_id_intermediate[GRAPHICS_NUM_INTERMEDIATE_SETS];
+extern GLuint G_framebuffer_id_intermediate[GRAPHICS_NUM_INTERMEDIATE_SETS];
+extern GLuint G_renderbuffer_id_intermediate[GRAPHICS_NUM_INTERMEDIATE_SETS];
+
+/* tile & sprite vbo ids and data buffers */
 extern GLuint G_vertex_array_id;
 
-extern GLuint G_vertex_buffer_id_tiles;
-extern GLuint G_texture_coord_buffer_id_tiles;
-extern GLuint G_lighting_and_palette_buffer_id_tiles;
-extern GLuint G_index_buffer_id_tiles;
+extern GLuint G_overscan_vertex_buffer_id[GRAPHICS_NUM_BUFFER_SETS];
+extern GLuint G_overscan_tex_coord_buffer_id[GRAPHICS_NUM_BUFFER_SETS];
+extern GLuint G_overscan_pal_coord_buffer_id[GRAPHICS_NUM_BUFFER_SETS];
+extern GLuint G_overscan_index_buffer_id[GRAPHICS_NUM_BUFFER_SETS];
 
-extern GLuint G_vertex_buffer_id_sprites;
-extern GLuint G_texture_coord_buffer_id_sprites;
-extern GLuint G_lighting_and_palette_buffer_id_sprites;
-extern GLuint G_index_buffer_id_sprites;
+extern GLfloat*         G_overscan_vertex_buffer_data[GRAPHICS_NUM_BUFFER_SETS];
+extern GLfloat*         G_overscan_tex_coord_buffer_data[GRAPHICS_NUM_BUFFER_SETS];
+extern GLfloat*         G_overscan_pal_coord_buffer_data[GRAPHICS_NUM_BUFFER_SETS];
+extern unsigned short*  G_overscan_index_buffer_data[GRAPHICS_NUM_BUFFER_SETS];
 
-/* postprocessing vbo ids */
-extern GLuint G_vertex_buffer_id_postprocessing_overscan;
-extern GLuint G_vertex_buffer_id_postprocessing_window;
+/* postprocessing vbo ids and data buffers */
+extern GLuint G_postprocessing_vertex_buffer_id_overscan;
+extern GLuint G_postprocessing_vertex_buffer_id_window;
 
-extern GLuint G_texture_coord_buffer_id_postprocessing_overscan;
+extern GLuint G_postprocessing_tex_coord_buffer_id_overscan;
 
-extern GLuint G_index_buffer_id_postprocessing_all;
+extern GLuint G_postprocessing_index_buffer_id_all;
 
-/* opengl intermediate textures */
-extern GLuint G_texture_id_intermediate_1;
-extern GLuint G_texture_id_intermediate_2;
+extern GLfloat          G_postprocessing_vertex_buffer_data_overscan[12];
+extern GLfloat          G_postprocessing_vertex_buffer_data_window[12];
 
-/* opengl framebuffer ids */
-extern GLuint G_framebuffer_id_intermediate_1;
-extern GLuint G_renderbuffer_id_intermediate_1;
+extern GLfloat          G_postprocessing_tex_coord_buffer_data_overscan[8];
 
-extern GLuint G_framebuffer_id_intermediate_2;
-extern GLuint G_renderbuffer_id_intermediate_2;
+extern unsigned short   G_postprocessing_index_buffer_data_all[6];
 
-/* vbos and matrices */
-extern GLfloat*         G_vertex_buffer_tiles;
-extern GLfloat*         G_texture_coord_buffer_tiles;
-extern GLfloat*         G_lighting_and_palette_buffer_tiles;
-extern unsigned short*  G_index_buffer_tiles;
-
-extern GLfloat*         G_vertex_buffer_sprites;
-extern GLfloat*         G_texture_coord_buffer_sprites;
-extern GLfloat*         G_lighting_and_palette_buffer_sprites;
-extern unsigned short*  G_index_buffer_sprites;
-
-extern GLfloat          G_vertex_buffer_postprocessing_overscan[12];
-extern GLfloat          G_vertex_buffer_postprocessing_window[12];
-
-extern GLfloat          G_texture_coord_buffer_postprocessing_overscan[8];
-
-extern unsigned short   G_index_buffer_postprocessing_all[6];
-
-extern GLfloat          G_mvp_matrix_overscan[16];
-extern GLfloat          G_mvp_matrix_intermediate[16];
-extern GLfloat          G_mvp_matrix_window[16];
+/* mvp matrices */
+extern GLfloat  G_mvp_matrix_overscan[16];
+extern GLfloat  G_mvp_matrix_intermediate[16];
+extern GLfloat  G_mvp_matrix_window[16];
 
 /* tiles & sprites vbo index tables */
 extern int G_tile_layer_index[GRAPHICS_NUM_TILE_LAYERS];
 extern int G_tile_layer_count[GRAPHICS_NUM_TILE_LAYERS];
+extern int G_tile_layer_max[GRAPHICS_NUM_TILE_LAYERS];
 
 extern int G_sprite_layer_index[GRAPHICS_NUM_SPRITE_LAYERS];
 extern int G_sprite_layer_count[GRAPHICS_NUM_SPRITE_LAYERS];
+extern int G_sprite_layer_max[GRAPHICS_NUM_SPRITE_LAYERS];
 
 /* function declarations */
 short int graphics_create_opengl_objects();
@@ -149,8 +146,6 @@ short int graphics_read_desktop_dimensions();
 short int graphics_set_window_size(int res);
 short int graphics_increase_window_size();
 short int graphics_decrease_window_size();
-
-short int graphics_generate_tables();
 
 #endif
 

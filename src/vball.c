@@ -15,7 +15,6 @@
 #include "midicont.h"
 #include "palette.h"
 #include "patch.h"
-#include "screen.h"
 #include "sequence.h"
 #include "texture.h"
 #include "vball.h"
@@ -65,62 +64,65 @@ enum
 #define VB_ALL_TILE_LAYER_COUNT(layer)                                     \
   G_tile_layer_count[GRAPHICS_TILE_LAYER_##layer]
 
+#define VB_ALL_TILE_LAYER_MAX(layer)                                       \
+  G_tile_layer_max[GRAPHICS_TILE_LAYER_##layer]
+
 /* position is the center, width & height are in 8x8 cells */
-#define VB_ALL_ADD_TILE_TO_VERTEX_BUFFER(pos_x, pos_y, width, height, layer)  \
-  G_vertex_buffer_tiles[12 * tile_index +  0] = pos_x - (4 * width);          \
-  G_vertex_buffer_tiles[12 * tile_index +  1] = pos_y - (4 * height);         \
-  G_vertex_buffer_tiles[12 * tile_index +  2] = GRAPHICS_Z_LEVEL_##layer;     \
-                                                                              \
-  G_vertex_buffer_tiles[12 * tile_index +  3] = pos_x + (4 * width);          \
-  G_vertex_buffer_tiles[12 * tile_index +  4] = pos_y - (4 * height);         \
-  G_vertex_buffer_tiles[12 * tile_index +  5] = GRAPHICS_Z_LEVEL_##layer;     \
-                                                                              \
-  G_vertex_buffer_tiles[12 * tile_index +  6] = pos_x - (4 * width);          \
-  G_vertex_buffer_tiles[12 * tile_index +  7] = pos_y + (4 * height);         \
-  G_vertex_buffer_tiles[12 * tile_index +  8] = GRAPHICS_Z_LEVEL_##layer;     \
-                                                                              \
-  G_vertex_buffer_tiles[12 * tile_index +  9] = pos_x + (4 * width);          \
-  G_vertex_buffer_tiles[12 * tile_index + 10] = pos_y + (4 * height);         \
-  G_vertex_buffer_tiles[12 * tile_index + 11] = GRAPHICS_Z_LEVEL_##layer;
+#define VB_ALL_ADD_TILE_TO_VERTEX_BUFFER(pos_x, pos_y, width, height, layer)                                  \
+  G_overscan_vertex_buffer_data[GRAPHICS_BUFFER_SET_TILES][12 * tile_index +  0] = pos_x - (4 * width);       \
+  G_overscan_vertex_buffer_data[GRAPHICS_BUFFER_SET_TILES][12 * tile_index +  1] = pos_y - (4 * height);      \
+  G_overscan_vertex_buffer_data[GRAPHICS_BUFFER_SET_TILES][12 * tile_index +  2] = GRAPHICS_Z_LEVEL_##layer;  \
+                                                                                                              \
+  G_overscan_vertex_buffer_data[GRAPHICS_BUFFER_SET_TILES][12 * tile_index +  3] = pos_x + (4 * width);       \
+  G_overscan_vertex_buffer_data[GRAPHICS_BUFFER_SET_TILES][12 * tile_index +  4] = pos_y - (4 * height);      \
+  G_overscan_vertex_buffer_data[GRAPHICS_BUFFER_SET_TILES][12 * tile_index +  5] = GRAPHICS_Z_LEVEL_##layer;  \
+                                                                                                              \
+  G_overscan_vertex_buffer_data[GRAPHICS_BUFFER_SET_TILES][12 * tile_index +  6] = pos_x - (4 * width);       \
+  G_overscan_vertex_buffer_data[GRAPHICS_BUFFER_SET_TILES][12 * tile_index +  7] = pos_y + (4 * height);      \
+  G_overscan_vertex_buffer_data[GRAPHICS_BUFFER_SET_TILES][12 * tile_index +  8] = GRAPHICS_Z_LEVEL_##layer;  \
+                                                                                                              \
+  G_overscan_vertex_buffer_data[GRAPHICS_BUFFER_SET_TILES][12 * tile_index +  9] = pos_x + (4 * width);       \
+  G_overscan_vertex_buffer_data[GRAPHICS_BUFFER_SET_TILES][12 * tile_index + 10] = pos_y + (4 * height);      \
+  G_overscan_vertex_buffer_data[GRAPHICS_BUFFER_SET_TILES][12 * tile_index + 11] = GRAPHICS_Z_LEVEL_##layer;
 
 /* cell_x and cell_y are the top left corner, width & height are in 8x8 cells */
-#define VB_ALL_ADD_TILE_TO_TEXTURE_COORD_BUFFER(cell_x, cell_y, width, height)                                    \
-  G_texture_coord_buffer_tiles[8 * tile_index + 0] = G_texture_coord_table[cell_x];                               \
-  G_texture_coord_buffer_tiles[8 * tile_index + 1] = G_texture_coord_table[TEXTURE_NUM_CELLS - cell_y];           \
-                                                                                                                  \
-  G_texture_coord_buffer_tiles[8 * tile_index + 2] = G_texture_coord_table[cell_x + width];                       \
-  G_texture_coord_buffer_tiles[8 * tile_index + 3] = G_texture_coord_table[TEXTURE_NUM_CELLS - cell_y];           \
-                                                                                                                  \
-  G_texture_coord_buffer_tiles[8 * tile_index + 4] = G_texture_coord_table[cell_x];                               \
-  G_texture_coord_buffer_tiles[8 * tile_index + 5] = G_texture_coord_table[TEXTURE_NUM_CELLS - height - cell_y];  \
-                                                                                                                  \
-  G_texture_coord_buffer_tiles[8 * tile_index + 6] = G_texture_coord_table[cell_x + width];                       \
-  G_texture_coord_buffer_tiles[8 * tile_index + 7] = G_texture_coord_table[TEXTURE_NUM_CELLS - height - cell_y];
+#define VB_ALL_ADD_TILE_TO_TEXTURE_COORD_BUFFER(cell_x, cell_y, width, height)                                                                  \
+  G_overscan_tex_coord_buffer_data[GRAPHICS_BUFFER_SET_TILES][8 * tile_index + 0] = G_texture_coord_table[cell_x];                              \
+  G_overscan_tex_coord_buffer_data[GRAPHICS_BUFFER_SET_TILES][8 * tile_index + 1] = G_texture_coord_table[TEXTURE_NUM_CELLS - cell_y];          \
+                                                                                                                                                \
+  G_overscan_tex_coord_buffer_data[GRAPHICS_BUFFER_SET_TILES][8 * tile_index + 2] = G_texture_coord_table[cell_x + width];                      \
+  G_overscan_tex_coord_buffer_data[GRAPHICS_BUFFER_SET_TILES][8 * tile_index + 3] = G_texture_coord_table[TEXTURE_NUM_CELLS - cell_y];          \
+                                                                                                                                                \
+  G_overscan_tex_coord_buffer_data[GRAPHICS_BUFFER_SET_TILES][8 * tile_index + 4] = G_texture_coord_table[cell_x];                              \
+  G_overscan_tex_coord_buffer_data[GRAPHICS_BUFFER_SET_TILES][8 * tile_index + 5] = G_texture_coord_table[TEXTURE_NUM_CELLS - height - cell_y]; \
+                                                                                                                                                \
+  G_overscan_tex_coord_buffer_data[GRAPHICS_BUFFER_SET_TILES][8 * tile_index + 6] = G_texture_coord_table[cell_x + width];                      \
+  G_overscan_tex_coord_buffer_data[GRAPHICS_BUFFER_SET_TILES][8 * tile_index + 7] = G_texture_coord_table[TEXTURE_NUM_CELLS - height - cell_y];
 
-#define VB_ALL_ADD_TILE_TO_LIGHTING_AND_PALETTE_BUFFER(lighting, palette)                                           \
-  G_lighting_and_palette_buffer_tiles[8 * tile_index + 0] = G_lighting_coord_table[PALETTE_BASE_LEVEL + lighting];  \
-  G_lighting_and_palette_buffer_tiles[8 * tile_index + 1] = G_palette_coord_table[palette];                         \
-                                                                                                                    \
-  G_lighting_and_palette_buffer_tiles[8 * tile_index + 2] = G_lighting_coord_table[PALETTE_BASE_LEVEL + lighting];  \
-  G_lighting_and_palette_buffer_tiles[8 * tile_index + 3] = G_palette_coord_table[palette];                         \
-                                                                                                                    \
-  G_lighting_and_palette_buffer_tiles[8 * tile_index + 4] = G_lighting_coord_table[PALETTE_BASE_LEVEL + lighting];  \
-  G_lighting_and_palette_buffer_tiles[8 * tile_index + 5] = G_palette_coord_table[palette];                         \
-                                                                                                                    \
-  G_lighting_and_palette_buffer_tiles[8 * tile_index + 6] = G_lighting_coord_table[PALETTE_BASE_LEVEL + lighting];  \
-  G_lighting_and_palette_buffer_tiles[8 * tile_index + 7] = G_palette_coord_table[palette];
+#define VB_ALL_ADD_TILE_TO_LIGHTING_AND_PALETTE_BUFFER(lighting, palette)                                                                   \
+  G_overscan_pal_coord_buffer_data[GRAPHICS_BUFFER_SET_TILES][8 * tile_index + 0] = G_lighting_coord_table[PALETTE_BASE_LEVEL + lighting];  \
+  G_overscan_pal_coord_buffer_data[GRAPHICS_BUFFER_SET_TILES][8 * tile_index + 1] = G_palette_coord_table[palette];                         \
+                                                                                                                                            \
+  G_overscan_pal_coord_buffer_data[GRAPHICS_BUFFER_SET_TILES][8 * tile_index + 2] = G_lighting_coord_table[PALETTE_BASE_LEVEL + lighting];  \
+  G_overscan_pal_coord_buffer_data[GRAPHICS_BUFFER_SET_TILES][8 * tile_index + 3] = G_palette_coord_table[palette];                         \
+                                                                                                                                            \
+  G_overscan_pal_coord_buffer_data[GRAPHICS_BUFFER_SET_TILES][8 * tile_index + 4] = G_lighting_coord_table[PALETTE_BASE_LEVEL + lighting];  \
+  G_overscan_pal_coord_buffer_data[GRAPHICS_BUFFER_SET_TILES][8 * tile_index + 5] = G_palette_coord_table[palette];                         \
+                                                                                                                                            \
+  G_overscan_pal_coord_buffer_data[GRAPHICS_BUFFER_SET_TILES][8 * tile_index + 6] = G_lighting_coord_table[PALETTE_BASE_LEVEL + lighting];  \
+  G_overscan_pal_coord_buffer_data[GRAPHICS_BUFFER_SET_TILES][8 * tile_index + 7] = G_palette_coord_table[palette];
 
-#define VB_ALL_ADD_TILE_TO_ELEMENT_BUFFER()                                    \
-  G_index_buffer_tiles[6 * tile_index + 0] = 4 * tile_index + 0;               \
-  G_index_buffer_tiles[6 * tile_index + 1] = 4 * tile_index + 2;               \
-  G_index_buffer_tiles[6 * tile_index + 2] = 4 * tile_index + 1;               \
-                                                                               \
-  G_index_buffer_tiles[6 * tile_index + 3] = 4 * tile_index + 1;               \
-  G_index_buffer_tiles[6 * tile_index + 4] = 4 * tile_index + 2;               \
-  G_index_buffer_tiles[6 * tile_index + 5] = 4 * tile_index + 3;
+#define VB_ALL_ADD_TILE_TO_ELEMENT_BUFFER()                                                         \
+  G_overscan_index_buffer_data[GRAPHICS_BUFFER_SET_TILES][6 * tile_index + 0] = 4 * tile_index + 0; \
+  G_overscan_index_buffer_data[GRAPHICS_BUFFER_SET_TILES][6 * tile_index + 1] = 4 * tile_index + 2; \
+  G_overscan_index_buffer_data[GRAPHICS_BUFFER_SET_TILES][6 * tile_index + 2] = 4 * tile_index + 1; \
+                                                                                                    \
+  G_overscan_index_buffer_data[GRAPHICS_BUFFER_SET_TILES][6 * tile_index + 3] = 4 * tile_index + 1; \
+  G_overscan_index_buffer_data[GRAPHICS_BUFFER_SET_TILES][6 * tile_index + 4] = 4 * tile_index + 2; \
+  G_overscan_index_buffer_data[GRAPHICS_BUFFER_SET_TILES][6 * tile_index + 5] = 4 * tile_index + 3;
 
 #define VB_ALL_ADD_TILE_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, lighting, palette, layer)  \
-  if (VB_ALL_TILE_LAYER_INDEX(layer) < GRAPHICS_MAX_##layer##_TILES)                        \
+  if (VB_ALL_TILE_LAYER_INDEX(layer) < VB_ALL_TILE_LAYER_MAX(layer))                        \
   {                                                                                         \
     tile_index =  VB_ALL_TILE_LAYER_INDEX(layer) +                                          \
                   VB_ALL_TILE_LAYER_COUNT(layer);                                           \
@@ -133,30 +135,30 @@ enum
     VB_ALL_TILE_LAYER_COUNT(layer) += 1;                                                    \
   }
 
-#define VB_ALL_UPDATE_TILES_IN_VBOS(layer)                                                    \
-  glBindBuffer(GL_ARRAY_BUFFER, G_vertex_buffer_id_tiles);                                    \
-  glBufferSubData(GL_ARRAY_BUFFER,                                                            \
-                  VB_ALL_TILE_LAYER_INDEX(layer) * 12 * sizeof(GLfloat),                      \
-                  VB_ALL_TILE_LAYER_COUNT(layer) * 12 * sizeof(GLfloat),                      \
-                  &G_vertex_buffer_tiles[VB_ALL_TILE_LAYER_INDEX(layer) * 12]);               \
-                                                                                              \
-  glBindBuffer(GL_ARRAY_BUFFER, G_texture_coord_buffer_id_tiles);                             \
-  glBufferSubData(GL_ARRAY_BUFFER,                                                            \
-                  VB_ALL_TILE_LAYER_INDEX(layer) * 8 * sizeof(GLfloat),                       \
-                  VB_ALL_TILE_LAYER_COUNT(layer) * 8 * sizeof(GLfloat),                       \
-                  &G_texture_coord_buffer_tiles[VB_ALL_TILE_LAYER_INDEX(layer) * 8]);         \
-                                                                                              \
-  glBindBuffer(GL_ARRAY_BUFFER, G_lighting_and_palette_buffer_id_tiles);                      \
-  glBufferSubData(GL_ARRAY_BUFFER,                                                            \
-                  VB_ALL_TILE_LAYER_INDEX(layer) * 8 * sizeof(GLfloat),                       \
-                  VB_ALL_TILE_LAYER_COUNT(layer) * 8 * sizeof(GLfloat),                       \
-                  &G_lighting_and_palette_buffer_tiles[VB_ALL_TILE_LAYER_INDEX(layer) * 8]);  \
-                                                                                              \
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, G_index_buffer_id_tiles);                             \
-  glBufferSubData(GL_ELEMENT_ARRAY_BUFFER,                                                    \
-                  VB_ALL_TILE_LAYER_INDEX(layer) * 6 * sizeof(unsigned short),                \
-                  VB_ALL_TILE_LAYER_COUNT(layer) * 6 * sizeof(unsigned short),                \
-                  &G_index_buffer_tiles[VB_ALL_TILE_LAYER_INDEX(layer) * 6]);
+#define VB_ALL_UPDATE_TILES_IN_VBOS(layer)                                                                            \
+  glBindBuffer(GL_ARRAY_BUFFER, G_overscan_vertex_buffer_id[GRAPHICS_BUFFER_SET_TILES]);                              \
+  glBufferSubData(GL_ARRAY_BUFFER,                                                                                    \
+                  VB_ALL_TILE_LAYER_INDEX(layer) * 12 * sizeof(GLfloat),                                              \
+                  VB_ALL_TILE_LAYER_COUNT(layer) * 12 * sizeof(GLfloat),                                              \
+                  &G_overscan_vertex_buffer_data[GRAPHICS_BUFFER_SET_TILES][VB_ALL_TILE_LAYER_INDEX(layer) * 12]);    \
+                                                                                                                      \
+  glBindBuffer(GL_ARRAY_BUFFER, G_overscan_tex_coord_buffer_id[GRAPHICS_BUFFER_SET_TILES]);                           \
+  glBufferSubData(GL_ARRAY_BUFFER,                                                                                    \
+                  VB_ALL_TILE_LAYER_INDEX(layer) * 8 * sizeof(GLfloat),                                               \
+                  VB_ALL_TILE_LAYER_COUNT(layer) * 8 * sizeof(GLfloat),                                               \
+                  &G_overscan_tex_coord_buffer_data[GRAPHICS_BUFFER_SET_TILES][VB_ALL_TILE_LAYER_INDEX(layer) * 8]);  \
+                                                                                                                      \
+  glBindBuffer(GL_ARRAY_BUFFER, G_overscan_pal_coord_buffer_id[GRAPHICS_BUFFER_SET_TILES]);                           \
+  glBufferSubData(GL_ARRAY_BUFFER,                                                                                    \
+                  VB_ALL_TILE_LAYER_INDEX(layer) * 8 * sizeof(GLfloat),                                               \
+                  VB_ALL_TILE_LAYER_COUNT(layer) * 8 * sizeof(GLfloat),                                               \
+                  &G_overscan_pal_coord_buffer_data[GRAPHICS_BUFFER_SET_TILES][VB_ALL_TILE_LAYER_INDEX(layer) * 8]);  \
+                                                                                                                      \
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, G_overscan_index_buffer_id[GRAPHICS_BUFFER_SET_TILES]);                       \
+  glBufferSubData(GL_ELEMENT_ARRAY_BUFFER,                                                                            \
+                  VB_ALL_TILE_LAYER_INDEX(layer) * 6 * sizeof(unsigned short),                                        \
+                  VB_ALL_TILE_LAYER_COUNT(layer) * 6 * sizeof(unsigned short),                                        \
+                  &G_overscan_index_buffer_data[GRAPHICS_BUFFER_SET_TILES][VB_ALL_TILE_LAYER_INDEX(layer) * 6]);
 
 /* sprites */
 #define VB_ALL_SPRITE_LAYER_INDEX(layer)                                     \
@@ -165,62 +167,65 @@ enum
 #define VB_ALL_SPRITE_LAYER_COUNT(layer)                                     \
   G_sprite_layer_count[GRAPHICS_SPRITE_LAYER_##layer]
 
+#define VB_ALL_SPRITE_LAYER_MAX(layer)                                       \
+  G_sprite_layer_max[GRAPHICS_SPRITE_LAYER_##layer]
+
 /* position is the center, width & height are in 8x8 cells */
-#define VB_ALL_ADD_SPRITE_TO_VERTEX_BUFFER(pos_x, pos_y, width, height, layer)  \
-  G_vertex_buffer_sprites[12 * sprite_index +  0] = pos_x - (4 * width);        \
-  G_vertex_buffer_sprites[12 * sprite_index +  1] = pos_y - (4 * height);       \
-  G_vertex_buffer_sprites[12 * sprite_index +  2] = GRAPHICS_Z_LEVEL_##layer;   \
-                                                                                \
-  G_vertex_buffer_sprites[12 * sprite_index +  3] = pos_x + (4 * width);        \
-  G_vertex_buffer_sprites[12 * sprite_index +  4] = pos_y - (4 * height);       \
-  G_vertex_buffer_sprites[12 * sprite_index +  5] = GRAPHICS_Z_LEVEL_##layer;   \
-                                                                                \
-  G_vertex_buffer_sprites[12 * sprite_index +  6] = pos_x - (4 * width);        \
-  G_vertex_buffer_sprites[12 * sprite_index +  7] = pos_y + (4 * height);       \
-  G_vertex_buffer_sprites[12 * sprite_index +  8] = GRAPHICS_Z_LEVEL_##layer;   \
-                                                                                \
-  G_vertex_buffer_sprites[12 * sprite_index +  9] = pos_x + (4 * width);        \
-  G_vertex_buffer_sprites[12 * sprite_index + 10] = pos_y + (4 * height);       \
-  G_vertex_buffer_sprites[12 * sprite_index + 11] = GRAPHICS_Z_LEVEL_##layer;
+#define VB_ALL_ADD_SPRITE_TO_VERTEX_BUFFER(pos_x, pos_y, width, height, layer)                                    \
+  G_overscan_vertex_buffer_data[GRAPHICS_BUFFER_SET_SPRITES][12 * sprite_index +  0] = pos_x - (4 * width);       \
+  G_overscan_vertex_buffer_data[GRAPHICS_BUFFER_SET_SPRITES][12 * sprite_index +  1] = pos_y - (4 * height);      \
+  G_overscan_vertex_buffer_data[GRAPHICS_BUFFER_SET_SPRITES][12 * sprite_index +  2] = GRAPHICS_Z_LEVEL_##layer;  \
+                                                                                                                  \
+  G_overscan_vertex_buffer_data[GRAPHICS_BUFFER_SET_SPRITES][12 * sprite_index +  3] = pos_x + (4 * width);       \
+  G_overscan_vertex_buffer_data[GRAPHICS_BUFFER_SET_SPRITES][12 * sprite_index +  4] = pos_y - (4 * height);      \
+  G_overscan_vertex_buffer_data[GRAPHICS_BUFFER_SET_SPRITES][12 * sprite_index +  5] = GRAPHICS_Z_LEVEL_##layer;  \
+                                                                                                                  \
+  G_overscan_vertex_buffer_data[GRAPHICS_BUFFER_SET_SPRITES][12 * sprite_index +  6] = pos_x - (4 * width);       \
+  G_overscan_vertex_buffer_data[GRAPHICS_BUFFER_SET_SPRITES][12 * sprite_index +  7] = pos_y + (4 * height);      \
+  G_overscan_vertex_buffer_data[GRAPHICS_BUFFER_SET_SPRITES][12 * sprite_index +  8] = GRAPHICS_Z_LEVEL_##layer;  \
+                                                                                                                  \
+  G_overscan_vertex_buffer_data[GRAPHICS_BUFFER_SET_SPRITES][12 * sprite_index +  9] = pos_x + (4 * width);       \
+  G_overscan_vertex_buffer_data[GRAPHICS_BUFFER_SET_SPRITES][12 * sprite_index + 10] = pos_y + (4 * height);      \
+  G_overscan_vertex_buffer_data[GRAPHICS_BUFFER_SET_SPRITES][12 * sprite_index + 11] = GRAPHICS_Z_LEVEL_##layer;
 
 /* cell_x and cell_y are the top left corner, width & height are in 8x8 cells */
-#define VB_ALL_ADD_SPRITE_TO_TEXTURE_COORD_BUFFER(cell_x, cell_y, width, height)                                      \
-  G_texture_coord_buffer_sprites[8 * sprite_index + 0] = G_texture_coord_table[cell_x];                               \
-  G_texture_coord_buffer_sprites[8 * sprite_index + 1] = G_texture_coord_table[TEXTURE_NUM_CELLS - cell_y];           \
-                                                                                                                      \
-  G_texture_coord_buffer_sprites[8 * sprite_index + 2] = G_texture_coord_table[cell_x + width];                       \
-  G_texture_coord_buffer_sprites[8 * sprite_index + 3] = G_texture_coord_table[TEXTURE_NUM_CELLS - cell_y];           \
-                                                                                                                      \
-  G_texture_coord_buffer_sprites[8 * sprite_index + 4] = G_texture_coord_table[cell_x];                               \
-  G_texture_coord_buffer_sprites[8 * sprite_index + 5] = G_texture_coord_table[TEXTURE_NUM_CELLS - height - cell_y];  \
-                                                                                                                      \
-  G_texture_coord_buffer_sprites[8 * sprite_index + 6] = G_texture_coord_table[cell_x + width];                       \
-  G_texture_coord_buffer_sprites[8 * sprite_index + 7] = G_texture_coord_table[TEXTURE_NUM_CELLS - height - cell_y];
+#define VB_ALL_ADD_SPRITE_TO_TEXTURE_COORD_BUFFER(cell_x, cell_y, width, height)                                                                    \
+  G_overscan_tex_coord_buffer_data[GRAPHICS_BUFFER_SET_SPRITES][8 * sprite_index + 0] = G_texture_coord_table[cell_x];                              \
+  G_overscan_tex_coord_buffer_data[GRAPHICS_BUFFER_SET_SPRITES][8 * sprite_index + 1] = G_texture_coord_table[TEXTURE_NUM_CELLS - cell_y];          \
+                                                                                                                                                    \
+  G_overscan_tex_coord_buffer_data[GRAPHICS_BUFFER_SET_SPRITES][8 * sprite_index + 2] = G_texture_coord_table[cell_x + width];                      \
+  G_overscan_tex_coord_buffer_data[GRAPHICS_BUFFER_SET_SPRITES][8 * sprite_index + 3] = G_texture_coord_table[TEXTURE_NUM_CELLS - cell_y];          \
+                                                                                                                                                    \
+  G_overscan_tex_coord_buffer_data[GRAPHICS_BUFFER_SET_SPRITES][8 * sprite_index + 4] = G_texture_coord_table[cell_x];                              \
+  G_overscan_tex_coord_buffer_data[GRAPHICS_BUFFER_SET_SPRITES][8 * sprite_index + 5] = G_texture_coord_table[TEXTURE_NUM_CELLS - height - cell_y]; \
+                                                                                                                                                    \
+  G_overscan_tex_coord_buffer_data[GRAPHICS_BUFFER_SET_SPRITES][8 * sprite_index + 6] = G_texture_coord_table[cell_x + width];                      \
+  G_overscan_tex_coord_buffer_data[GRAPHICS_BUFFER_SET_SPRITES][8 * sprite_index + 7] = G_texture_coord_table[TEXTURE_NUM_CELLS - height - cell_y];
 
-#define VB_ALL_ADD_SPRITE_TO_LIGHTING_AND_PALETTE_BUFFER(lighting, palette)                                             \
-  G_lighting_and_palette_buffer_sprites[8 * sprite_index + 0] = G_lighting_coord_table[PALETTE_BASE_LEVEL + lighting];  \
-  G_lighting_and_palette_buffer_sprites[8 * sprite_index + 1] = G_palette_coord_table[palette];                         \
-                                                                                                                        \
-  G_lighting_and_palette_buffer_sprites[8 * sprite_index + 2] = G_lighting_coord_table[PALETTE_BASE_LEVEL + lighting];  \
-  G_lighting_and_palette_buffer_sprites[8 * sprite_index + 3] = G_palette_coord_table[palette];                         \
-                                                                                                                        \
-  G_lighting_and_palette_buffer_sprites[8 * sprite_index + 4] = G_lighting_coord_table[PALETTE_BASE_LEVEL + lighting];  \
-  G_lighting_and_palette_buffer_sprites[8 * sprite_index + 5] = G_palette_coord_table[palette];                         \
-                                                                                                                        \
-  G_lighting_and_palette_buffer_sprites[8 * sprite_index + 6] = G_lighting_coord_table[PALETTE_BASE_LEVEL + lighting];  \
-  G_lighting_and_palette_buffer_sprites[8 * sprite_index + 7] = G_palette_coord_table[palette];
+#define VB_ALL_ADD_SPRITE_TO_LIGHTING_AND_PALETTE_BUFFER(lighting, palette)                                                                     \
+  G_overscan_pal_coord_buffer_data[GRAPHICS_BUFFER_SET_SPRITES][8 * sprite_index + 0] = G_lighting_coord_table[PALETTE_BASE_LEVEL + lighting];  \
+  G_overscan_pal_coord_buffer_data[GRAPHICS_BUFFER_SET_SPRITES][8 * sprite_index + 1] = G_palette_coord_table[palette];                         \
+                                                                                                                                                \
+  G_overscan_pal_coord_buffer_data[GRAPHICS_BUFFER_SET_SPRITES][8 * sprite_index + 2] = G_lighting_coord_table[PALETTE_BASE_LEVEL + lighting];  \
+  G_overscan_pal_coord_buffer_data[GRAPHICS_BUFFER_SET_SPRITES][8 * sprite_index + 3] = G_palette_coord_table[palette];                         \
+                                                                                                                                                \
+  G_overscan_pal_coord_buffer_data[GRAPHICS_BUFFER_SET_SPRITES][8 * sprite_index + 4] = G_lighting_coord_table[PALETTE_BASE_LEVEL + lighting];  \
+  G_overscan_pal_coord_buffer_data[GRAPHICS_BUFFER_SET_SPRITES][8 * sprite_index + 5] = G_palette_coord_table[palette];                         \
+                                                                                                                                                \
+  G_overscan_pal_coord_buffer_data[GRAPHICS_BUFFER_SET_SPRITES][8 * sprite_index + 6] = G_lighting_coord_table[PALETTE_BASE_LEVEL + lighting];  \
+  G_overscan_pal_coord_buffer_data[GRAPHICS_BUFFER_SET_SPRITES][8 * sprite_index + 7] = G_palette_coord_table[palette];
 
-#define VB_ALL_ADD_SPRITE_TO_ELEMENT_BUFFER()                                  \
-  G_index_buffer_sprites[6 * sprite_index + 0] = 4 * sprite_index + 0;         \
-  G_index_buffer_sprites[6 * sprite_index + 1] = 4 * sprite_index + 2;         \
-  G_index_buffer_sprites[6 * sprite_index + 2] = 4 * sprite_index + 1;         \
-                                                                               \
-  G_index_buffer_sprites[6 * sprite_index + 3] = 4 * sprite_index + 1;         \
-  G_index_buffer_sprites[6 * sprite_index + 4] = 4 * sprite_index + 2;         \
-  G_index_buffer_sprites[6 * sprite_index + 5] = 4 * sprite_index + 3;
+#define VB_ALL_ADD_SPRITE_TO_ELEMENT_BUFFER()                                                             \
+  G_overscan_index_buffer_data[GRAPHICS_BUFFER_SET_SPRITES][6 * sprite_index + 0] = 4 * sprite_index + 0; \
+  G_overscan_index_buffer_data[GRAPHICS_BUFFER_SET_SPRITES][6 * sprite_index + 1] = 4 * sprite_index + 2; \
+  G_overscan_index_buffer_data[GRAPHICS_BUFFER_SET_SPRITES][6 * sprite_index + 2] = 4 * sprite_index + 1; \
+                                                                                                          \
+  G_overscan_index_buffer_data[GRAPHICS_BUFFER_SET_SPRITES][6 * sprite_index + 3] = 4 * sprite_index + 1; \
+  G_overscan_index_buffer_data[GRAPHICS_BUFFER_SET_SPRITES][6 * sprite_index + 4] = 4 * sprite_index + 2; \
+  G_overscan_index_buffer_data[GRAPHICS_BUFFER_SET_SPRITES][6 * sprite_index + 5] = 4 * sprite_index + 3;
 
 #define VB_ALL_ADD_SPRITE_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, width, height, lighting, palette, layer) \
-  if (VB_ALL_SPRITE_LAYER_COUNT(layer) < GRAPHICS_MAX_##layer##_SPRITES)                                    \
+  if (VB_ALL_SPRITE_LAYER_COUNT(layer) < VB_ALL_SPRITE_LAYER_MAX(layer))                                    \
   {                                                                                                         \
     sprite_index =  VB_ALL_SPRITE_LAYER_INDEX(layer) +                                                      \
                     VB_ALL_SPRITE_LAYER_COUNT(layer);                                                       \
@@ -233,46 +238,54 @@ enum
     VB_ALL_SPRITE_LAYER_COUNT(layer) += 1;                                                                  \
   }
 
-#define VB_ALL_UPDATE_SPRITES_IN_VBOS(layer)                                                      \
-  glBindBuffer(GL_ARRAY_BUFFER, G_vertex_buffer_id_sprites);                                      \
-  glBufferSubData(GL_ARRAY_BUFFER,                                                                \
-                  VB_ALL_SPRITE_LAYER_INDEX(layer) * 12 * sizeof(GLfloat),                        \
-                  VB_ALL_SPRITE_LAYER_COUNT(layer) * 12 * sizeof(GLfloat),                        \
-                  &G_vertex_buffer_sprites[VB_ALL_SPRITE_LAYER_INDEX(layer) * 12]);               \
-                                                                                                  \
-  glBindBuffer(GL_ARRAY_BUFFER, G_texture_coord_buffer_id_sprites);                               \
-  glBufferSubData(GL_ARRAY_BUFFER,                                                                \
-                  VB_ALL_SPRITE_LAYER_INDEX(layer) * 8 * sizeof(GLfloat),                         \
-                  VB_ALL_SPRITE_LAYER_COUNT(layer) * 8 * sizeof(GLfloat),                         \
-                  &G_texture_coord_buffer_sprites[VB_ALL_SPRITE_LAYER_INDEX(layer) * 8]);         \
-                                                                                                  \
-  glBindBuffer(GL_ARRAY_BUFFER, G_lighting_and_palette_buffer_id_sprites);                        \
-  glBufferSubData(GL_ARRAY_BUFFER,                                                                \
-                  VB_ALL_SPRITE_LAYER_INDEX(layer) * 8 * sizeof(GLfloat),                         \
-                  VB_ALL_SPRITE_LAYER_COUNT(layer) * 8 * sizeof(GLfloat),                         \
-                  &G_lighting_and_palette_buffer_sprites[VB_ALL_SPRITE_LAYER_INDEX(layer) * 8]);  \
-                                                                                                  \
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, G_index_buffer_id_sprites);                               \
-  glBufferSubData(GL_ELEMENT_ARRAY_BUFFER,                                                        \
-                  VB_ALL_SPRITE_LAYER_INDEX(layer) * 6 * sizeof(unsigned short),                  \
-                  VB_ALL_SPRITE_LAYER_COUNT(layer) * 6 * sizeof(unsigned short),                  \
-                  &G_index_buffer_sprites[VB_ALL_SPRITE_LAYER_INDEX(layer) * 6]);
+#define VB_ALL_UPDATE_SPRITES_IN_VBOS(layer)                                                                              \
+  glBindBuffer(GL_ARRAY_BUFFER, G_overscan_vertex_buffer_id[GRAPHICS_BUFFER_SET_SPRITES]);                                \
+  glBufferSubData(GL_ARRAY_BUFFER,                                                                                        \
+                  VB_ALL_SPRITE_LAYER_INDEX(layer) * 12 * sizeof(GLfloat),                                                \
+                  VB_ALL_SPRITE_LAYER_COUNT(layer) * 12 * sizeof(GLfloat),                                                \
+                  &G_overscan_vertex_buffer_data[GRAPHICS_BUFFER_SET_SPRITES][VB_ALL_SPRITE_LAYER_INDEX(layer) * 12]);    \
+                                                                                                                          \
+  glBindBuffer(GL_ARRAY_BUFFER, G_overscan_tex_coord_buffer_id[GRAPHICS_BUFFER_SET_SPRITES]);                             \
+  glBufferSubData(GL_ARRAY_BUFFER,                                                                                        \
+                  VB_ALL_SPRITE_LAYER_INDEX(layer) * 8 * sizeof(GLfloat),                                                 \
+                  VB_ALL_SPRITE_LAYER_COUNT(layer) * 8 * sizeof(GLfloat),                                                 \
+                  &G_overscan_tex_coord_buffer_data[GRAPHICS_BUFFER_SET_SPRITES][VB_ALL_SPRITE_LAYER_INDEX(layer) * 8]);  \
+                                                                                                                          \
+  glBindBuffer(GL_ARRAY_BUFFER, G_overscan_pal_coord_buffer_id[GRAPHICS_BUFFER_SET_SPRITES]);                             \
+  glBufferSubData(GL_ARRAY_BUFFER,                                                                                        \
+                  VB_ALL_SPRITE_LAYER_INDEX(layer) * 8 * sizeof(GLfloat),                                                 \
+                  VB_ALL_SPRITE_LAYER_COUNT(layer) * 8 * sizeof(GLfloat),                                                 \
+                  &G_overscan_pal_coord_buffer_data[GRAPHICS_BUFFER_SET_SPRITES][VB_ALL_SPRITE_LAYER_INDEX(layer) * 8]);  \
+                                                                                                                          \
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, G_overscan_index_buffer_id[GRAPHICS_BUFFER_SET_SPRITES]);                         \
+  glBufferSubData(GL_ELEMENT_ARRAY_BUFFER,                                                                                \
+                  VB_ALL_SPRITE_LAYER_INDEX(layer) * 6 * sizeof(unsigned short),                                          \
+                  VB_ALL_SPRITE_LAYER_COUNT(layer) * 6 * sizeof(unsigned short),                                          \
+                  &G_overscan_index_buffer_data[GRAPHICS_BUFFER_SET_SPRITES][VB_ALL_SPRITE_LAYER_INDEX(layer) * 6]);
 
 /* cart edit screen layout macros */
-#define VB_ALL_CART_CASE_PARAM_INT(name, param, table)                      \
-  case LAYOUT_CART_PARAM_##name:                                            \
-  {                                                                         \
-    value = param;                                                          \
-    value_string = S_##table##_values[value - pr->lower_bound];             \
-    break;                                                                  \
+#define VB_ALL_CART_PARAM_CASE_INT(name, param, table)                       \
+  case LAYOUT_CART_PARAM_##name:                                             \
+  {                                                                          \
+    value = param;                                                           \
+    value_string = S_##table##_values[value - pr->lower_bound];              \
+    break;                                                                   \
   }
 
-#define VB_ALL_CART_CASE_PARAM_FLAG(name, param, table)                     \
-  case LAYOUT_CART_PARAM_##name:                                            \
-  {                                                                         \
-    value = (param & pr->upper_bound);                                      \
-    value_string = S_##table##_values[value / pr->upper_bound];             \
-    break;                                                                  \
+#define VB_ALL_CART_PARAM_CASE_FLAG(name, param, table)                      \
+  case LAYOUT_CART_PARAM_##name:                                             \
+  {                                                                          \
+    value = (param & pr->upper_bound);                                       \
+    value_string = S_##table##_values[value / pr->upper_bound];              \
+    break;                                                                   \
+  }
+
+#define VB_ALL_AUDITION_PARAM_CASE(name, param, table)                       \
+  case LAYOUT_AUDITION_PARAM_##name:                                         \
+  {                                                                          \
+    value = param;                                                           \
+    value_string = S_##table##_values[value - pr->lower_bound];              \
+    break;                                                                   \
   }
 
 /* common edit tables */
@@ -353,9 +366,11 @@ static char S_cart_param_names[LAYOUT_NUM_CART_PARAMS][VB_ALL_PARAM_NAME_MAX_TEX
     "Mde", "Leg", "Spd",                              /* portamento */
     "Vib", "Trm", "Bst", "Chr",                       /* mod wheel */
     "Vib", "Trm", "Bst", "Chr",                       /* aftertouch */
-    "Vib", "Trm", "Bst", "Chr",                       /* exp pedal */
-    "Oct", "Vel", "PW", "MW", "AT", "EP" 
+    "Vib", "Trm", "Bst", "Chr"                        /* exp pedal */
   };
+
+static char S_audition_param_names[LAYOUT_NUM_AUDITION_PARAMS][VB_ALL_PARAM_NAME_MAX_TEXT_SIZE] = 
+  { "Oct", "Vel", "PW", "MW", "AT", "EP" };
 
 static char S_patch_edit_algorithm_values[PATCH_ALGORITHM_NUM_VALUES][VB_ALL_PARAM_VALUE_MAX_TEXT_SIZE] = 
   { "1>2>3", "(1+2)>3", "1+(2>3)", "1+2+3" };
@@ -430,7 +445,7 @@ static char S_patch_edit_portamento_legato_values[PATCH_PORTAMENTO_LEGATO_NUM_VA
 static char S_patch_edit_routing_values[2][VB_ALL_PARAM_VALUE_MAX_TEXT_SIZE] = 
   { "Off", "On" };
 
-static char S_patch_edit_audition_bi_wheel_values[MIDI_CONT_BI_WHEEL_NUM_VALUES][VB_ALL_PARAM_NUMBER_MAX_TEXT_SIZE] = 
+static char S_audition_bi_wheel_values[MIDI_CONT_BI_WHEEL_NUM_VALUES][VB_ALL_PARAM_NUMBER_MAX_TEXT_SIZE] = 
   { "-64", "-63", "-62", "-61", "-60", "-59", "-58", "-57", 
     "-56", "-55", "-54", "-53", "-52", "-51", "-50", "-49", 
     "-48", "-47", "-46", "-45", "-44", "-43", "-42", "-41", 
@@ -450,7 +465,7 @@ static char S_patch_edit_audition_bi_wheel_values[MIDI_CONT_BI_WHEEL_NUM_VALUES]
      "57",  "58",  "59",  "60",  "61",  "62",  "63",  "64" 
   };
 
-static char S_patch_edit_audition_uni_wheel_values[MIDI_CONT_UNI_WHEEL_NUM_VALUES][VB_ALL_PARAM_NUMBER_MAX_TEXT_SIZE] = 
+static char S_audition_uni_wheel_values[MIDI_CONT_UNI_WHEEL_NUM_VALUES][VB_ALL_PARAM_NUMBER_MAX_TEXT_SIZE] = 
   {  "0",   "1",   "2",   "3",   "4",   "5",   "6",   "7",   "8", 
             "9",  "10",  "11",  "12",  "13",  "14",  "15",  "16", 
            "17",  "18",  "19",  "20",  "21",  "22",  "23",  "24", 
@@ -754,17 +769,17 @@ short int vb_all_load_text_box(int offset_x, int offset_y, int width, int state)
 }
 
 /*******************************************************************************
-** vb_all_load_vertical_scrollbar_area()
+** vb_all_load_vertical_scrollbar()
 *******************************************************************************/
-short int vb_all_load_vertical_scrollbar_area(int offset_x, int offset_y, 
-                                              int height)
+short int vb_all_load_vertical_scrollbar( int current_scroll_amount, 
+                                          int max_scroll_amount)
 {
   int n;
 
   int sprite_index;
 
-  int corner_x;
-  int corner_y;
+  int top_x;
+  int top_y;
 
   int pos_x;
   int pos_y;
@@ -775,52 +790,84 @@ short int vb_all_load_vertical_scrollbar_area(int offset_x, int offset_y,
   int lighting;
   int palette;
 
-  /* make sure the width and height are valid     */
-  /* the width & height are in terms of 8x8 cells */
-  if ((height < 4) || (height > LAYOUT_OVERSCAN_HEIGHT / 8))
+  /* make sure the scroll amount is valid */
+  if ((current_scroll_amount < 0) || (current_scroll_amount > max_scroll_amount))
     return 1;
-
-  /* determine coordinates of the center of the top left corner   */
-  /* 8x8 cell. the offsets from the screen center are in pixels.  */
-  corner_x = LAYOUT_OVERSCAN_CENTER_X + offset_x - 4 * (1 - 1);
-  corner_y = LAYOUT_OVERSCAN_CENTER_Y + offset_y - 4 * (height - 1);
 
   /* set lighting and palette */
   lighting = 0;
   palette = VB_ALL_PALETTE_1;
 
-  /* draw the scrollbar track */
-  for (n = 0; n < height; n++)
+  /* draw corner block */
+  pos_x = LAYOUT_OVERSCAN_CENTER_X;
+  pos_x += LAYOUT_SCROLLBAR_BLOCK_X;
+
+  pos_y = LAYOUT_OVERSCAN_CENTER_Y;
+  pos_y += LAYOUT_SCROLLBAR_BLOCK_Y;
+
+  cell_x = 11;
+  cell_y = 7;
+
+  VB_ALL_ADD_SPRITE_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, 1, 1, lighting, palette, WIDGETS)
+
+  /* draw up arrow */
+  pos_x = LAYOUT_OVERSCAN_CENTER_X;
+  pos_x += LAYOUT_VERT_SCROLLBAR_UP_ARROW_X;
+
+  pos_y = LAYOUT_OVERSCAN_CENTER_Y;
+  pos_y += LAYOUT_VERT_SCROLLBAR_UP_ARROW_Y;
+
+  cell_x = 14;
+  cell_y = 7;
+
+  VB_ALL_ADD_SPRITE_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, 1, 1, lighting, palette, WIDGETS)
+
+  /* draw down arrow */
+  pos_x = LAYOUT_OVERSCAN_CENTER_X;
+  pos_x += LAYOUT_VERT_SCROLLBAR_DOWN_ARROW_X;
+
+  pos_y = LAYOUT_OVERSCAN_CENTER_Y;
+  pos_y += LAYOUT_VERT_SCROLLBAR_DOWN_ARROW_Y;
+
+  cell_x = 15;
+  cell_y = 7;
+
+  VB_ALL_ADD_SPRITE_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, 1, 1, lighting, palette, WIDGETS)
+
+  /************************/
+  /* draw scrollbar track */
+  /************************/
+
+  /* determine coordinates of the center of the top 8x8 cell. */
+  /* the offsets from the screen center are in pixels.        */
+  top_x = LAYOUT_OVERSCAN_CENTER_X;
+  top_x += LAYOUT_VERT_SCROLLBAR_TRACK_X;
+
+  top_y = LAYOUT_OVERSCAN_CENTER_Y;
+  top_y += LAYOUT_VERT_SCROLLBAR_TRACK_Y;
+  top_y -= 4 * LAYOUT_VERT_SCROLLBAR_TRACK_HEIGHT;
+  top_y += 4;
+
+  /* draw the scrollbar */
+  for (n = 0; n < LAYOUT_VERT_SCROLLBAR_TRACK_HEIGHT; n++)
   {
     /* determine center of this piece */
-    pos_x = corner_x + (8 * 0);
-    pos_y = corner_y + (8 * n);
+    pos_x = top_x + (8 * 0);
+    pos_y = top_y + (8 * n);
 
-    /* up arrow piece */
+    /* top piece */
     if (n == 0)
-    {
-      cell_x = 14;
-      cell_y = 7;
-    }
-    /* bottom arrow piece */
-    else if (n == height - 1)
-    {
-      cell_x = 15;
-      cell_y = 7;
-    }
-    /* bar top piece */
-    else if (n == 1)
     {
       cell_x = 7;
       cell_y = 6;
     }
-    /* bar bottom piece */
-    else if (n == height - 2)
+    /* bottom piece */
+    else if (n == LAYOUT_VERT_SCROLLBAR_TRACK_HEIGHT - 1)
     {
       cell_x = 7;
       cell_y = 8;
     }
-    /* bar middle piece */
+    /* middle piece */
     else
     {
       cell_x = 7;
@@ -830,72 +877,29 @@ short int vb_all_load_vertical_scrollbar_area(int offset_x, int offset_y,
     VB_ALL_ADD_SPRITE_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, 1, 1, lighting, palette, WIDGETS)
   }
 
-  return 0;
-}
-
-/*******************************************************************************
-** vb_all_load_vertical_scrollbar_slider()
-*******************************************************************************/
-short int vb_all_load_vertical_scrollbar_slider(int offset_x, 
-                                                int offset_y, 
-                                                int height, 
-                                                int current_scroll_amount, 
-                                                int max_scroll_amount)
-{
-  int n;
-
-  int sprite_index;
-
-  int corner_x;
-  int corner_y;
-
-  int pos_x;
-  int pos_y;
-
-  int cell_x;
-  int cell_y;
-
-  int lighting;
-  int palette;
-
-  /* make sure the height is valid        */
-  /* the height is in terms of 8x8 cells  */
-  if ((height < 4) || (height > LAYOUT_OVERSCAN_HEIGHT / 8))
-    return 1;
-
-  /* make sure the scroll amount is valid */
-  if ((current_scroll_amount < 0) || (current_scroll_amount > max_scroll_amount))
-    return 1;
-
-  /* determine coordinates of the center of the top left corner   */
-  /* 8x8 cell. the offsets from the screen center are in pixels.  */
-  corner_x = LAYOUT_OVERSCAN_CENTER_X + offset_x - 4 * (1 - 1);
-  corner_y = LAYOUT_OVERSCAN_CENTER_Y + offset_y - 4 * (height - 1);
-
-  if (max_scroll_amount > 0)
-    corner_y += (current_scroll_amount * 8 * (height - 2)) / max_scroll_amount;
+  /**************************/
+  /* draw scrollbar slider  */
+  /**************************/
 
   /* set lighting and palette */
   lighting = 0;
   palette = VB_ALL_PALETTE_1;
 
-  /* draw the scrollbar's slider */
-  for (n = 0; n < 2; n++)
-  {
-    /* determine vertical position */
-    pos_x = corner_x + (8 * 0);
-    pos_y = corner_y + (8 * n);
+  /* determine coordinates of slider's top 8x8 cell */
+  pos_x = LAYOUT_OVERSCAN_CENTER_X;
+  pos_x += LAYOUT_VERT_SCROLLBAR_TRACK_X;
 
-    /* top / bottom half */
-    cell_x = 8;
+  pos_y = LAYOUT_OVERSCAN_CENTER_Y;
+  pos_y += LAYOUT_VERT_SCROLLBAR_TRACK_Y;
+  pos_y -= 4 * (LAYOUT_VERT_SCROLLBAR_TRACK_HEIGHT - 2);
 
-    if (n == 0)
-      cell_y = 7;
-    else
-      cell_y = 8;
+  if (max_scroll_amount > 0)
+    pos_y += (current_scroll_amount * 8 * (LAYOUT_VERT_SCROLLBAR_TRACK_HEIGHT - 2)) / max_scroll_amount;
 
-    VB_ALL_ADD_SPRITE_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, 1, 1, lighting, palette, TEXT)
-  }
+  cell_x = 8;
+  cell_y = 7;
+
+  VB_ALL_ADD_SPRITE_TO_BUFFERS(pos_x, pos_y, cell_x, cell_y, 1, 2, lighting, palette, TEXT)
 
   return 0;
 }
@@ -1235,17 +1239,6 @@ short int vb_all_load_top_panel()
                     LAYOUT_TOP_PANEL_AREA_WIDTH, LAYOUT_TOP_PANEL_AREA_HEIGHT, 
                     LAYOUT_PANEL_TYPE_1);
 
-  /* vertical scrollbar track & slider */
-  vb_all_load_vertical_scrollbar_area(LAYOUT_VERT_SCROLLBAR_AREA_X, 
-                                      LAYOUT_VERT_SCROLLBAR_AREA_Y, 
-                                      LAYOUT_VERT_SCROLLBAR_AREA_HEIGHT);
-
-  vb_all_load_vertical_scrollbar_slider(LAYOUT_VERT_SCROLLBAR_TRACK_X, 
-                                        LAYOUT_VERT_SCROLLBAR_TRACK_Y, 
-                                        LAYOUT_VERT_SCROLLBAR_TRACK_HEIGHT, 
-                                        G_current_scroll_amount, 
-                                        G_max_scroll_amount);
-
   /* headers */
   for (m = 0; m < LAYOUT_NUM_TOP_PANEL_HEADERS; m++)
   {
@@ -1295,8 +1288,6 @@ short int vb_all_load_cart_screen()
   short int value;
   char*     value_string;
 
-  int pos_y;
-
   int cart_index;
   int patch_index;
 
@@ -1315,37 +1306,31 @@ short int vb_all_load_cart_screen()
   cr = &G_cart_bank[cart_index];
   pt = &(cr->patches[patch_index]);
 
-  /* horizontal divider */
-  pos_y = LAYOUT_CART_MAIN_DIVIDER_Y - G_current_scroll_amount;
+  /* vertical scrollbar track & slider */
+  vb_all_load_vertical_scrollbar( G_current_scroll_amount, 
+                                  G_max_scroll_amount);
 
-  if (LAYOUT_CART_HEADER_OR_PARAM_IS_IN_MAIN_AREA(pos_y))
+  /* horizontal divider */
+  if (LAYOUT_CART_HEADER_OR_PARAM_IS_IN_MAIN_AREA(LAYOUT_CART_MAIN_DIVIDER_Y))
   {
     vb_all_load_horizontal_divider( LAYOUT_CART_MAIN_DIVIDER_X, 
-                                    pos_y, 
+                                    LAYOUT_SCROLLED_POSITION_Y(LAYOUT_CART_MAIN_DIVIDER_Y), 
                                     LAYOUT_CART_MAIN_DIVIDER_WIDTH);
   }
-
-  /* audition panel */
-  vb_all_load_panel(LAYOUT_CART_AUDITION_PANEL_X, LAYOUT_CART_AUDITION_PANEL_Y, 
-                    LAYOUT_CART_AUDITION_PANEL_WIDTH, LAYOUT_CART_AUDITION_PANEL_HEIGHT, 
-                    LAYOUT_PANEL_TYPE_2);
 
   /* buttons */
   for (m = 0; m < LAYOUT_NUM_CART_BUTTONS; m++)
   {
     b = &G_layout_cart_buttons[m];
 
-    /* determine vertical position for this button */
-    pos_y = b->center_y - G_current_scroll_amount;
-
-    if (LAYOUT_CART_BUTTON_OR_TEXT_BOX_IS_NOT_IN_MAIN_AREA(pos_y))
+    if (LAYOUT_CART_BUTTON_OR_TEXT_BOX_IS_NOT_IN_MAIN_AREA(b->center_y))
       continue;
 
     /* load button & text */
-    vb_all_load_button( b->center_x, pos_y, 
+    vb_all_load_button( b->center_x, LAYOUT_SCROLLED_POSITION_Y(b->center_y), 
                         b->width, b->state);
 
-    vb_all_load_text( b->center_x, pos_y, 
+    vb_all_load_text( b->center_x, LAYOUT_SCROLLED_POSITION_Y(b->center_y), 
                       VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_GRAY, VB_ALL_BUTTON_MAX_TEXT_SIZE, 
                       S_cart_button_names[m]);
   }
@@ -1355,10 +1340,7 @@ short int vb_all_load_cart_screen()
   {
     t = &G_layout_cart_text_boxes[m];
 
-    /* determine vertical position for this text_box */
-    pos_y = t->center_y - G_current_scroll_amount;
-
-    if (LAYOUT_CART_BUTTON_OR_TEXT_BOX_IS_NOT_IN_MAIN_AREA(pos_y))
+    if (LAYOUT_CART_BUTTON_OR_TEXT_BOX_IS_NOT_IN_MAIN_AREA(t->center_y))
       continue;
 
     /* set value string */
@@ -1370,10 +1352,10 @@ short int vb_all_load_cart_screen()
       value_string = NULL;
 
     /* load text box & text */
-    vb_all_load_text_box( t->center_x, pos_y, 
+    vb_all_load_text_box( t->center_x, LAYOUT_SCROLLED_POSITION_Y(t->center_y), 
                           t->width, t->state);
 
-    vb_all_load_text( t->center_x, pos_y, 
+    vb_all_load_text( t->center_x, LAYOUT_SCROLLED_POSITION_Y(t->center_y), 
                       VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_GRAY, VB_ALL_TEXT_BOX_COLUMN_MAX_TEXT_SIZE, 
                       value_string);
   }
@@ -1383,14 +1365,11 @@ short int vb_all_load_cart_screen()
   {
     hd = &G_layout_cart_headers[m];
 
-    /* determine vertical position for this header */
-    pos_y = hd->center_y - G_current_scroll_amount;
-
-    if (LAYOUT_CART_HEADER_OR_PARAM_IS_NOT_IN_MAIN_AREA(pos_y))
+    if (LAYOUT_CART_HEADER_OR_PARAM_IS_NOT_IN_MAIN_AREA(hd->center_y))
       continue;
 
     /* load the header! */
-    vb_all_load_text( hd->center_x, pos_y, 
+    vb_all_load_text( hd->center_x, LAYOUT_SCROLLED_POSITION_Y(hd->center_y), 
                       VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_3, VB_ALL_HEADER_MAX_TEXT_SIZE, 
                       S_cart_header_names[m]);
   }
@@ -1400,24 +1379,8 @@ short int vb_all_load_cart_screen()
   {
     pr = &G_layout_cart_params[m];
 
-    /* determine vertical position for audition bar params (remain stationary) */
-    if ((m == LAYOUT_CART_PARAM_AUDITION_OCTAVE)      || 
-        (m == LAYOUT_CART_PARAM_AUDITION_VELOCITY)    || 
-        (m == LAYOUT_CART_PARAM_AUDITION_PITCH_WHEEL) || 
-        (m == LAYOUT_CART_PARAM_AUDITION_MOD_WHEEL)   || 
-        (m == LAYOUT_CART_PARAM_AUDITION_AFTERTOUCH)  || 
-        (m == LAYOUT_CART_PARAM_AUDITION_EXP_PEDAL))
-    {
-      pos_y = pr->center_y;
-    }
-    /* determine vertical position for other params (can be scrolled up/down) */
-    else
-    {
-      pos_y = pr->center_y - G_current_scroll_amount;
-
-      if (LAYOUT_CART_HEADER_OR_PARAM_IS_NOT_IN_MAIN_AREA(pos_y))
-        continue;
-    }
+    if (LAYOUT_CART_HEADER_OR_PARAM_IS_NOT_IN_MAIN_AREA(pr->center_y))
+      continue;
 
     /* skip oscillator multiple/divisor or octave/note based on frequency mode */
     if (((pt->osc_freq_mode[0] == PATCH_OSC_FREQ_MODE_FIXED) && (m == LAYOUT_CART_PARAM_OSC_1_MULTIPLE))  || 
@@ -1439,251 +1402,314 @@ short int vb_all_load_cart_screen()
     /* determine parameter value & string */
     switch (m)
     {
-      VB_ALL_CART_CASE_PARAM_INT(CART_NUMBER,   G_patch_edit_cart_number,   common_edit_1_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(PATCH_NUMBER,  G_patch_edit_patch_number,  common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(CART_NUMBER,   G_patch_edit_cart_number,   common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(PATCH_NUMBER,  G_patch_edit_patch_number,  common_edit_1_to_100)
 
-      VB_ALL_CART_CASE_PARAM_INT(ALGORITHM, pt->algorithm,  patch_edit_algorithm)
-      VB_ALL_CART_CASE_PARAM_INT(OSC_SYNC,  pt->osc_sync,   patch_edit_sync)
+      VB_ALL_CART_PARAM_CASE_INT(ALGORITHM, pt->algorithm,  patch_edit_algorithm)
+      VB_ALL_CART_PARAM_CASE_INT(OSC_SYNC,  pt->osc_sync,   patch_edit_sync)
 
-      VB_ALL_CART_CASE_PARAM_INT(OSC_1_WAVEFORM,  pt->osc_waveform[0],  patch_edit_osc_waveform)
-      VB_ALL_CART_CASE_PARAM_INT(OSC_1_PHI,       pt->osc_phi[0],       patch_edit_osc_phi)
-      VB_ALL_CART_CASE_PARAM_INT(OSC_1_FREQ_MODE, pt->osc_freq_mode[0], patch_edit_osc_freq_mode)
-      VB_ALL_CART_CASE_PARAM_INT(OSC_1_MULTIPLE,  pt->osc_multiple[0],  common_edit_1_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(OSC_1_DIVISOR,   pt->osc_divisor[0],   common_edit_1_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(OSC_1_OCTAVE,    pt->osc_octave[0],    patch_edit_osc_octave)
-      VB_ALL_CART_CASE_PARAM_INT(OSC_1_NOTE,      pt->osc_note[0],      patch_edit_osc_note)
-      VB_ALL_CART_CASE_PARAM_INT(OSC_1_DETUNE,    pt->osc_detune[0],    patch_edit_osc_detune)
+      VB_ALL_CART_PARAM_CASE_INT(OSC_1_WAVEFORM,  pt->osc_waveform[0],  patch_edit_osc_waveform)
+      VB_ALL_CART_PARAM_CASE_INT(OSC_1_PHI,       pt->osc_phi[0],       patch_edit_osc_phi)
+      VB_ALL_CART_PARAM_CASE_INT(OSC_1_FREQ_MODE, pt->osc_freq_mode[0], patch_edit_osc_freq_mode)
+      VB_ALL_CART_PARAM_CASE_INT(OSC_1_MULTIPLE,  pt->osc_multiple[0],  common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(OSC_1_DIVISOR,   pt->osc_divisor[0],   common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(OSC_1_OCTAVE,    pt->osc_octave[0],    patch_edit_osc_octave)
+      VB_ALL_CART_PARAM_CASE_INT(OSC_1_NOTE,      pt->osc_note[0],      patch_edit_osc_note)
+      VB_ALL_CART_PARAM_CASE_INT(OSC_1_DETUNE,    pt->osc_detune[0],    patch_edit_osc_detune)
 
-      VB_ALL_CART_CASE_PARAM_FLAG(OSC_1_ROUTING_VIBRATO,      pt->osc_routing[0], patch_edit_routing)
-      VB_ALL_CART_CASE_PARAM_FLAG(OSC_1_ROUTING_PITCH_ENV,    pt->osc_routing[0], patch_edit_routing)
-      VB_ALL_CART_CASE_PARAM_FLAG(OSC_1_ROUTING_PITCH_WHEEL,  pt->osc_routing[0], patch_edit_routing)
+      VB_ALL_CART_PARAM_CASE_FLAG(OSC_1_ROUTING_VIBRATO,      pt->osc_routing[0], patch_edit_routing)
+      VB_ALL_CART_PARAM_CASE_FLAG(OSC_1_ROUTING_PITCH_ENV,    pt->osc_routing[0], patch_edit_routing)
+      VB_ALL_CART_PARAM_CASE_FLAG(OSC_1_ROUTING_PITCH_WHEEL,  pt->osc_routing[0], patch_edit_routing)
 
-      VB_ALL_CART_CASE_PARAM_INT(OSC_2_WAVEFORM,  pt->osc_waveform[1],  patch_edit_osc_waveform)
-      VB_ALL_CART_CASE_PARAM_INT(OSC_2_PHI,       pt->osc_phi[1],       patch_edit_osc_phi)
-      VB_ALL_CART_CASE_PARAM_INT(OSC_2_FREQ_MODE, pt->osc_freq_mode[1], patch_edit_osc_freq_mode)
-      VB_ALL_CART_CASE_PARAM_INT(OSC_2_MULTIPLE,  pt->osc_multiple[1],  common_edit_1_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(OSC_2_DIVISOR,   pt->osc_divisor[1],   common_edit_1_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(OSC_2_OCTAVE,    pt->osc_octave[1],    patch_edit_osc_octave)
-      VB_ALL_CART_CASE_PARAM_INT(OSC_2_NOTE,      pt->osc_note[1],      patch_edit_osc_note)
-      VB_ALL_CART_CASE_PARAM_INT(OSC_2_DETUNE,    pt->osc_detune[1],    patch_edit_osc_detune)
+      VB_ALL_CART_PARAM_CASE_INT(OSC_2_WAVEFORM,  pt->osc_waveform[1],  patch_edit_osc_waveform)
+      VB_ALL_CART_PARAM_CASE_INT(OSC_2_PHI,       pt->osc_phi[1],       patch_edit_osc_phi)
+      VB_ALL_CART_PARAM_CASE_INT(OSC_2_FREQ_MODE, pt->osc_freq_mode[1], patch_edit_osc_freq_mode)
+      VB_ALL_CART_PARAM_CASE_INT(OSC_2_MULTIPLE,  pt->osc_multiple[1],  common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(OSC_2_DIVISOR,   pt->osc_divisor[1],   common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(OSC_2_OCTAVE,    pt->osc_octave[1],    patch_edit_osc_octave)
+      VB_ALL_CART_PARAM_CASE_INT(OSC_2_NOTE,      pt->osc_note[1],      patch_edit_osc_note)
+      VB_ALL_CART_PARAM_CASE_INT(OSC_2_DETUNE,    pt->osc_detune[1],    patch_edit_osc_detune)
 
-      VB_ALL_CART_CASE_PARAM_FLAG(OSC_2_ROUTING_VIBRATO,      pt->osc_routing[1], patch_edit_routing)
-      VB_ALL_CART_CASE_PARAM_FLAG(OSC_2_ROUTING_PITCH_ENV,    pt->osc_routing[1], patch_edit_routing)
-      VB_ALL_CART_CASE_PARAM_FLAG(OSC_2_ROUTING_PITCH_WHEEL,  pt->osc_routing[1], patch_edit_routing)
+      VB_ALL_CART_PARAM_CASE_FLAG(OSC_2_ROUTING_VIBRATO,      pt->osc_routing[1], patch_edit_routing)
+      VB_ALL_CART_PARAM_CASE_FLAG(OSC_2_ROUTING_PITCH_ENV,    pt->osc_routing[1], patch_edit_routing)
+      VB_ALL_CART_PARAM_CASE_FLAG(OSC_2_ROUTING_PITCH_WHEEL,  pt->osc_routing[1], patch_edit_routing)
 
-      VB_ALL_CART_CASE_PARAM_INT(OSC_3_WAVEFORM,  pt->osc_waveform[2],  patch_edit_osc_waveform)
-      VB_ALL_CART_CASE_PARAM_INT(OSC_3_PHI,       pt->osc_phi[2],       patch_edit_osc_phi)
-      VB_ALL_CART_CASE_PARAM_INT(OSC_3_FREQ_MODE, pt->osc_freq_mode[2], patch_edit_osc_freq_mode)
-      VB_ALL_CART_CASE_PARAM_INT(OSC_3_MULTIPLE,  pt->osc_multiple[2],  common_edit_1_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(OSC_3_DIVISOR,   pt->osc_divisor[2],   common_edit_1_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(OSC_3_OCTAVE,    pt->osc_octave[2],    patch_edit_osc_octave)
-      VB_ALL_CART_CASE_PARAM_INT(OSC_3_NOTE,      pt->osc_note[2],      patch_edit_osc_note)
-      VB_ALL_CART_CASE_PARAM_INT(OSC_3_DETUNE,    pt->osc_detune[2],    patch_edit_osc_detune)
+      VB_ALL_CART_PARAM_CASE_INT(OSC_3_WAVEFORM,  pt->osc_waveform[2],  patch_edit_osc_waveform)
+      VB_ALL_CART_PARAM_CASE_INT(OSC_3_PHI,       pt->osc_phi[2],       patch_edit_osc_phi)
+      VB_ALL_CART_PARAM_CASE_INT(OSC_3_FREQ_MODE, pt->osc_freq_mode[2], patch_edit_osc_freq_mode)
+      VB_ALL_CART_PARAM_CASE_INT(OSC_3_MULTIPLE,  pt->osc_multiple[2],  common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(OSC_3_DIVISOR,   pt->osc_divisor[2],   common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(OSC_3_OCTAVE,    pt->osc_octave[2],    patch_edit_osc_octave)
+      VB_ALL_CART_PARAM_CASE_INT(OSC_3_NOTE,      pt->osc_note[2],      patch_edit_osc_note)
+      VB_ALL_CART_PARAM_CASE_INT(OSC_3_DETUNE,    pt->osc_detune[2],    patch_edit_osc_detune)
 
-      VB_ALL_CART_CASE_PARAM_FLAG(OSC_3_ROUTING_VIBRATO,      pt->osc_routing[2], patch_edit_routing)
-      VB_ALL_CART_CASE_PARAM_FLAG(OSC_3_ROUTING_PITCH_ENV,    pt->osc_routing[2], patch_edit_routing)
-      VB_ALL_CART_CASE_PARAM_FLAG(OSC_3_ROUTING_PITCH_WHEEL,  pt->osc_routing[2], patch_edit_routing)
+      VB_ALL_CART_PARAM_CASE_FLAG(OSC_3_ROUTING_VIBRATO,      pt->osc_routing[2], patch_edit_routing)
+      VB_ALL_CART_PARAM_CASE_FLAG(OSC_3_ROUTING_PITCH_ENV,    pt->osc_routing[2], patch_edit_routing)
+      VB_ALL_CART_PARAM_CASE_FLAG(OSC_3_ROUTING_PITCH_WHEEL,  pt->osc_routing[2], patch_edit_routing)
 
-      VB_ALL_CART_CASE_PARAM_INT(ENV_1_ATTACK,      pt->env_attack[0],      common_edit_1_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(ENV_1_DECAY,       pt->env_decay[0],       common_edit_1_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(ENV_1_SUSTAIN,     pt->env_sustain[0],     common_edit_1_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(ENV_1_RELEASE,     pt->env_release[0],     common_edit_1_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(ENV_1_AMPLITUDE,   pt->env_amplitude[0],   common_edit_0_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(ENV_1_HOLD_LEVEL,  pt->env_hold_level[0],  common_edit_0_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(ENV_1_HOLD_MODE,   pt->env_hold_mode[0],   patch_edit_env_hold_mode)
-      VB_ALL_CART_CASE_PARAM_INT(ENV_1_RATE_KS,     pt->env_rate_ks[0],     common_edit_1_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(ENV_1_LEVEL_KS,    pt->env_level_ks[0],    common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(ENV_1_ATTACK,      pt->env_attack[0],      common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(ENV_1_DECAY,       pt->env_decay[0],       common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(ENV_1_SUSTAIN,     pt->env_sustain[0],     common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(ENV_1_RELEASE,     pt->env_release[0],     common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(ENV_1_AMPLITUDE,   pt->env_amplitude[0],   common_edit_0_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(ENV_1_HOLD_LEVEL,  pt->env_hold_level[0],  common_edit_0_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(ENV_1_HOLD_MODE,   pt->env_hold_mode[0],   patch_edit_env_hold_mode)
+      VB_ALL_CART_PARAM_CASE_INT(ENV_1_RATE_KS,     pt->env_rate_ks[0],     common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(ENV_1_LEVEL_KS,    pt->env_level_ks[0],    common_edit_1_to_100)
 
-      VB_ALL_CART_CASE_PARAM_FLAG(ENV_1_ROUTING_TREMOLO,  pt->env_routing[0], patch_edit_routing)
-      VB_ALL_CART_CASE_PARAM_FLAG(ENV_1_ROUTING_BOOST,    pt->env_routing[0], patch_edit_routing)
-      VB_ALL_CART_CASE_PARAM_FLAG(ENV_1_ROUTING_VELOCITY, pt->env_routing[0], patch_edit_routing)
+      VB_ALL_CART_PARAM_CASE_FLAG(ENV_1_ROUTING_TREMOLO,  pt->env_routing[0], patch_edit_routing)
+      VB_ALL_CART_PARAM_CASE_FLAG(ENV_1_ROUTING_BOOST,    pt->env_routing[0], patch_edit_routing)
+      VB_ALL_CART_PARAM_CASE_FLAG(ENV_1_ROUTING_VELOCITY, pt->env_routing[0], patch_edit_routing)
 
-      VB_ALL_CART_CASE_PARAM_INT(ENV_2_ATTACK,      pt->env_attack[1],      common_edit_1_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(ENV_2_DECAY,       pt->env_decay[1],       common_edit_1_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(ENV_2_SUSTAIN,     pt->env_sustain[1],     common_edit_1_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(ENV_2_RELEASE,     pt->env_release[1],     common_edit_1_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(ENV_2_AMPLITUDE,   pt->env_amplitude[1],   common_edit_0_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(ENV_2_HOLD_LEVEL,  pt->env_hold_level[1],  common_edit_0_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(ENV_2_HOLD_MODE,   pt->env_hold_mode[1],   patch_edit_env_hold_mode)
-      VB_ALL_CART_CASE_PARAM_INT(ENV_2_RATE_KS,     pt->env_rate_ks[1],     common_edit_1_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(ENV_2_LEVEL_KS,    pt->env_level_ks[1],    common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(ENV_2_ATTACK,      pt->env_attack[1],      common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(ENV_2_DECAY,       pt->env_decay[1],       common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(ENV_2_SUSTAIN,     pt->env_sustain[1],     common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(ENV_2_RELEASE,     pt->env_release[1],     common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(ENV_2_AMPLITUDE,   pt->env_amplitude[1],   common_edit_0_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(ENV_2_HOLD_LEVEL,  pt->env_hold_level[1],  common_edit_0_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(ENV_2_HOLD_MODE,   pt->env_hold_mode[1],   patch_edit_env_hold_mode)
+      VB_ALL_CART_PARAM_CASE_INT(ENV_2_RATE_KS,     pt->env_rate_ks[1],     common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(ENV_2_LEVEL_KS,    pt->env_level_ks[1],    common_edit_1_to_100)
 
-      VB_ALL_CART_CASE_PARAM_FLAG(ENV_2_ROUTING_TREMOLO,  pt->env_routing[1], patch_edit_routing)
-      VB_ALL_CART_CASE_PARAM_FLAG(ENV_2_ROUTING_BOOST,    pt->env_routing[1], patch_edit_routing)
-      VB_ALL_CART_CASE_PARAM_FLAG(ENV_2_ROUTING_VELOCITY, pt->env_routing[1], patch_edit_routing)
+      VB_ALL_CART_PARAM_CASE_FLAG(ENV_2_ROUTING_TREMOLO,  pt->env_routing[1], patch_edit_routing)
+      VB_ALL_CART_PARAM_CASE_FLAG(ENV_2_ROUTING_BOOST,    pt->env_routing[1], patch_edit_routing)
+      VB_ALL_CART_PARAM_CASE_FLAG(ENV_2_ROUTING_VELOCITY, pt->env_routing[1], patch_edit_routing)
 
-      VB_ALL_CART_CASE_PARAM_INT(ENV_3_ATTACK,      pt->env_attack[2],      common_edit_1_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(ENV_3_DECAY,       pt->env_decay[2],       common_edit_1_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(ENV_3_SUSTAIN,     pt->env_sustain[2],     common_edit_1_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(ENV_3_RELEASE,     pt->env_release[2],     common_edit_1_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(ENV_3_AMPLITUDE,   pt->env_amplitude[2],   common_edit_0_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(ENV_3_HOLD_LEVEL,  pt->env_hold_level[2],  common_edit_0_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(ENV_3_HOLD_MODE,   pt->env_hold_mode[2],   patch_edit_env_hold_mode)
-      VB_ALL_CART_CASE_PARAM_INT(ENV_3_RATE_KS,     pt->env_rate_ks[2],     common_edit_1_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(ENV_3_LEVEL_KS,    pt->env_level_ks[2],    common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(ENV_3_ATTACK,      pt->env_attack[2],      common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(ENV_3_DECAY,       pt->env_decay[2],       common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(ENV_3_SUSTAIN,     pt->env_sustain[2],     common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(ENV_3_RELEASE,     pt->env_release[2],     common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(ENV_3_AMPLITUDE,   pt->env_amplitude[2],   common_edit_0_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(ENV_3_HOLD_LEVEL,  pt->env_hold_level[2],  common_edit_0_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(ENV_3_HOLD_MODE,   pt->env_hold_mode[2],   patch_edit_env_hold_mode)
+      VB_ALL_CART_PARAM_CASE_INT(ENV_3_RATE_KS,     pt->env_rate_ks[2],     common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(ENV_3_LEVEL_KS,    pt->env_level_ks[2],    common_edit_1_to_100)
 
-      VB_ALL_CART_CASE_PARAM_FLAG(ENV_3_ROUTING_TREMOLO,  pt->env_routing[2], patch_edit_routing)
-      VB_ALL_CART_CASE_PARAM_FLAG(ENV_3_ROUTING_BOOST,    pt->env_routing[2], patch_edit_routing)
-      VB_ALL_CART_CASE_PARAM_FLAG(ENV_3_ROUTING_VELOCITY, pt->env_routing[2], patch_edit_routing)
+      VB_ALL_CART_PARAM_CASE_FLAG(ENV_3_ROUTING_TREMOLO,  pt->env_routing[2], patch_edit_routing)
+      VB_ALL_CART_PARAM_CASE_FLAG(ENV_3_ROUTING_BOOST,    pt->env_routing[2], patch_edit_routing)
+      VB_ALL_CART_PARAM_CASE_FLAG(ENV_3_ROUTING_VELOCITY, pt->env_routing[2], patch_edit_routing)
 
-      VB_ALL_CART_CASE_PARAM_INT(VIBRATO_WAVEFORM,    pt->lfo_waveform[0],    patch_edit_lfo_waveform)
-      VB_ALL_CART_CASE_PARAM_INT(VIBRATO_DELAY,       pt->lfo_delay[0],       common_edit_0_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(VIBRATO_SPEED,       pt->lfo_speed[0],       common_edit_1_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(VIBRATO_DEPTH,       pt->lfo_depth[0],       common_edit_0_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(VIBRATO_SENSITIVITY, pt->lfo_sensitivity[0], common_edit_1_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(VIBRATO_SYNC,        pt->lfo_sync[0],        patch_edit_sync)
-      VB_ALL_CART_CASE_PARAM_INT(VIBRATO_POLARITY,    pt->lfo_polarity[0],    patch_edit_lfo_polarity)
+      VB_ALL_CART_PARAM_CASE_INT(VIBRATO_WAVEFORM,    pt->lfo_waveform[0],    patch_edit_lfo_waveform)
+      VB_ALL_CART_PARAM_CASE_INT(VIBRATO_DELAY,       pt->lfo_delay[0],       common_edit_0_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(VIBRATO_SPEED,       pt->lfo_speed[0],       common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(VIBRATO_DEPTH,       pt->lfo_depth[0],       common_edit_0_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(VIBRATO_SENSITIVITY, pt->lfo_sensitivity[0], common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(VIBRATO_SYNC,        pt->lfo_sync[0],        patch_edit_sync)
+      VB_ALL_CART_PARAM_CASE_INT(VIBRATO_POLARITY,    pt->lfo_polarity[0],    patch_edit_lfo_polarity)
 
-      VB_ALL_CART_CASE_PARAM_INT(TREMOLO_WAVEFORM,    pt->lfo_waveform[1],    patch_edit_lfo_waveform)
-      VB_ALL_CART_CASE_PARAM_INT(TREMOLO_DELAY,       pt->lfo_delay[1],       common_edit_0_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(TREMOLO_SPEED,       pt->lfo_speed[1],       common_edit_1_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(TREMOLO_DEPTH,       pt->lfo_depth[1],       common_edit_0_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(TREMOLO_SENSITIVITY, pt->lfo_sensitivity[1], common_edit_1_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(TREMOLO_SYNC,        pt->lfo_sync[1],        patch_edit_sync)
+      VB_ALL_CART_PARAM_CASE_INT(TREMOLO_WAVEFORM,    pt->lfo_waveform[1],    patch_edit_lfo_waveform)
+      VB_ALL_CART_PARAM_CASE_INT(TREMOLO_DELAY,       pt->lfo_delay[1],       common_edit_0_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(TREMOLO_SPEED,       pt->lfo_speed[1],       common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(TREMOLO_DEPTH,       pt->lfo_depth[1],       common_edit_0_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(TREMOLO_SENSITIVITY, pt->lfo_sensitivity[1], common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(TREMOLO_SYNC,        pt->lfo_sync[1],        patch_edit_sync)
 
-      VB_ALL_CART_CASE_PARAM_INT(CHORUS_WAVEFORM,     pt->lfo_waveform[2],    patch_edit_lfo_waveform)
-      VB_ALL_CART_CASE_PARAM_INT(CHORUS_DELAY,        pt->lfo_delay[2],       common_edit_0_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(CHORUS_SPEED,        pt->lfo_speed[2],       common_edit_1_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(CHORUS_DEPTH,        pt->lfo_depth[2],       common_edit_0_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(CHORUS_SENSITIVITY,  pt->lfo_sensitivity[2], common_edit_1_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(CHORUS_SYNC,         pt->lfo_sync[2],        patch_edit_sync)
+      VB_ALL_CART_PARAM_CASE_INT(CHORUS_WAVEFORM,     pt->lfo_waveform[2],    patch_edit_lfo_waveform)
+      VB_ALL_CART_PARAM_CASE_INT(CHORUS_DELAY,        pt->lfo_delay[2],       common_edit_0_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(CHORUS_SPEED,        pt->lfo_speed[2],       common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(CHORUS_DEPTH,        pt->lfo_depth[2],       common_edit_0_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(CHORUS_SENSITIVITY,  pt->lfo_sensitivity[2], common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(CHORUS_SYNC,         pt->lfo_sync[2],        patch_edit_sync)
 
-      VB_ALL_CART_CASE_PARAM_INT(BOOST_SENSITIVITY,     pt->boost_sensitivity,    common_edit_1_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(VELOCITY_SENSITIVITY,  pt->velocity_sensitivity, common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(BOOST_SENSITIVITY,     pt->boost_sensitivity,    common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(VELOCITY_SENSITIVITY,  pt->velocity_sensitivity, common_edit_1_to_100)
 
-      VB_ALL_CART_CASE_PARAM_INT(FILTERS_HIGHPASS,  pt->highpass_cutoff,  patch_edit_highpass_cutoff)
-      VB_ALL_CART_CASE_PARAM_INT(FILTERS_LOWPASS,   pt->lowpass_cutoff,   patch_edit_lowpass_cutoff)
+      VB_ALL_CART_PARAM_CASE_INT(FILTERS_HIGHPASS,  pt->highpass_cutoff,  patch_edit_highpass_cutoff)
+      VB_ALL_CART_PARAM_CASE_INT(FILTERS_LOWPASS,   pt->lowpass_cutoff,   patch_edit_lowpass_cutoff)
 
-      VB_ALL_CART_CASE_PARAM_INT(PITCH_ENV_ATTACK,  pt->peg_attack,   common_edit_1_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(PITCH_ENV_DECAY,   pt->peg_decay,    common_edit_1_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(PITCH_ENV_RELEASE, pt->peg_release,  common_edit_1_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(PITCH_ENV_MAXIMUM, pt->peg_maximum,  patch_edit_peg_level)
-      VB_ALL_CART_CASE_PARAM_INT(PITCH_ENV_FINALE,  pt->peg_finale,   patch_edit_peg_level)
+      VB_ALL_CART_PARAM_CASE_INT(PITCH_ENV_ATTACK,  pt->peg_attack,   common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(PITCH_ENV_DECAY,   pt->peg_decay,    common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(PITCH_ENV_RELEASE, pt->peg_release,  common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(PITCH_ENV_MAXIMUM, pt->peg_maximum,  patch_edit_peg_level)
+      VB_ALL_CART_PARAM_CASE_INT(PITCH_ENV_FINALE,  pt->peg_finale,   patch_edit_peg_level)
 
-      VB_ALL_CART_CASE_PARAM_INT(PITCH_WHEEL_MODE,  pt->pitch_wheel_mode,   patch_edit_pitch_wheel_mode)
-      VB_ALL_CART_CASE_PARAM_INT(PITCH_WHEEL_RANGE, pt->pitch_wheel_range,  common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(PITCH_WHEEL_MODE,  pt->pitch_wheel_mode,   patch_edit_pitch_wheel_mode)
+      VB_ALL_CART_PARAM_CASE_INT(PITCH_WHEEL_RANGE, pt->pitch_wheel_range,  common_edit_1_to_100)
 
-      VB_ALL_CART_CASE_PARAM_INT(ARPEGGIO_MODE,     pt->arpeggio_mode,      patch_edit_arpeggio_mode)
-      VB_ALL_CART_CASE_PARAM_INT(ARPEGGIO_PATTERN,  pt->arpeggio_pattern,   patch_edit_arpeggio_pattern)
-      VB_ALL_CART_CASE_PARAM_INT(ARPEGGIO_OCTAVES,  pt->arpeggio_octaves,   common_edit_1_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(ARPEGGIO_SPEED,    pt->arpeggio_speed,     common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(ARPEGGIO_MODE,     pt->arpeggio_mode,      patch_edit_arpeggio_mode)
+      VB_ALL_CART_PARAM_CASE_INT(ARPEGGIO_PATTERN,  pt->arpeggio_pattern,   patch_edit_arpeggio_pattern)
+      VB_ALL_CART_PARAM_CASE_INT(ARPEGGIO_OCTAVES,  pt->arpeggio_octaves,   common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(ARPEGGIO_SPEED,    pt->arpeggio_speed,     common_edit_1_to_100)
 
-      VB_ALL_CART_CASE_PARAM_INT(PORTAMENTO_MODE,   pt->portamento_mode,    patch_edit_portamento_mode)
-      VB_ALL_CART_CASE_PARAM_INT(PORTAMENTO_LEGATO, pt->portamento_legato,  patch_edit_portamento_legato)
-      VB_ALL_CART_CASE_PARAM_INT(PORTAMENTO_SPEED,  pt->portamento_speed,   common_edit_1_to_100)
+      VB_ALL_CART_PARAM_CASE_INT(PORTAMENTO_MODE,   pt->portamento_mode,    patch_edit_portamento_mode)
+      VB_ALL_CART_PARAM_CASE_INT(PORTAMENTO_LEGATO, pt->portamento_legato,  patch_edit_portamento_legato)
+      VB_ALL_CART_PARAM_CASE_INT(PORTAMENTO_SPEED,  pt->portamento_speed,   common_edit_1_to_100)
 
-      VB_ALL_CART_CASE_PARAM_FLAG(MOD_WHEEL_ROUTING_VIBRATO,  pt->mod_wheel_routing,  patch_edit_routing)
-      VB_ALL_CART_CASE_PARAM_FLAG(MOD_WHEEL_ROUTING_TREMOLO,  pt->mod_wheel_routing,  patch_edit_routing)
-      VB_ALL_CART_CASE_PARAM_FLAG(MOD_WHEEL_ROUTING_BOOST,    pt->mod_wheel_routing,  patch_edit_routing)
-      VB_ALL_CART_CASE_PARAM_FLAG(MOD_WHEEL_ROUTING_CHORUS,   pt->mod_wheel_routing,  patch_edit_routing)
+      VB_ALL_CART_PARAM_CASE_FLAG(MOD_WHEEL_ROUTING_VIBRATO,  pt->mod_wheel_routing,  patch_edit_routing)
+      VB_ALL_CART_PARAM_CASE_FLAG(MOD_WHEEL_ROUTING_TREMOLO,  pt->mod_wheel_routing,  patch_edit_routing)
+      VB_ALL_CART_PARAM_CASE_FLAG(MOD_WHEEL_ROUTING_BOOST,    pt->mod_wheel_routing,  patch_edit_routing)
+      VB_ALL_CART_PARAM_CASE_FLAG(MOD_WHEEL_ROUTING_CHORUS,   pt->mod_wheel_routing,  patch_edit_routing)
 
-      VB_ALL_CART_CASE_PARAM_FLAG(AFTERTOUCH_ROUTING_VIBRATO, pt->aftertouch_routing, patch_edit_routing)
-      VB_ALL_CART_CASE_PARAM_FLAG(AFTERTOUCH_ROUTING_TREMOLO, pt->aftertouch_routing, patch_edit_routing)
-      VB_ALL_CART_CASE_PARAM_FLAG(AFTERTOUCH_ROUTING_BOOST,   pt->aftertouch_routing, patch_edit_routing)
-      VB_ALL_CART_CASE_PARAM_FLAG(AFTERTOUCH_ROUTING_CHORUS,  pt->aftertouch_routing, patch_edit_routing)
+      VB_ALL_CART_PARAM_CASE_FLAG(AFTERTOUCH_ROUTING_VIBRATO, pt->aftertouch_routing, patch_edit_routing)
+      VB_ALL_CART_PARAM_CASE_FLAG(AFTERTOUCH_ROUTING_TREMOLO, pt->aftertouch_routing, patch_edit_routing)
+      VB_ALL_CART_PARAM_CASE_FLAG(AFTERTOUCH_ROUTING_BOOST,   pt->aftertouch_routing, patch_edit_routing)
+      VB_ALL_CART_PARAM_CASE_FLAG(AFTERTOUCH_ROUTING_CHORUS,  pt->aftertouch_routing, patch_edit_routing)
 
-      VB_ALL_CART_CASE_PARAM_FLAG(EXP_PEDAL_ROUTING_VIBRATO,  pt->exp_pedal_routing,  patch_edit_routing)
-      VB_ALL_CART_CASE_PARAM_FLAG(EXP_PEDAL_ROUTING_TREMOLO,  pt->exp_pedal_routing,  patch_edit_routing)
-      VB_ALL_CART_CASE_PARAM_FLAG(EXP_PEDAL_ROUTING_BOOST,    pt->exp_pedal_routing,  patch_edit_routing)
-      VB_ALL_CART_CASE_PARAM_FLAG(EXP_PEDAL_ROUTING_CHORUS,   pt->exp_pedal_routing,  patch_edit_routing)
-
-      VB_ALL_CART_CASE_PARAM_INT(AUDITION_OCTAVE,       G_patch_edit_octave,          common_edit_1_to_100)
-      VB_ALL_CART_CASE_PARAM_INT(AUDITION_VELOCITY,     G_patch_edit_note_velocity,   patch_edit_audition_uni_wheel)
-      VB_ALL_CART_CASE_PARAM_INT(AUDITION_PITCH_WHEEL,  G_patch_edit_pitch_wheel_pos, patch_edit_audition_bi_wheel)
-      VB_ALL_CART_CASE_PARAM_INT(AUDITION_MOD_WHEEL,    G_patch_edit_mod_wheel_pos,   patch_edit_audition_uni_wheel)
-      VB_ALL_CART_CASE_PARAM_INT(AUDITION_AFTERTOUCH,   G_patch_edit_aftertouch_pos,  patch_edit_audition_uni_wheel)
-      VB_ALL_CART_CASE_PARAM_INT(AUDITION_EXP_PEDAL,    G_patch_edit_exp_pedal_pos,   patch_edit_audition_uni_wheel)
+      VB_ALL_CART_PARAM_CASE_FLAG(EXP_PEDAL_ROUTING_VIBRATO,  pt->exp_pedal_routing,  patch_edit_routing)
+      VB_ALL_CART_PARAM_CASE_FLAG(EXP_PEDAL_ROUTING_TREMOLO,  pt->exp_pedal_routing,  patch_edit_routing)
+      VB_ALL_CART_PARAM_CASE_FLAG(EXP_PEDAL_ROUTING_BOOST,    pt->exp_pedal_routing,  patch_edit_routing)
+      VB_ALL_CART_PARAM_CASE_FLAG(EXP_PEDAL_ROUTING_CHORUS,   pt->exp_pedal_routing,  patch_edit_routing)
 
       default:
+      {
         value = 0;
         value_string = NULL;
         break;
+      }
     }
 
     /* load the parameter name, value, and slider, arrows, or radio button */
+    vb_all_load_text( pr->center_x + LAYOUT_PARAM_NAME_X, 
+                      LAYOUT_SCROLLED_POSITION_Y(pr->center_y), 
+                      VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, VB_ALL_PARAM_NAME_MAX_TEXT_SIZE, 
+                      S_cart_param_names[m]);
+
     if (pr->type == LAYOUT_PARAM_TYPE_SLIDER)
     {
-      vb_all_load_text( pr->center_x + LAYOUT_CART_PARAM_SLIDER_NAME_X, pos_y, 
-                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, VB_ALL_PARAM_NAME_MAX_TEXT_SIZE, 
-                        S_cart_param_names[m]);
-
-      vb_all_load_text( pr->center_x + LAYOUT_CART_PARAM_SLIDER_VALUE_X, pos_y, 
+      vb_all_load_text( pr->center_x + LAYOUT_PARAM_SLIDER_VALUE_X, 
+                        LAYOUT_SCROLLED_POSITION_Y(pr->center_y), 
                         VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_GRAY, VB_ALL_PARAM_NUMBER_MAX_TEXT_SIZE, 
                         value_string);
 
-      vb_all_load_slider( pr->center_x + LAYOUT_CART_PARAM_SLIDER_TRACK_X, pos_y, 
-                          LAYOUT_CART_PARAM_SLIDER_WIDTH, 
+      vb_all_load_slider( pr->center_x + LAYOUT_PARAM_SLIDER_TRACK_X, 
+                          LAYOUT_SCROLLED_POSITION_Y(pr->center_y), 
+                          LAYOUT_PARAM_SLIDER_WIDTH, 
                           value, pr->lower_bound, pr->upper_bound);
     }
     else if (pr->type == LAYOUT_PARAM_TYPE_ARROWS)
     {
-      vb_all_load_text( pr->center_x + LAYOUT_CART_PARAM_ARROWS_NAME_X, pos_y, 
-                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, VB_ALL_PARAM_NAME_MAX_TEXT_SIZE, 
-                        S_cart_param_names[m]);
-
-      vb_all_load_text( pr->center_x + LAYOUT_CART_PARAM_ARROWS_VALUE_X, pos_y, 
+      vb_all_load_text( pr->center_x + LAYOUT_PARAM_ARROWS_VALUE_X, 
+                        LAYOUT_SCROLLED_POSITION_Y(pr->center_y), 
                         VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_GRAY, VB_ALL_PARAM_VALUE_MAX_TEXT_SIZE, 
                         value_string);
 
       if (value > pr->lower_bound)
       {
         vb_all_load_named_sprite( VB_ALL_SPRITE_NAME_PARAM_ARROWS_LEFT, 
-                                  pr->center_x + LAYOUT_CART_PARAM_ARROWS_LEFT_X, pos_y, 
+                                  pr->center_x + LAYOUT_PARAM_ARROWS_LEFT_X, 
+                                  LAYOUT_SCROLLED_POSITION_Y(pr->center_y), 
                                   0, VB_ALL_PALETTE_1);
       }
 
       if (value < pr->upper_bound)
       {
         vb_all_load_named_sprite( VB_ALL_SPRITE_NAME_PARAM_ARROWS_RIGHT, 
-                                  pr->center_x + LAYOUT_CART_PARAM_ARROWS_RIGHT_X, pos_y, 
+                                  pr->center_x + LAYOUT_PARAM_ARROWS_RIGHT_X, 
+                                  LAYOUT_SCROLLED_POSITION_Y(pr->center_y), 
                                   0, VB_ALL_PALETTE_1);
       }
     }
     else if (pr->type == LAYOUT_PARAM_TYPE_RADIO)
     {
-      vb_all_load_text( pr->center_x + LAYOUT_CART_PARAM_RADIO_NAME_X, pos_y, 
-                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, VB_ALL_PARAM_NAME_MAX_TEXT_SIZE, 
-                        S_cart_param_names[m]);
-
-      vb_all_load_text( pr->center_x + LAYOUT_CART_PARAM_RADIO_VALUE_X, pos_y, 
+      vb_all_load_text( pr->center_x + LAYOUT_PARAM_RADIO_VALUE_X, 
+                        LAYOUT_SCROLLED_POSITION_Y(pr->center_y), 
                         VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_GRAY, VB_ALL_PARAM_VALUE_MAX_TEXT_SIZE, 
                         value_string);
 
       if (value == pr->lower_bound)
       {
         vb_all_load_named_sprite( VB_ALL_SPRITE_NAME_PARAM_RADIO_BUTTON_OFF, 
-                                  pr->center_x + LAYOUT_CART_PARAM_RADIO_BUTTON_X, pos_y, 
+                                  pr->center_x + LAYOUT_PARAM_RADIO_BUTTON_X, 
+                                  LAYOUT_SCROLLED_POSITION_Y(pr->center_y), 
                                   0, VB_ALL_PALETTE_1);
       }
       else
       {
         vb_all_load_named_sprite( VB_ALL_SPRITE_NAME_PARAM_RADIO_BUTTON_ON, 
-                                  pr->center_x + LAYOUT_CART_PARAM_RADIO_BUTTON_X, pos_y, 
+                                  pr->center_x + LAYOUT_PARAM_RADIO_BUTTON_X, 
+                                  LAYOUT_SCROLLED_POSITION_Y(pr->center_y), 
                                   0, VB_ALL_PALETTE_1);
       }
     }
     else if (pr->type == LAYOUT_PARAM_TYPE_FLAG)
     {
-      vb_all_load_text( pr->center_x + LAYOUT_CART_PARAM_RADIO_NAME_X, pos_y, 
-                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, VB_ALL_PARAM_NAME_MAX_TEXT_SIZE, 
-                        S_cart_param_names[m]);
-
-      vb_all_load_text( pr->center_x + LAYOUT_CART_PARAM_RADIO_VALUE_X, pos_y, 
+      vb_all_load_text( pr->center_x + LAYOUT_PARAM_RADIO_VALUE_X, 
+                        LAYOUT_SCROLLED_POSITION_Y(pr->center_y), 
                         VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_GRAY, VB_ALL_PARAM_VALUE_MAX_TEXT_SIZE, 
                         value_string);
 
       if ((value & pr->upper_bound) == 0)
       {
         vb_all_load_named_sprite( VB_ALL_SPRITE_NAME_PARAM_RADIO_BUTTON_OFF, 
-                                  pr->center_x + LAYOUT_CART_PARAM_RADIO_BUTTON_X, pos_y, 
+                                  pr->center_x + LAYOUT_PARAM_RADIO_BUTTON_X, 
+                                  LAYOUT_SCROLLED_POSITION_Y(pr->center_y), 
                                   0, VB_ALL_PALETTE_1);
       }
       else
       {
         vb_all_load_named_sprite( VB_ALL_SPRITE_NAME_PARAM_RADIO_BUTTON_ON, 
-                                  pr->center_x + LAYOUT_CART_PARAM_RADIO_BUTTON_X, pos_y, 
+                                  pr->center_x + LAYOUT_PARAM_RADIO_BUTTON_X, 
+                                  LAYOUT_SCROLLED_POSITION_Y(pr->center_y), 
                                   0, VB_ALL_PALETTE_1);
       }
+    }
+  }
+
+  /* update vbos */
+  VB_ALL_UPDATE_SPRITES_IN_VBOS(PANELS)
+  VB_ALL_UPDATE_SPRITES_IN_VBOS(WIDGETS)
+  VB_ALL_UPDATE_SPRITES_IN_VBOS(TEXT)
+
+  return 0;
+}
+
+/*******************************************************************************
+** vb_all_load_audition_panel()
+*******************************************************************************/
+short int vb_all_load_audition_panel()
+{
+  int m;
+
+  param*    pr;
+
+  short int value;
+  char*     value_string;
+
+  /* panel */
+  vb_all_load_panel(LAYOUT_CART_AUDITION_PANEL_X, LAYOUT_CART_AUDITION_PANEL_Y, 
+                    LAYOUT_CART_AUDITION_PANEL_WIDTH, LAYOUT_CART_AUDITION_PANEL_HEIGHT, 
+                    LAYOUT_PANEL_TYPE_2);
+
+  /* parameters */
+  for (m = 0; m < LAYOUT_NUM_AUDITION_PARAMS; m++)
+  {
+    pr = &G_layout_audition_params[m];
+
+    /* determine parameter value & string */
+    switch (m)
+    {
+      VB_ALL_AUDITION_PARAM_CASE(OCTAVE,      G_patch_edit_octave,          common_edit_1_to_100)
+      VB_ALL_AUDITION_PARAM_CASE(VELOCITY,    G_patch_edit_note_velocity,   audition_uni_wheel)
+      VB_ALL_AUDITION_PARAM_CASE(PITCH_WHEEL, G_patch_edit_pitch_wheel_pos, audition_bi_wheel)
+      VB_ALL_AUDITION_PARAM_CASE(MOD_WHEEL,   G_patch_edit_mod_wheel_pos,   audition_uni_wheel)
+      VB_ALL_AUDITION_PARAM_CASE(AFTERTOUCH,  G_patch_edit_aftertouch_pos,  audition_uni_wheel)
+      VB_ALL_AUDITION_PARAM_CASE(EXP_PEDAL,   G_patch_edit_exp_pedal_pos,   audition_uni_wheel)
+
+      default:
+      {
+        value = 0;
+        value_string = NULL;
+        break;
+      }
+    }
+
+    /* load the parameter name, value, and slider, arrows, or radio button */
+    vb_all_load_text( pr->center_x + LAYOUT_PARAM_NAME_X, 
+                      pr->center_y, 
+                      VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_2, VB_ALL_PARAM_NAME_MAX_TEXT_SIZE, 
+                      S_audition_param_names[m]);
+
+    if (pr->type == LAYOUT_PARAM_TYPE_SLIDER)
+    {
+      vb_all_load_text( pr->center_x + LAYOUT_PARAM_SLIDER_VALUE_X, 
+                        pr->center_y, 
+                        VB_ALL_ALIGN_CENTER, 0, VB_ALL_PALETTE_GRAY, VB_ALL_PARAM_NUMBER_MAX_TEXT_SIZE, 
+                        value_string);
+
+      vb_all_load_slider( pr->center_x + LAYOUT_PARAM_SLIDER_TRACK_X, 
+                          pr->center_y, 
+                          LAYOUT_PARAM_SLIDER_WIDTH, 
+                          value, pr->lower_bound, pr->upper_bound);
     }
   }
 

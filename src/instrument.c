@@ -18,10 +18,6 @@
 #include "tuning.h"
 #include "voice.h"
 
-/* voice indices & polyphony */
-short int G_instrument_voice_index[BANK_NUM_INSTRUMENTS];
-short int G_instrument_polyphony[BANK_NUM_INSTRUMENTS];
-
 /* instrument bank */
 instrument G_instrument_bank[BANK_NUM_INSTRUMENTS];
 
@@ -34,6 +30,9 @@ short int instrument_reset_all()
   int n;
 
   instrument* ins;
+
+  int next_ins_index;
+  int next_voice_index;
 
   /* reset all instruments */
   for (m = 0; m < BANK_NUM_INSTRUMENTS; m++)
@@ -70,6 +69,49 @@ short int instrument_reset_all()
     ins->sustain_pedal = MIDI_CONT_SUSTAIN_PEDAL_UP;
   }
 
+  /* setup instrument mappings */
+  next_ins_index = 0;
+  next_voice_index = 0;
+
+  /* poly instruments */
+  for (m = 0; m < BANK_NUM_POLY_INSTRUMENTS; m++)
+  {
+    ins = &G_instrument_bank[next_ins_index];
+
+    ins->voice_index = next_voice_index;
+    ins->last_offset = 0;
+    ins->polyphony = BANK_VOICES_PER_POLY_INSTRUMENT;
+
+    next_ins_index += 1;
+    next_voice_index += BANK_VOICES_PER_POLY_INSTRUMENT;
+  }
+
+  /* mono instruments */
+  for (m = 0; m < BANK_NUM_MONO_INSTRUMENTS; m++)
+  {
+    ins = &G_instrument_bank[next_ins_index];
+
+    ins->voice_index = next_voice_index;
+    ins->last_offset = 0;
+    ins->polyphony = BANK_VOICES_PER_MONO_INSTRUMENT;
+
+    next_ins_index += 1;
+    next_voice_index += BANK_VOICES_PER_MONO_INSTRUMENT;
+  }
+
+  /* sound fx instruments */
+  for (m = 0; m < BANK_NUM_SOUND_FX_INSTRUMENTS; m++)
+  {
+    ins = &G_instrument_bank[next_ins_index];
+
+    ins->voice_index = next_voice_index;
+    ins->last_offset = 0;
+    ins->polyphony = BANK_VOICES_PER_SOUND_FX_INSTRUMENT;
+
+    next_ins_index += 1;
+    next_voice_index += BANK_VOICES_PER_SOUND_FX_INSTRUMENT;
+  }
+
   return 0;
 }
 
@@ -81,6 +123,8 @@ short int instrument_load_patch(int instrument_index,
 {
   int k;
   int m;
+
+  instrument* ins;
 
   int voice_index;
 
@@ -102,9 +146,11 @@ short int instrument_load_patch(int instrument_index,
    /* load patch to all voices associated with this instrument */
   for (k = 0; k < BANK_NUM_INSTRUMENTS; k++)
   {
-    for (m = 0; m < G_instrument_polyphony[k]; m++)
+    ins = &G_instrument_bank[k];
+
+    for (m = 0; m < ins->polyphony; m++)
     {
-      voice_index = G_instrument_voice_index[k] + m;
+      voice_index = ins->voice_index + m;
 
       voice_load_patch(voice_index, cart_index, patch_index);
       envelope_load_patch(voice_index, cart_index, patch_index);
@@ -127,13 +173,7 @@ short int instrument_note_on(int instrument_index, int note)
   instrument* ins;
   voice* v;
 
-  short int same_voice_index;
-  short int newest_voice_index;
-  short int oldest_voice_index;
-  short int released_voice_index;
-
-  short int current_voice_index;
-  short int selected_voice_index;
+  short int next_offset;
 
   /* make sure that the instrument index is valid */
   if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
@@ -146,112 +186,49 @@ short int instrument_note_on(int instrument_index, int note)
   /* obtain instrument pointer */
   ins = &G_instrument_bank[instrument_index];
 
-  /* determine selected voice for this note on */
-  selected_voice_index = -1;
+  /* initialize offset */
+  next_offset = 0;
 
-  same_voice_index = -1;
-  newest_voice_index = -1;
-  oldest_voice_index = -1;
-  released_voice_index = -1;
-
-  for (m = 0; m < G_instrument_polyphony[instrument_index]; m++)
+  /* if this is a monophonic instrument,    */
+  /* just select the only voice available!  */
+  if (ins->polyphony == 1)
   {
-    current_voice_index = G_instrument_voice_index[instrument_index] + m;
-
-    v = &G_voice_bank[current_voice_index];
-
-    /* this voice is playing the new note already */
-    if (same_voice_index == -1)
-    {
-      if (note == v->base_note)
-        same_voice_index = current_voice_index;
-    }
-
-    /* this voice is playing the most recently pressed key */
-    if (newest_voice_index == -1)
-    {
-      if (ins->pressed_keys[0] == v->base_note)
-        newest_voice_index = current_voice_index;
-    }
-
-    /* this voice is playing the oldest pressed key */
-    if (oldest_voice_index == -1)
-    {
-      if (ins->num_pressed < BANK_VOICES_PER_POLY_INSTRUMENT)
-      {
-        if (ins->pressed_keys[ins->num_pressed - 1] == v->base_note)
-          oldest_voice_index = current_voice_index;
-      }
-      else
-      {
-        if (ins->pressed_keys[BANK_VOICES_PER_POLY_INSTRUMENT - 1] == v->base_note)
-          oldest_voice_index = current_voice_index;
-      }
-    }
-
-    /* this voice is playing a released key */
-    if (released_voice_index == -1)
-    {
-      released_voice_index = current_voice_index;
-
-      for (m = 0; m < ins->num_pressed; m++)
-      {
-        if (ins->pressed_keys[m] == v->base_note)
-        {
-          released_voice_index = -1;
-          break;
-        }
-      }
-    }
-
-    /* this voice is playing a blank note */
-    if (released_voice_index == -1)
-    {
-      if (v->base_note == TUNING_NOTE_BLANK)
-        released_voice_index = current_voice_index;
-    }
+    next_offset = 0;
   }
-
   /* if the portamento is on, use the voice of the  */
   /* most recently pressed note for this note on    */
-  if (ins->port_arp_switch == MIDI_CONT_PORT_ARP_SWITCH_PORTAMENTO)
+  else if (ins->port_arp_switch == MIDI_CONT_PORT_ARP_SWITCH_PORTAMENTO)
   {
-    if (newest_voice_index != -1)
-      selected_voice_index = newest_voice_index;
-    else
-      selected_voice_index = G_instrument_voice_index[instrument_index];
+    next_offset = ins->last_offset;
   }
-  /* if a voice is currently playing this note, */
-  /* retrigger the note on that voice.          */
-  else if (same_voice_index != -1)
-  {
-    selected_voice_index = same_voice_index;
-  }
-  /* if a voice is still playing a note that is not   */
-  /* pressed right now, replace it with the new note. */
-  else if (released_voice_index != -1)
-  {
-    selected_voice_index = released_voice_index;
-  }
-  /* otherwise, replace the oldest note with this note */
-  else if (oldest_voice_index != -1)
-  {
-    selected_voice_index = oldest_voice_index;
-  }
-  /* if all else fails, just use the first voice! */
+  /* otherwise, select an available voice! */
   else
-    selected_voice_index = G_instrument_voice_index[instrument_index];
+  {
+    /* send a note-off to all voices playing this note */
+    for (m = 0; m < ins->polyphony; m++)
+    {
+      v = &G_voice_bank[ins->voice_index + m];
 
-  /* if no voice index found, return */
-  if (selected_voice_index == -1)
-    return 0;
+      if (note == v->base_note)
+      {
+        envelope_note_off(ins->voice_index + m);
+        peg_note_off(ins->voice_index + m);
+      }
+    }
 
-  /* send note on to the selected voice associated with this instrument */
-  voice_note_on(selected_voice_index, note);
+    /* find the next available note (round robin) */
+    next_offset = (ins->last_offset + 1) % ins->polyphony;
+    ins->last_offset = next_offset;
+  }
 
-  envelope_note_on(selected_voice_index, note, ins->note_velocity, ins->sustain_pedal);
-  peg_note_on(selected_voice_index);
-  lfo_note_on(selected_voice_index);
+  /* send note-on to the selected voice associated with this instrument */
+  voice_note_on(ins->voice_index + next_offset, note);
+
+  envelope_note_on( ins->voice_index + next_offset, 
+                    note, ins->note_velocity, ins->sustain_pedal);
+
+  peg_note_on(ins->voice_index + next_offset);
+  lfo_note_on(ins->voice_index + next_offset);
 
   return 0;
 }
@@ -263,10 +240,8 @@ short int instrument_note_off(int instrument_index, int note)
 {
   int m;
 
+  instrument* ins;
   voice* v;
-
-  short int current_voice_index;
-  short int selected_voice_index;
 
   /* make sure that the instrument index is valid */
   if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
@@ -276,26 +251,20 @@ short int instrument_note_off(int instrument_index, int note)
   if (TUNING_NOTE_IS_NOT_PLAYABLE(note))
     return 0;
 
-  /* determine selected voice for this note off */
-  selected_voice_index = -1;
+  /* obtain instrument pointer */
+  ins = &G_instrument_bank[instrument_index];
 
-  for (m = 0; m < G_instrument_polyphony[instrument_index]; m++)
+  /* send a note-off to all voices playing this note */
+  for (m = 0; m < ins->polyphony; m++)
   {
-    current_voice_index = G_instrument_voice_index[instrument_index] + m;
-
-    v = &G_voice_bank[current_voice_index];
+    v = &G_voice_bank[ins->voice_index + m];
 
     if (note == v->base_note)
-      selected_voice_index = current_voice_index;
+    {
+      envelope_note_off(ins->voice_index + m);
+      peg_note_off(ins->voice_index + m);
+    }
   }
-
-  /* if no voice index found, return */
-  if (selected_voice_index == -1)
-    return 0;
-
-  /* send note-off to the selected voice associated with this instrument */
-  envelope_note_off(selected_voice_index);
-  peg_note_off(selected_voice_index);
 
   return 0;
 }
@@ -510,8 +479,6 @@ short int instrument_set_mod_wheel_position(int instrument_index, short int pos)
   voice* v;
   envelope* e;
 
-  short int voice_index;
-
   /* make sure that the instrument index is valid */
   if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
     return 1;
@@ -534,17 +501,15 @@ short int instrument_set_mod_wheel_position(int instrument_index, short int pos)
   ins->mod_wheel_pos = pos;
 
   /* set the mod wheel input for other units associated with this instrument */
-  for (m = 0; m < G_instrument_polyphony[instrument_index]; m++)
+  for (m = 0; m < ins->polyphony; m++)
   {
-    voice_index = G_instrument_voice_index[instrument_index] + m;
-
-    v = &G_voice_bank[voice_index];
+    v = &G_voice_bank[ins->voice_index + m];
 
     v->mod_wheel_pos = pos;
 
     for (n = 0; n < BANK_ENVELOPES_PER_VOICE; n++)
     {
-      e = &G_envelope_bank[voice_index * BANK_ENVELOPES_PER_VOICE + n];
+      e = &G_envelope_bank[(ins->voice_index + m) * BANK_ENVELOPES_PER_VOICE + n];
 
       e->mod_wheel_pos = pos;
     }
@@ -564,8 +529,6 @@ short int instrument_set_aftertouch_position(int instrument_index, short int pos
   instrument* ins;
   voice* v;
   envelope* e;
-
-  short int voice_index;
 
   /* make sure that the instrument index is valid */
   if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
@@ -589,17 +552,15 @@ short int instrument_set_aftertouch_position(int instrument_index, short int pos
   ins->aftertouch_pos = pos;
 
   /* set the aftertouch input for other units associated with this instrument */
-  for (m = 0; m < G_instrument_polyphony[instrument_index]; m++)
+  for (m = 0; m < ins->polyphony; m++)
   {
-    voice_index = G_instrument_voice_index[instrument_index] + m;
-
-    v = &G_voice_bank[voice_index];
+    v = &G_voice_bank[ins->voice_index + m];
 
     v->aftertouch_pos = pos;
 
     for (n = 0; n < BANK_ENVELOPES_PER_VOICE; n++)
     {
-      e = &G_envelope_bank[voice_index * BANK_ENVELOPES_PER_VOICE + n];
+      e = &G_envelope_bank[(ins->voice_index + m) * BANK_ENVELOPES_PER_VOICE + n];
 
       e->aftertouch_pos = pos;
     }
@@ -619,8 +580,6 @@ short int instrument_set_exp_pedal_position(int instrument_index, short int pos)
   instrument* ins;
   voice* v;
   envelope* e;
-
-  short int voice_index;
 
   /* make sure that the instrument index is valid */
   if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
@@ -644,17 +603,15 @@ short int instrument_set_exp_pedal_position(int instrument_index, short int pos)
   ins->exp_pedal_pos = pos;
 
   /* set the exp pedal input for other units associated with this instrument */
-  for (m = 0; m < G_instrument_polyphony[instrument_index]; m++)
+  for (m = 0; m < ins->polyphony; m++)
   {
-    voice_index = G_instrument_voice_index[instrument_index] + m;
-
-    v = &G_voice_bank[voice_index];
+    v = &G_voice_bank[ins->voice_index + m];
 
     v->exp_pedal_pos = pos;
 
     for (n = 0; n < BANK_ENVELOPES_PER_VOICE; n++)
     {
-      e = &G_envelope_bank[voice_index * BANK_ENVELOPES_PER_VOICE + n];
+      e = &G_envelope_bank[(ins->voice_index + m) * BANK_ENVELOPES_PER_VOICE + n];
 
       e->exp_pedal_pos = pos;
     }
@@ -672,8 +629,6 @@ short int instrument_set_pitch_wheel_position(int instrument_index, short int po
 
   instrument* ins;
   voice* v;
-
-  short int voice_index;
 
   /* make sure that the instrument index is valid */
   if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
@@ -697,11 +652,9 @@ short int instrument_set_pitch_wheel_position(int instrument_index, short int po
   ins->pitch_wheel_pos = pos;
 
   /* set the pitch wheel input for other units associated with this instrument */
-  for (m = 0; m < G_instrument_polyphony[instrument_index]; m++)
+  for (m = 0; m < ins->polyphony; m++)
   {
-    voice_index = G_instrument_voice_index[instrument_index] + m;
-
-    v = &G_voice_bank[voice_index];
+    v = &G_voice_bank[ins->voice_index + m];
 
     v->pitch_wheel_pos = pos;
   }
@@ -822,53 +775,6 @@ short int instrument_set_sustain_pedal(int instrument_index, int state)
     }
 
     ins->num_held = 0;
-  }
-
-  return 0;
-}
-
-/*******************************************************************************
-** instrument_generate_tables()
-*******************************************************************************/
-short int instrument_generate_tables()
-{
-  int m;
-
-  int ins_index;
-  int voice_index;
-
-  /* initialize current instrument & voice indices */
-  ins_index = 0;
-  voice_index = 0;
-
-  /* poly instruments */
-  for (m = 0; m < BANK_NUM_POLY_INSTRUMENTS; m++)
-  {
-    G_instrument_voice_index[ins_index] = voice_index;
-    G_instrument_polyphony[ins_index] = BANK_VOICES_PER_POLY_INSTRUMENT;
-
-    ins_index += 1;
-    voice_index += BANK_VOICES_PER_POLY_INSTRUMENT;
-  }
-
-  /* mono instruments */
-  for (m = 0; m < BANK_NUM_MONO_INSTRUMENTS; m++)
-  {
-    G_instrument_voice_index[ins_index] = voice_index;
-    G_instrument_polyphony[ins_index] = BANK_VOICES_PER_MONO_INSTRUMENT;
-
-    ins_index += 1;
-    voice_index += BANK_VOICES_PER_MONO_INSTRUMENT;
-  }
-
-  /* sound fx instruments */
-  for (m = 0; m < BANK_NUM_SOUND_FX_INSTRUMENTS; m++)
-  {
-    G_instrument_voice_index[ins_index] = voice_index;
-    G_instrument_polyphony[ins_index] = BANK_VOICES_PER_SOUND_FX_INSTRUMENT;
-
-    ins_index += 1;
-    voice_index += BANK_VOICES_PER_SOUND_FX_INSTRUMENT;
   }
 
   return 0;

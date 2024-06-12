@@ -196,7 +196,7 @@ short int patch_validate_patch(int cart_index, int patch_index)
 
   for (m = 0; m < PATCH_PATCH_NAME_SIZE; m++)
   {
-    if (!(TEXT_CHARACTER_IS_VALID_IN_PATCH_NAME(p->name[m])))
+    if (!(TEXT_CHARACTER_IS_VALID_IN_CART_OR_PATCH_NAME(p->name[m])))
       p->name[m] = ' ';
   }
 
@@ -481,7 +481,7 @@ short int patch_validate_cart(int cart_index)
 
   for (m = 0; m < PATCH_CART_NAME_SIZE; m++)
   {
-    if (!(TEXT_CHARACTER_IS_VALID_IN_CART_NAME(c->name[m])))
+    if (!(TEXT_CHARACTER_IS_VALID_IN_CART_OR_PATCH_NAME(c->name[m])))
       c->name[m] = ' ';
   }
 

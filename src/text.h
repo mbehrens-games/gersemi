@@ -18,13 +18,10 @@
   ( ((c >= 'A') && (c <= 'Z')) ||                                              \
     ((c >= 'a') && (c <= 'z')))
 
-#define TEXT_CHARACTER_IS_VALID_IN_PATCH_NAME(c)                               \
+#define TEXT_CHARACTER_IS_VALID_IN_CART_OR_PATCH_NAME(c)                       \
   ( (TEXT_CHARACTER_IS_DIGIT(c))  ||                                           \
     (TEXT_CHARACTER_IS_LETTER(c)) ||                                           \
     (c == ' ') || (c == '\0'))
-
-#define TEXT_CHARACTER_IS_VALID_IN_CART_NAME(c)                                \
-  TEXT_CHARACTER_IS_VALID_IN_PATCH_NAME(c)
 
 #define TEXT_CHARACTER_IS_VALID_IN_FILE_NAME(c)                                \
   ( (TEXT_CHARACTER_IS_DIGIT(c))  ||                                           \
