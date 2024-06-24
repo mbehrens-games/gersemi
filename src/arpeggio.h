@@ -6,7 +6,7 @@
 #define ARPEGGIO_H
 
 #include "bank.h"
-#include "patch.h"
+#include "cart.h"
 
 #define ARPEGGIO_NUM_KEYS   12
 #define ARPEGGIO_NUM_NOTES  (ARPEGGIO_NUM_KEYS * PATCH_ARPEGGIO_OCTAVES_NUM_VALUES)

@@ -14,7 +14,7 @@
 
 #include "audio.h"
 #include "controls.h"
-#include "fileio.h"
+#include "datafile.h"
 #include "global.h"
 #include "graphics.h"
 #include "hola.h"
@@ -58,24 +58,10 @@ int main(int argc, char *argv[])
   globals_init_variables();
 
   /* initialize paths */
-  path_init_paths();
-
-  if (path_obtain_base_paths())
+  if (path_init())
   {
-    fprintf(stdout, "Failed to obtain Base paths. Exiting...\n");
+    fprintf(stdout, "Failed to initialize paths. Exiting...\n");
     goto cleanup_gl_library;
-  }
-
-  if (path_obtain_preferences_path())
-  {
-    fprintf(stdout, "Failed to obtain Preferences path. Exiting...\n");
-    goto cleanup_paths;
-  }
-
-  if (path_set_documents_path())
-  {
-    fprintf(stdout, "Failed to obtain Documents path. Exiting...\n");
-    goto cleanup_paths;
   }
 
   /* create window */
@@ -120,7 +106,7 @@ int main(int argc, char *argv[])
   palette_create_opengl_texture();
 
   /* load all textures */
-  if (texture_load_all_from_file(G_path_gfx_data))
+  if (texture_load_all())
   {
     fprintf(stdout, "Error loading gfx data. Exiting...\n");
     goto cleanup_textures;
@@ -149,7 +135,7 @@ int main(int argc, char *argv[])
   synth_reset_banks();
 
   /* testing: load test cart file */
-  fileio_cart_load(0, G_path_cart_test_1);
+  datafile_cart_load(0, G_path_cart_test_1);
 
   /* testing */
   instrument_load_patch(G_patch_edit_instrument_index, 0, 0);
@@ -286,7 +272,7 @@ int main(int argc, char *argv[])
   /* cleanup window and quit */
 cleanup_all:
   /* testing: save test patch set file */
-  fileio_cart_save(0, G_path_cart_test_1);
+  datafile_cart_save(0, G_path_cart_test_1);
 
   audio_deinit();
 cleanup_textures:
@@ -299,7 +285,7 @@ cleanup_opengl:
 cleanup_window:
   SDL_DestroyWindow(G_sdl_window);
 cleanup_paths:
-  path_free_paths();
+  path_deinit();
 cleanup_gl_library:
   SDL_GL_UnloadLibrary();
 cleanup_sdl:

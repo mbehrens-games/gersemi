@@ -6,8 +6,8 @@
 #include <math.h>
 
 #include "bank.h"
+#include "cart.h"
 #include "clock.h"
-#include "patch.h"
 #include "peg.h"
 #include "tuning.h"
 

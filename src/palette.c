@@ -178,6 +178,9 @@ short int palette_create_opengl_texture()
   /* allocate palette data */
   palette_data = malloc(sizeof(GLubyte) * 3 * PALETTE_SIZE * PALETTE_SIZE);
 
+  if (palette_data == NULL)
+    return 1;
+
   /* initialize palette data */
   for (k = 0; k < PALETTE_SIZE * PALETTE_SIZE; k++)
   {

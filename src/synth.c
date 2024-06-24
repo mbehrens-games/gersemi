@@ -7,12 +7,12 @@
 
 #include "arpeggio.h"
 #include "bank.h"
+#include "cart.h"
 #include "clock.h"
 #include "envelope.h"
 #include "filter.h"
 #include "instrument.h"
 #include "lfo.h"
-#include "patch.h"
 #include "peg.h"
 #include "sequence.h"
 #include "sweep.h"
@@ -40,7 +40,7 @@ short int synth_reset_banks()
 
   instrument_reset_all();
 
-  patch_reset_all();
+  cart_reset_all();
 
   /* reset tuning table */
   tuning_reset();

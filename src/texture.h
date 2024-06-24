@@ -22,6 +22,6 @@ short int texture_generate_coord_tables();
 short int texture_init();
 short int texture_deinit();
 
-short int texture_load_all_from_file(char* filename);
+short int texture_load_all();
 
 #endif

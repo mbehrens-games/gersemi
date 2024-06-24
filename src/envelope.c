@@ -6,10 +6,10 @@
 #include <math.h>
 
 #include "bank.h"
+#include "cart.h"
 #include "clock.h"
 #include "envelope.h"
 #include "midicont.h"
-#include "patch.h"
 #include "tuning.h"
 
 enum

@@ -8,16 +8,15 @@
 #include <stdlib.h>
 
 #include "bank.h"
+#include "cart.h"
 #include "controls.h"
 #include "global.h"
 #include "graphics.h"
 #include "instrument.h"
 #include "layout.h"
 #include "midicont.h"
-#include "patch.h"
 #include "program.h"
 #include "synth.h"
-#include "text.h"
 #include "tuning.h"
 
 enum
@@ -756,7 +755,7 @@ short int controls_cart_text_entry(int cart_index, int patch_index, char c)
 
   /* make sure the character is valid */
   if ((c != '\b') && 
-      (!(TEXT_CHARACTER_IS_VALID_IN_CART_OR_PATCH_NAME(c))))
+      (!(CART_CHARACTER_IS_VALID_IN_CART_OR_PATCH_NAME(c))))
   {
     return 0;
   }
@@ -765,12 +764,12 @@ short int controls_cart_text_entry(int cart_index, int patch_index, char c)
   if (G_program_screen == PROGRAM_SCREEN_TEXT_ENTRY_CART_NAME)
   {
     name = &cr->name[0];
-    bound = PATCH_CART_NAME_SIZE;
+    bound = CART_NAME_SIZE;
   }
   else if (G_program_screen == PROGRAM_SCREEN_TEXT_ENTRY_PATCH_NAME)
   {
     name = &pt->name[0];
-    bound = PATCH_PATCH_NAME_SIZE;
+    bound = PATCH_NAME_SIZE;
   }
   else
     return 0;

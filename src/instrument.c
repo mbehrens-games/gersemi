@@ -12,7 +12,6 @@
 #include "instrument.h"
 #include "lfo.h"
 #include "midicont.h"
-#include "patch.h"
 #include "peg.h"
 #include "sweep.h"
 #include "tuning.h"

@@ -7,10 +7,10 @@
 #include <math.h>
 
 #include "bank.h"
+#include "cart.h"
 #include "clock.h"
 #include "lfo.h"
 #include "midicont.h"
-#include "patch.h"
 #include "tempo.h"
 #include "tuning.h"
 

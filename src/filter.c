@@ -6,9 +6,9 @@
 #include <math.h>
 
 #include "bank.h"
+#include "cart.h"
 #include "clock.h"
 #include "filter.h"
-#include "patch.h"
 #include "tuning.h"
 
 #define PI      3.14159265358979323846f

@@ -5,9 +5,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "cart.h"
 #include "global.h"
 #include "midicont.h"
-#include "patch.h"
 
 int G_current_scroll_amount;
 int G_max_scroll_amount;

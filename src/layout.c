@@ -5,9 +5,9 @@
 #include <stdio.h>  /* testing */
 #include <stdlib.h>
 
+#include "cart.h"
 #include "layout.h"
 #include "midicont.h"
-#include "patch.h"
 #include "tuning.h"
 
 #define LAYOUT_SETUP_BUTTON_CASE(area, name)                                   \

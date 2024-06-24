@@ -9,114 +9,121 @@
 
 #include "path.h"
 
-#define PATH_FREE_PATH(name)                                                   \
+#define PATH_FREE_SDL_DIR(name)                                                \
   if (name != NULL)                                                            \
   {                                                                            \
     SDL_free(name);                                                            \
     name = NULL;                                                               \
   }
 
-char* G_path_base;
-char* G_path_gfx_data;
-char* G_path_shader_data;
+#define PATH_FREE_STRING(str)                                                  \
+  if (str != NULL)                                                             \
+  {                                                                            \
+    free(str);                                                                 \
+    str = NULL;                                                                \
+  }
 
-char* G_path_pref;
+char* G_path_base_dir;
+char* G_path_pref_dir;
 
-char* G_path_carts;
+char* G_path_graphics_dat;
+char* G_path_shaders_dat;
+
+char* G_path_carts_dir;
+char* G_path_songs_dir;
+
 char* G_path_cart_test_1;
 
-char* G_path_songs;
-
 /*******************************************************************************
-** path_init_paths()
+** path_init()
 *******************************************************************************/
-short int path_init_paths()
+short int path_init()
 {
-  G_path_base = NULL;
-  G_path_gfx_data = NULL;
-  G_path_shader_data = NULL;
+  /* initialize pointers */
+  G_path_base_dir = NULL;
+  G_path_pref_dir = NULL;
 
-  G_path_pref = NULL;
+  G_path_graphics_dat = NULL;
+  G_path_shaders_dat = NULL;
 
-  G_path_carts = NULL;
+  G_path_carts_dir = NULL;
+  G_path_songs_dir = NULL;
+
   G_path_cart_test_1 = NULL;
 
-  G_path_songs = NULL;
+  /* executable & preferences directories */
+  G_path_base_dir = SDL_GetBasePath();
+  G_path_pref_dir = SDL_GetPrefPath("Michael Behrens", "Gersemi");
 
-  return 0;
-}
-
-/*******************************************************************************
-** path_obtain_base_paths()
-*******************************************************************************/
-short int path_obtain_base_paths()
-{
-  G_path_base = SDL_GetBasePath();
-
-  if (G_path_base == NULL)
-  {
+  if (G_path_base_dir == NULL)
     return 1;
-  }
 
-  G_path_gfx_data = malloc(sizeof(char) * (strlen(G_path_base) + 12 + 1));
-  strcpy(G_path_gfx_data, G_path_base);
-  strcpy(G_path_gfx_data + strlen(G_path_base), "gersgrph.dat");
-
-  G_path_shader_data = malloc(sizeof(char) * (strlen(G_path_base) + 12 + 1));
-  strcpy(G_path_shader_data, G_path_base);
-  strcpy(G_path_shader_data + strlen(G_path_base), "shader2z.dat");
-
-  return 0;
-}
-
-/*******************************************************************************
-** path_obtain_preferences_path()
-*******************************************************************************/
-short int path_obtain_preferences_path()
-{
-  G_path_pref = SDL_GetPrefPath("Michael Behrens", "Gersemi");
-
-  if (G_path_pref == NULL)
-  {
+  if (G_path_pref_dir == NULL)
     return 1;
-  }
 
-  return 0;
-}
+  /* graphics file path */
+  G_path_graphics_dat = 
+    malloc(sizeof(char) * (strlen(G_path_base_dir) + strlen("gersgrph.dat") + 1));
 
-/*******************************************************************************
-** path_set_documents_path()
-*******************************************************************************/
-short int path_set_documents_path()
-{
-  G_path_carts = malloc(sizeof(char) * (255 + 1));
-  strcpy(G_path_carts, "/Users/mike/Documents/Gersemi/Carts/");
+  if (G_path_graphics_dat == NULL)
+    return 1;
 
-  G_path_songs = malloc(sizeof(char) * (255 + 1));
-  strcpy(G_path_songs, "/Users/mike/Documents/Gersemi/Songs/");
+  strcpy(G_path_graphics_dat, G_path_base_dir);
+  strcat(G_path_graphics_dat, "gersgrph.dat");
+
+  /* shader file path */
+  G_path_shaders_dat = 
+    malloc(sizeof(char) * (strlen(G_path_base_dir) + strlen("shader2z.dat") + 1));
+
+  if (G_path_shaders_dat == NULL)
+    return 1;
+
+  strcpy(G_path_shaders_dat, G_path_base_dir);
+  strcat(G_path_shaders_dat, "shader2z.dat");
+
+  /* document directories */
+
+  /* testing */
+  G_path_carts_dir = malloc(sizeof(char) * (255 + 1));
+
+  if (G_path_carts_dir == NULL)
+    return 1;
+
+  strcpy(G_path_carts_dir, "/Users/mike/Documents/Gersemi/Carts/");
+
+  G_path_songs_dir = malloc(sizeof(char) * (255 + 1));
+
+  if (G_path_songs_dir == NULL)
+    return 1;
+
+  strcpy(G_path_songs_dir, "/Users/mike/Documents/Gersemi/Songs/");
 
   G_path_cart_test_1 = malloc(sizeof(char) * (255 + 1));
-  strcpy(G_path_cart_test_1, G_path_carts);
-  strcpy(G_path_cart_test_1 + strlen(G_path_carts), "cart01.gct");
+
+  if (G_path_cart_test_1 == NULL)
+    return 1;
+
+  strcpy(G_path_cart_test_1, G_path_carts_dir);
+  strcat(G_path_cart_test_1, "cart01.gct");
 
   return 0;
 }
 
 /*******************************************************************************
-** path_free_paths()
+** path_deinit()
 *******************************************************************************/
-short int path_free_paths()
+short int path_deinit()
 {
-  PATH_FREE_PATH(G_path_base)
-  PATH_FREE_PATH(G_path_gfx_data)
-  PATH_FREE_PATH(G_path_shader_data)
+  PATH_FREE_SDL_DIR(G_path_base_dir)
+  PATH_FREE_SDL_DIR(G_path_pref_dir)
 
-  PATH_FREE_PATH(G_path_pref)
+  PATH_FREE_STRING(G_path_graphics_dat)
+  PATH_FREE_STRING(G_path_shaders_dat)
 
-  PATH_FREE_PATH(G_path_carts)
-  PATH_FREE_PATH(G_path_cart_test_1)
+  PATH_FREE_STRING(G_path_carts_dir)
+  PATH_FREE_STRING(G_path_songs_dir)
 
-  PATH_FREE_PATH(G_path_songs)
+  PATH_FREE_STRING(G_path_cart_test_1)
 
   return 0;
 }

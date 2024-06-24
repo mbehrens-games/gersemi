@@ -8,13 +8,13 @@
 #include <stdlib.h>
 
 #include "bank.h"
+#include "cart.h"
 #include "controls.h"
 #include "global.h"
 #include "graphics.h"
 #include "layout.h"
 #include "midicont.h"
 #include "palette.h"
-#include "patch.h"
 #include "sequence.h"
 #include "texture.h"
 #include "vball.h"

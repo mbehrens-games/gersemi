@@ -227,28 +227,56 @@ short int graphics_create_opengl_objects()
   S_graphics_buffer_set_size[GRAPHICS_BUFFER_SET_SPRITES] = index;
 
   /* create tile & sprite buffer objects */
+
+  /* initialize buffer pointers */
   for (m = 0; m < GRAPHICS_NUM_BUFFER_SETS; m++)
   {
-    /* generate buffers */
+    G_overscan_vertex_buffer_data[m] = NULL;
+    G_overscan_tex_coord_buffer_data[m] = NULL;
+    G_overscan_pal_coord_buffer_data[m] = NULL;
+    G_overscan_index_buffer_data[m] = NULL;
+  }
+
+  /* generate buffers */
+  for (m = 0; m < GRAPHICS_NUM_BUFFER_SETS; m++)
+  {
     glGenBuffers(1, &G_overscan_vertex_buffer_id[m]);
     glGenBuffers(1, &G_overscan_tex_coord_buffer_id[m]);
     glGenBuffers(1, &G_overscan_pal_coord_buffer_id[m]);
     glGenBuffers(1, &G_overscan_index_buffer_id[m]);
+  }
 
-    /* allocate buffers */
+  /* allocate buffers */
+  for (m = 0; m < GRAPHICS_NUM_BUFFER_SETS; m++)
+  {
     G_overscan_vertex_buffer_data[m] = 
       malloc(sizeof(GLfloat) * 3 * 4 * S_graphics_buffer_set_size[m]);
+
+    if (G_overscan_vertex_buffer_data[m] == NULL)
+      return 1;
 
     G_overscan_tex_coord_buffer_data[m] = 
       malloc(sizeof(GLfloat) * 2 * 4 * S_graphics_buffer_set_size[m]);
 
+    if (G_overscan_tex_coord_buffer_data[m] == NULL)
+      return 1;
+
     G_overscan_pal_coord_buffer_data[m] = 
       malloc(sizeof(GLfloat) * 2 * 4 * S_graphics_buffer_set_size[m]);
+
+    if (G_overscan_pal_coord_buffer_data[m] == NULL)
+      return 1;
 
     G_overscan_index_buffer_data[m] = 
       malloc(sizeof(unsigned short) * 6 * S_graphics_buffer_set_size[m]);
 
-    /* initialize buffers */
+    if (G_overscan_index_buffer_data[m] == NULL)
+      return 1;
+  }
+
+  /* initialize buffers */
+  for (m = 0; m < GRAPHICS_NUM_BUFFER_SETS; m++)
+  {
     for (n = 0; n < 3 * 4 * S_graphics_buffer_set_size[m]; n++)
       G_overscan_vertex_buffer_data[m][n] = 0.0f;
 
@@ -260,8 +288,11 @@ short int graphics_create_opengl_objects()
 
     for (n = 0; n < 6 * S_graphics_buffer_set_size[m]; n++)
       G_overscan_index_buffer_data[m][n] = 0;
+  }
 
-    /* set usage mode */
+  /* send buffer data to vbos */
+  for (m = 0; m < GRAPHICS_NUM_BUFFER_SETS; m++)
+  {
     if (m == GRAPHICS_BUFFER_SET_TILES)
       usage = GL_STATIC_DRAW;
     else if (m == GRAPHICS_BUFFER_SET_SPRITES)
@@ -269,7 +300,6 @@ short int graphics_create_opengl_objects()
     else
       usage = GL_DYNAMIC_DRAW;
 
-    /* send buffer data to vbos */
     glBindBuffer(GL_ARRAY_BUFFER, G_overscan_vertex_buffer_id[m]);
     glBufferData( GL_ARRAY_BUFFER, 
                   S_graphics_buffer_set_size[m] * 12 * sizeof(GLfloat),

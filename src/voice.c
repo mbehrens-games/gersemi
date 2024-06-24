@@ -7,8 +7,8 @@
 #include <math.h>
 
 #include "clock.h"
+#include "cart.h"
 #include "midicont.h"
-#include "patch.h"
 #include "sweep.h"
 #include "tuning.h"
 #include "voice.h"

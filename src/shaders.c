@@ -12,6 +12,13 @@
 #include "path.h"
 #include "shaders.h"
 
+/* shader source texts */
+static GLchar*  S_vert_source_string[SHADERS_NUM_PROGRAMS];
+static GLint    S_vert_source_length[SHADERS_NUM_PROGRAMS];
+
+static GLchar*  S_frag_source_string[SHADERS_NUM_PROGRAMS];
+static GLint    S_frag_source_length[SHADERS_NUM_PROGRAMS];
+
 /* shader program and uniform ids */
 GLuint G_program_id_A;
 GLuint G_program_id_B;
@@ -36,10 +43,10 @@ GLuint G_uniform_D_texture_sampler_id;
 ** shaders_compile_program()
 *******************************************************************************/
 short int shaders_compile_program(GLuint  program_id, 
-                                  GLchar* vert_source_string, 
-                                  GLint   vert_source_length, 
-                                  GLchar* frag_source_string, 
-                                  GLint   frag_source_length)
+                                  GLchar* S_vert_source_string, 
+                                  GLint   S_vert_source_length, 
+                                  GLchar* S_frag_source_string, 
+                                  GLint   S_frag_source_length)
 {
   GLuint  vertex_shader_id;
   GLuint  fragment_shader_id;
@@ -54,8 +61,8 @@ short int shaders_compile_program(GLuint  program_id,
   /* create and compile vertex shader */
   vertex_shader_id = glCreateShader(GL_VERTEX_SHADER);
 
-  string_array[0] = vert_source_string;
-  length_array[0] = vert_source_length;
+  string_array[0] = S_vert_source_string;
+  length_array[0] = S_vert_source_length;
 
   glShaderSource(vertex_shader_id, 1, string_array, length_array);
   glCompileShader(vertex_shader_id);
@@ -78,8 +85,8 @@ short int shaders_compile_program(GLuint  program_id,
   /* create and compile fragment shader */
   fragment_shader_id = glCreateShader(GL_FRAGMENT_SHADER);
 
-  string_array[0] = frag_source_string;
-  length_array[0] = frag_source_length;
+  string_array[0] = S_frag_source_string;
+  length_array[0] = S_frag_source_length;
 
   glShaderSource(fragment_shader_id, 1, string_array, length_array);
   glCompileShader(fragment_shader_id);
@@ -138,23 +145,15 @@ short int shaders_compile_program(GLuint  program_id,
 /*******************************************************************************
 ** shaders_load_shaders()
 *******************************************************************************/
-short int shaders_load_shaders(char* filename)
+short int shaders_load_shaders()
 {
-  FILE*         fp;
-  int           i;
-  char          signature[8];
+  int m;
 
-  GLchar*       vert_source_string[SHADERS_NUM_PROGRAMS];
-  GLint         vert_source_length[SHADERS_NUM_PROGRAMS];
-
-  GLchar*       frag_source_string[SHADERS_NUM_PROGRAMS];
-  GLint         frag_source_length[SHADERS_NUM_PROGRAMS];
-
-  if (filename == NULL)
-    return 1;
+  FILE* fp;
+  char  signature[8];
 
   /* open file */
-  fp = fopen(filename, "rb");
+  fp = fopen(G_path_shaders_dat, "rb");
 
   /* if file did not open, return error */
   if (fp == NULL)
@@ -173,44 +172,46 @@ short int shaders_load_shaders(char* filename)
     return 1;
   }
 
-  /* initialize source variables */
-  for (i = 0; i < SHADERS_NUM_PROGRAMS; i++)
-  {
-    vert_source_string[i] = NULL;
-    vert_source_length[i] = 0;
-
-    frag_source_string[i] = NULL;
-    frag_source_length[i] = 0;
-  }
-
   /* read shader sources */
-  for (i = 0; i < SHADERS_NUM_PROGRAMS; i++)
+  for (m = 0; m < SHADERS_NUM_PROGRAMS; m++)
   {
     /* vertex shader */
-    if (fread(&vert_source_length[i], 4, 1, fp) == 0)
+    if (fread(&S_vert_source_length[m], 4, 1, fp) == 0)
     {
       fclose(fp);
       return 1;
     }
 
-    vert_source_string[i] = malloc(sizeof(GLchar) * (unsigned int) vert_source_length[i]);
+    S_vert_source_string[m] = malloc(sizeof(GLchar) * (unsigned int) S_vert_source_length[m]);
 
-    if (fread(vert_source_string[i], 1, vert_source_length[i], fp) < (unsigned int) vert_source_length[i])
+    if (S_vert_source_string[m] == NULL)
+    {
+      fclose(fp);
+      return 1;
+    }
+
+    if (fread(S_vert_source_string[m], 1, S_vert_source_length[m], fp) < (unsigned int) S_vert_source_length[m])
     {
       fclose(fp);
       return 1;
     }
 
     /* fragment shader */
-    if (fread(&frag_source_length[i], 4, 1, fp) == 0)
+    if (fread(&S_frag_source_length[m], 4, 1, fp) == 0)
     {
       fclose(fp);
       return 1;
     }
 
-    frag_source_string[i] = malloc(sizeof(GLchar) * (unsigned int) frag_source_length[i]);
+    S_frag_source_string[m] = malloc(sizeof(GLchar) * (unsigned int) S_frag_source_length[m]);
 
-    if (fread(frag_source_string[i], 1, frag_source_length[i], fp) < (unsigned int) frag_source_length[i])
+    if (S_frag_source_string[m] == NULL)
+    {
+      fclose(fp);
+      return 1;
+    }
+
+    if (fread(S_frag_source_string[m], 1, S_frag_source_length[m], fp) < (unsigned int) S_frag_source_length[m])
     {
       fclose(fp);
       return 1;
@@ -225,11 +226,11 @@ short int shaders_load_shaders(char* filename)
   /* draw tiles program */
   G_program_id_A = glCreateProgram();
 
-  if (shaders_compile_program( G_program_id_A, 
-                                vert_source_string[SHADERS_PROGRAM_A],
-                                vert_source_length[SHADERS_PROGRAM_A],
-                                frag_source_string[SHADERS_PROGRAM_A],
-                                frag_source_length[SHADERS_PROGRAM_A]))
+  if (shaders_compile_program(G_program_id_A, 
+                              S_vert_source_string[SHADERS_PROGRAM_A],
+                              S_vert_source_length[SHADERS_PROGRAM_A],
+                              S_frag_source_string[SHADERS_PROGRAM_A],
+                              S_frag_source_length[SHADERS_PROGRAM_A]))
   {
     fprintf(stdout, "Failed to compile OpenGL program (draw tiles).\n");
     glDeleteProgram(G_program_id_A);
@@ -239,11 +240,11 @@ short int shaders_load_shaders(char* filename)
   /* draw sprites program */
   G_program_id_B = glCreateProgram();
 
-  if (shaders_compile_program( G_program_id_B, 
-                                vert_source_string[SHADERS_PROGRAM_B],
-                                vert_source_length[SHADERS_PROGRAM_B],
-                                frag_source_string[SHADERS_PROGRAM_B],
-                                frag_source_length[SHADERS_PROGRAM_B]))
+  if (shaders_compile_program(G_program_id_B, 
+                              S_vert_source_string[SHADERS_PROGRAM_B],
+                              S_vert_source_length[SHADERS_PROGRAM_B],
+                              S_frag_source_string[SHADERS_PROGRAM_B],
+                              S_frag_source_length[SHADERS_PROGRAM_B]))
   {
     fprintf(stdout, "Failed to compile OpenGL program (draw sprites).\n");
     glDeleteProgram(G_program_id_A);
@@ -254,11 +255,11 @@ short int shaders_load_shaders(char* filename)
   /* convert to rgb program */
   G_program_id_C = glCreateProgram();
 
-  if (shaders_compile_program( G_program_id_C, 
-                                vert_source_string[SHADERS_PROGRAM_C],
-                                vert_source_length[SHADERS_PROGRAM_C],
-                                frag_source_string[SHADERS_PROGRAM_C],
-                                frag_source_length[SHADERS_PROGRAM_C]))
+  if (shaders_compile_program(G_program_id_C, 
+                              S_vert_source_string[SHADERS_PROGRAM_C],
+                              S_vert_source_length[SHADERS_PROGRAM_C],
+                              S_frag_source_string[SHADERS_PROGRAM_C],
+                              S_frag_source_length[SHADERS_PROGRAM_C]))
   {
     fprintf(stdout, "Failed to compile OpenGL program (convert to rgb).\n");
     glDeleteProgram(G_program_id_A);
@@ -270,11 +271,11 @@ short int shaders_load_shaders(char* filename)
   /* linear upscale program */
   G_program_id_D = glCreateProgram();
 
-  if (shaders_compile_program( G_program_id_D, 
-                                vert_source_string[SHADERS_PROGRAM_D],
-                                vert_source_length[SHADERS_PROGRAM_D],
-                                frag_source_string[SHADERS_PROGRAM_D],
-                                frag_source_length[SHADERS_PROGRAM_D]))
+  if (shaders_compile_program(G_program_id_D, 
+                              S_vert_source_string[SHADERS_PROGRAM_D],
+                              S_vert_source_length[SHADERS_PROGRAM_D],
+                              S_frag_source_string[SHADERS_PROGRAM_D],
+                              S_frag_source_length[SHADERS_PROGRAM_D]))
   {
     fprintf(stdout, "Failed to compile OpenGL program (linear upscale).\n");
     glDeleteProgram(G_program_id_A);
@@ -285,19 +286,22 @@ short int shaders_load_shaders(char* filename)
   }
 
   /* free shader source strings */
-  for (i = 0; i < SHADERS_NUM_PROGRAMS; i++)
+  for (m = 0; m < SHADERS_NUM_PROGRAMS; m++)
   {
-    if (vert_source_string[i] != NULL)
+    if (S_vert_source_string[m] != NULL)
     {
-      free(vert_source_string[i]);
-      vert_source_string[i] = NULL;
+      free(S_vert_source_string[m]);
+      S_vert_source_string[m] = NULL;
     }
 
-    if (frag_source_string[i] != NULL)
+    if (S_frag_source_string[m] != NULL)
     {
-      free(frag_source_string[i]);
-      frag_source_string[i] = NULL;
+      free(S_frag_source_string[m]);
+      S_frag_source_string[m] = NULL;
     }
+
+    S_vert_source_length[m] = 0;
+    S_frag_source_length[m] = 0;
   }
 
   return 0;
@@ -308,8 +312,20 @@ short int shaders_load_shaders(char* filename)
 *******************************************************************************/
 short int shaders_create_programs()
 {
+  int m;
+
+  /* initialize source texts */
+  for (m = 0; m < SHADERS_NUM_PROGRAMS; m++)
+  {
+    S_vert_source_string[m] = NULL;
+    S_vert_source_length[m] = 0;
+
+    S_frag_source_string[m] = NULL;
+    S_frag_source_length[m] = 0;
+  }
+
   /* compile glsl shaders */
-  if (shaders_load_shaders(G_path_shader_data))
+  if (shaders_load_shaders())
   {
     fprintf(stdout, "Failed to compile GLSL shaders.\n");
     return 1;
@@ -338,6 +354,27 @@ short int shaders_create_programs()
 *******************************************************************************/
 short int shaders_destroy_programs()
 {
+  int m;
+
+  /* free source texts */
+  for (m = 0; m < SHADERS_NUM_PROGRAMS; m++)
+  {
+    if (S_vert_source_string[m] != NULL)
+    {
+      free(S_vert_source_string[m]);
+      S_vert_source_string[m] = NULL;
+    }
+
+    if (S_frag_source_string[m] != NULL)
+    {
+      free(S_frag_source_string[m]);
+      S_frag_source_string[m] = NULL;
+    }
+
+    S_vert_source_length[m] = 0;
+    S_frag_source_length[m] = 0;
+  }
+
   /* delete opengl shader programs */
   glDeleteProgram(G_program_id_A);
   glDeleteProgram(G_program_id_B);

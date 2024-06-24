@@ -9,6 +9,7 @@
 #include <string.h>
 #include <math.h>
 
+#include "path.h"
 #include "texture.h"
 
 GLuint G_texture_id_rom_data;
@@ -60,9 +61,9 @@ short int texture_deinit()
 }
 
 /*******************************************************************************
-** texture_load_all_from_file()
+** texture_load_all()
 *******************************************************************************/
-short int texture_load_all_from_file(char* filename)
+short int texture_load_all()
 {
   FILE* fp;
 
@@ -77,14 +78,12 @@ short int texture_load_all_from_file(char* filename)
   unsigned char*  image_data;
   GLfloat*        texture_data;
 
-  if (filename == NULL)
-    return 1;
-
-  /* initialize variables */
+  /* initialize pointers */
+  image_data = NULL;
   texture_data = NULL;
 
   /* open file */
-  fp = fopen(filename, "rb");
+  fp = fopen(G_path_graphics_dat, "rb");
 
   /* if file did not open, return error */
   if (fp == NULL)
@@ -122,14 +121,26 @@ short int texture_load_all_from_file(char* filename)
   /* allocate image data */
   image_data = malloc(sizeof(unsigned char) * TEXTURE_SIZE * TEXTURE_SIZE);
 
-  /* allocate texture data */
-  texture_data = malloc(sizeof(GLfloat) * 2 * TEXTURE_SIZE * TEXTURE_SIZE);
+  if (image_data == NULL)
+    return 1;
 
   /* read image data from file */
   if (fread(image_data, 1, TEXTURE_SIZE * TEXTURE_SIZE, fp) == 0)
   {
     free(image_data);
     fclose(fp);
+    return 1;
+  }
+
+  /* close file */
+  fclose(fp);
+
+  /* allocate texture data */
+  texture_data = malloc(sizeof(GLfloat) * 2 * TEXTURE_SIZE * TEXTURE_SIZE);
+
+  if (texture_data == NULL)
+  {
+    free(image_data);
     return 1;
   }
 
@@ -176,22 +187,9 @@ short int texture_load_all_from_file(char* filename)
   glTexImage2D( GL_TEXTURE_2D, 0, GL_RG32F, TEXTURE_SIZE, TEXTURE_SIZE, 
                 0, GL_RG, GL_FLOAT, texture_data);
 
-  /* close file */
-  fclose(fp);
-
-  /* clear image data */
-  if (image_data != NULL)
-  {
-    free(image_data);
-    image_data = NULL;
-  }
-
-  /* clear texture data */
-  if (texture_data != NULL)
-  {
-    free(texture_data);
-    texture_data = NULL;
-  }
+  /* clear image & texture data */
+  free(image_data);
+  free(texture_data);
 
   return 0;
 }
