@@ -21,7 +21,7 @@ enum
 
 #define PEG_MAX_INDEX 4095
 
-#define PEG_NUM_OCTAVES      13
+#define PEG_NUM_OCTAVES      16
 #define PEG_RATES_PER_OCTAVE 12
 
 #define PEG_NUM_RATES (PEG_NUM_OCTAVES * PEG_RATES_PER_OCTAVE)
@@ -60,10 +60,10 @@ static unsigned int S_peg_attack_phase_increment_table[PEG_NUM_RATES];
 static unsigned int S_peg_decay_phase_increment_table[PEG_NUM_RATES];
 
 /* rate table */
-static short int  S_peg_rate_table[PATCH_PEG_TIME_NUM_VALUES];
+static short int  S_peg_rate_table[32];
 
 /* maximum table */
-static short int  S_peg_max_table[PATCH_PEG_LEVEL_NUM_VALUES];
+static short int  S_peg_max_table[96];
 
 /* peg bank */
 peg G_peg_bank[BANK_NUM_PEGS];
@@ -84,18 +84,18 @@ short int peg_reset_all()
     e = &G_peg_bank[k];
 
     /* initialize peg variables */
-    e->a_rate = S_peg_rate_table[PATCH_PEG_TIME_DEFAULT - PATCH_PEG_TIME_LOWER_BOUND];
-    e->d_rate = S_peg_rate_table[PATCH_PEG_TIME_DEFAULT - PATCH_PEG_TIME_LOWER_BOUND];
-    e->r_rate = S_peg_rate_table[PATCH_PEG_TIME_DEFAULT - PATCH_PEG_TIME_LOWER_BOUND];
+    e->a_rate = S_peg_rate_table[0];
+    e->d_rate = S_peg_rate_table[0];
+    e->r_rate = S_peg_rate_table[0];
 
     e->stage = PEG_STAGE_RELEASE;
-    e->rate = S_peg_rate_table[PATCH_PEG_TIME_DEFAULT - PATCH_PEG_TIME_LOWER_BOUND];
+    e->rate = S_peg_rate_table[0];
 
     e->increment = 0;
     e->phase = 0;
 
-    e->attack_max = S_peg_max_table[PATCH_PEG_LEVEL_DEFAULT - PATCH_PEG_LEVEL_LOWER_BOUND];
-    e->finale_max = S_peg_max_table[PATCH_PEG_LEVEL_DEFAULT - PATCH_PEG_LEVEL_LOWER_BOUND];
+    e->attack_max = S_peg_max_table[0];
+    e->finale_max = S_peg_max_table[0];
 
     e->index = 0;
 
@@ -134,50 +134,31 @@ short int peg_load_patch( int voice_index,
   /* obtain peg pointer */
   e = &G_peg_bank[voice_index];
 
-  /* attack rate */
-  if ((p->peg_attack >= PATCH_PEG_TIME_LOWER_BOUND) && 
-      (p->peg_attack <= PATCH_PEG_TIME_UPPER_BOUND))
-  {
-    e->a_rate = S_peg_rate_table[p->peg_attack - PATCH_PEG_TIME_LOWER_BOUND];
-  }
+  /* load patch parameters */
+  if (PATCH_PARAM_IS_VALID_LOOKUP_BY_NAME(PITCH_ENV_ATTACK))
+    e->a_rate = S_peg_rate_table[p->values[PATCH_PARAM_PITCH_ENV_ATTACK]];
   else
-    e->a_rate = S_peg_rate_table[PATCH_PEG_TIME_DEFAULT - PATCH_PEG_TIME_LOWER_BOUND];
+    e->a_rate = S_peg_rate_table[0];
 
-  /* decay rate */
-  if ((p->peg_decay >= PATCH_PEG_TIME_LOWER_BOUND) && 
-      (p->peg_decay <= PATCH_PEG_TIME_UPPER_BOUND))
-  {
-    e->d_rate = S_peg_rate_table[p->peg_decay - PATCH_PEG_TIME_LOWER_BOUND];
-  }
+  if (PATCH_PARAM_IS_VALID_LOOKUP_BY_NAME(PITCH_ENV_DECAY))
+    e->d_rate = S_peg_rate_table[p->values[PATCH_PARAM_PITCH_ENV_DECAY]];
   else
-    e->d_rate = S_peg_rate_table[PATCH_PEG_TIME_DEFAULT - PATCH_PEG_TIME_LOWER_BOUND];
+    e->d_rate = S_peg_rate_table[0];
 
-  /* release rate */
-  if ((p->peg_release >= PATCH_PEG_TIME_LOWER_BOUND) && 
-      (p->peg_release <= PATCH_PEG_TIME_UPPER_BOUND))
-  {
-    e->r_rate = S_peg_rate_table[p->peg_release - PATCH_PEG_TIME_LOWER_BOUND];
-  }
+  if (PATCH_PARAM_IS_VALID_LOOKUP_BY_NAME(PITCH_ENV_RELEASE))
+    e->r_rate = S_peg_rate_table[p->values[PATCH_PARAM_PITCH_ENV_RELEASE]];
   else
-    e->r_rate = S_peg_rate_table[PATCH_PEG_TIME_DEFAULT - PATCH_PEG_TIME_LOWER_BOUND];
+    e->r_rate = S_peg_rate_table[0];
 
-  /* maximum */
-  if ((p->peg_maximum >= PATCH_PEG_LEVEL_LOWER_BOUND) && 
-      (p->peg_maximum <= PATCH_PEG_LEVEL_UPPER_BOUND))
-  {
-    e->attack_max = S_peg_max_table[p->peg_maximum - PATCH_PEG_LEVEL_LOWER_BOUND];
-  }
+  if (PATCH_PARAM_IS_VALID_LOOKUP_BY_NAME(PITCH_ENV_MAX))
+    e->attack_max = S_peg_max_table[p->values[PATCH_PARAM_PITCH_ENV_MAX]];
   else
-    e->attack_max = S_peg_max_table[PATCH_PEG_LEVEL_DEFAULT - PATCH_PEG_LEVEL_LOWER_BOUND];
+    e->attack_max = S_peg_max_table[0];
 
-  /* finale */
-  if ((p->peg_finale >= PATCH_PEG_LEVEL_LOWER_BOUND) && 
-      (p->peg_finale <= PATCH_PEG_LEVEL_UPPER_BOUND))
-  {
-    e->finale_max = S_peg_max_table[p->peg_finale - PATCH_PEG_LEVEL_LOWER_BOUND];
-  }
+  if (PATCH_PARAM_IS_VALID_LOOKUP_BY_NAME(PITCH_ENV_FINALE))
+    e->finale_max = S_peg_max_table[p->values[PATCH_PARAM_PITCH_ENV_FINALE]];
   else
-    e->finale_max = S_peg_max_table[PATCH_PEG_LEVEL_DEFAULT - PATCH_PEG_LEVEL_LOWER_BOUND];
+    e->finale_max = S_peg_max_table[0];
 
   return 0;
 }
@@ -320,55 +301,27 @@ short int peg_generate_tables()
   int m;
   int n;
 
-  int quotient;
-  int remainder;
-
   float base;
   float freq;
 
-  int center;
-  int bound;
-
   /* rate table */
-  for ( m = PATCH_PEG_TIME_LOWER_BOUND; 
-        m <= PATCH_PEG_TIME_UPPER_BOUND; 
-        m++)
+  for (m = 0; m < 32; m++)
   {
-    /* there are 8 times for each octave.     */
-    /* the octaves are numbered from 0 to 13. */
+    S_peg_rate_table[m] = 12 * ((31 - m) / 2);
 
-    /* we set up the calculation here so that the */
-    /* times 1-8 map to the octave numbered 13.   */
-    quotient =  ((PATCH_PEG_TIME_UPPER_BOUND - m + 4) / 8) + 1;
-    remainder = (PATCH_PEG_TIME_UPPER_BOUND - m + 4) % 8;
-
-    S_peg_rate_table[m - PATCH_PEG_TIME_LOWER_BOUND] = 12 * quotient;
-
-    if (remainder == 0)
-      S_peg_rate_table[m - PATCH_PEG_TIME_LOWER_BOUND] += 0;
-    else if (remainder == 1)
-      S_peg_rate_table[m - PATCH_PEG_TIME_LOWER_BOUND] += 2;
-    else if (remainder == 2)
-      S_peg_rate_table[m - PATCH_PEG_TIME_LOWER_BOUND] += 4;
-    else if (remainder == 3)
-      S_peg_rate_table[m - PATCH_PEG_TIME_LOWER_BOUND] += 6;
-    else if (remainder == 4)
-      S_peg_rate_table[m - PATCH_PEG_TIME_LOWER_BOUND] += 7;
-    else if (remainder == 5)
-      S_peg_rate_table[m - PATCH_PEG_TIME_LOWER_BOUND] += 8;
-    else if (remainder == 6)
-      S_peg_rate_table[m - PATCH_PEG_TIME_LOWER_BOUND] += 10;
+    if ((31 - m) % 2 == 0)
+      S_peg_rate_table[m] += 0;
     else
-      S_peg_rate_table[m - PATCH_PEG_TIME_LOWER_BOUND] += 11;
+      S_peg_rate_table[m] += 7;
   }
 
   /* phase increment tables  */
 
   /* for the decay stage, the fastest rate should have a fall time  */
-  /* of ~8 ms. thus with 13 octaves, the lowest rate is ~64 s.      */
-  /* so, the base frequency is (1 / 64) * 4095, where 4095 is the   */
+  /* of ~8 ms. thus with 16 octaves, the lowest rate is ~512 s.     */
+  /* so, the base frequency is (1 / 512) * 4095, where 4095 is the  */
   /* number of updates per fall time (with a 12 bit index).         */
-  base = PEG_MAX_INDEX / 64.0f;
+  base = PEG_MAX_INDEX / 512.0f;
 
   for (n = 0; n < PEG_NUM_OCTAVES; n++)
   {
@@ -382,8 +335,8 @@ short int peg_generate_tables()
   }
 
   /* for the attack stage, the fastest rate should have a rise time */
-  /* of ~4 ms. thus with 13 octaves, the lowest rate is ~32 s.      */
-  base = PEG_MAX_INDEX / 32.0f;
+  /* of ~4 ms. thus with 16 octaves, the lowest rate is ~256 s.     */
+  base = PEG_MAX_INDEX / 256.0f;
 
   for (n = 0; n < PEG_NUM_OCTAVES; n++)
   {
@@ -397,17 +350,13 @@ short int peg_generate_tables()
   }
 
   /* max table */
-  center = (PATCH_PEG_LEVEL_UPPER_BOUND + PATCH_PEG_LEVEL_LOWER_BOUND) / 2;
-  bound = (PATCH_PEG_LEVEL_UPPER_BOUND - PATCH_PEG_LEVEL_LOWER_BOUND) / 2;
+  S_peg_max_table[0] = -(4 * 12 * TUNING_NUM_SEMITONE_STEPS);
+  S_peg_max_table[48] = 0;
 
-  S_peg_max_table[center - PATCH_PEG_LEVEL_LOWER_BOUND] = 0;
-
-  for (m = 1; m <= bound; m++)
+  for (m = 1; m < 48; m++)
   {
-    S_peg_max_table[center + m - PATCH_PEG_LEVEL_LOWER_BOUND] = m * ((4 * 12 * TUNING_NUM_SEMITONE_STEPS) / bound);
-
-    S_peg_max_table[center - m - PATCH_PEG_LEVEL_LOWER_BOUND] = 
-      -S_peg_max_table[center + m - PATCH_PEG_LEVEL_LOWER_BOUND];
+    S_peg_max_table[48 + m] = (m * (4 * 12 * TUNING_NUM_SEMITONE_STEPS)) / 48;
+    S_peg_max_table[48 - m] = -S_peg_max_table[48 + m];
   }
 
   return 0;

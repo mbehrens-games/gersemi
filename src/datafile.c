@@ -10,88 +10,87 @@
 #include "cart.h"
 #include "datafile.h"
 
-/* 52 bytes */
+/* 50 bytes */
 enum
 {
-  /* osc frequency mode, detune, waveform (3 bytes) */
-  PATCH_DATA_BYTE_OSC_1_FREQ_MODE_DETUNE_WAVEFORM = 0,  /* frequency mode (1 bit), detune (3 bits), waveform (4 bits) */
-  PATCH_DATA_BYTE_OSC_2_FREQ_MODE_DETUNE_WAVEFORM,      /* frequency mode (1 bit), detune (3 bits), waveform (4 bits) */
-  PATCH_DATA_BYTE_OSC_3_FREQ_MODE_DETUNE_WAVEFORM,      /* frequency mode (1 bit), detune (3 bits), waveform (4 bits) */
-  /* osc multiple, divisor (3 bytes) */
-  PATCH_DATA_BYTE_OSC_1_MULTIPLE_DIVISOR,               /* multiple or octave (4 bits), divisor or note (4 bits) */
-  PATCH_DATA_BYTE_OSC_2_MULTIPLE_DIVISOR,               /* multiple or octave (4 bits), divisor or note (4 bits) */
-  PATCH_DATA_BYTE_OSC_3_MULTIPLE_DIVISOR,               /* multiple or octave (4 bits), divisor or note (4 bits) */
-  /* osc sync, phi (1 byte) */
-  PATCH_DATA_BYTE_OSC_SYNC_PHI,                         /* osc sync (1 bit), phi (2 bits each, 6 bits total) */
-  /* algorithm, filters, osc / env routing (3 bytes) */
-  PATCH_DATA_BYTE_ALGORITHM_OSC_1_ENV_1_ROUTING,        /* algorithm (2 bits), osc routing (3 bits), env routing (3 bits) */
-  PATCH_DATA_BYTE_HIGHPASS_CUTOFF_OSC_2_ENV_2_ROUTING,  /* highpass cutoff (2 bits), osc routing (3 bits), env routing (3 bits) */
-  PATCH_DATA_BYTE_LOWPASS_CUTOFF_OSC_3_ENV_3_ROUTING,   /* lowpass cutoff (2 bits), osc routing (3 bits), env routing (3 bits) */
-  /* envelope 1 (7 bytes) */
-  PATCH_DATA_BYTE_ENV_1_ATTACK,                         /* attack time (7 bits) */
-  PATCH_DATA_BYTE_ENV_1_DECAY,                          /* decay time (7 bits) */
-  PATCH_DATA_BYTE_ENV_1_SUSTAIN,                        /* sustain time (7 bits) */
-  PATCH_DATA_BYTE_ENV_1_RELEASE,                        /* release time (7 bits) */
-  PATCH_DATA_BYTE_ENV_1_AMPLITUDE,                      /* max level (7 bits) */
-  PATCH_DATA_BYTE_ENV_1_HOLD_LEVEL,                     /* hold level (7 bits) */
-  PATCH_DATA_BYTE_ENV_1_HOLD_MODE_KEYSCALING,           /* hold mode (2 bits), rate keyscaling (3 bits), level keyscaling (3 bits) */
-  /* envelope 2 (7 bytes) */
-  PATCH_DATA_BYTE_ENV_2_ATTACK,                         /* attack time (7 bits) */
-  PATCH_DATA_BYTE_ENV_2_DECAY,                          /* decay time (7 bits) */
-  PATCH_DATA_BYTE_ENV_2_SUSTAIN,                        /* sustain time (7 bits) */
-  PATCH_DATA_BYTE_ENV_2_RELEASE,                        /* release time (7 bits) */
-  PATCH_DATA_BYTE_ENV_2_AMPLITUDE,                      /* max level (7 bits) */
-  PATCH_DATA_BYTE_ENV_2_HOLD_LEVEL,                     /* hold level (7 bits) */
-  PATCH_DATA_BYTE_ENV_2_HOLD_MODE_KEYSCALING,           /* hold mode (2 bits), rate keyscaling (3 bits), level keyscaling (3 bits) */
-  /* envelope 3 (7 bytes) */
-  PATCH_DATA_BYTE_ENV_3_ATTACK,                         /* attack time (7 bits) */
-  PATCH_DATA_BYTE_ENV_3_DECAY,                          /* decay time (7 bits) */
-  PATCH_DATA_BYTE_ENV_3_SUSTAIN,                        /* sustain time (7 bits) */
-  PATCH_DATA_BYTE_ENV_3_RELEASE,                        /* release time (7 bits) */
-  PATCH_DATA_BYTE_ENV_3_AMPLITUDE,                      /* max level (7 bits) */
-  PATCH_DATA_BYTE_ENV_3_HOLD_LEVEL,                     /* hold level (7 bits) */
-  PATCH_DATA_BYTE_ENV_3_HOLD_MODE_KEYSCALING,           /* hold mode (2 bits), rate keyscaling (3 bits), level keyscaling (3 bits) */
-  /* vibrato lfo (3 bytes) */
-  PATCH_DATA_BYTE_VIBRATO_POLARITY_WAVEFORM_SPEED,      /* polarity (1 bit), waveform (2 bits), speed (4 bits) */
-  PATCH_DATA_BYTE_VIBRATO_SYNC_DELAY,                   /* sync (1 bit), delay (6 bits) */
-  PATCH_DATA_BYTE_VIBRATO_DEPTH,                        /* depth (8 bits) */
-  /* tremolo lfo (3 bytes) */
-  PATCH_DATA_BYTE_TREMOLO_WAVEFORM_SPEED,               /* waveform (2 bits), speed (4 bits) */
-  PATCH_DATA_BYTE_TREMOLO_SYNC_DELAY,                   /* sync (1 bit), delay (6 bits) */
-  PATCH_DATA_BYTE_TREMOLO_DEPTH,                        /* depth (8 bits) */
-  /* chorus (3 bytes) */
-  PATCH_DATA_BYTE_CHORUS_WAVEFORM_SPEED,                /* waveform (2 bits), speed (4 bits) */
-  PATCH_DATA_BYTE_CHORUS_SYNC_DELAY,                    /* sync (1 bit), delay (6 bits) */
-  PATCH_DATA_BYTE_CHORUS_DEPTH,                         /* depth (8 bits) */
-  /* sensitivities, midi controller routing (4 bytes) */
-  PATCH_DATA_BYTE_BOOST_VELOCITY_SENS,                  /* sensitivities (4 bits each, 8 bits total) */
-  PATCH_DATA_BYTE_VIBRATO_TREMOLO_SENS,                 /* sensitivities (4 bits each, 8 bits total) */
-  PATCH_DATA_BYTE_CHORUS_SENS_MOD_WHEEL_ROUTING,        /* chorus sensitivity (4 bits), mod wheel routing (4 bits) */
-  PATCH_DATA_BYTE_AFTERTOUCH_EXP_PEDAL_ROUTING,         /* aftertouch routing (4 bits), exp pedal routing (4 bits) */
+  /* osc waveform, feedback, detune (4 bytes) */
+  PATCH_DATA_BYTE_OSC_1_WAVEFORM_FEEDBACK_DETUNE = 0, /* waveform (2 bits), feedback (3 bits), detune (3 bits) */
+  PATCH_DATA_BYTE_OSC_2_WAVEFORM_FEEDBACK_DETUNE,     /* waveform (2 bits), feedback (3 bits), detune (3 bits) */
+  PATCH_DATA_BYTE_OSC_3_WAVEFORM_FEEDBACK_DETUNE,     /* waveform (2 bits), feedback (3 bits), detune (3 bits) */
+  PATCH_DATA_BYTE_OSC_4_WAVEFORM_FEEDBACK_DETUNE,     /* waveform (2 bits), feedback (3 bits), detune (3 bits) */
+  /* osc frequency mode, multiple, divisor (4 bytes) */
+  PATCH_DATA_BYTE_OSC_1_FREQ_MODE_MULTIPLE_DIVISOR,   /* frequency mode (1 bit), multiple/divisor or note/octave (7 bits) */
+  PATCH_DATA_BYTE_OSC_2_FREQ_MODE_MULTIPLE_DIVISOR,   /* frequency mode (1 bit), multiple/divisor or note/octave (7 bits) */
+  PATCH_DATA_BYTE_OSC_3_FREQ_MODE_MULTIPLE_DIVISOR,   /* frequency mode (1 bit), multiple/divisor or note/octave (7 bits) */
+  PATCH_DATA_BYTE_OSC_4_FREQ_MODE_MULTIPLE_DIVISOR,   /* frequency mode (1 bit), multiple/divisor or note/octave (7 bits) */
+  /* osc phase shift (1 byte) */
+  PATCH_DATA_BYTE_OSC_PHI,                            /* phi (8 bits total, 2 bits per envelope) */
+  /* legacy keyscaling, noise enable, algorithm (1 byte) */
+  PATCH_DATA_BYTE_OSC_SYNC_LEGACY_NOISE_ALGORITHM,    /* osc sync (1 bit), legacy keyscaling (1 bit), osc 4 noise (1 bit), algorithm (3 bits) */
+  /* envelope 1 (5 bytes) */
+  PATCH_DATA_BYTE_ENV_1_ATTACK,                       /* attack time (5 bits) */
+  PATCH_DATA_BYTE_ENV_1_DECAY,                        /* decay time (5 bits) */
+  PATCH_DATA_BYTE_ENV_1_HOLD_MODE_SUSTAIN,            /* sustain time (5 bits), hold mode (2 bits) */
+  PATCH_DATA_BYTE_ENV_1_HOLD_LEVEL_RELEASE,           /* release time (4 bits), hold level (4 bits) */
+  PATCH_DATA_BYTE_ENV_1_MAX_LEVEL,                    /* max level (7 bits) */
+  /* envelope 2 (5 bytes) */
+  PATCH_DATA_BYTE_ENV_2_ATTACK,                       /* attack time (5 bits) */
+  PATCH_DATA_BYTE_ENV_2_DECAY,                        /* decay time (5 bits) */
+  PATCH_DATA_BYTE_ENV_2_HOLD_MODE_SUSTAIN,            /* sustain time (5 bits), hold mode (2 bits) */
+  PATCH_DATA_BYTE_ENV_2_HOLD_LEVEL_RELEASE,           /* release time (4 bits), hold level (4 bits) */
+  PATCH_DATA_BYTE_ENV_2_MAX_LEVEL,                    /* max level (7 bits) */
+  /* envelope 3 (5 bytes) */
+  PATCH_DATA_BYTE_ENV_3_ATTACK,                       /* attack time (5 bits) */
+  PATCH_DATA_BYTE_ENV_3_DECAY,                        /* decay time (5 bits) */
+  PATCH_DATA_BYTE_ENV_3_HOLD_MODE_SUSTAIN,            /* sustain time (5 bits), hold mode (2 bits) */
+  PATCH_DATA_BYTE_ENV_3_HOLD_LEVEL_RELEASE,           /* release time (4 bits), hold level (4 bits) */
+  PATCH_DATA_BYTE_ENV_3_MAX_LEVEL,                    /* max level (7 bits) */
+  /* envelope 4 (5 bytes) */
+  PATCH_DATA_BYTE_ENV_4_ATTACK,                       /* attack time (5 bits) */
+  PATCH_DATA_BYTE_ENV_4_DECAY,                        /* decay time (5 bits) */
+  PATCH_DATA_BYTE_ENV_4_HOLD_MODE_SUSTAIN,            /* sustain time (5 bits), hold mode (2 bits) */
+  PATCH_DATA_BYTE_ENV_4_HOLD_LEVEL_RELEASE,           /* release time (4 bits), hold level (4 bits) */
+  PATCH_DATA_BYTE_ENV_4_MAX_LEVEL,                    /* max level (7 bits) */
+  /* keyscaling (2 bytes) */
+  PATCH_DATA_BYTE_RATE_KEYSCALING,                    /* rate keyscaling (8 bits total, 2 bits per envelope) */
+  PATCH_DATA_BYTE_LEVEL_KEYSCALING,                   /* level keyscaling (8 bits total, 2 bits per envelope) */
+  /* vibrato, tremolo (5 bytes) */
+  PATCH_DATA_BYTE_VIBRATO_TREMOLO_SPEED,              /* vibrato speed (4 bits), tremolo speed (4 bits) */
+  PATCH_DATA_BYTE_VIBRATO_WAVEFORM_DELAY,             /* waveform (2 bits), delay (6 bits) */
+  PATCH_DATA_BYTE_VIBRATO_SYNC_DEPTH,                 /* sync (1 bit), depth (7 bits) */
+  PATCH_DATA_BYTE_TREMOLO_WAVEFORM_DELAY,             /* waveform (2 bits), delay (6 bits) */
+  PATCH_DATA_BYTE_TREMOLO_SYNC_DEPTH,                 /* sync (1 bit), depth (7 bits) */
+  /* sensitivities, filters, midi controller routing (3 bytes) */
+  PATCH_DATA_BYTE_TREMOLO_VIBRATO_SENS_MOD_WHEEL,     /* tremolo sens (2 bits), vibrato sens (3 bits), mod wheel routing (3 bits) */
+  PATCH_DATA_BYTE_HIGHPASS_BOOST_SENS_AFTERTOUCH,     /* highpass cutoff (2 bits), boost sens (3 bits), aftertouch routing (3 bits) */
+  PATCH_DATA_BYTE_LOWPASS_VELOCITY_SENS_EXP_PEDAL,    /* lowpass cutoff (2 bits), velocity sens (3 bits), exp pedal routing (3 bits) */
+  /* lfo, boost, velocity routing (2 bytes) */
+  PATCH_DATA_BYTE_VIBRATO_TREMOLO_ROUTING,            /* vibrato routing (4 bits), velocity routing (4 bits) */
+  PATCH_DATA_BYTE_BOOST_VELOCITY_ROUTING,             /* tremolo routing (4 bits), boost routing (4 bits) */
   /* pitch envelope (5 bytes) */
-  PATCH_DATA_BYTE_PITCH_ENV_ATTACK,                     /* attack time (7 bits) */
-  PATCH_DATA_BYTE_PITCH_ENV_DECAY,                      /* decay time (7 bits) */
-  PATCH_DATA_BYTE_PITCH_ENV_RELEASE,                    /* release time (7 bits) */
-  PATCH_DATA_BYTE_PITCH_ENV_MAXIMUM,                    /* max level (7 bits) */
-  PATCH_DATA_BYTE_PITCH_ENV_FINALE,                     /* finale level (7 bits) */
+  PATCH_DATA_BYTE_PITCH_ENV_ATTACK,                   /* attack time (5 bits) */
+  PATCH_DATA_BYTE_PITCH_ENV_DECAY,                    /* decay time (5 bits) */
+  PATCH_DATA_BYTE_PITCH_ENV_RELEASE,                  /* release time (4 bits) */
+  PATCH_DATA_BYTE_PITCH_ENV_MAX,                      /* max level (7 bits) */
+  PATCH_DATA_BYTE_PITCH_ENV_FINALE,                   /* finale level (7 bits) */
   /* pitch wheel, arpeggio, portamento (3 bytes) */
-  PATCH_DATA_BYTE_PITCH_WHEEL,                          /* pitch wheel mode (1 bit), range (5 bits) */
-  PATCH_DATA_BYTE_ARPEGGIO,                             /* arpeggio pattern (2 bits), octaves (2 bits), speed (4 bits) */
-  PATCH_DATA_BYTE_PORTAMENTO,                           /* arpeggio mode (1 bit), portamento mode (1 bit), follow/legato (2 bits), speed (4 bits) */
+  PATCH_DATA_BYTE_PITCH_WHEEL,                        /* pitch wheel mode (1 bit), range (4 bits) */
+  PATCH_DATA_BYTE_ARPEGGIO,                           /* arpeggio pattern (2 bits), octaves (2 bits), speed (4 bits) */
+  PATCH_DATA_BYTE_PORTAMENTO,                         /* arpeggio mode (1 bit), portamento mode (1 bit), follow/legato (2 bits), speed (4 bits) */
   PATCH_DATA_NUM_BYTES
 };
 
-/* 10 bytes */
+/* 12 bytes */
 #define CART_NAME_NUM_BYTES   (CART_NAME_SIZE - 1)
 
-/* 10 bytes */
+/* 12 bytes */
 #define PATCH_NAME_NUM_BYTES  (PATCH_NAME_SIZE - 1)
 
-/* should be 10 + 52 = 62 bytes */
+/* should be 12 + 50 = 62 bytes */
 #define DATAFILE_BYTES_PER_PATCH  ( PATCH_NAME_NUM_BYTES +                     \
                                     PATCH_DATA_NUM_BYTES)
 
-/* should be 10 + (16 * 62) = 1002 bytes */
+/* should be 12 + (16 * 62) = 1004 bytes */
 #define DATAFILE_BYTES_PER_CART   ( CART_NAME_NUM_BYTES +                      \
                                     (DATAFILE_BYTES_PER_PATCH * BANK_PATCHES_PER_CART))
 
@@ -114,9 +113,8 @@ short int datafile_cart_load(int cart_index, char* filename)
   int m;
 
   FILE* fp;
-  char  signature[4];
-  char  type[4];
 
+  char signature[17];
   char cart_data[DATAFILE_BYTES_PER_CART];
 
   char current_byte;
@@ -132,6 +130,10 @@ short int datafile_cart_load(int cart_index, char* filename)
   if (filename == NULL)
     return 1;
 
+  /* reset signature */
+  for (m = 0; m < 17; m++)
+    signature[m] = '\0';
+
   /* open cart file */
   fp = fopen(filename, "rb");
 
@@ -140,32 +142,16 @@ short int datafile_cart_load(int cart_index, char* filename)
     return 0;
 
   /* read signature */
-  if (fread(signature, 1, 4, fp) < 4)
+  if (fread(signature, 1, 16, fp) < 16)
   {
     fclose(fp);
     return 1;
   }
 
-  if ((signature[0] != 'G') || 
-      (signature[1] != 'E') || 
-      (signature[2] != 'R') || 
-      (signature[3] != 'S'))
-  {
-    fclose(fp);
-    return 1;
-  }
-
-  /* read type */
-  if (fread(type, 1, 4, fp) < 4)
-  {
-    fclose(fp);
-    return 1;
-  }
-
-  if ((type[0] != 'C') || 
-      (type[1] != 'A') || 
-      (type[2] != 'R') || 
-      (type[3] != 'T'))
+  if ((strncmp(&signature[0],  "NSKM", 4)) || 
+      (strncmp(&signature[4],  "GERS", 4)) || 
+      (strncmp(&signature[8],  "CART", 4)) || 
+      (strncmp(&signature[12], "v1.0", 4)))
   {
     fclose(fp);
     return 1;
@@ -201,291 +187,292 @@ short int datafile_cart_load(int cart_index, char* filename)
 
     /* load patch data */
 
-    /* osc frequency mode, detune, waveform */
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, OSC_1_FREQ_MODE_DETUNE_WAVEFORM)];
+    /* osc waveform, feedback, detune */
+    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, OSC_1_WAVEFORM_FEEDBACK_DETUNE)];
 
-    p->osc_freq_mode[0] = PATCH_OSC_FREQ_MODE_LOWER_BOUND + ((current_byte >> 7) & 0x01);
-    p->osc_detune[0] = PATCH_OSC_DETUNE_LOWER_BOUND + ((current_byte >> 4) & 0x07);
-    p->osc_waveform[0] = PATCH_OSC_WAVEFORM_LOWER_BOUND + (current_byte & 0x0F);
+    p->values[PATCH_PARAM_OSC_1_WAVEFORM] = (current_byte >> 6) & 0x03;
+    p->values[PATCH_PARAM_OSC_1_FEEDBACK] = (current_byte >> 3) & 0x07;
+    p->values[PATCH_PARAM_OSC_1_DETUNE] = current_byte & 0x07;
 
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, OSC_2_FREQ_MODE_DETUNE_WAVEFORM)];
+    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, OSC_2_WAVEFORM_FEEDBACK_DETUNE)];
 
-    p->osc_freq_mode[1] = PATCH_OSC_FREQ_MODE_LOWER_BOUND + ((current_byte >> 7) & 0x01);
-    p->osc_detune[1] = PATCH_OSC_DETUNE_LOWER_BOUND + ((current_byte >> 4) & 0x07);
-    p->osc_waveform[1] = PATCH_OSC_WAVEFORM_LOWER_BOUND + (current_byte & 0x0F);
+    p->values[PATCH_PARAM_OSC_2_WAVEFORM] = (current_byte >> 6) & 0x03;
+    p->values[PATCH_PARAM_OSC_2_FEEDBACK] = (current_byte >> 3) & 0x07;
+    p->values[PATCH_PARAM_OSC_2_DETUNE] = current_byte & 0x07;
 
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, OSC_3_FREQ_MODE_DETUNE_WAVEFORM)];
+    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, OSC_3_WAVEFORM_FEEDBACK_DETUNE)];
 
-    p->osc_freq_mode[2] = PATCH_OSC_FREQ_MODE_LOWER_BOUND + ((current_byte >> 7) & 0x01);
-    p->osc_detune[2] = PATCH_OSC_DETUNE_LOWER_BOUND + ((current_byte >> 4) & 0x07);
-    p->osc_waveform[2] = PATCH_OSC_WAVEFORM_LOWER_BOUND + (current_byte & 0x0F);
+    p->values[PATCH_PARAM_OSC_3_WAVEFORM] = (current_byte >> 6) & 0x03;
+    p->values[PATCH_PARAM_OSC_3_FEEDBACK] = (current_byte >> 3) & 0x07;
+    p->values[PATCH_PARAM_OSC_3_DETUNE] = current_byte & 0x07;
 
-    /* osc multiple, divisor */
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, OSC_1_MULTIPLE_DIVISOR)];
+    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, OSC_4_WAVEFORM_FEEDBACK_DETUNE)];
 
-    if (p->osc_freq_mode[0] == PATCH_OSC_FREQ_MODE_FIXED)
-    {
-      p->osc_octave[0] = PATCH_OSC_OCTAVE_LOWER_BOUND + ((current_byte >> 4) & 0x0F);
-      p->osc_note[0] = PATCH_OSC_NOTE_LOWER_BOUND + (current_byte & 0x0F);
-    }
-    else
-    {
-      p->osc_multiple[0] = PATCH_OSC_MULTIPLE_LOWER_BOUND + ((current_byte >> 4) & 0x0F);
-      p->osc_divisor[0] = PATCH_OSC_DIVISOR_LOWER_BOUND + (current_byte & 0x0F);
-    }
+    p->values[PATCH_PARAM_OSC_4_WAVEFORM] = (current_byte >> 6) & 0x03;
+    p->values[PATCH_PARAM_OSC_4_FEEDBACK] = (current_byte >> 3) & 0x07;
+    p->values[PATCH_PARAM_OSC_4_DETUNE] = current_byte & 0x07;
 
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, OSC_2_MULTIPLE_DIVISOR)];
+    /* osc frequency mode, multiple, divisor */
+    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, OSC_1_FREQ_MODE_MULTIPLE_DIVISOR)];
 
-    if (p->osc_freq_mode[1] == PATCH_OSC_FREQ_MODE_FIXED)
-    {
-      p->osc_octave[1] = PATCH_OSC_OCTAVE_LOWER_BOUND + ((current_byte >> 4) & 0x0F);
-      p->osc_note[1] = PATCH_OSC_NOTE_LOWER_BOUND + (current_byte & 0x0F);
-    }
-    else
-    {
-      p->osc_multiple[1] = PATCH_OSC_MULTIPLE_LOWER_BOUND + ((current_byte >> 4) & 0x0F);
-      p->osc_divisor[1] = PATCH_OSC_DIVISOR_LOWER_BOUND + (current_byte & 0x0F);
-    }
+    p->values[PATCH_PARAM_OSC_1_FREQ_MODE] = (current_byte >> 7) & 0x01;
+    p->values[PATCH_PARAM_OSC_1_MULTIPLE] = (current_byte >> 3) & 0x0F;
+    p->values[PATCH_PARAM_OSC_1_DIVISOR] = current_byte & 0x07;
 
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, OSC_3_MULTIPLE_DIVISOR)];
+    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, OSC_2_FREQ_MODE_MULTIPLE_DIVISOR)];
 
-    if (p->osc_freq_mode[2] == PATCH_OSC_FREQ_MODE_FIXED)
-    {
-      p->osc_octave[2] = PATCH_OSC_OCTAVE_LOWER_BOUND + ((current_byte >> 4) & 0x0F);
-      p->osc_note[2] = PATCH_OSC_NOTE_LOWER_BOUND + (current_byte & 0x0F);
-    }
-    else
-    {
-      p->osc_multiple[2] = PATCH_OSC_MULTIPLE_LOWER_BOUND + ((current_byte >> 4) & 0x0F);
-      p->osc_divisor[2] = PATCH_OSC_DIVISOR_LOWER_BOUND + (current_byte & 0x0F);
-    }
+    p->values[PATCH_PARAM_OSC_2_FREQ_MODE] = (current_byte >> 7) & 0x01;
+    p->values[PATCH_PARAM_OSC_2_MULTIPLE] = (current_byte >> 3) & 0x0F;
+    p->values[PATCH_PARAM_OSC_2_DIVISOR] = current_byte & 0x07;
 
-    /* osc sync, phi */
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, OSC_SYNC_PHI)];
+    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, OSC_3_FREQ_MODE_MULTIPLE_DIVISOR)];
 
-    p->osc_sync = PATCH_SYNC_LOWER_BOUND + ((current_byte >> 6) & 0x01);
-    p->osc_phi[0] = PATCH_OSC_PHI_LOWER_BOUND + ((current_byte >> 4) & 0x03);
-    p->osc_phi[1] = PATCH_OSC_PHI_LOWER_BOUND + ((current_byte >> 2) & 0x03);
-    p->osc_phi[2] = PATCH_OSC_PHI_LOWER_BOUND + (current_byte & 0x03);
+    p->values[PATCH_PARAM_OSC_3_FREQ_MODE] = (current_byte >> 7) & 0x01;
+    p->values[PATCH_PARAM_OSC_3_MULTIPLE] = (current_byte >> 3) & 0x0F;
+    p->values[PATCH_PARAM_OSC_3_DIVISOR] = current_byte & 0x07;
 
-    /* algorithm, filters, osc / env routing */
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ALGORITHM_OSC_1_ENV_1_ROUTING)];
+    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, OSC_4_FREQ_MODE_MULTIPLE_DIVISOR)];
 
-    p->algorithm = PATCH_ALGORITHM_LOWER_BOUND + ((current_byte >> 6) & 0x03);
-    p->osc_routing[0] = PATCH_OSC_ROUTING_MASK & ((current_byte >> 3) & 0x07);
-    p->env_routing[0] = PATCH_ENV_ROUTING_MASK & (current_byte & 0x07);
+    p->values[PATCH_PARAM_OSC_4_FREQ_MODE] = (current_byte >> 7) & 0x01;
+    p->values[PATCH_PARAM_OSC_4_MULTIPLE] = (current_byte >> 3) & 0x0F;
+    p->values[PATCH_PARAM_OSC_4_DIVISOR] = current_byte & 0x07;
 
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, HIGHPASS_CUTOFF_OSC_2_ENV_2_ROUTING)];
+    /* osc phase shift */
+    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, OSC_PHI)];
 
-    p->highpass_cutoff = PATCH_HIGHPASS_CUTOFF_LOWER_BOUND + ((current_byte >> 6) & 0x03);
-    p->osc_routing[1] = PATCH_OSC_ROUTING_MASK & ((current_byte >> 3) & 0x07);
-    p->env_routing[1] = PATCH_ENV_ROUTING_MASK & (current_byte & 0x07);
+    p->values[PATCH_PARAM_OSC_1_PHI] = (current_byte >> 6) & 0x03;
+    p->values[PATCH_PARAM_OSC_2_PHI] = (current_byte >> 4) & 0x03;
+    p->values[PATCH_PARAM_OSC_3_PHI] = (current_byte >> 2) & 0x03;
+    p->values[PATCH_PARAM_OSC_4_PHI] = current_byte & 0x03;
 
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, LOWPASS_CUTOFF_OSC_3_ENV_3_ROUTING)];
+    /* legacy keyscaling, noise enable, algorithm */
+    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, OSC_SYNC_LEGACY_NOISE_ALGORITHM)];
 
-    p->lowpass_cutoff = PATCH_LOWPASS_CUTOFF_LOWER_BOUND + ((current_byte >> 6) & 0x03);
-    p->osc_routing[2] = PATCH_OSC_ROUTING_MASK & ((current_byte >> 3) & 0x07);
-    p->env_routing[2] = PATCH_ENV_ROUTING_MASK & (current_byte & 0x07);
+    p->values[PATCH_PARAM_OSC_SYNC] = (current_byte >> 5) & 0x01;
+    p->values[PATCH_PARAM_LEGACY_KEYSCALE] = (current_byte >> 4) & 0x01;
+    p->values[PATCH_PARAM_NOISE_ENABLE] = (current_byte >> 3) & 0x01;
+    p->values[PATCH_PARAM_ALGORITHM] = current_byte & 0x07;
 
     /* envelope 1 */
     current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_1_ATTACK)];
 
-    p->env_attack[0] = PATCH_ENV_TIME_LOWER_BOUND + (current_byte & 0x7F);
+    p->values[PATCH_PARAM_ENV_1_ATTACK] = current_byte & 0x1F;
 
     current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_1_DECAY)];
 
-    p->env_decay[0] = PATCH_ENV_TIME_LOWER_BOUND + (current_byte & 0x7F);
+    p->values[PATCH_PARAM_ENV_1_DECAY] = current_byte & 0x1F;
 
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_1_SUSTAIN)];
+    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_1_HOLD_MODE_SUSTAIN)];
 
-    p->env_sustain[0] = PATCH_ENV_TIME_LOWER_BOUND + (current_byte & 0x7F);
+    p->values[PATCH_PARAM_ENV_1_HOLD_MODE] = (current_byte >> 5) & 0x03;
+    p->values[PATCH_PARAM_ENV_1_SUSTAIN] = current_byte & 0x1F;
 
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_1_RELEASE)];
+    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_1_HOLD_LEVEL_RELEASE)];
 
-    p->env_release[0] = PATCH_ENV_TIME_LOWER_BOUND + (current_byte & 0x7F);
+    p->values[PATCH_PARAM_ENV_1_HOLD_LEVEL] = (current_byte >> 4) & 0x0F;
+    p->values[PATCH_PARAM_ENV_1_RELEASE] = current_byte & 0x0F;
 
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_1_AMPLITUDE)];
+    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_1_MAX_LEVEL)];
 
-    p->env_amplitude[0] = PATCH_ENV_LEVEL_LOWER_BOUND + (current_byte & 0x7F);
-
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_1_HOLD_LEVEL)];
-
-    p->env_hold_level[0] = PATCH_ENV_LEVEL_LOWER_BOUND + (current_byte & 0x7F);
-
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_1_HOLD_MODE_KEYSCALING)];
-
-    p->env_hold_mode[0] = PATCH_ENV_HOLD_MODE_LOWER_BOUND + ((current_byte >> 6) & 0x03);
-    p->env_rate_ks[0] = PATCH_ENV_KEYSCALING_LOWER_BOUND + ((current_byte >> 3) & 0x07);
-    p->env_level_ks[0] = PATCH_ENV_KEYSCALING_LOWER_BOUND + (current_byte & 0x07);
+    p->values[PATCH_PARAM_ENV_1_MAX_LEVEL] = current_byte & 0x7F;
 
     /* envelope 2 */
     current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_2_ATTACK)];
 
-    p->env_attack[1] = PATCH_ENV_TIME_LOWER_BOUND + (current_byte & 0x7F);
+    p->values[PATCH_PARAM_ENV_2_ATTACK] = current_byte & 0x1F;
 
     current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_2_DECAY)];
 
-    p->env_decay[1] = PATCH_ENV_TIME_LOWER_BOUND + (current_byte & 0x7F);
+    p->values[PATCH_PARAM_ENV_2_DECAY] = current_byte & 0x1F;
 
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_2_SUSTAIN)];
+    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_2_HOLD_MODE_SUSTAIN)];
 
-    p->env_sustain[1] = PATCH_ENV_TIME_LOWER_BOUND + (current_byte & 0x7F);
+    p->values[PATCH_PARAM_ENV_2_HOLD_MODE] = (current_byte >> 5) & 0x03;
+    p->values[PATCH_PARAM_ENV_2_SUSTAIN] = current_byte & 0x1F;
 
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_2_RELEASE)];
+    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_2_HOLD_LEVEL_RELEASE)];
 
-    p->env_release[1] = PATCH_ENV_TIME_LOWER_BOUND + (current_byte & 0x7F);
+    p->values[PATCH_PARAM_ENV_2_HOLD_LEVEL] = (current_byte >> 4) & 0x0F;
+    p->values[PATCH_PARAM_ENV_2_RELEASE] = current_byte & 0x0F;
 
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_2_AMPLITUDE)];
+    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_2_MAX_LEVEL)];
 
-    p->env_amplitude[1] = PATCH_ENV_LEVEL_LOWER_BOUND + (current_byte & 0x7F);
-
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_2_HOLD_LEVEL)];
-
-    p->env_hold_level[1] = PATCH_ENV_LEVEL_LOWER_BOUND + (current_byte & 0x7F);
-
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_2_HOLD_MODE_KEYSCALING)];
-
-    p->env_hold_mode[1] = PATCH_ENV_HOLD_MODE_LOWER_BOUND + ((current_byte >> 6) & 0x03);
-    p->env_rate_ks[1] = PATCH_ENV_KEYSCALING_LOWER_BOUND + ((current_byte >> 3) & 0x07);
-    p->env_level_ks[1] = PATCH_ENV_KEYSCALING_LOWER_BOUND + (current_byte & 0x07);
+    p->values[PATCH_PARAM_ENV_2_MAX_LEVEL] = current_byte & 0x7F;
 
     /* envelope 3 */
     current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_3_ATTACK)];
 
-    p->env_attack[2] = PATCH_ENV_TIME_LOWER_BOUND + (current_byte & 0x7F);
+    p->values[PATCH_PARAM_ENV_3_ATTACK] = current_byte & 0x1F;
 
     current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_3_DECAY)];
 
-    p->env_decay[2] = PATCH_ENV_TIME_LOWER_BOUND + (current_byte & 0x7F);
+    p->values[PATCH_PARAM_ENV_3_DECAY] = current_byte & 0x1F;
 
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_3_SUSTAIN)];
+    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_3_HOLD_MODE_SUSTAIN)];
 
-    p->env_sustain[2] = PATCH_ENV_TIME_LOWER_BOUND + (current_byte & 0x7F);
+    p->values[PATCH_PARAM_ENV_3_HOLD_MODE] = (current_byte >> 5) & 0x03;
+    p->values[PATCH_PARAM_ENV_3_SUSTAIN] = current_byte & 0x1F;
 
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_3_RELEASE)];
+    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_3_HOLD_LEVEL_RELEASE)];
 
-    p->env_release[2] = PATCH_ENV_TIME_LOWER_BOUND + (current_byte & 0x7F);
+    p->values[PATCH_PARAM_ENV_3_HOLD_LEVEL] = (current_byte >> 4) & 0x0F;
+    p->values[PATCH_PARAM_ENV_3_RELEASE] = current_byte & 0x0F;
 
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_3_AMPLITUDE)];
+    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_3_MAX_LEVEL)];
 
-    p->env_amplitude[2] = PATCH_ENV_LEVEL_LOWER_BOUND + (current_byte & 0x7F);
+    p->values[PATCH_PARAM_ENV_3_MAX_LEVEL] = current_byte & 0x7F;
 
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_3_HOLD_LEVEL)];
+    /* envelope 4 */
+    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_4_ATTACK)];
 
-    p->env_hold_level[2] = PATCH_ENV_LEVEL_LOWER_BOUND + (current_byte & 0x7F);
+    p->values[PATCH_PARAM_ENV_4_ATTACK] = current_byte & 0x1F;
 
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_3_HOLD_MODE_KEYSCALING)];
+    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_4_DECAY)];
 
-    p->env_hold_mode[2] = PATCH_ENV_HOLD_MODE_LOWER_BOUND + ((current_byte >> 6) & 0x03);
-    p->env_rate_ks[2] = PATCH_ENV_KEYSCALING_LOWER_BOUND + ((current_byte >> 3) & 0x07);
-    p->env_level_ks[2] = PATCH_ENV_KEYSCALING_LOWER_BOUND + (current_byte & 0x07);
+    p->values[PATCH_PARAM_ENV_4_DECAY] = current_byte & 0x1F;
 
-    /* vibrato lfo */
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, VIBRATO_POLARITY_WAVEFORM_SPEED)];
+    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_4_HOLD_MODE_SUSTAIN)];
 
-    p->lfo_polarity[0] = PATCH_LFO_POLARITY_LOWER_BOUND + ((current_byte >> 7) & 0x01);
-    p->lfo_waveform[0] = PATCH_LFO_WAVEFORM_LOWER_BOUND + ((current_byte >> 4) & 0x03);
-    p->lfo_speed[0] = PATCH_LFO_SPEED_LOWER_BOUND + (current_byte & 0x0F);
+    p->values[PATCH_PARAM_ENV_4_HOLD_MODE] = (current_byte >> 5) & 0x03;
+    p->values[PATCH_PARAM_ENV_4_SUSTAIN] = current_byte & 0x1F;
 
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, VIBRATO_SYNC_DELAY)];
+    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_4_HOLD_LEVEL_RELEASE)];
 
-    p->lfo_sync[0] = PATCH_SYNC_LOWER_BOUND + ((current_byte >> 7) & 0x01);
-    p->lfo_delay[0] = PATCH_LFO_DELAY_LOWER_BOUND + (current_byte & 0x3F);
+    p->values[PATCH_PARAM_ENV_4_HOLD_LEVEL] = (current_byte >> 4) & 0x0F;
+    p->values[PATCH_PARAM_ENV_4_RELEASE] = current_byte & 0x0F;
 
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, VIBRATO_DEPTH)];
+    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_4_MAX_LEVEL)];
 
-    p->lfo_depth[0] = PATCH_LFO_DEPTH_LOWER_BOUND + (current_byte & 0x7F);
+    p->values[PATCH_PARAM_ENV_4_MAX_LEVEL] = current_byte & 0x7F;
 
-    /* tremolo lfo */
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, TREMOLO_WAVEFORM_SPEED)];
+    /* keyscaling */
+    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, RATE_KEYSCALING)];
 
-    p->lfo_waveform[1] = PATCH_LFO_WAVEFORM_LOWER_BOUND + ((current_byte >> 4) & 0x03);
-    p->lfo_speed[1] = PATCH_LFO_SPEED_LOWER_BOUND + (current_byte & 0x0F);
+    p->values[PATCH_PARAM_ENV_1_RATE_KEYSCALING] = (current_byte >> 6) & 0x03;
+    p->values[PATCH_PARAM_ENV_2_RATE_KEYSCALING] = (current_byte >> 4) & 0x03;
+    p->values[PATCH_PARAM_ENV_3_RATE_KEYSCALING] = (current_byte >> 2) & 0x03;
+    p->values[PATCH_PARAM_ENV_4_RATE_KEYSCALING] = current_byte & 0x03;
 
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, TREMOLO_SYNC_DELAY)];
+    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, LEVEL_KEYSCALING)];
 
-    p->lfo_sync[1] = PATCH_SYNC_LOWER_BOUND + ((current_byte >> 7) & 0x01);
-    p->lfo_delay[1] = PATCH_LFO_DELAY_LOWER_BOUND + (current_byte & 0x3F);
+    p->values[PATCH_PARAM_ENV_1_LEVEL_KEYSCALING] = (current_byte >> 6) & 0x03;
+    p->values[PATCH_PARAM_ENV_2_LEVEL_KEYSCALING] = (current_byte >> 4) & 0x03;
+    p->values[PATCH_PARAM_ENV_3_LEVEL_KEYSCALING] = (current_byte >> 2) & 0x03;
+    p->values[PATCH_PARAM_ENV_4_LEVEL_KEYSCALING] = current_byte & 0x03;
 
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, TREMOLO_DEPTH)];
+    /* vibrato, tremolo */
+    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, VIBRATO_TREMOLO_SPEED)];
 
-    p->lfo_depth[1] = PATCH_LFO_DEPTH_LOWER_BOUND + (current_byte & 0x7F);
+    p->values[PATCH_PARAM_VIBRATO_SPEED] = (current_byte >> 4) & 0x0F;
+    p->values[PATCH_PARAM_TREMOLO_SPEED] = current_byte & 0x0F;
 
-    /* chorus */
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, CHORUS_WAVEFORM_SPEED)];
+    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, VIBRATO_WAVEFORM_DELAY)];
 
-    p->lfo_waveform[2] = PATCH_LFO_WAVEFORM_LOWER_BOUND + ((current_byte >> 4) & 0x03);
-    p->lfo_speed[2] = PATCH_LFO_SPEED_LOWER_BOUND + (current_byte & 0x0F);
+    p->values[PATCH_PARAM_VIBRATO_WAVEFORM] = (current_byte >> 6) & 0x03;
+    p->values[PATCH_PARAM_VIBRATO_DELAY] = current_byte & 0x3F;
 
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, CHORUS_SYNC_DELAY)];
+    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, VIBRATO_SYNC_DEPTH)];
 
-    p->lfo_sync[2] = PATCH_SYNC_LOWER_BOUND + ((current_byte >> 7) & 0x01);
-    p->lfo_delay[2] = PATCH_LFO_DELAY_LOWER_BOUND + (current_byte & 0x3F);
+    p->values[PATCH_PARAM_VIBRATO_SYNC] = (current_byte >> 7) & 0x01;
+    p->values[PATCH_PARAM_VIBRATO_DEPTH] = current_byte & 0x7F;
 
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, CHORUS_DEPTH)];
+    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, TREMOLO_WAVEFORM_DELAY)];
 
-    p->lfo_depth[2] = PATCH_LFO_DEPTH_LOWER_BOUND + (current_byte & 0x7F);
+    p->values[PATCH_PARAM_TREMOLO_WAVEFORM] = (current_byte >> 6) & 0x03;
+    p->values[PATCH_PARAM_TREMOLO_DELAY] = current_byte & 0x3F;
 
-    /* sensitivities, midi controller routing */
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, BOOST_VELOCITY_SENS)];
+    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, TREMOLO_SYNC_DEPTH)];
 
-    p->boost_sensitivity = PATCH_SENSITIVITY_LOWER_BOUND + ((current_byte >> 4) & 0x0F);
-    p->velocity_sensitivity = PATCH_SENSITIVITY_LOWER_BOUND + (current_byte & 0x0F);
+    p->values[PATCH_PARAM_TREMOLO_SYNC] = (current_byte >> 7) & 0x01;
+    p->values[PATCH_PARAM_TREMOLO_DEPTH] = current_byte & 0x7F;
 
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, VIBRATO_TREMOLO_SENS)];
+    /* sensitivities, filters, midi controller routing */
+    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, TREMOLO_VIBRATO_SENS_MOD_WHEEL)];
 
-    p->lfo_sensitivity[0] = PATCH_SENSITIVITY_LOWER_BOUND + ((current_byte >> 4) & 0x0F);
-    p->lfo_sensitivity[1] = PATCH_SENSITIVITY_LOWER_BOUND + (current_byte & 0x0F);
+    p->values[PATCH_PARAM_TREMOLO_SENSITIVITY] = (current_byte >> 6) & 0x03;
+    p->values[PATCH_PARAM_VIBRATO_SENSITIVITY] = (current_byte >> 3) & 0x07;
+    p->values[PATCH_PARAM_MOD_WHEEL_ROUTING_VIBRATO] = (current_byte >> 2) & 0x01;
+    p->values[PATCH_PARAM_MOD_WHEEL_ROUTING_TREMOLO] = (current_byte >> 1) & 0x01;
+    p->values[PATCH_PARAM_MOD_WHEEL_ROUTING_BOOST] = current_byte & 0x01;
 
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, CHORUS_SENS_MOD_WHEEL_ROUTING)];
+    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, HIGHPASS_BOOST_SENS_AFTERTOUCH)];
 
-    p->lfo_sensitivity[2] = PATCH_SENSITIVITY_LOWER_BOUND + ((current_byte >> 4) & 0x0F);
-    p->mod_wheel_routing = PATCH_MIDI_CONT_ROUTING_MASK & (current_byte & 0x0F);
+    p->values[PATCH_PARAM_HIGHPASS_CUTOFF] = (current_byte >> 6) & 0x03;
+    p->values[PATCH_PARAM_BOOST_SENSITIVITY] = (current_byte >> 3) & 0x07;
+    p->values[PATCH_PARAM_AFTERTOUCH_ROUTING_VIBRATO] = (current_byte >> 2) & 0x01;
+    p->values[PATCH_PARAM_AFTERTOUCH_ROUTING_TREMOLO] = (current_byte >> 1) & 0x01;
+    p->values[PATCH_PARAM_AFTERTOUCH_ROUTING_BOOST] = current_byte & 0x01;
 
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, AFTERTOUCH_EXP_PEDAL_ROUTING)];
+    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, LOWPASS_VELOCITY_SENS_EXP_PEDAL)];
 
-    p->aftertouch_routing = PATCH_MIDI_CONT_ROUTING_MASK & ((current_byte >> 4) & 0x0F);
-    p->exp_pedal_routing = PATCH_MIDI_CONT_ROUTING_MASK & (current_byte & 0x0F);
+    p->values[PATCH_PARAM_LOWPASS_CUTOFF] = (current_byte >> 6) & 0x03;
+    p->values[PATCH_PARAM_VELOCITY_SENSITIVITY] = (current_byte >> 3) & 0x07;
+    p->values[PATCH_PARAM_EXP_PEDAL_ROUTING_VIBRATO] = (current_byte >> 2) & 0x01;
+    p->values[PATCH_PARAM_EXP_PEDAL_ROUTING_TREMOLO] = (current_byte >> 1) & 0x01;
+    p->values[PATCH_PARAM_EXP_PEDAL_ROUTING_BOOST] = current_byte & 0x01;
+
+    /* lfo, boost, velocity routing */
+    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, VIBRATO_TREMOLO_ROUTING)];
+
+    p->values[PATCH_PARAM_VIBRATO_ROUTING_OSC_1] = (current_byte >> 7) & 0x01;
+    p->values[PATCH_PARAM_VIBRATO_ROUTING_OSC_2] = (current_byte >> 6) & 0x01;
+    p->values[PATCH_PARAM_VIBRATO_ROUTING_OSC_3] = (current_byte >> 5) & 0x01;
+    p->values[PATCH_PARAM_VIBRATO_ROUTING_OSC_4] = (current_byte >> 4) & 0x01;
+    p->values[PATCH_PARAM_TREMOLO_ROUTING_ENV_1] = (current_byte >> 3) & 0x01;
+    p->values[PATCH_PARAM_TREMOLO_ROUTING_ENV_2] = (current_byte >> 2) & 0x01;
+    p->values[PATCH_PARAM_TREMOLO_ROUTING_ENV_3] = (current_byte >> 1) & 0x01;
+    p->values[PATCH_PARAM_TREMOLO_ROUTING_ENV_4] = current_byte & 0x01;
+
+    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, BOOST_VELOCITY_ROUTING)];
+
+    p->values[PATCH_PARAM_BOOST_ROUTING_ENV_1] = (current_byte >> 7) & 0x01;
+    p->values[PATCH_PARAM_BOOST_ROUTING_ENV_2] = (current_byte >> 6) & 0x01;
+    p->values[PATCH_PARAM_BOOST_ROUTING_ENV_3] = (current_byte >> 5) & 0x01;
+    p->values[PATCH_PARAM_BOOST_ROUTING_ENV_4] = (current_byte >> 4) & 0x01;
+    p->values[PATCH_PARAM_VELOCITY_ROUTING_ENV_1] = (current_byte >> 3) & 0x01;
+    p->values[PATCH_PARAM_VELOCITY_ROUTING_ENV_2] = (current_byte >> 2) & 0x01;
+    p->values[PATCH_PARAM_VELOCITY_ROUTING_ENV_3] = (current_byte >> 1) & 0x01;
+    p->values[PATCH_PARAM_VELOCITY_ROUTING_ENV_4] = current_byte & 0x01;
 
     /* pitch envelope */
     current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, PITCH_ENV_ATTACK)];
 
-    p->peg_attack = PATCH_PEG_TIME_LOWER_BOUND + (current_byte & 0x7F);
+    p->values[PATCH_PARAM_PITCH_ENV_ATTACK] = current_byte & 0x1F;
 
     current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, PITCH_ENV_DECAY)];
 
-    p->peg_decay = PATCH_PEG_TIME_LOWER_BOUND + (current_byte & 0x7F);
+    p->values[PATCH_PARAM_PITCH_ENV_DECAY] = current_byte & 0x1F;
 
     current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, PITCH_ENV_RELEASE)];
 
-    p->peg_release = PATCH_PEG_TIME_LOWER_BOUND + (current_byte & 0x7F);
+    p->values[PATCH_PARAM_PITCH_ENV_RELEASE] = current_byte & 0x0F;
 
-    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, PITCH_ENV_MAXIMUM)];
+    current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, PITCH_ENV_MAX)];
 
-    p->peg_maximum = PATCH_PEG_LEVEL_LOWER_BOUND + (current_byte & 0x7F);
+    p->values[PATCH_PARAM_PITCH_ENV_MAX] = current_byte & 0x7F;
 
     current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, PITCH_ENV_FINALE)];
 
-    p->peg_finale = PATCH_PEG_LEVEL_LOWER_BOUND + (current_byte & 0x7F);
+    p->values[PATCH_PARAM_PITCH_ENV_FINALE] = current_byte & 0x7F;
 
     /* pitch wheel, arpeggio, portamento */
     current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, PITCH_WHEEL)];
 
-    p->pitch_wheel_mode = PATCH_PITCH_WHEEL_MODE_LOWER_BOUND + ((current_byte >> 6) & 0x01);
-    p->pitch_wheel_range = PATCH_PITCH_WHEEL_RANGE_LOWER_BOUND + (current_byte & 0x1F);
+    p->values[PATCH_PARAM_PITCH_WHEEL_MODE] = (current_byte >> 4) & 0x01;
+    p->values[PATCH_PARAM_PITCH_WHEEL_RANGE] = current_byte & 0x0F;
 
     current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ARPEGGIO)];
 
-    p->arpeggio_pattern = PATCH_ARPEGGIO_PATTERN_LOWER_BOUND + ((current_byte >> 6) & 0x03);
-    p->arpeggio_octaves = PATCH_ARPEGGIO_OCTAVES_LOWER_BOUND + ((current_byte >> 4) & 0x03);
-    p->arpeggio_speed = PATCH_ARPEGGIO_SPEED_LOWER_BOUND + (current_byte & 0x0F);
+    p->values[PATCH_PARAM_ARPEGGIO_PATTERN] = (current_byte >> 6) & 0x03;
+    p->values[PATCH_PARAM_ARPEGGIO_OCTAVE] = (current_byte >> 4) & 0x03;
+    p->values[PATCH_PARAM_ARPEGGIO_SPEED] = current_byte & 0x0F;
 
     current_byte = cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, PORTAMENTO)];
 
-    p->arpeggio_mode = PATCH_ARPEGGIO_MODE_LOWER_BOUND + ((current_byte >> 7) & 0x01);
-    p->portamento_mode = PATCH_PORTAMENTO_MODE_LOWER_BOUND + ((current_byte >> 6) & 0x01);
-    p->portamento_legato = PATCH_PORTAMENTO_LEGATO_LOWER_BOUND + ((current_byte >> 4) & 0x03);
-    p->portamento_speed = PATCH_PORTAMENTO_SPEED_LOWER_BOUND + (current_byte & 0x0F);
+    p->values[PATCH_PARAM_ARPEGGIO_MODE] = (current_byte >> 7) & 0x01;
+    p->values[PATCH_PARAM_PORTAMENTO_MODE] = (current_byte >> 6) & 0x01;
+    p->values[PATCH_PARAM_PORTAMENTO_LEGATO] = (current_byte >> 4) & 0x03;
+    p->values[PATCH_PARAM_PORTAMENTO_SPEED] = current_byte & 0x0F;
   }
 
   /* validate the cart */
@@ -502,9 +489,8 @@ short int datafile_cart_save(int cart_index, char* filename)
   int m;
 
   FILE* fp;
-  char  signature[4];
-  char  type[4];
 
+  char signature[17];
   char cart_data[DATAFILE_BYTES_PER_CART];
 
   char current_byte;
@@ -519,6 +505,10 @@ short int datafile_cart_save(int cart_index, char* filename)
   /* make sure filename is valid */
   if (filename == NULL)
     return 0;
+
+  /* reset signature */
+  for (m = 0; m < 17; m++)
+    signature[m] = '\0';
 
   /* initialize cart data */
   for (m = 0; m < DATAFILE_BYTES_PER_CART; m++)
@@ -542,289 +532,290 @@ short int datafile_cart_save(int cart_index, char* filename)
     /* save patch name */
     memcpy(&cart_data[DATAFILE_COMPUTE_PATCH_NAME_INDEX(m)], &p->name[0], PATCH_NAME_NUM_BYTES);
 
-    /* osc frequency mode, detune, waveform */
-    current_byte = ((p->osc_freq_mode[0] - PATCH_OSC_FREQ_MODE_LOWER_BOUND) & 0x01) << 7;
-    current_byte |= ((p->osc_detune[0] - PATCH_OSC_DETUNE_LOWER_BOUND) & 0x07) << 4;
-    current_byte |= (p->osc_waveform[0] - PATCH_OSC_WAVEFORM_LOWER_BOUND) & 0x0F;
+    /* osc waveform, feedback, detune */
+    current_byte =  (p->values[PATCH_PARAM_OSC_1_WAVEFORM] & 0x03) << 6;
+    current_byte |= (p->values[PATCH_PARAM_OSC_1_FEEDBACK] & 0x07) << 3;
+    current_byte |= p->values[PATCH_PARAM_OSC_1_DETUNE] & 0x07;
 
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, OSC_1_FREQ_MODE_DETUNE_WAVEFORM)] = current_byte;
+    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, OSC_1_WAVEFORM_FEEDBACK_DETUNE)] = current_byte;
 
-    current_byte = ((p->osc_freq_mode[1] - PATCH_OSC_FREQ_MODE_LOWER_BOUND) & 0x01) << 7;
-    current_byte |= ((p->osc_detune[1] - PATCH_OSC_DETUNE_LOWER_BOUND) & 0x07) << 4;
-    current_byte |= (p->osc_waveform[1] - PATCH_OSC_WAVEFORM_LOWER_BOUND) & 0x0F;
+    current_byte =  (p->values[PATCH_PARAM_OSC_2_WAVEFORM] & 0x03) << 6;
+    current_byte |= (p->values[PATCH_PARAM_OSC_2_FEEDBACK] & 0x07) << 3;
+    current_byte |= p->values[PATCH_PARAM_OSC_2_DETUNE] & 0x07;
 
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, OSC_2_FREQ_MODE_DETUNE_WAVEFORM)] = current_byte;
+    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, OSC_2_WAVEFORM_FEEDBACK_DETUNE)] = current_byte;
 
-    current_byte = ((p->osc_freq_mode[2] - PATCH_OSC_FREQ_MODE_LOWER_BOUND) & 0x01) << 7;
-    current_byte |= ((p->osc_detune[2] - PATCH_OSC_DETUNE_LOWER_BOUND) & 0x07) << 4;
-    current_byte |= (p->osc_waveform[2] - PATCH_OSC_WAVEFORM_LOWER_BOUND) & 0x0F;
+    current_byte =  (p->values[PATCH_PARAM_OSC_3_WAVEFORM] & 0x03) << 6;
+    current_byte |= (p->values[PATCH_PARAM_OSC_3_FEEDBACK] & 0x07) << 3;
+    current_byte |= p->values[PATCH_PARAM_OSC_3_DETUNE] & 0x07;
 
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, OSC_3_FREQ_MODE_DETUNE_WAVEFORM)] = current_byte;
+    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, OSC_3_WAVEFORM_FEEDBACK_DETUNE)] = current_byte;
 
-    /* osc multiple, divisor */
-    if (p->osc_freq_mode[0] == PATCH_OSC_FREQ_MODE_FIXED)
-    {
-      current_byte = ((p->osc_octave[0] - PATCH_OSC_OCTAVE_LOWER_BOUND) & 0x0F) << 4;
-      current_byte |= (p->osc_note[0] - PATCH_OSC_NOTE_LOWER_BOUND) & 0x0F;
-    }
-    else
-    {
-      current_byte = ((p->osc_multiple[0] - PATCH_OSC_MULTIPLE_LOWER_BOUND) & 0x0F) << 4;
-      current_byte |= (p->osc_divisor[0] - PATCH_OSC_DIVISOR_LOWER_BOUND) & 0x0F;
-    }
+    current_byte =  (p->values[PATCH_PARAM_OSC_4_WAVEFORM] & 0x03) << 6;
+    current_byte |= (p->values[PATCH_PARAM_OSC_4_FEEDBACK] & 0x07) << 3;
+    current_byte |= p->values[PATCH_PARAM_OSC_4_DETUNE] & 0x07;
 
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, OSC_1_MULTIPLE_DIVISOR)] = current_byte;
+    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, OSC_4_WAVEFORM_FEEDBACK_DETUNE)] = current_byte;
 
-    if (p->osc_freq_mode[1] == PATCH_OSC_FREQ_MODE_FIXED)
-    {
-      current_byte = ((p->osc_octave[1] - PATCH_OSC_OCTAVE_LOWER_BOUND) & 0x0F) << 4;
-      current_byte |= (p->osc_note[1] - PATCH_OSC_NOTE_LOWER_BOUND) & 0x0F;
-    }
-    else
-    {
-      current_byte = ((p->osc_multiple[1] - PATCH_OSC_MULTIPLE_LOWER_BOUND) & 0x0F) << 4;
-      current_byte |= (p->osc_divisor[1] - PATCH_OSC_DIVISOR_LOWER_BOUND) & 0x0F;
-    }
+    /* osc frequency mode, multiple, divisor */
+    current_byte =  (p->values[PATCH_PARAM_OSC_1_FREQ_MODE] & 0x01) << 7;
+    current_byte |= (p->values[PATCH_PARAM_OSC_1_MULTIPLE] & 0x0F) << 3;
+    current_byte |= p->values[PATCH_PARAM_OSC_1_DIVISOR] & 0x07;
 
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, OSC_2_MULTIPLE_DIVISOR)] = current_byte;
+    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, OSC_1_FREQ_MODE_MULTIPLE_DIVISOR)] = current_byte;
 
-    if (p->osc_freq_mode[2] == PATCH_OSC_FREQ_MODE_FIXED)
-    {
-      current_byte = ((p->osc_octave[2] - PATCH_OSC_OCTAVE_LOWER_BOUND) & 0x0F) << 4;
-      current_byte |= (p->osc_note[2] - PATCH_OSC_NOTE_LOWER_BOUND) & 0x0F;
-    }
-    else
-    {
-      current_byte = ((p->osc_multiple[2] - PATCH_OSC_MULTIPLE_LOWER_BOUND) & 0x0F) << 4;
-      current_byte |= (p->osc_divisor[2] - PATCH_OSC_DIVISOR_LOWER_BOUND) & 0x0F;
-    }
+    current_byte =  (p->values[PATCH_PARAM_OSC_2_FREQ_MODE] & 0x01) << 7;
+    current_byte |= (p->values[PATCH_PARAM_OSC_2_MULTIPLE] & 0x0F) << 3;
+    current_byte |= p->values[PATCH_PARAM_OSC_2_DIVISOR] & 0x07;
 
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, OSC_3_MULTIPLE_DIVISOR)] = current_byte;
+    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, OSC_2_FREQ_MODE_MULTIPLE_DIVISOR)] = current_byte;
 
-    /* osc sync, phi */
-    current_byte = ((p->osc_sync - PATCH_SYNC_LOWER_BOUND) & 0x01) << 6;
-    current_byte |= ((p->osc_phi[0] - PATCH_OSC_PHI_LOWER_BOUND) & 0x03) << 4;
-    current_byte |= ((p->osc_phi[1] - PATCH_OSC_PHI_LOWER_BOUND) & 0x03) << 2;
-    current_byte |= (p->osc_phi[2] - PATCH_OSC_PHI_LOWER_BOUND) & 0x03;
+    current_byte =  (p->values[PATCH_PARAM_OSC_3_FREQ_MODE] & 0x01) << 7;
+    current_byte |= (p->values[PATCH_PARAM_OSC_3_MULTIPLE] & 0x0F) << 3;
+    current_byte |= p->values[PATCH_PARAM_OSC_3_DIVISOR] & 0x07;
 
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, OSC_SYNC_PHI)] = current_byte;
+    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, OSC_3_FREQ_MODE_MULTIPLE_DIVISOR)] = current_byte;
 
-    /* algorithm, filters, osc / env routing */
-    current_byte = ((p->algorithm - PATCH_ALGORITHM_LOWER_BOUND) & 0x03) << 6;
-    current_byte |= ((p->osc_routing[0] & PATCH_OSC_ROUTING_MASK) & 0x07) << 3;
-    current_byte |= (p->env_routing[0] & PATCH_ENV_ROUTING_MASK) & 0x07;
+    current_byte =  (p->values[PATCH_PARAM_OSC_4_FREQ_MODE] & 0x01) << 7;
+    current_byte |= (p->values[PATCH_PARAM_OSC_4_MULTIPLE] & 0x0F) << 3;
+    current_byte |= p->values[PATCH_PARAM_OSC_4_DIVISOR] & 0x07;
 
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ALGORITHM_OSC_1_ENV_1_ROUTING)] = current_byte;
+    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, OSC_4_FREQ_MODE_MULTIPLE_DIVISOR)] = current_byte;
 
-    current_byte = ((p->highpass_cutoff - PATCH_HIGHPASS_CUTOFF_LOWER_BOUND) & 0x03) << 6;
-    current_byte |= ((p->osc_routing[1] & PATCH_OSC_ROUTING_MASK) & 0x07) << 3;
-    current_byte |= (p->env_routing[1] & PATCH_ENV_ROUTING_MASK) & 0x07;
+    /* osc phase shift */
+    current_byte =  (p->values[PATCH_PARAM_OSC_1_PHI] & 0x03) << 6;
+    current_byte |= (p->values[PATCH_PARAM_OSC_2_PHI] & 0x03) << 4;
+    current_byte |= (p->values[PATCH_PARAM_OSC_3_PHI] & 0x03) << 2;
+    current_byte |= p->values[PATCH_PARAM_OSC_4_PHI] & 0x03;
 
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, HIGHPASS_CUTOFF_OSC_2_ENV_2_ROUTING)] = current_byte;
+    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, OSC_PHI)] = current_byte;
 
-    current_byte = ((p->lowpass_cutoff - PATCH_LOWPASS_CUTOFF_LOWER_BOUND) & 0x03) << 6;
-    current_byte |= ((p->osc_routing[2] & PATCH_OSC_ROUTING_MASK) & 0x07) << 3;
-    current_byte |= (p->env_routing[2] & PATCH_ENV_ROUTING_MASK) & 0x07;
+    /* legacy keyscaling, noise enable, algorithm */
+    current_byte =  (p->values[PATCH_PARAM_OSC_SYNC] & 0x01) << 5;
+    current_byte |= (p->values[PATCH_PARAM_LEGACY_KEYSCALE] & 0x01) << 4;
+    current_byte |= (p->values[PATCH_PARAM_NOISE_ENABLE] & 0x01) << 3;
+    current_byte |= p->values[PATCH_PARAM_ALGORITHM] & 0x07;
 
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, LOWPASS_CUTOFF_OSC_3_ENV_3_ROUTING)] = current_byte;
+    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, OSC_SYNC_LEGACY_NOISE_ALGORITHM)] = current_byte;
 
     /* envelope 1 */
-    current_byte = (p->env_attack[0] - PATCH_ENV_TIME_LOWER_BOUND) & 0x7F;
+    current_byte = p->values[PATCH_PARAM_ENV_1_ATTACK] & 0x1F;
 
     cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_1_ATTACK)] = current_byte;
 
-    current_byte = (p->env_decay[0] - PATCH_ENV_TIME_LOWER_BOUND) & 0x7F;
+    current_byte = p->values[PATCH_PARAM_ENV_1_DECAY] & 0x1F;
 
     cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_1_DECAY)] = current_byte;
 
-    current_byte = (p->env_sustain[0] - PATCH_ENV_TIME_LOWER_BOUND) & 0x7F;
+    current_byte =  (p->values[PATCH_PARAM_ENV_1_HOLD_MODE] & 0x03) << 5;
+    current_byte |= p->values[PATCH_PARAM_ENV_1_SUSTAIN] & 0x1F;
 
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_1_SUSTAIN)] = current_byte;
+    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_1_HOLD_MODE_SUSTAIN)] = current_byte;
 
-    current_byte = (p->env_release[0] - PATCH_ENV_TIME_LOWER_BOUND) & 0x7F;
+    current_byte =  (p->values[PATCH_PARAM_ENV_1_HOLD_LEVEL] & 0x0F) << 4;
+    current_byte |= p->values[PATCH_PARAM_ENV_1_RELEASE] & 0x0F;
 
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_1_RELEASE)] = current_byte;
+    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_1_HOLD_LEVEL_RELEASE)] = current_byte;
 
-    current_byte = (p->env_amplitude[0] - PATCH_ENV_LEVEL_LOWER_BOUND) & 0x7F;
+    current_byte = p->values[PATCH_PARAM_ENV_1_MAX_LEVEL] & 0x7F;
 
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_1_AMPLITUDE)] = current_byte;
-
-    current_byte = (p->env_hold_level[0] - PATCH_ENV_LEVEL_LOWER_BOUND) & 0x7F;
-
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_1_HOLD_LEVEL)] = current_byte;
-
-    current_byte = ((p->env_hold_mode[0] - PATCH_ENV_HOLD_MODE_LOWER_BOUND) & 0x03) << 6;
-    current_byte |= ((p->env_rate_ks[0] - PATCH_ENV_KEYSCALING_LOWER_BOUND) & 0x07) << 3;
-    current_byte |= (p->env_level_ks[0] - PATCH_ENV_KEYSCALING_LOWER_BOUND) & 0x07;
-
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_1_HOLD_MODE_KEYSCALING)] = current_byte;
+    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_1_MAX_LEVEL)] = current_byte;
 
     /* envelope 2 */
-    current_byte = (p->env_attack[1] - PATCH_ENV_TIME_LOWER_BOUND) & 0x7F;
+    current_byte = p->values[PATCH_PARAM_ENV_2_ATTACK] & 0x1F;
 
     cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_2_ATTACK)] = current_byte;
 
-    current_byte = (p->env_decay[1] - PATCH_ENV_TIME_LOWER_BOUND) & 0x7F;
+    current_byte = p->values[PATCH_PARAM_ENV_2_DECAY] & 0x1F;
 
     cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_2_DECAY)] = current_byte;
 
-    current_byte = (p->env_sustain[1] - PATCH_ENV_TIME_LOWER_BOUND) & 0x7F;
+    current_byte =  (p->values[PATCH_PARAM_ENV_2_HOLD_MODE] & 0x03) << 5;
+    current_byte |= p->values[PATCH_PARAM_ENV_2_SUSTAIN] & 0x1F;
 
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_2_SUSTAIN)] = current_byte;
+    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_2_HOLD_MODE_SUSTAIN)] = current_byte;
 
-    current_byte = (p->env_release[1] - PATCH_ENV_TIME_LOWER_BOUND) & 0x7F;
+    current_byte =  (p->values[PATCH_PARAM_ENV_2_HOLD_LEVEL] & 0x0F) << 4;
+    current_byte |= p->values[PATCH_PARAM_ENV_2_RELEASE] & 0x0F;
 
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_2_RELEASE)] = current_byte;
+    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_2_HOLD_LEVEL_RELEASE)] = current_byte;
 
-    current_byte = (p->env_amplitude[1] - PATCH_ENV_LEVEL_LOWER_BOUND) & 0x7F;
+    current_byte = p->values[PATCH_PARAM_ENV_2_MAX_LEVEL] & 0x7F;
 
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_2_AMPLITUDE)] = current_byte;
-
-    current_byte = (p->env_hold_level[1] - PATCH_ENV_LEVEL_LOWER_BOUND) & 0x7F;
-
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_2_HOLD_LEVEL)] = current_byte;
-
-    current_byte = ((p->env_hold_mode[1] - PATCH_ENV_HOLD_MODE_LOWER_BOUND) & 0x03) << 6;
-    current_byte |= ((p->env_rate_ks[1] - PATCH_ENV_KEYSCALING_LOWER_BOUND) & 0x07) << 3;
-    current_byte |= (p->env_level_ks[1] - PATCH_ENV_KEYSCALING_LOWER_BOUND) & 0x07;
-
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_2_HOLD_MODE_KEYSCALING)] = current_byte;
+    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_2_MAX_LEVEL)] = current_byte;
 
     /* envelope 3 */
-    current_byte = (p->env_attack[2] - PATCH_ENV_TIME_LOWER_BOUND) & 0x7F;
+    current_byte = p->values[PATCH_PARAM_ENV_3_ATTACK] & 0x1F;
 
     cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_3_ATTACK)] = current_byte;
 
-    current_byte = (p->env_decay[2] - PATCH_ENV_TIME_LOWER_BOUND) & 0x7F;
+    current_byte = p->values[PATCH_PARAM_ENV_3_DECAY] & 0x1F;
 
     cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_3_DECAY)] = current_byte;
 
-    current_byte = (p->env_sustain[2] - PATCH_ENV_TIME_LOWER_BOUND) & 0x7F;
+    current_byte =  (p->values[PATCH_PARAM_ENV_3_HOLD_MODE] & 0x03) << 5;
+    current_byte |= p->values[PATCH_PARAM_ENV_3_SUSTAIN] & 0x1F;
 
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_3_SUSTAIN)] = current_byte;
+    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_3_HOLD_MODE_SUSTAIN)] = current_byte;
 
-    current_byte = (p->env_release[2] - PATCH_ENV_TIME_LOWER_BOUND) & 0x7F;
+    current_byte =  (p->values[PATCH_PARAM_ENV_3_HOLD_LEVEL] & 0x0F) << 4;
+    current_byte |= p->values[PATCH_PARAM_ENV_3_RELEASE] & 0x0F;
 
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_3_RELEASE)] = current_byte;
+    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_3_HOLD_LEVEL_RELEASE)] = current_byte;
 
-    current_byte = (p->env_amplitude[2] - PATCH_ENV_LEVEL_LOWER_BOUND) & 0x7F;
+    current_byte = p->values[PATCH_PARAM_ENV_3_MAX_LEVEL] & 0x7F;
 
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_3_AMPLITUDE)] = current_byte;
+    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_3_MAX_LEVEL)] = current_byte;
 
-    current_byte = (p->env_hold_level[2] - PATCH_ENV_LEVEL_LOWER_BOUND) & 0x7F;
+    /* envelope 4 */
+    current_byte = p->values[PATCH_PARAM_ENV_4_ATTACK] & 0x1F;
 
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_3_HOLD_LEVEL)] = current_byte;
+    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_4_ATTACK)] = current_byte;
 
-    current_byte = ((p->env_hold_mode[2] - PATCH_ENV_HOLD_MODE_LOWER_BOUND) & 0x03) << 6;
-    current_byte |= ((p->env_rate_ks[2] - PATCH_ENV_KEYSCALING_LOWER_BOUND) & 0x07) << 3;
-    current_byte |= (p->env_level_ks[2] - PATCH_ENV_KEYSCALING_LOWER_BOUND) & 0x07;
+    current_byte = p->values[PATCH_PARAM_ENV_4_DECAY] & 0x1F;
 
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_3_HOLD_MODE_KEYSCALING)] = current_byte;
+    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_4_DECAY)] = current_byte;
 
-    /* vibrato lfo */
-    current_byte = ((p->lfo_polarity[0] - PATCH_LFO_POLARITY_LOWER_BOUND) & 0x01) << 7;
-    current_byte |= ((p->lfo_waveform[0] - PATCH_LFO_WAVEFORM_LOWER_BOUND) & 0x03) << 4;
-    current_byte |= (p->lfo_speed[0] - PATCH_LFO_SPEED_LOWER_BOUND) & 0x0F;
+    current_byte =  (p->values[PATCH_PARAM_ENV_4_HOLD_MODE] & 0x03) << 5;
+    current_byte |= p->values[PATCH_PARAM_ENV_4_SUSTAIN] & 0x1F;
 
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, VIBRATO_POLARITY_WAVEFORM_SPEED)] = current_byte;
+    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_4_HOLD_MODE_SUSTAIN)] = current_byte;
 
-    current_byte = ((p->lfo_sync[0] - PATCH_SYNC_LOWER_BOUND) & 0x01) << 7;
-    current_byte |= (p->lfo_delay[0] - PATCH_LFO_DELAY_LOWER_BOUND) & 0x3F;
+    current_byte =  (p->values[PATCH_PARAM_ENV_4_HOLD_LEVEL] & 0x0F) << 4;
+    current_byte |= p->values[PATCH_PARAM_ENV_4_RELEASE] & 0x0F;
 
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, VIBRATO_SYNC_DELAY)] = current_byte;
+    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_4_HOLD_LEVEL_RELEASE)] = current_byte;
 
-    current_byte = (p->lfo_depth[0] - PATCH_LFO_DEPTH_LOWER_BOUND) & 0x7F;
+    current_byte = p->values[PATCH_PARAM_ENV_4_MAX_LEVEL] & 0x7F;
 
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, VIBRATO_DEPTH)] = current_byte;
+    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ENV_4_MAX_LEVEL)] = current_byte;
 
-    /* tremolo lfo */
-    current_byte = ((p->lfo_waveform[1] - PATCH_LFO_WAVEFORM_LOWER_BOUND) & 0x03) << 4;
-    current_byte |= (p->lfo_speed[1] - PATCH_LFO_SPEED_LOWER_BOUND) & 0x0F;
+    /* keyscaling */
+    current_byte =  (p->values[PATCH_PARAM_ENV_1_RATE_KEYSCALING] & 0x03) << 6;
+    current_byte |= (p->values[PATCH_PARAM_ENV_2_RATE_KEYSCALING] & 0x03) << 4;
+    current_byte |= (p->values[PATCH_PARAM_ENV_3_RATE_KEYSCALING] & 0x03) << 2;
+    current_byte |= p->values[PATCH_PARAM_ENV_4_RATE_KEYSCALING] & 0x03;
 
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, TREMOLO_WAVEFORM_SPEED)] = current_byte;
+    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, RATE_KEYSCALING)] = current_byte;
 
-    current_byte = ((p->lfo_sync[1] - PATCH_SYNC_LOWER_BOUND) & 0x01) << 7;
-    current_byte |= (p->lfo_delay[1] - PATCH_LFO_DELAY_LOWER_BOUND) & 0x3F;
+    current_byte =  (p->values[PATCH_PARAM_ENV_1_LEVEL_KEYSCALING] & 0x03) << 6;
+    current_byte |= (p->values[PATCH_PARAM_ENV_2_LEVEL_KEYSCALING] & 0x03) << 4;
+    current_byte |= (p->values[PATCH_PARAM_ENV_3_LEVEL_KEYSCALING] & 0x03) << 2;
+    current_byte |= p->values[PATCH_PARAM_ENV_4_LEVEL_KEYSCALING] & 0x03;
 
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, TREMOLO_SYNC_DELAY)] = current_byte;
+    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, LEVEL_KEYSCALING)] = current_byte;
 
-    current_byte = (p->lfo_depth[1] - PATCH_LFO_DEPTH_LOWER_BOUND) & 0x7F;
+    /* vibrato, tremolo */
+    current_byte =  (p->values[PATCH_PARAM_VIBRATO_SPEED] & 0x0F) << 4;
+    current_byte |= p->values[PATCH_PARAM_TREMOLO_SPEED] & 0x0F;
 
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, TREMOLO_DEPTH)] = current_byte;
+    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, VIBRATO_TREMOLO_SPEED)] = current_byte;
 
-    /* chorus */
-    current_byte = ((p->lfo_waveform[2] - PATCH_LFO_WAVEFORM_LOWER_BOUND) & 0x03) << 4;
-    current_byte |= (p->lfo_speed[2] - PATCH_LFO_SPEED_LOWER_BOUND) & 0x0F;
+    current_byte =  (p->values[PATCH_PARAM_VIBRATO_WAVEFORM] & 0x03) << 6;
+    current_byte |= p->values[PATCH_PARAM_VIBRATO_DELAY] & 0x3F;
 
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, CHORUS_WAVEFORM_SPEED)] = current_byte;
+    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, VIBRATO_WAVEFORM_DELAY)] = current_byte;
 
-    current_byte = ((p->lfo_sync[2] - PATCH_SYNC_LOWER_BOUND) & 0x01) << 7;
-    current_byte |= (p->lfo_delay[2] - PATCH_LFO_DELAY_LOWER_BOUND) & 0x3F;
+    current_byte =  (p->values[PATCH_PARAM_VIBRATO_SYNC] & 0x01) << 7;
+    current_byte |= p->values[PATCH_PARAM_VIBRATO_DEPTH] & 0x7F;
 
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, CHORUS_SYNC_DELAY)] = current_byte;
+    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, VIBRATO_SYNC_DEPTH)] = current_byte;
 
-    current_byte = (p->lfo_depth[2] - PATCH_LFO_DEPTH_LOWER_BOUND) & 0x7F;
+    current_byte =  (p->values[PATCH_PARAM_TREMOLO_WAVEFORM] & 0x03) << 6;
+    current_byte |= p->values[PATCH_PARAM_TREMOLO_DELAY] & 0x3F;
 
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, CHORUS_DEPTH)] = current_byte;
+    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, TREMOLO_WAVEFORM_DELAY)] = current_byte;
 
-    /* sensitivities */
-    current_byte = ((p->boost_sensitivity - PATCH_SENSITIVITY_LOWER_BOUND) & 0x0F) << 4;
-    current_byte |= (p->velocity_sensitivity - PATCH_SENSITIVITY_LOWER_BOUND) & 0x0F;
+    current_byte =  (p->values[PATCH_PARAM_TREMOLO_SYNC] & 0x01) << 7;
+    current_byte |= p->values[PATCH_PARAM_TREMOLO_DEPTH] & 0x7F;
 
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, BOOST_VELOCITY_SENS)] = current_byte;
+    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, TREMOLO_SYNC_DEPTH)] = current_byte;
 
-    current_byte = ((p->lfo_sensitivity[0] - PATCH_SENSITIVITY_LOWER_BOUND) & 0x0F) << 4;
-    current_byte |= (p->lfo_sensitivity[1] - PATCH_SENSITIVITY_LOWER_BOUND) & 0x0F;
+    /* sensitivities, filters, midi controller routing */
+    current_byte =  (p->values[PATCH_PARAM_TREMOLO_SENSITIVITY] & 0x03) << 6;
+    current_byte |= (p->values[PATCH_PARAM_VIBRATO_SENSITIVITY] & 0x07) << 3;
+    current_byte |= (p->values[PATCH_PARAM_MOD_WHEEL_ROUTING_VIBRATO] & 0x01) << 2;
+    current_byte |= (p->values[PATCH_PARAM_MOD_WHEEL_ROUTING_TREMOLO] & 0x01) << 1;
+    current_byte |= p->values[PATCH_PARAM_MOD_WHEEL_ROUTING_BOOST] & 0x01;
 
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, VIBRATO_TREMOLO_SENS)] = current_byte;
+    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, TREMOLO_VIBRATO_SENS_MOD_WHEEL)] = current_byte;
 
-    current_byte = ((p->lfo_sensitivity[2] - PATCH_SENSITIVITY_LOWER_BOUND) & 0x0F) << 4;
-    current_byte |= (p->mod_wheel_routing & PATCH_MIDI_CONT_ROUTING_MASK) & 0x0F;
+    current_byte =  (p->values[PATCH_PARAM_HIGHPASS_CUTOFF] & 0x03) << 6;
+    current_byte |= (p->values[PATCH_PARAM_BOOST_SENSITIVITY] & 0x07) << 3;
+    current_byte |= (p->values[PATCH_PARAM_AFTERTOUCH_ROUTING_VIBRATO] & 0x01) << 2;
+    current_byte |= (p->values[PATCH_PARAM_AFTERTOUCH_ROUTING_TREMOLO] & 0x01) << 1;
+    current_byte |= p->values[PATCH_PARAM_AFTERTOUCH_ROUTING_BOOST] & 0x01;
 
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, CHORUS_SENS_MOD_WHEEL_ROUTING)] = current_byte;
+    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, HIGHPASS_BOOST_SENS_AFTERTOUCH)] = current_byte;
 
-    current_byte = ((p->aftertouch_routing & PATCH_MIDI_CONT_ROUTING_MASK) & 0x0F) << 4;
-    current_byte |= (p->exp_pedal_routing & PATCH_MIDI_CONT_ROUTING_MASK) & 0x0F;
+    current_byte =  (p->values[PATCH_PARAM_LOWPASS_CUTOFF] & 0x03) << 6;
+    current_byte |= (p->values[PATCH_PARAM_VELOCITY_SENSITIVITY] & 0x07) << 3;
+    current_byte |= (p->values[PATCH_PARAM_EXP_PEDAL_ROUTING_VIBRATO] & 0x01) << 2;
+    current_byte |= (p->values[PATCH_PARAM_EXP_PEDAL_ROUTING_TREMOLO] & 0x01) << 1;
+    current_byte |= p->values[PATCH_PARAM_EXP_PEDAL_ROUTING_BOOST] & 0x01;
 
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, AFTERTOUCH_EXP_PEDAL_ROUTING)] = current_byte;
+    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, LOWPASS_VELOCITY_SENS_EXP_PEDAL)] = current_byte;
+
+    /* lfo, boost, velocity routing */
+    current_byte =  (p->values[PATCH_PARAM_VIBRATO_ROUTING_OSC_1] & 0x01) << 7;
+    current_byte |= (p->values[PATCH_PARAM_VIBRATO_ROUTING_OSC_2] & 0x01) << 6;
+    current_byte |= (p->values[PATCH_PARAM_VIBRATO_ROUTING_OSC_3] & 0x01) << 5;
+    current_byte |= (p->values[PATCH_PARAM_VIBRATO_ROUTING_OSC_4] & 0x01) << 4;
+    current_byte |= (p->values[PATCH_PARAM_TREMOLO_ROUTING_ENV_1] & 0x01) << 3;
+    current_byte |= (p->values[PATCH_PARAM_TREMOLO_ROUTING_ENV_2] & 0x01) << 2;
+    current_byte |= (p->values[PATCH_PARAM_TREMOLO_ROUTING_ENV_3] & 0x01) << 1;
+    current_byte |= p->values[PATCH_PARAM_TREMOLO_ROUTING_ENV_4] & 0x01;
+
+    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, VIBRATO_TREMOLO_ROUTING)] = current_byte;
+
+    current_byte =  (p->values[PATCH_PARAM_BOOST_ROUTING_ENV_1] & 0x01) << 7;
+    current_byte |= (p->values[PATCH_PARAM_BOOST_ROUTING_ENV_2] & 0x01) << 6;
+    current_byte |= (p->values[PATCH_PARAM_BOOST_ROUTING_ENV_3] & 0x01) << 5;
+    current_byte |= (p->values[PATCH_PARAM_BOOST_ROUTING_ENV_4] & 0x01) << 4;
+    current_byte |= (p->values[PATCH_PARAM_VELOCITY_ROUTING_ENV_1] & 0x01) << 3;
+    current_byte |= (p->values[PATCH_PARAM_VELOCITY_ROUTING_ENV_2] & 0x01) << 2;
+    current_byte |= (p->values[PATCH_PARAM_VELOCITY_ROUTING_ENV_3] & 0x01) << 1;
+    current_byte |= p->values[PATCH_PARAM_VELOCITY_ROUTING_ENV_4] & 0x01;
+
+    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, BOOST_VELOCITY_ROUTING)] = current_byte;
 
     /* pitch envelope */
-    current_byte = (p->peg_attack - PATCH_PEG_TIME_LOWER_BOUND) & 0x7F;
+    current_byte = p->values[PATCH_PARAM_PITCH_ENV_ATTACK] & 0x1F;
 
     cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, PITCH_ENV_ATTACK)] = current_byte;
 
-    current_byte = (p->peg_decay - PATCH_PEG_TIME_LOWER_BOUND) & 0x7F;
+    current_byte = p->values[PATCH_PARAM_PITCH_ENV_DECAY] & 0x1F;
 
     cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, PITCH_ENV_DECAY)] = current_byte;
 
-    current_byte = (p->peg_release - PATCH_PEG_TIME_LOWER_BOUND) & 0x7F;
+    current_byte = p->values[PATCH_PARAM_PITCH_ENV_RELEASE] & 0x0F;
 
     cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, PITCH_ENV_RELEASE)] = current_byte;
 
-    current_byte = (p->peg_maximum - PATCH_PEG_LEVEL_LOWER_BOUND) & 0x7F;
+    current_byte = p->values[PATCH_PARAM_PITCH_ENV_MAX] & 0x7F;
 
-    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, PITCH_ENV_MAXIMUM)] = current_byte;
+    cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, PITCH_ENV_MAX)] = current_byte;
 
-    current_byte = (p->peg_finale - PATCH_PEG_LEVEL_LOWER_BOUND) & 0x7F;
+    current_byte = p->values[PATCH_PARAM_PITCH_ENV_FINALE] & 0x7F;
 
     cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, PITCH_ENV_FINALE)] = current_byte;
 
     /* pitch wheel, arpeggio, portamento */
-    current_byte = ((p->pitch_wheel_mode - PATCH_PITCH_WHEEL_MODE_LOWER_BOUND) & 0x01) << 6;
-    current_byte |= (p->pitch_wheel_range - PATCH_PITCH_WHEEL_RANGE_LOWER_BOUND) & 0x1F;
+    current_byte =  (p->values[PATCH_PARAM_PITCH_WHEEL_MODE] & 0x01) << 4;
+    current_byte |= p->values[PATCH_PARAM_PITCH_WHEEL_RANGE] & 0x0F;
 
     cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, PITCH_WHEEL)] = current_byte;
 
-    current_byte = ((p->arpeggio_pattern - PATCH_ARPEGGIO_PATTERN_LOWER_BOUND) & 0x03) << 6;
-    current_byte |= ((p->arpeggio_octaves - PATCH_ARPEGGIO_OCTAVES_LOWER_BOUND) & 0x03) << 4;
-    current_byte |= (p->arpeggio_speed - PATCH_ARPEGGIO_SPEED_LOWER_BOUND) & 0x0F;
+    current_byte =  (p->values[PATCH_PARAM_ARPEGGIO_PATTERN] & 0x03) << 6;
+    current_byte |= (p->values[PATCH_PARAM_ARPEGGIO_OCTAVE] & 0x03) << 4;
+    current_byte |= p->values[PATCH_PARAM_ARPEGGIO_SPEED] & 0x0F;
 
     cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, ARPEGGIO)] = current_byte;
 
-    current_byte = ((p->arpeggio_mode - PATCH_ARPEGGIO_MODE_LOWER_BOUND) & 0x01) << 7;
-    current_byte |= ((p->portamento_mode - PATCH_PORTAMENTO_MODE_LOWER_BOUND) & 0x01) << 6;
-    current_byte |= ((p->portamento_legato - PATCH_PORTAMENTO_LEGATO_LOWER_BOUND) & 0x03) << 4;
-    current_byte |= (p->portamento_speed - PATCH_PORTAMENTO_SPEED_LOWER_BOUND) & 0x0F;
+    current_byte =  (p->values[PATCH_PARAM_ARPEGGIO_MODE] & 0x01) << 7;
+    current_byte |= (p->values[PATCH_PARAM_PORTAMENTO_MODE] & 0x01) << 6;
+    current_byte |= (p->values[PATCH_PARAM_PORTAMENTO_LEGATO] & 0x03) << 4;
+    current_byte |= p->values[PATCH_PARAM_PORTAMENTO_SPEED] & 0x0F;
 
     cart_data[DATAFILE_COMPUTE_PATCH_DATA_INDEX(m, PORTAMENTO)] = current_byte;
   }
@@ -837,28 +828,12 @@ short int datafile_cart_save(int cart_index, char* filename)
     return 0;
 
   /* write signature */
-  signature[0] = 'G';
-  signature[1] = 'E';
-  signature[2] = 'R';
-  signature[3] = 'S';
+  strcpy(signature, "NSKM");
+  strcat(signature, "GERS");
+  strcat(signature, "CART");
+  strcat(signature, "v1.0");
 
-  if (fwrite(signature, 1, 4, fp) < 4)
-  {
-    fclose(fp);
-    return 1;
-  }
-
-  /* write type */
-  type[0] = 'C';
-  type[1] = 'A';
-  type[2] = 'R';
-  type[3] = 'T';
-
-  if (fwrite(type, 1, 4, fp) < 4)
-  {
-    fclose(fp);
-    return 1;
-  }
+  fwrite(signature, 1, 16, fp);
 
   /* write cart data */
   if (fwrite(cart_data, 1, DATAFILE_BYTES_PER_CART, fp) == 0)

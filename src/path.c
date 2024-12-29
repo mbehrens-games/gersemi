@@ -104,7 +104,7 @@ short int path_init()
     return 1;
 
   strcpy(G_path_cart_test_1, G_path_carts_dir);
-  strcat(G_path_cart_test_1, "cart01.gct");
+  strcat(G_path_cart_test_1, "cart01.crt");
 
   return 0;
 }

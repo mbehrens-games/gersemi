@@ -34,7 +34,7 @@
   }
 
 #define ARPEGGIO_ADJUST_STEP_INDEX()                                           \
-  if (a->pattern == PATCH_ARPEGGIO_PATTERN_UP)                                 \
+  if (a->pattern == 0)                                                         \
   {                                                                            \
     a->step_index = 0;                                                         \
                                                                                \
@@ -46,7 +46,7 @@
         break;                                                                 \
     }                                                                          \
   }                                                                            \
-  else if (a->pattern == PATCH_ARPEGGIO_PATTERN_DOWN)                          \
+  else if (a->pattern == 1)                                                    \
   {                                                                            \
     a->step_index = 0;                                                         \
                                                                                \
@@ -58,8 +58,8 @@
         break;                                                                 \
     }                                                                          \
   }                                                                            \
-  else if ( (a->pattern == PATCH_ARPEGGIO_PATTERN_UP_AND_DOWN) ||              \
-            (a->pattern == PATCH_ARPEGGIO_PATTERN_UP_AND_DOWN_ALT))            \
+  else if ( (a->pattern == 2) ||                                               \
+            (a->pattern == 3))                                                 \
   {                                                                            \
     if (last_half == 0)                                                        \
     {                                                                          \
@@ -88,7 +88,7 @@
   }
 
 /* speed table (in notes per beat) */
-static int  S_arpeggio_speed_table[PATCH_ARPEGGIO_SPEED_NUM_VALUES] = 
+static int  S_arpeggio_speed_table[12] = 
             {  1,  2,  3,  4,  5,  6, 
                8, 10, 12, 16, 20, 24 
             };
@@ -116,19 +116,17 @@ short int arpeggio_reset_all()
     a = &G_arpeggio_bank[k];
 
     /* initialize arpeggio variables */
-    a->mode = PATCH_ARPEGGIO_MODE_DEFAULT;
-    a->pattern = PATCH_ARPEGGIO_PATTERN_DEFAULT;
-    a->octaves = PATCH_ARPEGGIO_OCTAVES_DEFAULT;
-    a->speed = PATCH_ARPEGGIO_SPEED_DEFAULT;
+    a->mode = 0;
+    a->pattern = 0;
+    a->octaves = 0;
+    a->speed = 0;
 
     a->tempo = TEMPO_DEFAULT;
 
     a->phase = 0;
 
-    a->increment = 
-      S_arpeggio_phase_increment_table[TEMPO_DEFAULT - TEMPO_LOWER_BOUND];
-    a->increment *= 
-      S_arpeggio_speed_table[PATCH_ARPEGGIO_SPEED_DEFAULT - PATCH_ARPEGGIO_SPEED_LOWER_BOUND];
+    a->increment = S_arpeggio_phase_increment_table[a->tempo];
+    a->increment *= S_arpeggio_speed_table[0];
 
     for (m = 0; m < ARPEGGIO_NUM_STEPS; m++)
       a->pattern_steps[m] = TUNING_NOTE_BLANK;
@@ -251,11 +249,11 @@ short int arpeggio_compute_pattern_steps(int instrument_index)
   }
 
   /* set the pattern steps based on the pattern */
-  if (a->pattern == PATCH_ARPEGGIO_PATTERN_UP)
+  if (a->pattern == 0)
   {
     a->num_steps = a->num_notes;
   }
-  else if (a->pattern == PATCH_ARPEGGIO_PATTERN_DOWN)
+  else if (a->pattern == 1)
   {
     a->num_steps = a->num_notes;
 
@@ -266,7 +264,7 @@ short int arpeggio_compute_pattern_steps(int instrument_index)
       a->pattern_steps[m] = val;
     }
   }
-  else if (a->pattern == PATCH_ARPEGGIO_PATTERN_UP_AND_DOWN)
+  else if (a->pattern == 2)
   {
     if (a->num_notes >= 3)
     {
@@ -278,7 +276,7 @@ short int arpeggio_compute_pattern_steps(int instrument_index)
     else
       a->num_steps = a->num_notes;
   }
-  else if (a->pattern == PATCH_ARPEGGIO_PATTERN_UP_AND_DOWN_ALT)
+  else if (a->pattern == 3)
   {
     a->num_steps = 2 * a->num_notes;
 
@@ -322,47 +320,30 @@ short int arpeggio_load_patch(int instrument_index,
   /* obtain arpeggio pointer */
   a = &G_arpeggio_bank[instrument_index];
 
-  /* mode */
-  if ((p->arpeggio_mode >= PATCH_ARPEGGIO_MODE_LOWER_BOUND) && 
-      (p->arpeggio_mode <= PATCH_ARPEGGIO_MODE_UPPER_BOUND))
-  {
-    a->mode = p->arpeggio_mode;
-  }
+  /* load patch parameters */
+  if (PATCH_PARAM_IS_VALID_LOOKUP_BY_NAME(ARPEGGIO_MODE))
+    a->mode = p->values[PATCH_PARAM_ARPEGGIO_MODE];
   else
-    a->mode = PATCH_ARPEGGIO_MODE_DEFAULT;
+    a->mode = 0;
 
-  /* pattern */
-  if ((p->arpeggio_pattern >= PATCH_ARPEGGIO_PATTERN_LOWER_BOUND) && 
-      (p->arpeggio_pattern <= PATCH_ARPEGGIO_PATTERN_UPPER_BOUND))
-  {
-    a->pattern = p->arpeggio_pattern;
-  }
+  if (PATCH_PARAM_IS_VALID_LOOKUP_BY_NAME(ARPEGGIO_PATTERN))
+    a->pattern = p->values[PATCH_PARAM_ARPEGGIO_PATTERN];
   else
-    a->pattern = PATCH_ARPEGGIO_PATTERN_DEFAULT;
+    a->pattern = 0;
 
-  /* octaves */
-  if ((p->arpeggio_octaves >= PATCH_ARPEGGIO_OCTAVES_LOWER_BOUND) && 
-      (p->arpeggio_octaves <= PATCH_ARPEGGIO_OCTAVES_UPPER_BOUND))
-  {
-    a->octaves = p->arpeggio_octaves;
-  }
+  if (PATCH_PARAM_IS_VALID_LOOKUP_BY_NAME(ARPEGGIO_OCTAVE))
+    a->octaves = p->values[PATCH_PARAM_ARPEGGIO_OCTAVE];
   else
-    a->octaves = PATCH_ARPEGGIO_OCTAVES_DEFAULT;
+    a->octaves = 0;
 
-  /* speed */
-  if ((p->arpeggio_speed >= PATCH_ARPEGGIO_SPEED_LOWER_BOUND) && 
-      (p->arpeggio_speed <= PATCH_ARPEGGIO_SPEED_UPPER_BOUND))
-  {
-    a->speed = p->arpeggio_speed;
-  }
+  if (PATCH_PARAM_IS_VALID_LOOKUP_BY_NAME(ARPEGGIO_SPEED))
+    a->speed = p->values[PATCH_PARAM_ARPEGGIO_SPEED];
   else
-    a->speed = PATCH_ARPEGGIO_SPEED_DEFAULT;
+    a->speed = 0;
 
   /* set phase increment */
-  a->increment = 
-    S_arpeggio_phase_increment_table[a->tempo - TEMPO_LOWER_BOUND];
-  a->increment *= 
-    S_arpeggio_speed_table[a->speed - PATCH_ARPEGGIO_SPEED_LOWER_BOUND];
+  a->increment = S_arpeggio_phase_increment_table[a->tempo];
+  a->increment *= S_arpeggio_speed_table[a->speed];
 
   /* restart arpeggio if necessary */
   ARPEGGIO_RESTART()
@@ -382,11 +363,8 @@ short int arpeggio_set_mode(int instrument_index, short int mode)
     return 1;
 
   /* make sure the mode is valid */
-  if ((mode < PATCH_ARPEGGIO_MODE_LOWER_BOUND) || 
-      (mode > PATCH_ARPEGGIO_MODE_UPPER_BOUND))
-  {
+  if (PATCH_VALUE_IS_NOT_VALID_LOOKUP_BY_NAME(mode, ARPEGGIO_MODE))
     return 0;
-  }
 
   /* obtain arpeggio pointer */
   a = &G_arpeggio_bank[instrument_index];
@@ -411,11 +389,8 @@ short int arpeggio_set_pattern(int instrument_index, short int pattern)
     return 1;
 
   /* make sure the pattern is valid */
-  if ((pattern < PATCH_ARPEGGIO_PATTERN_LOWER_BOUND) || 
-      (pattern > PATCH_ARPEGGIO_PATTERN_UPPER_BOUND))
-  {
+  if (PATCH_VALUE_IS_NOT_VALID_LOOKUP_BY_NAME(pattern, ARPEGGIO_PATTERN))
     return 0;
-  }
 
   /* obtain arpeggio pointer */
   a = &G_arpeggio_bank[instrument_index];
@@ -443,11 +418,8 @@ short int arpeggio_set_octaves(int instrument_index, short int octaves)
     return 1;
 
   /* make sure the octaves is valid */
-  if ((octaves < PATCH_ARPEGGIO_OCTAVES_LOWER_BOUND) || 
-      (octaves > PATCH_ARPEGGIO_OCTAVES_UPPER_BOUND))
-  {
+  if (PATCH_VALUE_IS_NOT_VALID_LOOKUP_BY_NAME(octaves, ARPEGGIO_OCTAVE))
     return 0;
-  }
 
   /* obtain arpeggio pointer */
   a = &G_arpeggio_bank[instrument_index];
@@ -473,11 +445,8 @@ short int arpeggio_set_speed(int instrument_index, short int speed)
     return 1;
 
   /* make sure the speed is valid */
-  if ((speed < PATCH_ARPEGGIO_SPEED_LOWER_BOUND) || 
-      (speed > PATCH_ARPEGGIO_SPEED_UPPER_BOUND))
-  {
+  if (PATCH_VALUE_IS_NOT_VALID_LOOKUP_BY_NAME(speed, ARPEGGIO_SPEED))
     return 0;
-  }
 
   /* obtain arpeggio pointer */
   a = &G_arpeggio_bank[instrument_index];
@@ -486,10 +455,8 @@ short int arpeggio_set_speed(int instrument_index, short int speed)
   a->speed = speed;
 
   /* set phase increment */
-  a->increment = 
-    S_arpeggio_phase_increment_table[a->tempo - TEMPO_LOWER_BOUND];
-  a->increment *= 
-    S_arpeggio_speed_table[a->speed - PATCH_ARPEGGIO_SPEED_LOWER_BOUND];
+  a->increment = S_arpeggio_phase_increment_table[a->tempo];
+  a->increment *= S_arpeggio_speed_table[a->speed];
 
   return 0;
 }
@@ -545,18 +512,16 @@ short int arpeggio_set_tempo(int instrument_index, short int tempo)
   a = &G_arpeggio_bank[instrument_index];
 
   /* set tempo */
-  if (tempo < TEMPO_LOWER_BOUND)
-    a->tempo = TEMPO_LOWER_BOUND;
-  else if (tempo > TEMPO_UPPER_BOUND)
-    a->tempo = TEMPO_UPPER_BOUND;
+  if (tempo < 0)
+    a->tempo = 0;
+  else if (tempo > TEMPO_NUM_VALUES - 1)
+    a->tempo = TEMPO_NUM_VALUES - 1;
   else
     a->tempo = tempo;
 
   /* adjust phase increment based on tempo */
-  a->increment = 
-    S_arpeggio_phase_increment_table[a->tempo - TEMPO_LOWER_BOUND];
-  a->increment *= 
-    S_arpeggio_speed_table[a->speed - PATCH_ARPEGGIO_SPEED_LOWER_BOUND];
+  a->increment = S_arpeggio_phase_increment_table[a->tempo];
+  a->increment *= S_arpeggio_speed_table[a->speed];
 
   return 0;
 }
@@ -614,8 +579,8 @@ short int arpeggio_key_pressed(int instrument_index, int note)
       last_note = a->pattern_steps[a->step_index];
 
     /* determine last half */
-    if ((a->pattern == PATCH_ARPEGGIO_PATTERN_UP_AND_DOWN) || 
-        (a->pattern == PATCH_ARPEGGIO_PATTERN_UP_AND_DOWN_ALT))
+    if ((a->pattern == 2) || 
+        (a->pattern == 3))
     {
       if (a->step_index >= a->num_steps / 2)
         last_half = 1;
@@ -690,8 +655,8 @@ short int arpeggio_key_released(int instrument_index, int note)
       last_note = a->pattern_steps[a->step_index];
 
     /* determine last half */
-    if ((a->pattern == PATCH_ARPEGGIO_PATTERN_UP_AND_DOWN) || 
-        (a->pattern == PATCH_ARPEGGIO_PATTERN_UP_AND_DOWN_ALT))
+    if ((a->pattern == 2) || 
+        (a->pattern == 3))
     {
       if (a->step_index >= a->num_steps / 2)
         last_half = 1;
@@ -744,7 +709,7 @@ short int arpeggio_update_all()
         continue;
 
       /* send note off for the previous note, if necessary */
-      if (a->mode == PATCH_ARPEGGIO_MODE_HARP)
+      if (a->mode == 0)
         instrument_note_off(k, a->pattern_steps[a->step_index]);
 
       /* update step index */
@@ -772,7 +737,7 @@ short int arpeggio_generate_tables()
   for (m = 0; m < TEMPO_NUM_VALUES; m++)
   {
     S_arpeggio_phase_increment_table[m] = 
-      (int) ((1 * TEMPO_COMPUTE_BEATS_PER_SECOND(m + TEMPO_LOWER_BOUND) * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
+      (int) ((1 * TEMPO_COMPUTE_BEATS_PER_SECOND(m) * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
   }
 
   return 0;

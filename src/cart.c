@@ -8,29 +8,37 @@
 #include "bank.h"
 #include "cart.h"
 
-#define PATCH_RESET_PARAMETER(param, name)                                     \
-  p->param = PATCH_##name##_DEFAULT;
-
-#define PATCH_BOUND_PARAMETER(param, name)                                     \
-  if (p->param < PATCH_##name##_LOWER_BOUND)                                   \
-    p->param = PATCH_##name##_LOWER_BOUND;                                     \
-  else if (p->param > PATCH_##name##_UPPER_BOUND)                              \
-    p->param = PATCH_##name##_UPPER_BOUND;
-
-#define PATCH_COPY_PARAMETER(param)                                            \
-  dest_p->param = src_p->param;
-
-#define PATCH_CLEAR_FLAGS(param, name)                                         \
-  p->param = PATCH_##name##_CLEAR;
-
-#define PATCH_MASK_FLAGS(param, name)                                          \
-  p->param &= PATCH_##name##_MASK;
-
-#define PATCH_COPY_FLAGS(param)                                                \
-  dest_p->param = src_p->param;
-
 /* cart bank */
 cart G_cart_bank[BANK_NUM_CARTS];
+
+/* patch parameter bounds array */
+unsigned char G_patch_param_bounds[PATCH_NUM_PARAMS] = 
+  {  3,   1,                                    /* algorithm, legacy keyscale */
+     1,   1,                                    /* noise enable, osc sync */
+     3,   7,   3,   1,  15,   7,   7,           /* osc 1 */
+     3,   7,   3,   1,  15,   7,   7,           /* osc 2 */
+     3,   7,   3,   1,  15,   7,   7,           /* osc 3 */
+     3,   7,   3,   1,  15,   7,   7,           /* osc 4 */
+    31,  31,  31,  15, 127,   3,  15,   3,   3, /* env 1 */
+    31,  31,  31,  15, 127,   3,  15,   3,   3, /* env 2 */
+    31,  31,  31,  15, 127,   3,  15,   3,   3, /* env 3 */
+    31,  31,  31,  15, 127,   3,  15,   3,   3, /* env 4 */
+     1,   1,   1,   1,                          /* vibrato routing */
+     1,   1,   1,   1,                          /* tremolo routing */
+     1,   1,   1,   1,                          /* boost routing */
+     1,   1,   1,   1,                          /* velocity routing */
+     3,  47,  15, 127,   7,   1,                /* vibrato */
+     3,  47,  15, 127,   3,   1,                /* tremolo */
+     7,   7,                                    /* boost, velocity sensitivity */
+    31,  31,  15,  95,  95,                     /* pitch envelope */
+     3,   3,                                    /* filter cutoffs */
+     1,  11,                                    /* pitch wheel */
+     1,   3,   3,  11,                          /* arpeggio */
+     1,   2,  15,                               /* portamento */
+     1,   1,   1,                               /* mod wheel routing */
+     1,   1,   1,                               /* aftertouch routing */
+     1,   1,   1                                /* exp pedal routing */
+  };
 
 /*******************************************************************************
 ** cart_reset_all()
@@ -53,7 +61,7 @@ short int cart_reset_patch(int cart_index, int patch_index)
 {
   int m;
 
-  cart* c;
+  cart*  c;
   patch* p;
 
   /* make sure that the cart & patch indices are valid */
@@ -71,92 +79,9 @@ short int cart_reset_patch(int cart_index, int patch_index)
   for (m = 0; m < PATCH_NAME_SIZE; m++)
     p->name[m] = '\0';
 
-  /* algorithm */
-  PATCH_RESET_PARAMETER(algorithm,            ALGORITHM)
-
-  /* oscillator sync */
-  PATCH_RESET_PARAMETER(osc_sync,             SYNC)
-
-  /* oscillators */
-  for (m = 0; m < BANK_OSCILLATORS_PER_VOICE; m++)
-  {
-    PATCH_RESET_PARAMETER(osc_waveform[m],    OSC_WAVEFORM)
-    PATCH_RESET_PARAMETER(osc_phi[m],         OSC_PHI)
-
-    PATCH_RESET_PARAMETER(osc_freq_mode[m],   OSC_FREQ_MODE)
-    PATCH_RESET_PARAMETER(osc_multiple[m],    OSC_MULTIPLE)
-    PATCH_RESET_PARAMETER(osc_divisor[m],     OSC_DIVISOR)
-    PATCH_RESET_PARAMETER(osc_octave[m],      OSC_OCTAVE)
-    PATCH_RESET_PARAMETER(osc_note[m],        OSC_NOTE)
-    PATCH_RESET_PARAMETER(osc_detune[m],      OSC_DETUNE)
-
-    PATCH_CLEAR_FLAGS(osc_routing[m],         OSC_ROUTING)
-  }
-
-  /* amplitude envelopes */
-  for (m = 0; m < BANK_ENVELOPES_PER_VOICE; m++)
-  {
-    PATCH_RESET_PARAMETER(env_attack[m],      ENV_TIME)
-    PATCH_RESET_PARAMETER(env_decay[m],       ENV_TIME)
-    PATCH_RESET_PARAMETER(env_sustain[m],     ENV_TIME)
-    PATCH_RESET_PARAMETER(env_release[m],     ENV_TIME)
-    PATCH_RESET_PARAMETER(env_amplitude[m],   ENV_LEVEL)
-    PATCH_RESET_PARAMETER(env_hold_level[m],  ENV_LEVEL)
-    PATCH_RESET_PARAMETER(env_hold_mode[m],   ENV_HOLD_MODE)
-    PATCH_RESET_PARAMETER(env_rate_ks[m],     ENV_KEYSCALING)
-    PATCH_RESET_PARAMETER(env_level_ks[m],    ENV_KEYSCALING)
-
-    PATCH_CLEAR_FLAGS(env_routing[m],         ENV_ROUTING)
-  }
-
-  /* lfos */
-  for (m = 0; m < BANK_LFOS_PER_VOICE; m++)
-  {
-    PATCH_RESET_PARAMETER(lfo_waveform[m],    LFO_WAVEFORM)
-    PATCH_RESET_PARAMETER(lfo_delay[m],       LFO_DELAY)
-    PATCH_RESET_PARAMETER(lfo_speed[m],       LFO_SPEED)
-    PATCH_RESET_PARAMETER(lfo_depth[m],       LFO_DEPTH)
-    PATCH_RESET_PARAMETER(lfo_sensitivity[m], SENSITIVITY)
-    PATCH_RESET_PARAMETER(lfo_sync[m],        SYNC)
-    PATCH_RESET_PARAMETER(lfo_polarity[m],    LFO_POLARITY)
-  }
-
-  /* boost */
-  PATCH_RESET_PARAMETER(boost_sensitivity,    SENSITIVITY)
-
-  /* velocity */
-  PATCH_RESET_PARAMETER(velocity_sensitivity, SENSITIVITY)
-
-  /* filters */
-  PATCH_RESET_PARAMETER(highpass_cutoff,      HIGHPASS_CUTOFF)
-  PATCH_RESET_PARAMETER(lowpass_cutoff,       LOWPASS_CUTOFF)
-
-  /* pitch envelope */
-  PATCH_RESET_PARAMETER(peg_attack,           PEG_TIME)
-  PATCH_RESET_PARAMETER(peg_decay,            PEG_TIME)
-  PATCH_RESET_PARAMETER(peg_release,          PEG_TIME)
-  PATCH_RESET_PARAMETER(peg_maximum,          PEG_LEVEL)
-  PATCH_RESET_PARAMETER(peg_finale,           PEG_LEVEL)
-
-  /* pitch wheel */
-  PATCH_RESET_PARAMETER(pitch_wheel_mode,     PITCH_WHEEL_MODE)
-  PATCH_RESET_PARAMETER(pitch_wheel_range,    PITCH_WHEEL_RANGE)
-
-  /* arpeggio */
-  PATCH_RESET_PARAMETER(arpeggio_mode,        ARPEGGIO_MODE)
-  PATCH_RESET_PARAMETER(arpeggio_pattern,     ARPEGGIO_PATTERN)
-  PATCH_RESET_PARAMETER(arpeggio_octaves,     ARPEGGIO_OCTAVES)
-  PATCH_RESET_PARAMETER(arpeggio_speed,       ARPEGGIO_SPEED)
-
-  /* portamento */
-  PATCH_RESET_PARAMETER(portamento_mode,      PORTAMENTO_MODE)
-  PATCH_RESET_PARAMETER(portamento_legato,    PORTAMENTO_LEGATO)
-  PATCH_RESET_PARAMETER(portamento_speed,     PORTAMENTO_SPEED)
-
-  /* midi controller routing */
-  PATCH_CLEAR_FLAGS(mod_wheel_routing,        MIDI_CONT_ROUTING)
-  PATCH_CLEAR_FLAGS(aftertouch_routing,       MIDI_CONT_ROUTING)
-  PATCH_CLEAR_FLAGS(exp_pedal_routing,        MIDI_CONT_ROUTING)
+  /* reset patch data */
+  for (m = 0; m < PATCH_NUM_PARAMS; m++)
+    p->values[m] = 0;
 
   return 0;
 }
@@ -168,7 +93,7 @@ short int cart_validate_patch(int cart_index, int patch_index)
 {
   int m;
 
-  cart* c;
+  cart*  c;
   patch* p;
 
   /* make sure that the cart & patch indices are valid */
@@ -199,92 +124,14 @@ short int cart_validate_patch(int cart_index, int patch_index)
       p->name[m] = ' ';
   }
 
-  /* algorithm */
-  PATCH_BOUND_PARAMETER(algorithm,            ALGORITHM)
-
-  /* oscillator sync */
-  PATCH_BOUND_PARAMETER(osc_sync,             SYNC)
-
-  /* oscillators */
-  for (m = 0; m < BANK_OSCILLATORS_PER_VOICE; m++)
+  /* validate patch data */
+  for (m = 0; m < PATCH_NUM_PARAMS; m++)
   {
-    PATCH_BOUND_PARAMETER(osc_waveform[m],    OSC_WAVEFORM)
-    PATCH_BOUND_PARAMETER(osc_phi[m],         OSC_PHI)
-
-    PATCH_BOUND_PARAMETER(osc_freq_mode[m],   OSC_FREQ_MODE)
-    PATCH_BOUND_PARAMETER(osc_multiple[m],    OSC_MULTIPLE)
-    PATCH_BOUND_PARAMETER(osc_divisor[m],     OSC_DIVISOR)
-    PATCH_BOUND_PARAMETER(osc_octave[m],      OSC_OCTAVE)
-    PATCH_BOUND_PARAMETER(osc_note[m],        OSC_NOTE)
-    PATCH_BOUND_PARAMETER(osc_detune[m],      OSC_DETUNE)
-
-    PATCH_MASK_FLAGS(osc_routing[m],          OSC_ROUTING)
+    if (p->values[m] < 0)
+      p->values[m] = 0;
+    else if (p->values[m] > G_patch_param_bounds[m])
+      p->values[m] = G_patch_param_bounds[m];
   }
-
-  /* amplitude envelopes */
-  for (m = 0; m < BANK_ENVELOPES_PER_VOICE; m++)
-  {
-    PATCH_BOUND_PARAMETER(env_attack[m],      ENV_TIME)
-    PATCH_BOUND_PARAMETER(env_decay[m],       ENV_TIME)
-    PATCH_BOUND_PARAMETER(env_sustain[m],     ENV_TIME)
-    PATCH_BOUND_PARAMETER(env_release[m],     ENV_TIME)
-    PATCH_BOUND_PARAMETER(env_amplitude[m],   ENV_LEVEL)
-    PATCH_BOUND_PARAMETER(env_hold_level[m],  ENV_LEVEL)
-    PATCH_BOUND_PARAMETER(env_hold_mode[m],   ENV_HOLD_MODE)
-    PATCH_BOUND_PARAMETER(env_rate_ks[m],     ENV_KEYSCALING)
-    PATCH_BOUND_PARAMETER(env_level_ks[m],    ENV_KEYSCALING)
-
-    PATCH_MASK_FLAGS(env_routing[m],          ENV_ROUTING)
-  }
-
-  /* lfos */
-  for (m = 0; m < BANK_LFOS_PER_VOICE; m++)
-  {
-    PATCH_BOUND_PARAMETER(lfo_waveform[m],    LFO_WAVEFORM)
-    PATCH_BOUND_PARAMETER(lfo_delay[m],       LFO_DELAY)
-    PATCH_BOUND_PARAMETER(lfo_speed[m],       LFO_SPEED)
-    PATCH_BOUND_PARAMETER(lfo_depth[m],       LFO_DEPTH)
-    PATCH_BOUND_PARAMETER(lfo_sensitivity[m], SENSITIVITY)
-    PATCH_BOUND_PARAMETER(lfo_sync[m],        SYNC)
-    PATCH_BOUND_PARAMETER(lfo_polarity[m],    LFO_POLARITY)
-  }
-
-  /* boost */
-  PATCH_BOUND_PARAMETER(boost_sensitivity,    SENSITIVITY)
-
-  /* velocity */
-  PATCH_BOUND_PARAMETER(velocity_sensitivity, SENSITIVITY)
-
-  /* filters */
-  PATCH_BOUND_PARAMETER(highpass_cutoff,      HIGHPASS_CUTOFF)
-  PATCH_BOUND_PARAMETER(lowpass_cutoff,       LOWPASS_CUTOFF)
-
-  /* pitch envelope */
-  PATCH_BOUND_PARAMETER(peg_attack,           PEG_TIME)
-  PATCH_BOUND_PARAMETER(peg_decay,            PEG_TIME)
-  PATCH_BOUND_PARAMETER(peg_release,          PEG_TIME)
-  PATCH_BOUND_PARAMETER(peg_maximum,          PEG_LEVEL)
-  PATCH_BOUND_PARAMETER(peg_finale,           PEG_LEVEL)
-
-  /* pitch wheel */
-  PATCH_BOUND_PARAMETER(pitch_wheel_mode,     PITCH_WHEEL_MODE)
-  PATCH_BOUND_PARAMETER(pitch_wheel_range,    PITCH_WHEEL_RANGE)
-
-  /* arpeggio */
-  PATCH_BOUND_PARAMETER(arpeggio_mode,        ARPEGGIO_MODE)
-  PATCH_BOUND_PARAMETER(arpeggio_pattern,     ARPEGGIO_PATTERN)
-  PATCH_BOUND_PARAMETER(arpeggio_octaves,     ARPEGGIO_OCTAVES)
-  PATCH_BOUND_PARAMETER(arpeggio_speed,       ARPEGGIO_SPEED)
-
-  /* portamento */
-  PATCH_BOUND_PARAMETER(portamento_mode,      PORTAMENTO_MODE)
-  PATCH_BOUND_PARAMETER(portamento_legato,    PORTAMENTO_LEGATO)
-  PATCH_BOUND_PARAMETER(portamento_speed,     PORTAMENTO_SPEED)
-
-  /* midi controller routing */
-  PATCH_MASK_FLAGS(mod_wheel_routing,         MIDI_CONT_ROUTING)
-  PATCH_MASK_FLAGS(aftertouch_routing,        MIDI_CONT_ROUTING)
-  PATCH_MASK_FLAGS(exp_pedal_routing,         MIDI_CONT_ROUTING)
 
   return 0;
 }
@@ -292,15 +139,15 @@ short int cart_validate_patch(int cart_index, int patch_index)
 /*******************************************************************************
 ** cart_copy_patch()
 *******************************************************************************/
-short int cart_copy_patch( int dest_cart_index,  int dest_patch_index, 
-                            int src_cart_index,   int src_patch_index)
+short int cart_copy_patch(int dest_cart_index,  int dest_patch_index, 
+                          int src_cart_index,   int src_patch_index)
 {
   int m;
 
-  cart* dest_c;
+  cart*  dest_c;
   patch* dest_p;
 
-  cart* src_c;
+  cart*  src_c;
   patch* src_p;
 
   /* make sure the destination and source indices are different */
@@ -334,92 +181,9 @@ short int cart_copy_patch( int dest_cart_index,  int dest_patch_index,
   /* copy patch name */
   strncpy(dest_p->name, src_p->name, PATCH_NAME_SIZE);
 
-  /* algorithm */
-  PATCH_COPY_PARAMETER(algorithm)
-
-  /* oscillator sync */
-  PATCH_COPY_PARAMETER(osc_sync)
-
-  /* oscillators */
-  for (m = 0; m < BANK_OSCILLATORS_PER_VOICE; m++)
-  {
-    PATCH_COPY_PARAMETER(osc_waveform[m])
-    PATCH_COPY_PARAMETER(osc_phi[m])
-
-    PATCH_COPY_PARAMETER(osc_freq_mode[m])
-    PATCH_COPY_PARAMETER(osc_multiple[m])
-    PATCH_COPY_PARAMETER(osc_divisor[m])
-    PATCH_COPY_PARAMETER(osc_octave[m])
-    PATCH_COPY_PARAMETER(osc_note[m])
-    PATCH_COPY_PARAMETER(osc_detune[m])
-
-    PATCH_COPY_FLAGS(osc_routing[m])
-  }
-
-  /* amplitude envelopes */
-  for (m = 0; m < BANK_ENVELOPES_PER_VOICE; m++)
-  {
-    PATCH_COPY_PARAMETER(env_attack[m])
-    PATCH_COPY_PARAMETER(env_decay[m])
-    PATCH_COPY_PARAMETER(env_sustain[m])
-    PATCH_COPY_PARAMETER(env_release[m])
-    PATCH_COPY_PARAMETER(env_amplitude[m])
-    PATCH_COPY_PARAMETER(env_hold_level[m])
-    PATCH_COPY_PARAMETER(env_hold_mode[m])
-    PATCH_COPY_PARAMETER(env_rate_ks[m])
-    PATCH_COPY_PARAMETER(env_level_ks[m])
-
-    PATCH_COPY_FLAGS(env_routing[m])
-  }
-
-  /* lfos */
-  for (m = 0; m < BANK_LFOS_PER_VOICE; m++)
-  {
-    PATCH_COPY_PARAMETER(lfo_waveform[m])
-    PATCH_COPY_PARAMETER(lfo_delay[m])
-    PATCH_COPY_PARAMETER(lfo_speed[m])
-    PATCH_COPY_PARAMETER(lfo_depth[m])
-    PATCH_COPY_PARAMETER(lfo_sensitivity[m])
-    PATCH_COPY_PARAMETER(lfo_sync[m])
-    PATCH_COPY_PARAMETER(lfo_polarity[m])
-  }
-
-  /* boost */
-  PATCH_COPY_PARAMETER(boost_sensitivity)
-
-  /* velocity */
-  PATCH_COPY_PARAMETER(velocity_sensitivity)
-
-  /* filters */
-  PATCH_COPY_PARAMETER(highpass_cutoff)
-  PATCH_COPY_PARAMETER(lowpass_cutoff)
-
-  /* pitch envelope */
-  PATCH_COPY_PARAMETER(peg_attack)
-  PATCH_COPY_PARAMETER(peg_decay)
-  PATCH_COPY_PARAMETER(peg_release)
-  PATCH_COPY_PARAMETER(peg_maximum)
-  PATCH_COPY_PARAMETER(peg_finale)
-
-  /* pitch wheel */
-  PATCH_COPY_PARAMETER(pitch_wheel_mode)
-  PATCH_COPY_PARAMETER(pitch_wheel_range)
-
-  /* arpeggio */
-  PATCH_COPY_PARAMETER(arpeggio_mode)
-  PATCH_COPY_PARAMETER(arpeggio_pattern)
-  PATCH_COPY_PARAMETER(arpeggio_octaves)
-  PATCH_COPY_PARAMETER(arpeggio_speed)
-
-  /* portamento */
-  PATCH_COPY_PARAMETER(portamento_mode)
-  PATCH_COPY_PARAMETER(portamento_legato)
-  PATCH_COPY_PARAMETER(portamento_speed)
-
-  /* midi controller routing */
-  PATCH_COPY_FLAGS(mod_wheel_routing)
-  PATCH_COPY_FLAGS(aftertouch_routing)
-  PATCH_COPY_FLAGS(exp_pedal_routing)
+  /* copy patch data */
+  for (m = 0; m < PATCH_NUM_PARAMS; m++)
+    dest_p->values[m] = src_p->values[m];
 
   return 0;
 }

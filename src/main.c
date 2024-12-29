@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
   synth_generate_tables();
 
   /* generate screen layouts */
-  layout_setup_all();
+  layout_generate_tables();
 
   /* initialize controller input states */
   controls_setup();

@@ -7,8 +7,6 @@
 
 #include "bank.h"
 
-#define VOICE_NUM_OSCILLATOR_SETS 2
-
 typedef struct voice
 {
   /* algorithm, sync */
@@ -31,20 +29,17 @@ typedef struct voice
   short int osc_pitch_index[BANK_OSCILLATORS_PER_VOICE];
 
   /* phases */
-  unsigned int osc_phase[BANK_OSCILLATORS_PER_VOICE][VOICE_NUM_OSCILLATOR_SETS];
+  unsigned int osc_phase[BANK_OSCILLATORS_PER_VOICE];
 
-  /* noise lfsrs */
-  unsigned int osc_lfsr[BANK_OSCILLATORS_PER_VOICE];
+  /* noise lfsr */
+  unsigned int noise_lfsr;
 
   /* envelope input levels */
   short int env_input[BANK_ENVELOPES_PER_VOICE];
 
-  /* vibrato, chorus */
+  /* vibrato */
   short int vibrato_base;
   short int vibrato_extra;
-
-  short int chorus_base;
-  short int chorus_extra;
 
   /* pitch wheel */
   short int pitch_wheel_mode;

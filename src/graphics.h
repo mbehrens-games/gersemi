@@ -53,9 +53,9 @@ enum
 #define GRAPHICS_INTERMEDIATE_TEXTURE_HEIGHT  1024
 
 /* the maximum number of tiles is determined as follows:        */
-/*   number of 16x16 background tiles (1 screen): 25 * 14 = 350 */
-/* overall, this is 350                                         */
-#define GRAPHICS_MAX_BACKGROUND_TILES 350
+/*   number of 8x8 background tiles (1 screen): 50 * 28 = 1400  */
+/* overall, this is 1400                                        */
+#define GRAPHICS_MAX_BACKGROUND_TILES 1400
 
 /* the maximum number of sprites is determined as follows:  */
 /*   number of 8x8  (1 screen): 50 * 28 = 1400              */

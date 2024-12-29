@@ -8,11 +8,9 @@
 /* function declarations */
 short int vb_all_load_background();
 
-short int vb_all_load_top_panel();
+short int vb_all_load_top_bar();
 
 short int vb_all_load_cart_screen();
-short int vb_all_load_audition_panel();
-
 short int vb_all_load_instruments_screen();
 short int vb_all_load_song_screen();
 short int vb_all_load_mixer_screen();

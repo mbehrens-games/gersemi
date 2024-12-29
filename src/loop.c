@@ -28,46 +28,43 @@ short int loop_advance_frame()
   /* update vbos */
   if (G_program_screen == PROGRAM_SCREEN_CART)
   {
-    vb_all_load_top_panel();
+    vb_all_load_top_bar();
     vb_all_load_cart_screen();
-    vb_all_load_audition_panel();
   }
   else if (G_program_screen == PROGRAM_SCREEN_INSTRUMENTS)
   {
-    vb_all_load_top_panel();
+    vb_all_load_top_bar();
     vb_all_load_instruments_screen();
   }
   else if (G_program_screen == PROGRAM_SCREEN_SONG)
   {
-    vb_all_load_top_panel();
+    vb_all_load_top_bar();
     vb_all_load_song_screen();
   }
   else if (G_program_screen == PROGRAM_SCREEN_MIXER)
   {
-    vb_all_load_top_panel();
+    vb_all_load_top_bar();
     vb_all_load_mixer_screen();
   }
   else if (G_program_screen == PROGRAM_SCREEN_SOUND_FX)
   {
-    vb_all_load_top_panel();
+    vb_all_load_top_bar();
     vb_all_load_sound_fx_screen();
   }
   else if (G_program_screen == PROGRAM_SCREEN_DPCM)
   {
-    vb_all_load_top_panel();
+    vb_all_load_top_bar();
     vb_all_load_dpcm_screen();
   }
   else if (G_program_screen == PROGRAM_SCREEN_TEXT_ENTRY_CART_NAME)
   {
-    vb_all_load_top_panel();
+    vb_all_load_top_bar();
     vb_all_load_cart_screen();
-    vb_all_load_audition_panel();
   }
   else if (G_program_screen == PROGRAM_SCREEN_TEXT_ENTRY_PATCH_NAME)
   {
-    vb_all_load_top_panel();
+    vb_all_load_top_bar();
     vb_all_load_cart_screen();
-    vb_all_load_audition_panel();
   }
 
   /* rendering */

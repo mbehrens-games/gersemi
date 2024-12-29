@@ -20,8 +20,7 @@
 enum
 {
   LFO_TYPE_VIBRATO = 1, 
-  LFO_TYPE_TREMOLO, 
-  LFO_TYPE_CHORUS 
+  LFO_TYPE_TREMOLO 
 };
 
 #define LFO_TREMOLO_SENSITIVITY_STEP  (1 * 32)
@@ -40,15 +39,10 @@ enum
 /* vib/trem speeds (in cycles per beat)     */
 /* at 120 bpm, the frequencies range from   */
 /* 0.5 hz to 8 hz (counting up by 0.5 hz)   */
-#define LFO_VIB_TREM_SPEED_STEP 0.25f
-
-/* chorus speeds (in cycles per beat)       */
-/* at 120 bpm, the frequencies range from   */
-/* 0.1 hz to 1.6 hz (counting up by 0.1 hz) */
-#define LFO_CHORUS_SPEED_STEP 0.05f
+#define LFO_SPEED_STEP 0.25f
 
 /* amplitude tables */
-static short int  S_lfo_vibrato_max_table[PATCH_SENSITIVITY_NUM_VALUES] = 
+static short int  S_lfo_vibrato_max_table[16] = 
                   { (  2 * TUNING_NUM_SEMITONE_STEPS) / 128, 
                     (  4 * TUNING_NUM_SEMITONE_STEPS) / 128, 
                     (  6 * TUNING_NUM_SEMITONE_STEPS) / 128, 
@@ -67,7 +61,7 @@ static short int  S_lfo_vibrato_max_table[PATCH_SENSITIVITY_NUM_VALUES] =
                     (256 * TUNING_NUM_SEMITONE_STEPS) / 128 
                   };
 
-static short int  S_lfo_tremolo_max_table[PATCH_SENSITIVITY_NUM_VALUES] = 
+static short int  S_lfo_tremolo_max_table[16] = 
                   { LFO_TREMOLO_SENSITIVITY_STEP *  1, 
                     LFO_TREMOLO_SENSITIVITY_STEP *  2, 
                     LFO_TREMOLO_SENSITIVITY_STEP *  3, 
@@ -86,25 +80,6 @@ static short int  S_lfo_tremolo_max_table[PATCH_SENSITIVITY_NUM_VALUES] =
                     LFO_TREMOLO_SENSITIVITY_STEP * 16 
                   };
 
-static short int  S_lfo_chorus_max_table[PATCH_SENSITIVITY_NUM_VALUES] = 
-                  { ( 2 * TUNING_NUM_SEMITONE_STEPS) / 128, 
-                    ( 4 * TUNING_NUM_SEMITONE_STEPS) / 128, 
-                    ( 6 * TUNING_NUM_SEMITONE_STEPS) / 128, 
-                    ( 8 * TUNING_NUM_SEMITONE_STEPS) / 128, 
-                    (10 * TUNING_NUM_SEMITONE_STEPS) / 128, 
-                    (12 * TUNING_NUM_SEMITONE_STEPS) / 128, 
-                    (14 * TUNING_NUM_SEMITONE_STEPS) / 128, 
-                    (16 * TUNING_NUM_SEMITONE_STEPS) / 128, 
-                    (18 * TUNING_NUM_SEMITONE_STEPS) / 128, 
-                    (20 * TUNING_NUM_SEMITONE_STEPS) / 128, 
-                    (22 * TUNING_NUM_SEMITONE_STEPS) / 128, 
-                    (24 * TUNING_NUM_SEMITONE_STEPS) / 128, 
-                    (26 * TUNING_NUM_SEMITONE_STEPS) / 128, 
-                    (28 * TUNING_NUM_SEMITONE_STEPS) / 128, 
-                    (30 * TUNING_NUM_SEMITONE_STEPS) / 128, 
-                    (32 * TUNING_NUM_SEMITONE_STEPS) / 128 
-                  };
-
 /* wavetables */
 static short int  S_lfo_bi_wavetable_tri[LFO_WAVETABLE_SIZE_FULL];
 static short int  S_lfo_bi_wavetable_saw[LFO_WAVETABLE_SIZE_FULL];
@@ -116,8 +91,7 @@ static short int  S_lfo_uni_wavetable_saw[LFO_WAVETABLE_SIZE_FULL];
 static int S_lfo_delay_period_table[TEMPO_NUM_VALUES];
 
 /* phase increment tables */
-static unsigned int S_lfo_vib_trem_phase_increment_table[TEMPO_NUM_VALUES];
-static unsigned int S_lfo_chorus_phase_increment_table[TEMPO_NUM_VALUES];
+static unsigned int S_lfo_phase_increment_table[TEMPO_NUM_VALUES];
 
 /* lfo bank */
 lfo G_lfo_bank[BANK_NUM_LFOS];
@@ -142,54 +116,35 @@ short int lfo_reset_all()
       l->type = LFO_TYPE_VIBRATO; 
     else if ((k % BANK_LFOS_PER_VOICE) == 1)
       l->type = LFO_TYPE_TREMOLO;
-    else if ((k % BANK_LFOS_PER_VOICE) == 2)
-      l->type = LFO_TYPE_CHORUS;
     else
       l->type = LFO_TYPE_VIBRATO;
 
-    l->waveform = PATCH_LFO_WAVEFORM_DEFAULT;
-    l->speed = PATCH_LFO_SPEED_DEFAULT;
-    l->sync = PATCH_SYNC_DEFAULT;
+    l->waveform = 0;
+    l->speed = 0;
+    l->sync = 0;
 
     if (l->type == LFO_TYPE_VIBRATO)
-      l->polarity = PATCH_LFO_POLARITY_DEFAULT;
+      l->polarity = 0;
     else if (l->type == LFO_TYPE_TREMOLO)
-      l->polarity = PATCH_LFO_POLARITY_UNI;
-    else if (l->type == LFO_TYPE_CHORUS)
-      l->polarity = PATCH_LFO_POLARITY_BI;
+      l->polarity = 1;
     else
-      l->polarity = PATCH_LFO_POLARITY_DEFAULT;
-
-    l->delay_cycles = 0;
-    l->delay_period = 
-      S_lfo_delay_period_table[TEMPO_DEFAULT - TEMPO_LOWER_BOUND] * PATCH_LFO_DELAY_DEFAULT;
-
-    l->phase = 0;
-
-    if ((l->type == LFO_TYPE_VIBRATO) || 
-        (l->type == LFO_TYPE_TREMOLO))
-    {
-      l->increment = 
-        S_lfo_vib_trem_phase_increment_table[TEMPO_DEFAULT - TEMPO_LOWER_BOUND] * PATCH_LFO_SPEED_DEFAULT;
-    }
-    else if (l->type == LFO_TYPE_CHORUS)
-    {
-      l->increment = 
-        S_lfo_chorus_phase_increment_table[TEMPO_DEFAULT - TEMPO_LOWER_BOUND] * PATCH_LFO_SPEED_DEFAULT;
-    }
-    else
-      l->increment = 0;
+      l->polarity = 0;
 
     l->tempo = TEMPO_DEFAULT;
 
-    l->depth = PATCH_LFO_DEPTH_DEFAULT;
+    l->delay_cycles = 0;
+    l->delay_period = S_lfo_delay_period_table[l->tempo] * 0;
+
+    l->phase = 0;
+
+    l->increment = S_lfo_phase_increment_table[l->tempo] * 0;
+
+    l->depth = 0;
 
     if (l->type == LFO_TYPE_VIBRATO)
-      l->max = S_lfo_vibrato_max_table[PATCH_SENSITIVITY_DEFAULT - PATCH_SENSITIVITY_LOWER_BOUND];
+      l->max = S_lfo_vibrato_max_table[0];
     else if (l->type == LFO_TYPE_TREMOLO)
-      l->max = S_lfo_tremolo_max_table[PATCH_SENSITIVITY_DEFAULT - PATCH_SENSITIVITY_LOWER_BOUND];
-    else if (l->type == LFO_TYPE_CHORUS)
-      l->max = S_lfo_chorus_max_table[PATCH_SENSITIVITY_DEFAULT - PATCH_SENSITIVITY_LOWER_BOUND];
+      l->max = S_lfo_tremolo_max_table[0];
     else
       l->max = 0;
 
@@ -206,8 +161,6 @@ short int lfo_reset_all()
 short int lfo_load_patch( int voice_index, 
                           int cart_index, int patch_index)
 {
-  int m;
-
   lfo* l;
 
   cart* c;
@@ -228,108 +181,77 @@ short int lfo_load_patch( int voice_index,
   c = &G_cart_bank[cart_index];
   p = &(c->patches[patch_index]);
 
-  for (m = 0; m < BANK_LFOS_PER_VOICE; m++)
-  {
-    /* obtain lfo pointer */
-    l = &G_lfo_bank[voice_index * BANK_LFOS_PER_VOICE + m];
+  /* load vibrato patch parameters */
+  l = &G_lfo_bank[voice_index * BANK_LFOS_PER_VOICE + 0];
 
-    /* waveform */
-    if ((p->lfo_waveform[m] >= PATCH_LFO_WAVEFORM_LOWER_BOUND) && 
-        (p->lfo_waveform[m] <= PATCH_LFO_WAVEFORM_UPPER_BOUND))
-    {
-      l->waveform = p->lfo_waveform[m];
-    }
-    else
-      l->waveform = PATCH_LFO_WAVEFORM_DEFAULT;
+  if (PATCH_PARAM_IS_VALID_LOOKUP_BY_NAME(VIBRATO_WAVEFORM))
+    l->waveform = p->values[PATCH_PARAM_VIBRATO_WAVEFORM];
+  else
+    l->waveform = 0;
 
-    /* delay */
-    if ((p->lfo_delay[m] >= PATCH_LFO_DELAY_LOWER_BOUND) && 
-        (p->lfo_delay[m] <= PATCH_LFO_DELAY_UPPER_BOUND))
-    {
-      l->delay_period = S_lfo_delay_period_table[l->tempo - TEMPO_LOWER_BOUND] * p->lfo_delay[m];
-    }
-    else
-      l->delay_period = S_lfo_delay_period_table[l->tempo - TEMPO_LOWER_BOUND] * PATCH_LFO_DELAY_DEFAULT;
+  if (PATCH_PARAM_IS_VALID_LOOKUP_BY_NAME(VIBRATO_DELAY))
+    l->delay_period = S_lfo_delay_period_table[l->tempo] * p->values[PATCH_PARAM_VIBRATO_DELAY];
+  else
+    l->delay_period = S_lfo_delay_period_table[l->tempo] * 0;
 
-    /* speed */
-    if ((p->lfo_speed[m] >= PATCH_LFO_SPEED_LOWER_BOUND) && 
-        (p->lfo_speed[m] <= PATCH_LFO_SPEED_UPPER_BOUND))
-    {
-      l->speed = p->lfo_speed[m];
-    }
-    else
-      l->speed = PATCH_LFO_SPEED_DEFAULT;
+  if (PATCH_PARAM_IS_VALID_LOOKUP_BY_NAME(VIBRATO_SPEED))
+    l->speed = p->values[PATCH_PARAM_VIBRATO_SPEED];
+  else
+    l->speed = 0;
 
-    /* depth */
-    if ((p->lfo_depth[m] >= PATCH_LFO_DEPTH_LOWER_BOUND) && 
-        (p->lfo_depth[m] <= PATCH_LFO_DEPTH_UPPER_BOUND))
-    {
-      l->depth = p->lfo_depth[m];
-    }
-    else
-      l->depth = PATCH_LFO_DEPTH_DEFAULT;
+  if (PATCH_PARAM_IS_VALID_LOOKUP_BY_NAME(VIBRATO_DEPTH))
+    l->depth = p->values[PATCH_PARAM_VIBRATO_DEPTH];
+  else
+    l->depth = 0;
 
-    /* sensitivity */
-    if ((p->lfo_sensitivity[m] >= PATCH_SENSITIVITY_LOWER_BOUND) && 
-        (p->lfo_sensitivity[m] <= PATCH_SENSITIVITY_UPPER_BOUND))
-    {
-      if (l->type == LFO_TYPE_VIBRATO)
-        l->max = S_lfo_vibrato_max_table[p->lfo_sensitivity[m] - PATCH_SENSITIVITY_LOWER_BOUND];
-      else if (l->type == LFO_TYPE_TREMOLO)
-        l->max = S_lfo_tremolo_max_table[p->lfo_sensitivity[m] - PATCH_SENSITIVITY_LOWER_BOUND];
-      else if (l->type == LFO_TYPE_CHORUS)
-        l->max = S_lfo_chorus_max_table[p->lfo_sensitivity[m] - PATCH_SENSITIVITY_LOWER_BOUND];
-      else
-        l->max = S_lfo_vibrato_max_table[p->lfo_sensitivity[m] - PATCH_SENSITIVITY_LOWER_BOUND];
-    }
-    else
-    {
-      if (l->type == LFO_TYPE_VIBRATO)
-        l->max = S_lfo_vibrato_max_table[PATCH_SENSITIVITY_DEFAULT - PATCH_SENSITIVITY_LOWER_BOUND];
-      else if (l->type == LFO_TYPE_TREMOLO)
-        l->max = S_lfo_tremolo_max_table[PATCH_SENSITIVITY_DEFAULT - PATCH_SENSITIVITY_LOWER_BOUND];
-      else if (l->type == LFO_TYPE_CHORUS)
-        l->max = S_lfo_chorus_max_table[PATCH_SENSITIVITY_DEFAULT - PATCH_SENSITIVITY_LOWER_BOUND];
-      else
-        l->max = S_lfo_vibrato_max_table[PATCH_SENSITIVITY_DEFAULT - PATCH_SENSITIVITY_LOWER_BOUND];
-    }
+  if (PATCH_PARAM_IS_VALID_LOOKUP_BY_NAME(VIBRATO_SENSITIVITY))
+    l->max = S_lfo_vibrato_max_table[p->values[PATCH_PARAM_VIBRATO_SENSITIVITY]];
+  else
+    l->max = S_lfo_vibrato_max_table[0];
 
-    /* sync */
-    if ((p->lfo_sync[m] >= PATCH_SYNC_LOWER_BOUND) && 
-        (p->lfo_sync[m] <= PATCH_SYNC_UPPER_BOUND))
-    {
-      l->sync = p->lfo_sync[m];
-    }
-    else
-      l->sync = PATCH_SYNC_DEFAULT;
+  if (PATCH_PARAM_IS_VALID_LOOKUP_BY_NAME(VIBRATO_SYNC))
+    l->sync = p->values[PATCH_PARAM_VIBRATO_SYNC];
+  else
+    l->sync = 0;
 
-    /* polarity */
-    if (l->type == LFO_TYPE_VIBRATO)
-    {
-      if ((p->lfo_polarity[m] >= PATCH_LFO_POLARITY_LOWER_BOUND) && 
-          (p->lfo_polarity[m] <= PATCH_LFO_POLARITY_UPPER_BOUND))
-      {
-        l->polarity = p->lfo_polarity[m];
-      }
-      else
-        l->polarity = PATCH_SYNC_DEFAULT;
-    }
+  l->increment = 
+    S_lfo_phase_increment_table[l->tempo] * l->speed;
 
-    /* set increment based on speed */
-    if ((l->type == LFO_TYPE_VIBRATO) || 
-        (l->type == LFO_TYPE_TREMOLO))
-    {
-      l->increment = 
-        S_lfo_vib_trem_phase_increment_table[l->tempo - TEMPO_LOWER_BOUND] * l->speed;
-    }
-    else if (l->type == LFO_TYPE_CHORUS)
-    {
-      l->increment = 
-        S_lfo_chorus_phase_increment_table[l->tempo - TEMPO_LOWER_BOUND] * l->speed;
-    }
-    else
-      l->increment = 0;
-  }
+  /* load tremolo patch parameters */
+  l = &G_lfo_bank[voice_index * BANK_LFOS_PER_VOICE + 1];
+
+  if (PATCH_PARAM_IS_VALID_LOOKUP_BY_NAME(TREMOLO_WAVEFORM))
+    l->waveform = p->values[PATCH_PARAM_TREMOLO_WAVEFORM];
+  else
+    l->waveform = 0;
+
+  if (PATCH_PARAM_IS_VALID_LOOKUP_BY_NAME(TREMOLO_DELAY))
+    l->delay_period = S_lfo_delay_period_table[l->tempo] * p->values[PATCH_PARAM_TREMOLO_DELAY];
+  else
+    l->delay_period = S_lfo_delay_period_table[l->tempo] * 0;
+
+  if (PATCH_PARAM_IS_VALID_LOOKUP_BY_NAME(TREMOLO_SPEED))
+    l->speed = p->values[PATCH_PARAM_TREMOLO_SPEED];
+  else
+    l->speed = 0;
+
+  if (PATCH_PARAM_IS_VALID_LOOKUP_BY_NAME(TREMOLO_DEPTH))
+    l->depth = p->values[PATCH_PARAM_TREMOLO_DEPTH];
+  else
+    l->depth = 0;
+
+  if (PATCH_PARAM_IS_VALID_LOOKUP_BY_NAME(TREMOLO_SENSITIVITY))
+    l->max = S_lfo_tremolo_max_table[p->values[PATCH_PARAM_TREMOLO_SENSITIVITY]];
+  else
+    l->max = S_lfo_tremolo_max_table[0];
+
+  if (PATCH_PARAM_IS_VALID_LOOKUP_BY_NAME(TREMOLO_SYNC))
+    l->sync = p->values[PATCH_PARAM_TREMOLO_SYNC];
+  else
+    l->sync = 0;
+
+  l->increment = 
+    S_lfo_phase_increment_table[l->tempo] * l->speed;
 
   return 0;
 }
@@ -353,27 +275,16 @@ short int lfo_set_tempo(int voice_index, short int tempo)
     l = &G_lfo_bank[voice_index * BANK_LFOS_PER_VOICE + m];
 
     /* set tempo */
-    if (tempo < TEMPO_LOWER_BOUND)
-      l->tempo = TEMPO_LOWER_BOUND;
-    else if (tempo > TEMPO_UPPER_BOUND)
-      l->tempo = TEMPO_UPPER_BOUND;
+    if (tempo < 0)
+      l->tempo = 0;
+    else if (tempo > TEMPO_NUM_VALUES - 1)
+      l->tempo = TEMPO_NUM_VALUES - 1;
     else
       l->tempo = tempo;
 
     /* adjust phase increment based on tempo */
-    if ((l->type == LFO_TYPE_VIBRATO) || 
-        (l->type == LFO_TYPE_TREMOLO))
-    {
-      l->increment = 
-        S_lfo_vib_trem_phase_increment_table[l->tempo - TEMPO_LOWER_BOUND] * l->speed;
-    }
-    else if (l->type == LFO_TYPE_CHORUS)
-    {
-      l->increment = 
-        S_lfo_chorus_phase_increment_table[l->tempo - TEMPO_LOWER_BOUND] * l->speed;
-    }
-    else
-      l->increment = 0;
+    l->increment = 
+      S_lfo_phase_increment_table[l->tempo] * l->speed;
   }
 
   return 0;
@@ -398,7 +309,7 @@ short int lfo_tempo_sync(int voice_index)
     l = &G_lfo_bank[voice_index * BANK_LFOS_PER_VOICE + m];
 
     /* reset phase if necessary */
-    if (l->sync == PATCH_SYNC_OFF)
+    if (l->sync == 0)
       l->phase = 0;
   }
 
@@ -434,7 +345,7 @@ short int lfo_note_on(int voice_index)
     }
 
     /* reset phase if necessary */
-    if (l->sync == PATCH_SYNC_ON)
+    if (l->sync == 1)
       l->phase = 0;
   }
 
@@ -472,7 +383,7 @@ short int lfo_update_all()
     {
       l->delay_cycles -= 1;
 
-      if ((l->delay_cycles == 0) && (l->sync == PATCH_SYNC_ON))
+      if ((l->delay_cycles == 0) && (l->sync == 1))
         l->phase = 0;
 
       continue;
@@ -482,38 +393,38 @@ short int lfo_update_all()
     masked_phase = ((l->phase >> 20) & 0xFF);
 
     /* determine wave level */
-    if (l->polarity == PATCH_LFO_POLARITY_BI)
+    if (l->type == LFO_TYPE_VIBRATO)
     {
-      if (l->waveform == PATCH_LFO_WAVEFORM_TRIANGLE)
+      if (l->waveform == 0)
         wave_level = S_lfo_bi_wavetable_tri[masked_phase];
-      else if (l->waveform == PATCH_LFO_WAVEFORM_SQUARE)
+      else if (l->waveform == 1)
       {
         if (masked_phase < LFO_WAVETABLE_SIZE_HALF)
           wave_level = LFO_WAVE_AMPLITUDE;
         else
           wave_level = -LFO_WAVE_AMPLITUDE;
       }
-      else if (l->waveform == PATCH_LFO_WAVEFORM_SAW_UP)
+      else if (l->waveform == 2)
         wave_level = LFO_WAVE_AMPLITUDE - S_lfo_bi_wavetable_saw[masked_phase];
-      else if (l->waveform == PATCH_LFO_WAVEFORM_SAW_DOWN)
+      else if (l->waveform == 3)
         wave_level = S_lfo_bi_wavetable_saw[masked_phase];
       else
         wave_level = 0;
     }
-    else if (l->polarity == PATCH_LFO_POLARITY_UNI)
+    else if (l->type == LFO_TYPE_TREMOLO)
     {
-      if (l->waveform == PATCH_LFO_WAVEFORM_TRIANGLE)
+      if (l->waveform == 0)
         wave_level = S_lfo_uni_wavetable_tri[masked_phase];
-      else if (l->waveform == PATCH_LFO_WAVEFORM_SQUARE)
+      else if (l->waveform == 1)
       {
         if (masked_phase < LFO_WAVETABLE_SIZE_HALF)
           wave_level = 0;
         else
           wave_level = LFO_WAVE_AMPLITUDE;
       }
-      else if (l->waveform == PATCH_LFO_WAVEFORM_SAW_UP)
+      else if (l->waveform == 2)
         wave_level = LFO_WAVE_AMPLITUDE - S_lfo_uni_wavetable_saw[masked_phase];
-      else if (l->waveform == PATCH_LFO_WAVEFORM_SAW_DOWN)
+      else if (l->waveform == 3)
         wave_level = S_lfo_uni_wavetable_saw[masked_phase];
       else
         wave_level = 0;
@@ -525,7 +436,7 @@ short int lfo_update_all()
     wave_level = (wave_level * l->max) / LFO_WAVE_AMPLITUDE;
 
     /* determine base level */
-    l->level_base = (wave_level * l->depth) / PATCH_LFO_DEPTH_UPPER_BOUND;
+    l->level_base = (wave_level * l->depth) / 16;
 
     /* determine extra level */
     l->level_extra = wave_level - l->level_base;
@@ -590,17 +501,14 @@ short int lfo_generate_tables()
   for (m = 0; m < TEMPO_NUM_VALUES; m++)
   {
     S_lfo_delay_period_table[m] = 
-      (int) ((LFO_DELAY_STEP * TEMPO_COMPUTE_SECONDS_PER_BEAT(m + TEMPO_LOWER_BOUND) * CLOCK_SAMPLING_RATE) + 0.5f);
+      (int) ((LFO_DELAY_STEP * TEMPO_COMPUTE_SECONDS_PER_BEAT(m) * CLOCK_SAMPLING_RATE) + 0.5f);
   }
 
   /* phase increment tables */
   for (m = 0; m < TEMPO_NUM_VALUES; m++)
   {
-    S_lfo_vib_trem_phase_increment_table[m] = 
-      (int) ((LFO_VIB_TREM_SPEED_STEP * TEMPO_COMPUTE_BEATS_PER_SECOND(m + TEMPO_LOWER_BOUND) * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
-
-    S_lfo_chorus_phase_increment_table[m] = 
-      (int) ((LFO_CHORUS_SPEED_STEP * TEMPO_COMPUTE_BEATS_PER_SECOND(m + TEMPO_LOWER_BOUND) * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
+    S_lfo_phase_increment_table[m] = 
+      (int) ((LFO_SPEED_STEP * TEMPO_COMPUTE_BEATS_PER_SECOND(m) * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
   }
 
 #if 0
@@ -624,13 +532,7 @@ short int lfo_generate_tables()
   for (m = 0; m < PATCH_LFO_SPEED_NUM_VALUES; m++)
   {
     printf( "Vibrato/Tremolo Phase Increment (at 120 BPM) Index %d: %d \n", 
-            m, S_lfo_vib_trem_phase_increment_table[120 - TEMPO_LOWER_BOUND] * (m + 1));
-  }
-
-  for (m = 0; m < PATCH_LFO_SPEED_NUM_VALUES; m++)
-  {
-    printf( "Chorus Phase Increment (at 120 BPM) Index %d: %d \n", 
-            m, S_lfo_chorus_phase_increment_table[120 - TEMPO_LOWER_BOUND] * (m + 1));
+            m, S_lfo_phase_increment_table[TEMPO_DEFAULT] * (m + 1));
   }
 #endif
 

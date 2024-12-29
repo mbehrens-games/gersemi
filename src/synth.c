@@ -115,12 +115,6 @@ short int synth_update()
         e->tremolo_extra = l->level_extra;
       }
 
-      /* chorus */
-      l = &G_lfo_bank[voice_index * BANK_LFOS_PER_VOICE + 2];
-
-      v->chorus_base = l->level_base;
-      v->chorus_extra = l->level_extra;
-
       /* sweep */
       sw = &G_sweep_bank[voice_index];
 

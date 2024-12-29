@@ -15,14 +15,14 @@
 #define TWO_PI  6.28318530717958647693f
 
 /* cutoff_index note tables */
-static short int S_highpass_cutoff_note_table[PATCH_HIGHPASS_CUTOFF_NUM_VALUES] = 
+static short int S_highpass_cutoff_note_table[4] = 
   { TUNING_NOTE_A0 + 0 * 12 + 0,  /* A0 */
     TUNING_NOTE_A0 + 1 * 12 + 0,  /* A1 */
     TUNING_NOTE_A0 + 2 * 12 + 0,  /* A2 */
     TUNING_NOTE_A0 + 3 * 12 + 0   /* A3 */
   };
 
-static short int S_lowpass_cutoff_note_table[PATCH_LOWPASS_CUTOFF_NUM_VALUES] = 
+static short int S_lowpass_cutoff_note_table[4] = 
   { TUNING_NOTE_C4 + 3 * 12 + 4,  /* E7 */
     TUNING_NOTE_C4 + 3 * 12 + 7,  /* G7 */
     TUNING_NOTE_C4 + 3 * 12 + 9,  /* A7 */
@@ -30,8 +30,8 @@ static short int S_lowpass_cutoff_note_table[PATCH_LOWPASS_CUTOFF_NUM_VALUES] =
   };
 
 /* filter coefficient tables */
-static int S_highpass_stage_multiplier_table[PATCH_HIGHPASS_CUTOFF_NUM_VALUES];
-static int S_lowpass_stage_multiplier_table[PATCH_LOWPASS_CUTOFF_NUM_VALUES];
+static int S_highpass_stage_multiplier_table[4];
+static int S_lowpass_stage_multiplier_table[4];
 
 /* filter bank */
 filter G_highpass_filter_bank[BANK_NUM_FILTER_SETS];
@@ -58,7 +58,7 @@ short int filter_reset_all()
     /* reset highpass filter */
 
     /* set cutoff */
-    hpf->cutoff_index = PATCH_HIGHPASS_CUTOFF_DEFAULT;
+    hpf->cutoff_index = 0;
 
     /* reset state */
     hpf->input = 0;
@@ -75,7 +75,7 @@ short int filter_reset_all()
     /* reset lowpass filter */
 
     /* set cutoff */
-    lpf->cutoff_index = PATCH_HIGHPASS_CUTOFF_DEFAULT;
+    lpf->cutoff_index = 0;
 
     /* reset state */
     lpf->input = 0;
@@ -124,23 +124,16 @@ short int filter_load_patch(int voice_index,
   hpf = &G_highpass_filter_bank[voice_index];
   lpf = &G_lowpass_filter_bank[voice_index];
 
-  /* highpass cutoff */
-  if ((p->highpass_cutoff >= PATCH_HIGHPASS_CUTOFF_LOWER_BOUND) && 
-      (p->highpass_cutoff <= PATCH_HIGHPASS_CUTOFF_UPPER_BOUND))
-  {
-    hpf->cutoff_index = p->highpass_cutoff - PATCH_HIGHPASS_CUTOFF_LOWER_BOUND;
-  }
+  /* load patch parameters */
+  if (PATCH_PARAM_IS_VALID_LOOKUP_BY_NAME(HIGHPASS_CUTOFF))
+    hpf->cutoff_index = p->values[PATCH_PARAM_HIGHPASS_CUTOFF];
   else
-    hpf->cutoff_index = PATCH_HIGHPASS_CUTOFF_DEFAULT - PATCH_HIGHPASS_CUTOFF_LOWER_BOUND;
+    hpf->cutoff_index = 0;
 
-  /* lowpass cutoff */
-  if ((p->lowpass_cutoff >= PATCH_LOWPASS_CUTOFF_LOWER_BOUND) && 
-      (p->lowpass_cutoff <= PATCH_LOWPASS_CUTOFF_UPPER_BOUND))
-  {
-    lpf->cutoff_index = p->lowpass_cutoff - PATCH_LOWPASS_CUTOFF_LOWER_BOUND;
-  }
+  if (PATCH_PARAM_IS_VALID_LOOKUP_BY_NAME(LOWPASS_CUTOFF))
+    lpf->cutoff_index = p->values[PATCH_PARAM_LOWPASS_CUTOFF];
   else
-    lpf->cutoff_index = PATCH_LOWPASS_CUTOFF_DEFAULT - PATCH_LOWPASS_CUTOFF_LOWER_BOUND;
+    lpf->cutoff_index = 0;
 
   return 0;
 }
@@ -224,7 +217,7 @@ short int filter_generate_tables()
   /* multiplier = ((1/2) * omega_0 * delta_T) / [1 + ((1/2) * omega_0 * delta_T)] */
 
   /* note that we compute the lowpass filter coefficients at each note */
-  for (m = 0; m < PATCH_HIGHPASS_CUTOFF_NUM_VALUES; m++)
+  for (m = 0; m < 4; m++)
   {
     val = 440.0f * exp(log(2) * ((S_highpass_cutoff_note_table[m] - TUNING_NOTE_A4) / 12.0f));
 
@@ -235,7 +228,7 @@ short int filter_generate_tables()
       (int) (32768 * (omega_0_delta_t_over_2 / (1.0f + omega_0_delta_t_over_2)) + 0.5f);
   }
 
-  for (m = 0; m < PATCH_LOWPASS_CUTOFF_NUM_VALUES; m++)
+  for (m = 0; m < 4; m++)
   {
     val = 440.0f * exp(log(2) * ((S_lowpass_cutoff_note_table[m] - TUNING_NOTE_A4) / 12.0f));
 

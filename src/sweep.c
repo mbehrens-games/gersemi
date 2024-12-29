@@ -19,7 +19,7 @@
 #define TWO_PI  6.28318530717958647693f
 
 /* speed table (in semitones per beat) */
-static int  S_sweep_speed_table[PATCH_PORTAMENTO_SPEED_NUM_VALUES] = 
+static int  S_sweep_speed_table[16] = 
             { 1,  2,  3,  4,  5,  6,  7,  8, 
               9, 10, 11, 12, 16, 19, 22, 24 
             };
@@ -46,18 +46,16 @@ short int sweep_reset_all()
     sw = &G_sweep_bank[k];
 
     /* initialize sweep variables */
-    sw->mode = PATCH_PORTAMENTO_MODE_DEFAULT;
-    sw->legato = PATCH_PORTAMENTO_LEGATO_DEFAULT;
-    sw->speed = PATCH_PORTAMENTO_SPEED_DEFAULT;
+    sw->mode = 0;
+    sw->legato = 0;
+    sw->speed = 0;
 
     sw->tempo = TEMPO_DEFAULT;
 
     sw->phase = 0;
 
-    sw->increment = 
-      S_sweep_phase_increment_table[TEMPO_DEFAULT - TEMPO_LOWER_BOUND];
-    sw->increment *= 
-      S_sweep_speed_table[PATCH_PORTAMENTO_SPEED_DEFAULT - PATCH_PORTAMENTO_SPEED_LOWER_BOUND];
+    sw->increment = S_sweep_phase_increment_table[sw->tempo];
+    sw->increment *= S_sweep_speed_table[0];
 
     sw->note = TUNING_NOTE_BLANK;
     sw->target = 0;
@@ -100,38 +98,25 @@ short int sweep_load_patch( int instrument_index,
   /* obtain sweep pointer */
   sw = &G_sweep_bank[instrument_index];
 
-  /* mode */
-  if ((p->portamento_mode >= PATCH_PORTAMENTO_MODE_LOWER_BOUND) && 
-      (p->portamento_mode <= PATCH_PORTAMENTO_MODE_UPPER_BOUND))
-  {
-    sw->mode = p->portamento_mode;
-  }
+  /* load patch parameters */
+  if (PATCH_PARAM_IS_VALID_LOOKUP_BY_NAME(PORTAMENTO_MODE))
+    sw->mode = p->values[PATCH_PARAM_PORTAMENTO_MODE];
   else
-    sw->mode = PATCH_PORTAMENTO_MODE_DEFAULT;
+    sw->mode = 0;
 
-  /* legato */
-  if ((p->portamento_legato >= PATCH_PORTAMENTO_LEGATO_LOWER_BOUND) && 
-      (p->portamento_legato <= PATCH_PORTAMENTO_LEGATO_UPPER_BOUND))
-  {
-    sw->legato = p->portamento_legato;
-  }
+  if (PATCH_PARAM_IS_VALID_LOOKUP_BY_NAME(PORTAMENTO_LEGATO))
+    sw->legato = p->values[PATCH_PARAM_PORTAMENTO_LEGATO];
   else
-    sw->legato = PATCH_PORTAMENTO_LEGATO_DEFAULT;
+    sw->legato = 0;
 
-  /* speed */
-  if ((p->portamento_speed >= PATCH_PORTAMENTO_SPEED_LOWER_BOUND) && 
-      (p->portamento_speed <= PATCH_PORTAMENTO_SPEED_UPPER_BOUND))
-  {
-    sw->speed = p->portamento_speed;
-  }
+  if (PATCH_PARAM_IS_VALID_LOOKUP_BY_NAME(PORTAMENTO_SPEED))
+    sw->speed = p->values[PATCH_PARAM_PORTAMENTO_SPEED];
   else
-    sw->speed = PATCH_PORTAMENTO_SPEED_DEFAULT;
+    sw->speed = 0;
 
   /* set phase increment */
-  sw->increment = 
-    S_sweep_phase_increment_table[sw->tempo - TEMPO_LOWER_BOUND];
-  sw->increment *= 
-    S_sweep_speed_table[sw->speed - PATCH_PORTAMENTO_SPEED_LOWER_BOUND];
+  sw->increment = S_sweep_phase_increment_table[sw->tempo];
+  sw->increment *= S_sweep_speed_table[sw->speed];
 
   return 0;
 }
@@ -148,11 +133,8 @@ short int sweep_set_speed(int instrument_index, short int speed)
     return 1;
 
   /* make sure the speed is valid */
-  if ((speed < PATCH_PORTAMENTO_SPEED_LOWER_BOUND) || 
-      (speed > PATCH_PORTAMENTO_SPEED_UPPER_BOUND))
-  {
+  if (PATCH_VALUE_IS_NOT_VALID_LOOKUP_BY_NAME(speed, PORTAMENTO_SPEED))
     return 0;
-  }
 
   /* obtain sweep pointer */
   sw = &G_sweep_bank[instrument_index];
@@ -161,10 +143,8 @@ short int sweep_set_speed(int instrument_index, short int speed)
   sw->speed = speed;
 
   /* set phase increment */
-  sw->increment = 
-    S_sweep_phase_increment_table[sw->tempo - TEMPO_LOWER_BOUND];
-  sw->increment *= 
-    S_sweep_speed_table[sw->speed - PATCH_PORTAMENTO_SPEED_LOWER_BOUND];
+  sw->increment = S_sweep_phase_increment_table[sw->tempo];
+  sw->increment *= S_sweep_speed_table[sw->speed];
 
   return 0;
 }
@@ -239,18 +219,16 @@ short int sweep_set_tempo(int instrument_index, short int tempo)
   sw = &G_sweep_bank[instrument_index];
 
   /* set tempo */
-  if (tempo < TEMPO_LOWER_BOUND)
-    sw->tempo = TEMPO_LOWER_BOUND;
-  else if (tempo > TEMPO_UPPER_BOUND)
-    sw->tempo = TEMPO_UPPER_BOUND;
+  if (tempo < 0)
+    sw->tempo = 0;
+  else if (tempo > TEMPO_NUM_VALUES - 1)
+    sw->tempo = TEMPO_NUM_VALUES - 1;
   else
     sw->tempo = tempo;
 
   /* set phase increment */
-  sw->increment = 
-    S_sweep_phase_increment_table[sw->tempo - TEMPO_LOWER_BOUND];
-  sw->increment *= 
-    S_sweep_speed_table[sw->speed - PATCH_PORTAMENTO_SPEED_LOWER_BOUND];
+  sw->increment = S_sweep_phase_increment_table[sw->tempo];
+  sw->increment *= S_sweep_speed_table[sw->speed];
 
   return 0;
 }
@@ -313,7 +291,7 @@ short int sweep_key_pressed(int instrument_index, int note)
     else if (ins->num_pressed > 1)
     {
       /* if the legato is off, store the end note of the slide */
-      if (sw->legato == PATCH_PORTAMENTO_LEGATO_OFF)
+      if (sw->legato == 0)
       {
         if (sw->note == TUNING_NOTE_BLANK)
           sw->offset = (ins->pressed_keys[1] - ins->pressed_keys[0]) * TUNING_NUM_SEMITONE_STEPS;
@@ -378,7 +356,7 @@ short int sweep_key_released(int instrument_index, int note)
     }
     /* if the legato is off, send the note-off when */
     /* the end note of the pitch slide is released  */
-    else if (sw->legato == PATCH_PORTAMENTO_LEGATO_OFF)
+    else if (sw->legato == 0)
     {
       /* the stored note is the end note of the slide */
       if (note == sw->note)
@@ -389,7 +367,7 @@ short int sweep_key_released(int instrument_index, int note)
     }
     /* if the legato is set to follow, send the note-off  */
     /* when the end note of the pitch slide is released   */
-    else if (sw->legato == PATCH_PORTAMENTO_LEGATO_FOLLOW)
+    else if (sw->legato == 1)
     {
       /* the stored note is the start note of the slide */
       if (note == (sw->note + (sw->target / TUNING_NUM_SEMITONE_STEPS)))
@@ -400,7 +378,7 @@ short int sweep_key_released(int instrument_index, int note)
     }
     /* if the legato is set to hammer-on, send the note-off */
     /* when the start note of the pitch slide is released   */
-    else if (sw->legato == PATCH_PORTAMENTO_LEGATO_HAMMER)
+    else if (sw->legato == 2)
     {
       /* the stored note is the start note of the slide */
       if (note == sw->note)
@@ -451,9 +429,9 @@ short int sweep_update_all()
     }
 
     /* set level based on mode */
-    if (sw->mode == PATCH_PORTAMENTO_MODE_BEND)
+    if (sw->mode == 0)
       sw->level = sw->offset;
-    else if (sw->mode == PATCH_PORTAMENTO_MODE_SEMITONES)
+    else if (sw->mode == 1)
     {
       if (sw->offset >= 0)
       {
@@ -486,7 +464,7 @@ short int sweep_generate_tables()
   for (m = 0; m < TEMPO_NUM_VALUES; m++)
   {
     S_sweep_phase_increment_table[m] = 
-      (int) ((1 * TUNING_NUM_SEMITONE_STEPS * TEMPO_COMPUTE_BEATS_PER_SECOND(m + TEMPO_LOWER_BOUND) * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
+      (int) ((1 * TUNING_NUM_SEMITONE_STEPS * TEMPO_COMPUTE_BEATS_PER_SECOND(m) * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
   }
 
   return 0;

@@ -51,14 +51,13 @@ short int program_set_screen(int screen)
     G_current_scroll_amount = 0;
     G_max_scroll_amount = LAYOUT_CART_MAX_SCROLL_AMOUNT;
 
-    layout_reset_cart_button_and_text_box_states();
+    layout_reset_cart_states();
 
     render_reset_vbos();
 
     vb_all_load_background();
-    vb_all_load_top_panel();
+    vb_all_load_top_bar();
     vb_all_load_cart_screen();
-    vb_all_load_audition_panel();
   }
   /* instruments screen */
   else if (screen == PROGRAM_SCREEN_INSTRUMENTS)
@@ -69,7 +68,7 @@ short int program_set_screen(int screen)
     render_reset_vbos();
 
     vb_all_load_background();
-    vb_all_load_top_panel();
+    vb_all_load_top_bar();
     vb_all_load_instruments_screen();
   }
   /* song screen */
@@ -81,7 +80,7 @@ short int program_set_screen(int screen)
     render_reset_vbos();
 
     vb_all_load_background();
-    vb_all_load_top_panel();
+    vb_all_load_top_bar();
     vb_all_load_song_screen();
   }
   /* mixer screen */
@@ -93,7 +92,7 @@ short int program_set_screen(int screen)
     render_reset_vbos();
 
     vb_all_load_background();
-    vb_all_load_top_panel();
+    vb_all_load_top_bar();
     vb_all_load_mixer_screen();
   }
   /* sound fx screen */
@@ -105,7 +104,7 @@ short int program_set_screen(int screen)
     render_reset_vbos();
 
     vb_all_load_background();
-    vb_all_load_top_panel();
+    vb_all_load_top_bar();
     vb_all_load_sound_fx_screen();
   }
   /* dpcm screen */
@@ -117,7 +116,7 @@ short int program_set_screen(int screen)
     render_reset_vbos();
 
     vb_all_load_background();
-    vb_all_load_top_panel();
+    vb_all_load_top_bar();
     vb_all_load_dpcm_screen();
   }
   /* text entry: cart name (on cart screen) */
@@ -126,9 +125,8 @@ short int program_set_screen(int screen)
     render_reset_vbos();
 
     vb_all_load_background();
-    vb_all_load_top_panel();
+    vb_all_load_top_bar();
     vb_all_load_cart_screen();
-    vb_all_load_audition_panel();
   }
   /* text entry: patch name (on cart screen) */
   else if (screen == PROGRAM_SCREEN_TEXT_ENTRY_PATCH_NAME)
@@ -136,9 +134,8 @@ short int program_set_screen(int screen)
     render_reset_vbos();
 
     vb_all_load_background();
-    vb_all_load_top_panel();
+    vb_all_load_top_bar();
     vb_all_load_cart_screen();
-    vb_all_load_audition_panel();
   }
 
   return 0;
