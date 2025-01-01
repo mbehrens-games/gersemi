@@ -5,15 +5,10 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "arpeggio.h"
 #include "bank.h"
-#include "envelope.h"
 #include "filter.h"
 #include "instrument.h"
-#include "lfo.h"
 #include "midicont.h"
-#include "peg.h"
-#include "sweep.h"
 #include "tuning.h"
 #include "voice.h"
 
@@ -57,15 +52,10 @@ short int instrument_reset_all()
     /* note velocity */
     ins->note_velocity = MIDI_CONT_NOTE_VELOCITY_DEFAULT;
 
-    /* mod wheel, aftertouch, pitch wheel */
-    ins->mod_wheel_pos = MIDI_CONT_UNI_WHEEL_DEFAULT;
-    ins->aftertouch_pos = MIDI_CONT_UNI_WHEEL_DEFAULT;
-    ins->exp_pedal_pos = MIDI_CONT_UNI_WHEEL_DEFAULT;
-    ins->pitch_wheel_pos = MIDI_CONT_BI_WHEEL_DEFAULT;
-
-    /* portamento switch, arpeggio switch, sustain pedal */
-    ins->port_arp_switch = MIDI_CONT_PORT_ARP_SWITCH_OFF;
-    ins->sustain_pedal = MIDI_CONT_SUSTAIN_PEDAL_UP;
+    /* midi controllers */
+    ins->vibrato_wheel_pos = MIDI_CONT_UNI_WHEEL_DEFAULT;
+    ins->tremolo_wheel_pos = MIDI_CONT_UNI_WHEEL_DEFAULT;
+    ins->boost_wheel_pos = MIDI_CONT_UNI_WHEEL_DEFAULT;
   }
 
   /* setup instrument mappings */
@@ -138,10 +128,6 @@ short int instrument_load_patch(int instrument_index,
   if (BANK_PATCH_INDEX_IS_NOT_VALID(patch_index))
     return 1;
 
-  /* load patch to this instrument's midi controllers */
-  sweep_load_patch(instrument_index, cart_index, patch_index);
-  arpeggio_load_patch(instrument_index, cart_index, patch_index);
-
    /* load patch to all voices associated with this instrument */
   for (k = 0; k < BANK_NUM_INSTRUMENTS; k++)
   {
@@ -152,10 +138,7 @@ short int instrument_load_patch(int instrument_index,
       voice_index = ins->voice_index + m;
 
       voice_load_patch(voice_index, cart_index, patch_index);
-      envelope_load_patch(voice_index, cart_index, patch_index);
-      lfo_load_patch(voice_index, cart_index, patch_index);
       filter_load_patch(voice_index, cart_index, patch_index);
-      peg_load_patch(voice_index, cart_index, patch_index);
     }
   }
 
@@ -194,12 +177,6 @@ short int instrument_note_on(int instrument_index, int note)
   {
     next_offset = 0;
   }
-  /* if the portamento is on, use the voice of the  */
-  /* most recently pressed note for this note on    */
-  else if (ins->port_arp_switch == MIDI_CONT_PORT_ARP_SWITCH_PORTAMENTO)
-  {
-    next_offset = ins->last_offset;
-  }
   /* otherwise, select an available voice! */
   else
   {
@@ -209,10 +186,7 @@ short int instrument_note_on(int instrument_index, int note)
       v = &G_voice_bank[ins->voice_index + m];
 
       if (note == v->base_note)
-      {
-        envelope_note_off(ins->voice_index + m);
-        peg_note_off(ins->voice_index + m);
-      }
+        voice_note_off(ins->voice_index + m);
     }
 
     /* find the next available note (round robin) */
@@ -222,12 +196,6 @@ short int instrument_note_on(int instrument_index, int note)
 
   /* send note-on to the selected voice associated with this instrument */
   voice_note_on(ins->voice_index + next_offset, note);
-
-  envelope_note_on( ins->voice_index + next_offset, 
-                    note, ins->note_velocity, ins->sustain_pedal);
-
-  peg_note_on(ins->voice_index + next_offset);
-  lfo_note_on(ins->voice_index + next_offset);
 
   return 0;
 }
@@ -259,10 +227,7 @@ short int instrument_note_off(int instrument_index, int note)
     v = &G_voice_bank[ins->voice_index + m];
 
     if (note == v->base_note)
-    {
-      envelope_note_off(ins->voice_index + m);
-      peg_note_off(ins->voice_index + m);
-    }
+      voice_note_off(ins->voice_index + m);
   }
 
   return 0;
@@ -337,12 +302,7 @@ short int instrument_key_pressed(int instrument_index, int note)
   }
 
   /* send a note-on for this key */
-  if (ins->port_arp_switch == MIDI_CONT_PORT_ARP_SWITCH_OFF)
-    instrument_note_on(instrument_index, note);
-  else if (ins->port_arp_switch == MIDI_CONT_PORT_ARP_SWITCH_PORTAMENTO)
-    sweep_key_pressed(instrument_index, note);
-  else if (ins->port_arp_switch == MIDI_CONT_PORT_ARP_SWITCH_ARPEGGIO)
-    arpeggio_key_pressed(instrument_index, note);
+  instrument_note_on(instrument_index, note);
 
   return 0;
 }
@@ -370,9 +330,28 @@ short int instrument_key_released(int instrument_index, int note)
   if (TUNING_NOTE_IS_NOT_PLAYABLE(note))
     return 0;
 
+  /* remove this key from the pressed keys */
+  for (m = 0; m < ins->num_pressed; m++)
+  {
+    if (ins->pressed_keys[m] == note)
+    {
+      for (n = m; n < ins->num_pressed - 1; n++)
+        ins->pressed_keys[n] = ins->pressed_keys[n + 1];
+
+      ins->pressed_keys[ins->num_pressed - 1] = TUNING_NOTE_BLANK;
+      ins->num_pressed -= 1;
+
+      break;
+    }
+  }
+
+  instrument_note_off(instrument_index, note);
+
+#if 0
   /* if the sustain pedal is up, remove   */
   /* this key from the pressed keys, and  */
   /* then send a note-off for this key.   */
+
   if (ins->sustain_pedal == MIDI_CONT_SUSTAIN_PEDAL_UP)
   {
     /* remove this key from the pressed keys */
@@ -390,12 +369,7 @@ short int instrument_key_released(int instrument_index, int note)
       }
     }
 
-    if (ins->port_arp_switch == MIDI_CONT_PORT_ARP_SWITCH_OFF)
-      instrument_note_off(instrument_index, note);
-    else if (ins->port_arp_switch == MIDI_CONT_PORT_ARP_SWITCH_PORTAMENTO)
-      sweep_key_released(instrument_index, note);
-    else if (ins->port_arp_switch == MIDI_CONT_PORT_ARP_SWITCH_ARPEGGIO)
-      arpeggio_key_released(instrument_index, note);
+    instrument_note_off(instrument_index, note);
   }
   /* if the sustain pedal is down,  */
   /* add this key to the held keys. */
@@ -431,6 +405,7 @@ short int instrument_key_released(int instrument_index, int note)
         ins->num_held += 1;
     }
   }
+#endif
 
   return 0;
 }
@@ -467,16 +442,14 @@ short int instrument_set_note_velocity(int instrument_index, short int vel)
 }
 
 /*******************************************************************************
-** instrument_set_mod_wheel_position()
+** instrument_set_vibrato_wheel_position()
 *******************************************************************************/
-short int instrument_set_mod_wheel_position(int instrument_index, short int pos)
+short int instrument_set_vibrato_wheel_position(int instrument_index, short int pos)
 {
   int m;
-  int n;
 
   instrument* ins;
   voice* v;
-  envelope* e;
 
   /* make sure that the instrument index is valid */
   if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
@@ -493,41 +466,32 @@ short int instrument_set_mod_wheel_position(int instrument_index, short int pos)
   ins = &G_instrument_bank[instrument_index];
 
   /* if this new position is the same as the current position, return */
-  if (pos == ins->mod_wheel_pos)
+  if (pos == ins->vibrato_wheel_pos)
     return 0;
 
   /* set the new mod wheel position */
-  ins->mod_wheel_pos = pos;
+  ins->vibrato_wheel_pos = pos;
 
   /* set the mod wheel input for other units associated with this instrument */
   for (m = 0; m < ins->polyphony; m++)
   {
     v = &G_voice_bank[ins->voice_index + m];
 
-    v->mod_wheel_pos = pos;
-
-    for (n = 0; n < BANK_ENVELOPES_PER_VOICE; n++)
-    {
-      e = &G_envelope_bank[(ins->voice_index + m) * BANK_ENVELOPES_PER_VOICE + n];
-
-      e->mod_wheel_pos = pos;
-    }
+    v->vibrato_wheel_pos = pos;
   }
 
   return 0;
 }
 
 /*******************************************************************************
-** instrument_set_aftertouch_position()
+** instrument_set_tremolo_wheel_position()
 *******************************************************************************/
-short int instrument_set_aftertouch_position(int instrument_index, short int pos)
+short int instrument_set_tremolo_wheel_position(int instrument_index, short int pos)
 {
   int m;
-  int n;
 
   instrument* ins;
   voice* v;
-  envelope* e;
 
   /* make sure that the instrument index is valid */
   if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
@@ -544,41 +508,32 @@ short int instrument_set_aftertouch_position(int instrument_index, short int pos
   ins = &G_instrument_bank[instrument_index];
 
   /* if this new position is the same as the current position, return */
-  if (pos == ins->aftertouch_pos)
+  if (pos == ins->tremolo_wheel_pos)
     return 0;
 
   /* set the new aftertouch position */
-  ins->aftertouch_pos = pos;
+  ins->tremolo_wheel_pos = pos;
 
   /* set the aftertouch input for other units associated with this instrument */
   for (m = 0; m < ins->polyphony; m++)
   {
     v = &G_voice_bank[ins->voice_index + m];
 
-    v->aftertouch_pos = pos;
-
-    for (n = 0; n < BANK_ENVELOPES_PER_VOICE; n++)
-    {
-      e = &G_envelope_bank[(ins->voice_index + m) * BANK_ENVELOPES_PER_VOICE + n];
-
-      e->aftertouch_pos = pos;
-    }
+    v->tremolo_wheel_pos = pos;
   }
 
   return 0;
 }
 
 /*******************************************************************************
-** instrument_set_exp_pedal_position()
+** instrument_set_boost_wheel_position()
 *******************************************************************************/
-short int instrument_set_exp_pedal_position(int instrument_index, short int pos)
+short int instrument_set_boost_wheel_position(int instrument_index, short int pos)
 {
   int m;
-  int n;
 
   instrument* ins;
   voice* v;
-  envelope* e;
 
   /* make sure that the instrument index is valid */
   if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
@@ -595,185 +550,18 @@ short int instrument_set_exp_pedal_position(int instrument_index, short int pos)
   ins = &G_instrument_bank[instrument_index];
 
   /* if this new position is the same as the current position, return */
-  if (pos == ins->exp_pedal_pos)
+  if (pos == ins->boost_wheel_pos)
     return 0;
 
   /* set the new exp pedal position */
-  ins->exp_pedal_pos = pos;
+  ins->boost_wheel_pos = pos;
 
   /* set the exp pedal input for other units associated with this instrument */
   for (m = 0; m < ins->polyphony; m++)
   {
     v = &G_voice_bank[ins->voice_index + m];
 
-    v->exp_pedal_pos = pos;
-
-    for (n = 0; n < BANK_ENVELOPES_PER_VOICE; n++)
-    {
-      e = &G_envelope_bank[(ins->voice_index + m) * BANK_ENVELOPES_PER_VOICE + n];
-
-      e->exp_pedal_pos = pos;
-    }
-  }
-
-  return 0;
-}
-
-/*******************************************************************************
-** instrument_set_pitch_wheel_position()
-*******************************************************************************/
-short int instrument_set_pitch_wheel_position(int instrument_index, short int pos)
-{
-  int m;
-
-  instrument* ins;
-  voice* v;
-
-  /* make sure that the instrument index is valid */
-  if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
-    return 1;
-
-  /* make sure the pitch wheel position is valid */
-  if ((pos < MIDI_CONT_BI_WHEEL_LOWER_BOUND) || 
-      (pos > MIDI_CONT_BI_WHEEL_UPPER_BOUND))
-  {
-    return 0;
-  }
-
-  /* obtain pointers */
-  ins = &G_instrument_bank[instrument_index];
-
-  /* if this new position is the same as the current position, return */
-  if (pos == ins->pitch_wheel_pos)
-    return 0;
-
-  /* set the new pitch wheel position */
-  ins->pitch_wheel_pos = pos;
-
-  /* set the pitch wheel input for other units associated with this instrument */
-  for (m = 0; m < ins->polyphony; m++)
-  {
-    v = &G_voice_bank[ins->voice_index + m];
-
-    v->pitch_wheel_pos = pos;
-  }
-
-  return 0;
-}
-
-/*******************************************************************************
-** instrument_set_port_arp_switch()
-*******************************************************************************/
-short int instrument_set_port_arp_switch(int instrument_index, int state)
-{
-  instrument* ins;
-
-  /* make sure that the instrument index is valid */
-  if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
-    return 1;
-
-  /* make sure the switch state is valid */
-  if ((state != MIDI_CONT_PORT_ARP_SWITCH_OFF)        && 
-      (state != MIDI_CONT_PORT_ARP_SWITCH_PORTAMENTO) && 
-      (state != MIDI_CONT_PORT_ARP_SWITCH_ARPEGGIO))
-  {
-    return 0;
-  }
-
-  /* obtain pointers */
-  ins = &G_instrument_bank[instrument_index];
-
-  /* if the switch is already set to this state, return */
-  if (ins->port_arp_switch == state)
-    return 0;
-
-  /* set the portamento/arpeggio switch in the instrument */
-  ins->port_arp_switch = state;
-
-  /* set the switch input for this instrument's sweep & arpeggio units */
-  if (ins->port_arp_switch == MIDI_CONT_PORT_ARP_SWITCH_PORTAMENTO)
-  {
-    arpeggio_set_switch(instrument_index, MIDI_CONT_TOGGLE_SWITCH_OFF);
-    sweep_set_switch(instrument_index, MIDI_CONT_TOGGLE_SWITCH_ON);
-  }
-  else if (ins->port_arp_switch == MIDI_CONT_PORT_ARP_SWITCH_ARPEGGIO)
-  {
-    sweep_set_switch(instrument_index, MIDI_CONT_TOGGLE_SWITCH_OFF);
-    arpeggio_set_switch(instrument_index, MIDI_CONT_TOGGLE_SWITCH_ON);
-  }
-  else
-  {
-    sweep_set_switch(instrument_index, MIDI_CONT_TOGGLE_SWITCH_OFF);
-    arpeggio_set_switch(instrument_index, MIDI_CONT_TOGGLE_SWITCH_OFF);
-  }
-
-  return 0;
-}
-
-/*******************************************************************************
-** instrument_set_sustain_pedal()
-*******************************************************************************/
-short int instrument_set_sustain_pedal(int instrument_index, int state)
-{
-  int k;
-  int m;
-  int n;
-
-  instrument* ins;
-
-  /* make sure that the instrument index is valid */
-  if (BANK_INSTRUMENT_INDEX_IS_NOT_VALID(instrument_index))
-    return 1;
-
-  /* make sure the pedal state is valid */
-  if ((state != MIDI_CONT_SUSTAIN_PEDAL_UP) && 
-      (state != MIDI_CONT_SUSTAIN_PEDAL_DOWN))
-  {
-    return 0;
-  }
-
-  /* obtain instrument pointer */
-  ins = &G_instrument_bank[instrument_index];
-
-  /* if this state is already set, return */
-  if (ins->sustain_pedal == state)
-    return 0;
-
-  /* set the sustain pedal in the instrument */
-  ins->sustain_pedal = state;
-
-  /* if the sustain pedal is now up, release all held keys */
-  if (ins->sustain_pedal == MIDI_CONT_SUSTAIN_PEDAL_UP)
-  {
-    for (k = 0; k < ins->num_held; k++)
-    {
-      /* remove this key from the pressed keys */
-      for (m = 0; m < ins->num_pressed; m++)
-      {
-        if (ins->pressed_keys[m] == ins->held_keys[k])
-        {
-          for (n = m; n < ins->num_pressed - 1; n++)
-            ins->pressed_keys[n] = ins->pressed_keys[n + 1];
-
-          ins->pressed_keys[ins->num_pressed - 1] = TUNING_NOTE_BLANK;
-          ins->num_pressed -= 1;
-
-          break;
-        }
-      }
-
-      /* send a note-off for this key */
-      if (ins->port_arp_switch == MIDI_CONT_PORT_ARP_SWITCH_OFF)
-        instrument_note_off(instrument_index, ins->held_keys[k]);
-      else if (ins->port_arp_switch == MIDI_CONT_PORT_ARP_SWITCH_PORTAMENTO)
-        sweep_key_released(instrument_index, ins->held_keys[k]);
-      else if (ins->port_arp_switch == MIDI_CONT_PORT_ARP_SWITCH_ARPEGGIO)
-        arpeggio_key_released(instrument_index, ins->held_keys[k]);
-
-      ins->held_keys[k] = TUNING_NOTE_BLANK;
-    }
-
-    ins->num_held = 0;
+    v->boost_wheel_pos = pos;
   }
 
   return 0;

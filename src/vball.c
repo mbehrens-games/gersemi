@@ -289,17 +289,11 @@ static char S_patch_edit_sync_values[2][6] =
 static char S_patch_edit_osc_waveform_values[4][6] = 
   {  "Sine", "Half", "Full", "Quar" };
 
-static char S_patch_edit_osc_phi_values[4][6] = 
-  { "0", "90", "180", "270" };
-
 static char S_patch_edit_osc_freq_mode_values[2][6] = 
   { "Ratio", "Fixed" };
 
 static char S_patch_edit_osc_detune_values[8][6] = 
   { "0", "-3", "-2", "-1", "0", "1", "2", "3" };
-
-static char S_patch_edit_env_hold_mode_values[4][6] = 
-  { "Off", "Pedal", "Invrt", "Alwys" };
 
 static char S_patch_edit_lfo_waveform_values[4][6] = 
   { "Tri", "Squa", "SawU", "SawD" };
@@ -309,40 +303,6 @@ static char S_patch_edit_highpass_cutoff_values[4][6] =
 
 static char S_patch_edit_lowpass_cutoff_values[4][6] = 
   { "E7", "G7", "A7", "C8" };
-
-static char S_patch_edit_peg_level_values[96][4] = 
-  { "-48", "-47", "-46", "-45", "-44", "-43", "-42", "-41", 
-    "-40", "-39", "-38", "-37", "-36", "-35", "-34", "-33", 
-    "-32", "-31", "-30", "-29", "-28", "-27", "-26", "-25", 
-    "-24", "-23", "-22", "-21", "-20", "-19", "-18", "-17", 
-    "-16", "-15", "-14", "-13", "-12", "-11", "-10",  "-9", 
-     "-8",  "-7",  "-6",  "-5",  "-4",  "-3",  "-2",  "-1", 
-      "0", 
-      "1",   "2",   "3",   "4",   "5",   "6",   "7",   "8", 
-      "9",  "10",  "11",  "12",  "13",  "14",  "15",  "16", 
-     "17",  "18",  "19",  "20",  "21",  "22",  "23",  "24", 
-     "25",  "26",  "27",  "28",  "29",  "30",  "31",  "32", 
-     "33",  "34",  "35",  "36",  "37",  "38",  "39",  "40", 
-     "41",  "42",  "43",  "44",  "45",  "46",  "47" 
-  };
-
-static char S_patch_edit_pitch_wheel_mode_values[2][6] = 
-  { "Bend", "Half" };
-
-static char S_patch_edit_arpeggio_mode_values[2][6] = 
-  { "Harp", "Roll" };
-
-static char S_patch_edit_arpeggio_pattern_values[4][6] = 
-  { "Up", "Down", "U/D", "Alt" };
-
-static char S_patch_edit_portamento_mode_values[2][6] = 
-  { "Bend", "Half" };
-
-static char S_patch_edit_portamento_legato_values[3][6] = 
-  { "Off", "Foll", "Hamm" };
-
-static char S_patch_edit_routing_values[2][6] = 
-  { "Off", "On" };
 
 static char S_audition_bi_wheel_values[MIDI_CONT_BI_WHEEL_NUM_VALUES][4] = 
   { "-64", "-63", "-62", "-61", "-60", "-59", "-58", "-57", 
@@ -813,10 +773,8 @@ short int vb_all_load_cart_screen()
     /* determine parameter value string */
     switch(m)
     {
-      case PATCH_PARAM_OSC_1_FEEDBACK:
-      case PATCH_PARAM_OSC_2_FEEDBACK:
-      case PATCH_PARAM_OSC_3_FEEDBACK:
-      case PATCH_PARAM_OSC_4_FEEDBACK:
+      case PATCH_PARAM_FEEDBACK:
+      case PATCH_PARAM_ALGORITHM:
       case PATCH_PARAM_ENV_1_MAX_LEVEL:
       case PATCH_PARAM_ENV_2_MAX_LEVEL:
       case PATCH_PARAM_ENV_3_MAX_LEVEL:
@@ -825,15 +783,13 @@ short int vb_all_load_cart_screen()
       case PATCH_PARAM_ENV_2_HOLD_LEVEL:
       case PATCH_PARAM_ENV_3_HOLD_LEVEL:
       case PATCH_PARAM_ENV_4_HOLD_LEVEL:
-      case PATCH_PARAM_VIBRATO_DELAY:
-      case PATCH_PARAM_TREMOLO_DELAY:
+      case PATCH_PARAM_LFO_DELAY:
       case PATCH_PARAM_VIBRATO_DEPTH:
       case PATCH_PARAM_TREMOLO_DEPTH:
       {
         value_str = S_common_edit_0_to_127_values[pt->values[m]];
         break;
       }
-      case PATCH_PARAM_ALGORITHM:
       case PATCH_PARAM_OSC_1_MULTIPLE:
       case PATCH_PARAM_OSC_2_MULTIPLE:
       case PATCH_PARAM_OSC_3_MULTIPLE:
@@ -858,61 +814,28 @@ short int vb_all_load_cart_screen()
       case PATCH_PARAM_ENV_2_RELEASE:
       case PATCH_PARAM_ENV_3_RELEASE:
       case PATCH_PARAM_ENV_4_RELEASE:
-      case PATCH_PARAM_ENV_1_RATE_KEYSCALING:
-      case PATCH_PARAM_ENV_2_RATE_KEYSCALING:
-      case PATCH_PARAM_ENV_3_RATE_KEYSCALING:
-      case PATCH_PARAM_ENV_4_RATE_KEYSCALING:
-      case PATCH_PARAM_ENV_1_LEVEL_KEYSCALING:
-      case PATCH_PARAM_ENV_2_LEVEL_KEYSCALING:
-      case PATCH_PARAM_ENV_3_LEVEL_KEYSCALING:
-      case PATCH_PARAM_ENV_4_LEVEL_KEYSCALING:
-      case PATCH_PARAM_VIBRATO_SPEED:
-      case PATCH_PARAM_TREMOLO_SPEED:
+      case PATCH_PARAM_ENV_1_RATE_KS:
+      case PATCH_PARAM_ENV_2_RATE_KS:
+      case PATCH_PARAM_ENV_3_RATE_KS:
+      case PATCH_PARAM_ENV_4_RATE_KS:
+      case PATCH_PARAM_ENV_1_LEVEL_KS:
+      case PATCH_PARAM_ENV_2_LEVEL_KS:
+      case PATCH_PARAM_ENV_3_LEVEL_KS:
+      case PATCH_PARAM_ENV_4_LEVEL_KS:
+      case PATCH_PARAM_LFO_SPEED:
       case PATCH_PARAM_VIBRATO_SENSITIVITY:
       case PATCH_PARAM_TREMOLO_SENSITIVITY:
       case PATCH_PARAM_BOOST_SENSITIVITY:
       case PATCH_PARAM_VELOCITY_SENSITIVITY:
-      case PATCH_PARAM_PITCH_ENV_ATTACK:
-      case PATCH_PARAM_PITCH_ENV_DECAY:
-      case PATCH_PARAM_PITCH_ENV_RELEASE:
-      case PATCH_PARAM_PITCH_WHEEL_RANGE:
-      case PATCH_PARAM_ARPEGGIO_OCTAVE:
-      case PATCH_PARAM_ARPEGGIO_SPEED:
-      case PATCH_PARAM_PORTAMENTO_SPEED:
       {
         value_str = S_common_edit_1_to_128_values[pt->values[m]];
         break;
       }
-      case PATCH_PARAM_LEGACY_KEYSCALE:
-      case PATCH_PARAM_NOISE_ENABLE:
       case PATCH_PARAM_OSC_SYNC:
-      case PATCH_PARAM_VIBRATO_SYNC:
-      case PATCH_PARAM_TREMOLO_SYNC:
-      case PATCH_PARAM_VIBRATO_ROUTING_OSC_1:
-      case PATCH_PARAM_VIBRATO_ROUTING_OSC_2:
-      case PATCH_PARAM_VIBRATO_ROUTING_OSC_3:
-      case PATCH_PARAM_VIBRATO_ROUTING_OSC_4:
-      case PATCH_PARAM_TREMOLO_ROUTING_ENV_1:
-      case PATCH_PARAM_TREMOLO_ROUTING_ENV_2:
-      case PATCH_PARAM_TREMOLO_ROUTING_ENV_3:
-      case PATCH_PARAM_TREMOLO_ROUTING_ENV_4:
-      case PATCH_PARAM_BOOST_ROUTING_ENV_1:
-      case PATCH_PARAM_BOOST_ROUTING_ENV_2:
-      case PATCH_PARAM_BOOST_ROUTING_ENV_3:
-      case PATCH_PARAM_BOOST_ROUTING_ENV_4:
-      case PATCH_PARAM_VELOCITY_ROUTING_ENV_1:
-      case PATCH_PARAM_VELOCITY_ROUTING_ENV_2:
-      case PATCH_PARAM_VELOCITY_ROUTING_ENV_3:
-      case PATCH_PARAM_VELOCITY_ROUTING_ENV_4:
-      case PATCH_PARAM_MOD_WHEEL_ROUTING_VIBRATO:
-      case PATCH_PARAM_MOD_WHEEL_ROUTING_TREMOLO:
-      case PATCH_PARAM_MOD_WHEEL_ROUTING_BOOST:
-      case PATCH_PARAM_AFTERTOUCH_ROUTING_VIBRATO:
-      case PATCH_PARAM_AFTERTOUCH_ROUTING_TREMOLO:
-      case PATCH_PARAM_AFTERTOUCH_ROUTING_BOOST:
-      case PATCH_PARAM_EXP_PEDAL_ROUTING_VIBRATO:
-      case PATCH_PARAM_EXP_PEDAL_ROUTING_TREMOLO:
-      case PATCH_PARAM_EXP_PEDAL_ROUTING_BOOST:
+      case PATCH_PARAM_LFO_SYNC:
+      case PATCH_PARAM_VIBRATO_POLARITY:
+      case PATCH_PARAM_TREMOLO_MODE:
+      case PATCH_PARAM_BOOST_MODE:
       {
         value_str = S_patch_edit_sync_values[pt->values[m]];
         break;
@@ -923,14 +846,6 @@ short int vb_all_load_cart_screen()
       case PATCH_PARAM_OSC_4_WAVEFORM:
       {
         value_str = S_patch_edit_osc_waveform_values[pt->values[m]];
-        break;
-      }
-      case PATCH_PARAM_OSC_1_PHI:
-      case PATCH_PARAM_OSC_2_PHI:
-      case PATCH_PARAM_OSC_3_PHI:
-      case PATCH_PARAM_OSC_4_PHI:
-      {
-        value_str = S_patch_edit_osc_phi_values[pt->values[m]];
         break;
       }
       case PATCH_PARAM_OSC_1_FREQ_MODE:
@@ -949,16 +864,7 @@ short int vb_all_load_cart_screen()
         value_str = S_patch_edit_osc_detune_values[pt->values[m]];
         break;
       }
-      case PATCH_PARAM_ENV_1_HOLD_MODE:
-      case PATCH_PARAM_ENV_2_HOLD_MODE:
-      case PATCH_PARAM_ENV_3_HOLD_MODE:
-      case PATCH_PARAM_ENV_4_HOLD_MODE:
-      {
-        value_str = S_patch_edit_env_hold_mode_values[pt->values[m]];
-        break;
-      }
-      case PATCH_PARAM_VIBRATO_WAVEFORM:
-      case PATCH_PARAM_TREMOLO_WAVEFORM:
+      case PATCH_PARAM_LFO_WAVEFORM:
       {
         value_str = S_patch_edit_lfo_waveform_values[pt->values[m]];
         break;
@@ -971,37 +877,6 @@ short int vb_all_load_cart_screen()
       case PATCH_PARAM_LOWPASS_CUTOFF:
       {
         value_str = S_patch_edit_lowpass_cutoff_values[pt->values[m]];
-        break;
-      }
-      case PATCH_PARAM_PITCH_ENV_MAX:
-      case PATCH_PARAM_PITCH_ENV_FINALE:
-      {
-        value_str = S_patch_edit_peg_level_values[pt->values[m]];
-        break;
-      }
-      case PATCH_PARAM_PITCH_WHEEL_MODE:
-      {
-        value_str = S_patch_edit_pitch_wheel_mode_values[pt->values[m]];
-        break;
-      }
-      case PATCH_PARAM_ARPEGGIO_MODE:
-      {
-        value_str = S_patch_edit_arpeggio_mode_values[pt->values[m]];
-        break;
-      }
-      case PATCH_PARAM_ARPEGGIO_PATTERN:
-      {
-        value_str = S_patch_edit_arpeggio_pattern_values[pt->values[m]];
-        break;
-      }
-      case PATCH_PARAM_PORTAMENTO_MODE:
-      {
-        value_str = S_patch_edit_portamento_mode_values[pt->values[m]];
-        break;
-      }
-      case PATCH_PARAM_PORTAMENTO_LEGATO:
-      {
-        value_str = S_patch_edit_portamento_legato_values[pt->values[m]];
         break;
       }
       default:

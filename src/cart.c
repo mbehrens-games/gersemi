@@ -13,31 +13,21 @@ cart G_cart_bank[BANK_NUM_CARTS];
 
 /* patch parameter bounds array */
 unsigned char G_patch_param_bounds[PATCH_NUM_PARAMS] = 
-  {  3,   1,                                    /* algorithm, legacy keyscale */
-     1,   1,                                    /* noise enable, osc sync */
-     3,   7,   3,   1,  15,   7,   7,           /* osc 1 */
-     3,   7,   3,   1,  15,   7,   7,           /* osc 2 */
-     3,   7,   3,   1,  15,   7,   7,           /* osc 3 */
-     3,   7,   3,   1,  15,   7,   7,           /* osc 4 */
-    31,  31,  31,  15, 127,   3,  15,   3,   3, /* env 1 */
-    31,  31,  31,  15, 127,   3,  15,   3,   3, /* env 2 */
-    31,  31,  31,  15, 127,   3,  15,   3,   3, /* env 3 */
-    31,  31,  31,  15, 127,   3,  15,   3,   3, /* env 4 */
-     1,   1,   1,   1,                          /* vibrato routing */
-     1,   1,   1,   1,                          /* tremolo routing */
-     1,   1,   1,   1,                          /* boost routing */
-     1,   1,   1,   1,                          /* velocity routing */
-     3,  47,  15, 127,   7,   1,                /* vibrato */
-     3,  47,  15, 127,   3,   1,                /* tremolo */
-     7,   7,                                    /* boost, velocity sensitivity */
-    31,  31,  15,  95,  95,                     /* pitch envelope */
-     3,   3,                                    /* filter cutoffs */
-     1,  11,                                    /* pitch wheel */
-     1,   3,   3,  11,                          /* arpeggio */
-     1,   2,  15,                               /* portamento */
-     1,   1,   1,                               /* mod wheel routing */
-     1,   1,   1,                               /* aftertouch routing */
-     1,   1,   1                                /* exp pedal routing */
+  {  7,   7,   1,                           /* feedback, algorithm, osc sync */
+     3,   1,  15,   7,   7,                 /* osc 1 */
+     3,   1,  15,   7,   7,                 /* osc 2 */
+     3,   1,  15,   7,   7,                 /* osc 3 */
+     3,   1,  15,   7,   7,                 /* osc 4 */
+    31,  31,  31,  15, 127,  15,   3,   3,  /* env 1 */
+    31,  31,  31,  15, 127,  15,   3,   3,  /* env 2 */
+    31,  31,  31,  15, 127,  15,   3,   3,  /* env 3 */
+    31,  31,  31,  15, 127,  15,   3,   3,  /* env 4 */
+     3,   1,  15,  47,                      /* lfo */
+     1,   7, 127,                           /* vibrato */
+     1,   3, 127,                           /* tremolo */
+     7,                                     /* velocity */
+     1,   7,                                /* boost */
+     3,   3                                 /* filter cutoffs */
   };
 
 /*******************************************************************************

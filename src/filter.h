@@ -7,24 +7,28 @@
 
 #include "bank.h"
 
-#define FILTER_NUM_STAGES 2
-
 typedef struct filter
 {
-  short int cutoff_index;
+  /* cart & patch indices */
+  short int cart_index;
+  short int patch_index;
 
+  /* filter */
   int input;
 
-  int s[FILTER_NUM_STAGES];
-  int v[FILTER_NUM_STAGES];
-  int y[FILTER_NUM_STAGES];
+  int hpf_s[2];
+  int hpf_v[2];
+  int hpf_y[2];
+
+  int lpf_s[2];
+  int lpf_v[2];
+  int lpf_y[2];
 
   int level;
 } filter;
 
 /* filter bank */
-extern filter G_highpass_filter_bank[BANK_NUM_FILTER_SETS];
-extern filter G_lowpass_filter_bank[BANK_NUM_FILTER_SETS];
+extern filter G_filter_bank[BANK_NUM_VOICES];
 
 /* function declarations */
 short int filter_reset_all();

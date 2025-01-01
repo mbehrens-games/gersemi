@@ -7,58 +7,59 @@
 
 #include "bank.h"
 
+#define VOICE_NUM_OSCS 4
+
 typedef struct voice
 {
-  /* algorithm, sync */
-  short int algorithm;
-  short int sync;
+  /* cart & patch indices */
+  short int cart_index;
+  short int patch_index;
+
+  /* looked at by the instrument. can probably move it up there! */
+  int base_note;
+
+  /* lfo */
+  short int tempo;
+
+  int lfo_delay_cycles;
+
+  unsigned int lfo_phase;
+  unsigned int lfo_increment;
 
   /* oscillators */
-  short int osc_waveform[BANK_OSCILLATORS_PER_VOICE];
-  short int osc_phi[BANK_OSCILLATORS_PER_VOICE];
-  short int osc_freq_mode[BANK_OSCILLATORS_PER_VOICE];
+  short int osc_pitch_index[VOICE_NUM_OSCS];
 
-  short int osc_note_offset[BANK_OSCILLATORS_PER_VOICE];
-  short int osc_detune_offset[BANK_OSCILLATORS_PER_VOICE];
-
-  unsigned char osc_routing[BANK_OSCILLATORS_PER_VOICE];
-
-  /* currently playing notes, pitch indices */
-  short int base_note;
-
-  short int osc_pitch_index[BANK_OSCILLATORS_PER_VOICE];
-
-  /* phases */
-  unsigned int osc_phase[BANK_OSCILLATORS_PER_VOICE];
-
-  /* noise lfsr */
+  unsigned int osc_phase[VOICE_NUM_OSCS];
   unsigned int noise_lfsr;
 
-  /* envelope input levels */
-  short int env_input[BANK_ENVELOPES_PER_VOICE];
+  /* envelopes */
+  int env_stage[VOICE_NUM_OSCS];
 
-  /* vibrato */
+  unsigned int env_increment[VOICE_NUM_OSCS];
+  unsigned int env_phase[VOICE_NUM_OSCS];
+
+  short int env_attenuation[VOICE_NUM_OSCS];
+
+  short int env_ks_rate_adjustment[VOICE_NUM_OSCS];
+  short int env_ks_level_adjustment[VOICE_NUM_OSCS];
+
+  short int env_volume_adjustment[VOICE_NUM_OSCS];
+  short int env_amplitude_adjustment[VOICE_NUM_OSCS];
+  short int env_velocity_adjustment[VOICE_NUM_OSCS];
+
+  /* lfo input */
   short int vibrato_base;
   short int vibrato_extra;
 
-  /* pitch wheel */
-  short int pitch_wheel_mode;
-  short int pitch_wheel_max;
+  short int tremolo_base;
+  short int tremolo_extra;
 
-  /* pitch envelope, sweep */
-  short int peg_input;
-  short int sweep_input;
-
-  /* midi controller routing */
-  unsigned char mod_wheel_routing;
-  unsigned char aftertouch_routing;
-  unsigned char exp_pedal_routing;
+  short int boost_extra;
 
   /* midi controller positions */
-  short int mod_wheel_pos;
-  short int aftertouch_pos;
-  short int exp_pedal_pos;
-  short int pitch_wheel_pos;
+  short int vibrato_wheel_pos;
+  short int tremolo_wheel_pos;
+  short int boost_wheel_pos;
 
   /* output level */
   int level;
@@ -74,6 +75,7 @@ short int voice_load_patch( int voice_index,
                             int cart_index, int patch_index);
 
 short int voice_note_on(int voice_index, int note);
+short int voice_note_off(int voice_index);
 
 short int voice_update_all();
 
