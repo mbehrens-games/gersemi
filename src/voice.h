@@ -7,7 +7,7 @@
 
 #include "bank.h"
 
-#define VOICE_NUM_OSCS 4
+#define VOICE_NUM_OSCS 3
 
 typedef struct voice
 {
@@ -17,6 +17,9 @@ typedef struct voice
 
   /* looked at by the instrument. can probably move it up there! */
   int base_note;
+
+  /* feedback */
+  short int feedin[2];
 
   /* lfo */
   short int tempo;
@@ -30,7 +33,6 @@ typedef struct voice
   short int osc_pitch_index[VOICE_NUM_OSCS];
 
   unsigned int osc_phase[VOICE_NUM_OSCS];
-  unsigned int noise_lfsr;
 
   /* envelopes */
   int env_stage[VOICE_NUM_OSCS];
@@ -46,15 +48,6 @@ typedef struct voice
   short int env_volume_adjustment[VOICE_NUM_OSCS];
   short int env_amplitude_adjustment[VOICE_NUM_OSCS];
   short int env_velocity_adjustment[VOICE_NUM_OSCS];
-
-  /* lfo input */
-  short int vibrato_base;
-  short int vibrato_extra;
-
-  short int tremolo_base;
-  short int tremolo_extra;
-
-  short int boost_extra;
 
   /* midi controller positions */
   short int vibrato_wheel_pos;

@@ -41,10 +41,9 @@ enum
 #define VOICE_WAVETABLE_SIZE_QUARTER  (VOICE_WAVETABLE_SIZE_FULL / 4)
 
 /* envelopes */
-#define VOICE_ENV_NUM_OCTAVES      16
-#define VOICE_ENV_RATES_PER_OCTAVE 12
+#define VOICE_ENV_NUM_OCTAVES 13
 
-#define VOICE_ENV_NUM_RATES (VOICE_ENV_NUM_OCTAVES * VOICE_ENV_RATES_PER_OCTAVE)
+#define VOICE_ENV_NUM_RATES (VOICE_ENV_NUM_OCTAVES * 12)
 
 /* lfo */
 #define VOICE_LFO_WAVE_AMPLITUDE 512
@@ -55,7 +54,7 @@ enum
 
 /* multiple table */
 /* the values form the harmonic series! */
-static int  S_voice_multiple_table[16] = 
+static int  S_voice_multiple_table[PATCH_NUM_OSC_MULTIPLE_VALS] = 
             { 0 * 12 + 0,   /*  1x  */
               1 * 12 + 0,   /*  2x  */
               1 * 12 + 7,   /*  3x  */
@@ -75,9 +74,8 @@ static int  S_voice_multiple_table[16] =
             };
 
 /* detune table */
-static int  S_voice_detune_table[8] = 
-            { ( 0  * TUNING_NUM_SEMITONE_STEPS) / 128, 
-              (-12 * TUNING_NUM_SEMITONE_STEPS) / 128, 
+static int  S_voice_detune_table[PATCH_NUM_OSC_DETUNE_VALS] = 
+            { (-12 * TUNING_NUM_SEMITONE_STEPS) / 128, 
               (-8  * TUNING_NUM_SEMITONE_STEPS) / 128, 
               (-4  * TUNING_NUM_SEMITONE_STEPS) / 128, 
               ( 0  * TUNING_NUM_SEMITONE_STEPS) / 128, 
@@ -86,24 +84,28 @@ static int  S_voice_detune_table[8] =
               ( 12 * TUNING_NUM_SEMITONE_STEPS) / 128 
             };
 
-/* lfo tables */
-static short int  S_voice_lfo_vibrato_max_table[8] = 
-                  { (  4 * TUNING_NUM_SEMITONE_STEPS) / 128, 
+/* sensitivity tables */
+static short int S_voice_vibrato_max_table[PATCH_NUM_SENSITIVITY_VALS] = 
+                  { (  2 * TUNING_NUM_SEMITONE_STEPS) / 128, 
+                    (  4 * TUNING_NUM_SEMITONE_STEPS) / 128, 
+                    (  6 * TUNING_NUM_SEMITONE_STEPS) / 128, 
                     (  8 * TUNING_NUM_SEMITONE_STEPS) / 128, 
                     ( 12 * TUNING_NUM_SEMITONE_STEPS) / 128, 
                     ( 16 * TUNING_NUM_SEMITONE_STEPS) / 128, 
+                    ( 20 * TUNING_NUM_SEMITONE_STEPS) / 128, 
+                    ( 24 * TUNING_NUM_SEMITONE_STEPS) / 128, 
+                    ( 28 * TUNING_NUM_SEMITONE_STEPS) / 128, 
                     ( 32 * TUNING_NUM_SEMITONE_STEPS) / 128, 
+                    ( 48 * TUNING_NUM_SEMITONE_STEPS) / 128, 
                     ( 64 * TUNING_NUM_SEMITONE_STEPS) / 128, 
                     (128 * TUNING_NUM_SEMITONE_STEPS) / 128, 
-                    (256 * TUNING_NUM_SEMITONE_STEPS) / 128 
+                    (256 * TUNING_NUM_SEMITONE_STEPS) / 128, 
+                    (512 * TUNING_NUM_SEMITONE_STEPS) / 128, 
+                    (896 * TUNING_NUM_SEMITONE_STEPS) / 128 
                   };
 
-static short int  S_voice_lfo_tremolo_max_table[4] = 
-                  {  4 * (1 * 32), 
-                     8 * (1 * 32), 
-                    12 * (1 * 32), 
-                    16 * (1 * 32) 
-                  };
+static short int S_voice_tremolo_max_table[PATCH_NUM_SENSITIVITY_VALS];
+static short int S_voice_boost_max_table[PATCH_NUM_SENSITIVITY_VALS];
 
 /* oscillator phase increment table */
 static unsigned int S_voice_wave_phase_increment_table[TUNING_NUM_INDICES];
@@ -118,20 +120,14 @@ static short int S_voice_wavetable_sine[VOICE_WAVETABLE_SIZE_HALF];
 static unsigned int S_voice_env_attack_increment_table[VOICE_ENV_NUM_RATES];
 static unsigned int S_voice_env_decay_increment_table[VOICE_ENV_NUM_RATES];
 
-/* amplitude, hold level table */
-static short int S_voice_env_max_level_table[128];
-static short int S_voice_env_hold_level_table[16];
-
-/* rate table */
-static short int S_voice_env_time_table[32];
+/* envelope level, time tables */
+static short int S_voice_env_max_level_table[PATCH_NUM_ENV_LEVEL_VALS];
+static short int S_voice_env_hold_level_table[PATCH_NUM_ENV_LEVEL_VALS];
+static short int S_voice_env_time_table[PATCH_NUM_ENV_TIME_VALS];
 
 /* keyscaling tables */
 static short int S_voice_env_rate_keyscale_table[TUNING_NUM_PLAYABLE_NOTES];
 static short int S_voice_env_level_keyscale_table[TUNING_NUM_PLAYABLE_NOTES];
-
-/* boost & velocity tables */
-static short int S_voice_env_boost_max_table[8];
-static short int S_voice_env_velocity_max_table[8];
 
 /* lfo wavetables */
 static short int S_voice_lfo_bi_wavetable_tri[VOICE_LFO_WAVE_PERIOD_FULL];
@@ -172,14 +168,16 @@ short int voice_reset_all()
     /* base note */
     v->base_note = TUNING_NOTE_BLANK;
 
+    /* feedback */
+    v->feedin[0] = 0;
+    v->feedin[1] = 0;
+
     /* oscillators */
     for (m = 0; m < VOICE_NUM_OSCS; m++)
     {
       v->osc_pitch_index[m] = 0;
       v->osc_phase[m] = 0;
     }
-
-    v->noise_lfsr = 0x0001;
 
     /* envelopes */
     for (m = 0; m < VOICE_NUM_OSCS; m++)
@@ -206,14 +204,6 @@ short int voice_reset_all()
 
     v->lfo_phase = 0;
     v->lfo_increment = S_voice_lfo_phase_increment_table[v->tempo] * 0;
-
-    v->vibrato_base = 0;
-    v->vibrato_extra = 0;
-
-    v->tremolo_base = 0;
-    v->tremolo_extra = 0;
-
-    v->boost_extra = 0;
 
     /* midi controller positions */
     v->vibrato_wheel_pos = MIDI_CONT_UNI_WHEEL_DEFAULT;
@@ -293,16 +283,6 @@ short int voice_note_on(int voice_index, int note)
   v->lfo_delay_cycles = S_voice_lfo_delay_period_table[v->tempo];
   v->lfo_delay_cycles *= p->values[PATCH_PARAM_LFO_DELAY];
 
-  /* reset lfo levels during the delay */
-  if (v->lfo_delay_cycles > 0)
-  {
-    v->vibrato_base = 0;
-    v->vibrato_extra = 0;
-
-    v->tremolo_base = 0;
-    v->tremolo_extra = 0;
-  }
-
   /* compute phase increment */
   v->lfo_increment = S_voice_lfo_phase_increment_table[v->tempo];
   v->lfo_increment *= p->values[PATCH_PARAM_LFO_SPEED];
@@ -315,14 +295,15 @@ short int voice_note_on(int voice_index, int note)
   for (m = 0; m < VOICE_NUM_OSCS; m++)
   {
     /* shift note based on multiple/divisor or fixed frequency mode */
-    if (p->values[PATCH_PARAM_OSC_1_FREQ_MODE + m * PATCH_PARAM_OSC_SHIFT] == 1)
+    if (p->values[PATCH_PARAM_OSC_1_FREQ_MODE + m * PATCH_PARAM_OSC_SHIFT] == PATCH_OSC_FREQ_MODE_VAL_FIXED)
     {
-      shifted_note = TUNING_NOTE_BLANK;
+      shifted_note = TUNING_NOTE_C0;
+      shifted_note += 12 * p->values[PATCH_PARAM_OSC_1_OCTAVE + m * PATCH_PARAM_OSC_SHIFT];
+      shifted_note += p->values[PATCH_PARAM_OSC_1_NOTE + m * PATCH_PARAM_OSC_SHIFT];
     }
     else
     {
       shifted_note = note;
-
       shifted_note += S_voice_multiple_table[p->values[PATCH_PARAM_OSC_1_MULTIPLE + m * PATCH_PARAM_OSC_SHIFT]];
       shifted_note -= S_voice_multiple_table[p->values[PATCH_PARAM_OSC_1_DIVISOR + m * PATCH_PARAM_OSC_SHIFT]];
     }
@@ -333,8 +314,16 @@ short int voice_note_on(int voice_index, int note)
       shifted_note = TUNING_NOTE_B9;
 
     /* compute keyscaling adjustments based on shifted note */
-    v->env_ks_rate_adjustment[m] = S_voice_env_rate_keyscale_table[shifted_note - TUNING_NOTE_A0];
-    v->env_ks_level_adjustment[m] = S_voice_env_level_keyscale_table[shifted_note - TUNING_NOTE_A0];
+    if (p->values[PATCH_PARAM_LEGACY_KEYSCALE] == PATCH_LEGACY_KEYSCALE_VAL_KEY)
+    {
+      v->env_ks_rate_adjustment[m] = S_voice_env_rate_keyscale_table[note - TUNING_NOTE_A0];
+      v->env_ks_level_adjustment[m] = S_voice_env_level_keyscale_table[note - TUNING_NOTE_A0];
+    }
+    else
+    {
+      v->env_ks_rate_adjustment[m] = S_voice_env_rate_keyscale_table[shifted_note - TUNING_NOTE_A0];
+      v->env_ks_level_adjustment[m] = S_voice_env_level_keyscale_table[shifted_note - TUNING_NOTE_A0];
+    }
 
     if (p->values[PATCH_PARAM_ENV_1_RATE_KS + m * PATCH_PARAM_ENV_SHIFT] < 3)
     {
@@ -351,26 +340,6 @@ short int voice_note_on(int voice_index, int note)
     /* set the amplitude adjustment */
     v->env_amplitude_adjustment[m] = 
       S_voice_env_max_level_table[p->values[PATCH_PARAM_ENV_1_MAX_LEVEL + m * PATCH_PARAM_ENV_SHIFT]];
-
-#if 0
-    /* set the velocity adjustment */
-    if ((vel >= MIDI_CONT_NOTE_VELOCITY_LOWER_BOUND) && 
-        (vel <= MIDI_CONT_NOTE_VELOCITY_SPLIT_POINT))
-    {
-      v->env_velocity_adjustment[m] = S_voice_env_velocity_max_table[p->values[PATCH_PARAM_VELOCITY_SENSITIVITY]];
-      v->env_velocity_adjustment[m] *= (MIDI_CONT_NOTE_VELOCITY_SPLIT_POINT - vel);
-      v->env_velocity_adjustment[m] /= MIDI_CONT_NOTE_VELOCITY_DIVISOR;
-    }
-    else if ( (vel >  MIDI_CONT_NOTE_VELOCITY_SPLIT_POINT) && 
-              (vel <= MIDI_CONT_NOTE_VELOCITY_UPPER_BOUND))
-    {
-      v->env_velocity_adjustment[m] = -S_voice_env_velocity_max_table[p->values[PATCH_PARAM_VELOCITY_SENSITIVITY]];
-      v->env_velocity_adjustment[m] *= (vel - MIDI_CONT_NOTE_VELOCITY_SPLIT_POINT);
-      v->env_velocity_adjustment[m] /= MIDI_CONT_NOTE_VELOCITY_DIVISOR;
-    }
-    else
-      v->env_velocity_adjustment[m] = 0;
-#endif
 
     /* set to attack stage */
     v->env_stage[m] = VOICE_ENV_STAGE_ATTACK;
@@ -401,10 +370,7 @@ short int voice_note_on(int voice_index, int note)
 
     /* reset phases if necessary */
     if (p->values[PATCH_PARAM_OSC_SYNC] == 1)
-    {
       v->osc_phase[m] = 0;
-      v->noise_lfsr = 0x0001;
-    }
   }
 
   return 0;
@@ -473,12 +439,15 @@ short int voice_update_all()
   cart* c;
   patch* p;
 
-  int vibrato_level;
-  int tremolo_level;
+  int lfo_bi_level;
+  int lfo_uni_level;
+
+  int wheel_base;
+  int wheel_extra;
 
   int vibrato_adjustment;
-  int tremolo_adjustment;
-  int boost_adjustment;
+  int carrier_adjustment;
+  int modulator_adjustment;
 
   int env_level[VOICE_NUM_OSCS];
 
@@ -489,6 +458,7 @@ short int voice_update_all()
   int osc_phase_mod[VOICE_NUM_OSCS];
 
   int adjusted_pitch_index;
+  int fb_phase_mod;
 
   unsigned int masked_phase;
 
@@ -502,6 +472,9 @@ short int voice_update_all()
     /* obtain cart & patch pointers */
     c = &G_cart_bank[v->cart_index];
     p = &(c->patches[v->patch_index]);
+
+    /* compute feedback */
+    fb_phase_mod = (v->feedin[0] + v->feedin[1]) >> 1;
 
     /* update lfo */
     v->lfo_phase += v->lfo_increment;
@@ -522,77 +495,107 @@ short int voice_update_all()
     /* determine base wave indices */
     masked_phase = ((v->lfo_phase >> 20) & 0xFF);
 
-    /* determine wave level */
-    if (p->values[PATCH_PARAM_LFO_WAVEFORM] == 0)
+    /* determine lfo wave level */
+    lfo_bi_level = 0;
+    lfo_uni_level = 0;
+
+    if (p->values[PATCH_PARAM_LFO_WAVEFORM] == PATCH_LFO_WAVEFORM_VAL_TRIANGLE)
     {
-      vibrato_level = S_voice_lfo_bi_wavetable_tri[masked_phase];
-      tremolo_level = S_voice_lfo_uni_wavetable_tri[masked_phase];
+      lfo_bi_level = S_voice_lfo_bi_wavetable_tri[masked_phase];
+      lfo_uni_level = S_voice_lfo_uni_wavetable_tri[masked_phase];
     }
-    else if (p->values[PATCH_PARAM_LFO_WAVEFORM] == 1)
+    else if (p->values[PATCH_PARAM_LFO_WAVEFORM] == PATCH_LFO_WAVEFORM_VAL_SQUARE)
     {
       if (masked_phase < VOICE_LFO_WAVE_PERIOD_HALF)
       {
-        vibrato_level = VOICE_LFO_WAVE_AMPLITUDE;
-        tremolo_level = 0;
+        lfo_bi_level = VOICE_LFO_WAVE_AMPLITUDE;
+        lfo_uni_level = 0;
       }
       else
       {
-        vibrato_level = -VOICE_LFO_WAVE_AMPLITUDE;
-        tremolo_level = VOICE_LFO_WAVE_AMPLITUDE;
+        lfo_bi_level = -VOICE_LFO_WAVE_AMPLITUDE;
+        lfo_uni_level = VOICE_LFO_WAVE_AMPLITUDE;
       }
     }
-    else if (p->values[PATCH_PARAM_LFO_WAVEFORM] == 2)
+    else if (p->values[PATCH_PARAM_LFO_WAVEFORM] == PATCH_LFO_WAVEFORM_VAL_SAW_UP)
     {
-      vibrato_level = VOICE_LFO_WAVE_AMPLITUDE - S_voice_lfo_bi_wavetable_saw[masked_phase];
-      tremolo_level = VOICE_LFO_WAVE_AMPLITUDE - S_voice_lfo_uni_wavetable_saw[masked_phase];
+      lfo_bi_level = VOICE_LFO_WAVE_AMPLITUDE - S_voice_lfo_bi_wavetable_saw[masked_phase];
+      lfo_uni_level = VOICE_LFO_WAVE_AMPLITUDE - S_voice_lfo_uni_wavetable_saw[masked_phase];
     }
-    else if (p->values[PATCH_PARAM_LFO_WAVEFORM] == 3)
+    else if (p->values[PATCH_PARAM_LFO_WAVEFORM] == PATCH_LFO_WAVEFORM_VAL_SAW_DOWN)
     {
-      vibrato_level = S_voice_lfo_bi_wavetable_saw[masked_phase];
-      tremolo_level = S_voice_lfo_uni_wavetable_saw[masked_phase];
-    }
-    else
-    {
-      vibrato_level = 0;
-      tremolo_level = 0;
+      lfo_bi_level = S_voice_lfo_bi_wavetable_saw[masked_phase];
+      lfo_uni_level = S_voice_lfo_uni_wavetable_saw[masked_phase];
     }
 
     /* make sure the levels are zeroed out during a delay */
     if (v->lfo_delay_cycles > 0)
     {
-      vibrato_level = 0;
-      tremolo_level = 0;
+      lfo_bi_level = 0;
+      lfo_uni_level = 0;
     }
 
-    /* determine vibrato levels */
-    v->vibrato_extra = vibrato_level;
-    v->vibrato_extra *= S_voice_lfo_vibrato_max_table[p->values[PATCH_PARAM_VIBRATO_SENSITIVITY]];
-    v->vibrato_extra /= VOICE_LFO_WAVE_AMPLITUDE;
+    /* determine vibrato adjustment */
+    if (p->values[PATCH_PARAM_VIBRATO_POLARITY] == PATCH_POLARITY_VAL_UNI)
+      wheel_extra = lfo_uni_level;
+    else
+      wheel_extra = lfo_bi_level;
 
-    v->vibrato_base = v->vibrato_extra;
-    v->vibrato_base *= p->values[PATCH_PARAM_VIBRATO_DEPTH];
-    v->vibrato_base /= G_patch_param_bounds[PATCH_PARAM_VIBRATO_DEPTH];
+    wheel_extra *= S_voice_vibrato_max_table[p->values[PATCH_PARAM_VIBRATO_SENSITIVITY]];
+    wheel_extra /= VOICE_LFO_WAVE_AMPLITUDE;
 
-    /* determine tremolo levels */
-    v->tremolo_extra = tremolo_level;
-    v->tremolo_extra *= S_voice_lfo_tremolo_max_table[p->values[PATCH_PARAM_TREMOLO_SENSITIVITY]];
-    v->tremolo_extra /= VOICE_LFO_WAVE_AMPLITUDE;
+    wheel_base = wheel_extra;
+    wheel_base *= p->values[PATCH_PARAM_VIBRATO_DEPTH];
+    wheel_base /= G_patch_param_bounds[PATCH_PARAM_VIBRATO_DEPTH];
 
-    v->tremolo_base = v->tremolo_extra;
-    v->tremolo_base *= p->values[PATCH_PARAM_TREMOLO_DEPTH];
-    v->tremolo_base /= G_patch_param_bounds[PATCH_PARAM_TREMOLO_DEPTH];
+    wheel_extra -= wheel_base;
 
-    /* compute midi controller adjustments */
-    vibrato_adjustment = v->vibrato_base;
+    vibrato_adjustment = wheel_base;
     vibrato_adjustment += 
-      (v->vibrato_extra * v->vibrato_wheel_pos) / MIDI_CONT_UNI_WHEEL_DIVISOR;
+      (wheel_extra * v->vibrato_wheel_pos) / MIDI_CONT_UNI_WHEEL_DIVISOR;
 
-    tremolo_adjustment = v->tremolo_base;
-    tremolo_adjustment += 
-      (v->tremolo_extra * v->tremolo_wheel_pos) / MIDI_CONT_UNI_WHEEL_DIVISOR;
+    /* determine tremolo adjustment */
+    wheel_extra = lfo_uni_level;
+    wheel_extra *= S_voice_tremolo_max_table[p->values[PATCH_PARAM_TREMOLO_SENSITIVITY]];
+    wheel_extra /= VOICE_LFO_WAVE_AMPLITUDE;
 
-    boost_adjustment = 
-      -(v->boost_extra * v->boost_wheel_pos) / MIDI_CONT_UNI_WHEEL_DIVISOR;
+    wheel_base = wheel_extra;
+    wheel_base *= p->values[PATCH_PARAM_TREMOLO_DEPTH];
+    wheel_base /= G_patch_param_bounds[PATCH_PARAM_TREMOLO_DEPTH];
+
+    wheel_extra -= wheel_base;
+
+    if (p->values[PATCH_PARAM_TREMOLO_MODE] == PATCH_AM_MODE_VAL_MODULATORS)
+    {
+      carrier_adjustment = 0;
+
+      modulator_adjustment = wheel_base;
+      modulator_adjustment += 
+        (wheel_extra * v->tremolo_wheel_pos) / MIDI_CONT_UNI_WHEEL_DIVISOR;
+    }
+    else
+    {
+      carrier_adjustment = wheel_base;
+      carrier_adjustment += 
+        (wheel_extra * v->tremolo_wheel_pos) / MIDI_CONT_UNI_WHEEL_DIVISOR;
+
+      modulator_adjustment = 0;
+    }
+
+    /* add on boost adjustment */
+    wheel_base = 0;
+    wheel_extra = S_voice_boost_max_table[p->values[PATCH_PARAM_BOOST_SENSITIVITY]];
+
+    if (p->values[PATCH_PARAM_BOOST_MODE] == PATCH_AM_MODE_VAL_MODULATORS)
+    {
+      modulator_adjustment -= 
+        (wheel_extra * v->boost_wheel_pos) / MIDI_CONT_UNI_WHEEL_DIVISOR;
+    }
+    else
+    {
+      carrier_adjustment -= 
+        (wheel_extra * v->boost_wheel_pos) / MIDI_CONT_UNI_WHEEL_DIVISOR;
+    }
 
     /* update envelopes */
     for (m = 0; m < VOICE_NUM_OSCS; m++)
@@ -680,8 +683,33 @@ short int voice_update_all()
       /* update level */
       env_level[m] = v->env_attenuation[m];
 
-      env_level[m] += tremolo_adjustment;
-      env_level[m] += boost_adjustment;
+      if (p->values[PATCH_PARAM_ALGORITHM] == PATCH_ALGORITHM_VAL_1C_CHAIN)
+      {
+        if (m == 1)
+          env_level[m] += modulator_adjustment;
+        else if (m == 2)
+          env_level[m] += carrier_adjustment;
+      }
+      else if (p->values[PATCH_PARAM_ALGORITHM] == PATCH_ALGORITHM_VAL_1C_THE_V)
+      {
+        if ((m == 0) || (m == 1))
+          env_level[m] += modulator_adjustment;
+        else if (m == 2)
+          env_level[m] += carrier_adjustment;
+      }
+      else if ( (p->values[PATCH_PARAM_ALGORITHM] == PATCH_ALGORITHM_VAL_2C_1_TO_1) || 
+                (p->values[PATCH_PARAM_ALGORITHM] == PATCH_ALGORITHM_VAL_2C_1_TO_2))
+      {
+        if (m == 0)
+          env_level[m] += modulator_adjustment;
+        else if ((m == 1) || (m == 2))
+          env_level[m] += carrier_adjustment;
+      }
+      else if (p->values[PATCH_PARAM_ALGORITHM] == PATCH_ALGORITHM_VAL_3C_PIPES)
+      {
+        if ((m == 0) || (m == 1) || (m == 2))
+          env_level[m] += carrier_adjustment;
+      }
 
       env_level[m] += v->env_ks_level_adjustment[m];
 
@@ -719,42 +747,30 @@ short int voice_update_all()
       masked_phase = (v->osc_phase[m] >> 18) & 0x3FF;
 
       /* apply phase mod, if necessary */
-      if (m == 1)
+      if (m == 0)
       {
-        if ((p->values[PATCH_PARAM_ALGORITHM] == 0) || 
-            (p->values[PATCH_PARAM_ALGORITHM] == 3) || 
-            (p->values[PATCH_PARAM_ALGORITHM] == 4) || 
-            (p->values[PATCH_PARAM_ALGORITHM] == 5) || 
-            (p->values[PATCH_PARAM_ALGORITHM] == 6))
+        if (p->values[PATCH_PARAM_FEEDBACK] > 0)
+        {
+          masked_phase = 
+            (masked_phase + (fb_phase_mod >> (7 - p->values[PATCH_PARAM_FEEDBACK]))) & 0x3FF;
+        }
+      }
+      else if (m == 1)
+      {
+        if ((p->values[PATCH_PARAM_ALGORITHM] == PATCH_ALGORITHM_VAL_1C_CHAIN)  || 
+            (p->values[PATCH_PARAM_ALGORITHM] == PATCH_ALGORITHM_VAL_2C_1_TO_1) || 
+            (p->values[PATCH_PARAM_ALGORITHM] == PATCH_ALGORITHM_VAL_2C_1_TO_2))
         {
           masked_phase = (masked_phase + osc_phase_mod[0]) & 0x3FF;
         }
       }
       else if (m == 2)
       {
-        if ((p->values[PATCH_PARAM_ALGORITHM] == 0) || 
-            (p->values[PATCH_PARAM_ALGORITHM] == 2))
-        {
+        if (p->values[PATCH_PARAM_ALGORITHM] == PATCH_ALGORITHM_VAL_1C_CHAIN)
           masked_phase = (masked_phase + osc_phase_mod[1]) & 0x3FF;
-        }
-        else if (p->values[PATCH_PARAM_ALGORITHM] == 1)
+        else if (p->values[PATCH_PARAM_ALGORITHM] == PATCH_ALGORITHM_VAL_1C_THE_V)
           masked_phase = (masked_phase + osc_phase_mod[0] + osc_phase_mod[1]) & 0x3FF;
-        else if (p->values[PATCH_PARAM_ALGORITHM] == 5)
-          masked_phase = (masked_phase + osc_phase_mod[0]) & 0x3FF;
-      }
-      else if (m == 3)
-      {
-        if ((p->values[PATCH_PARAM_ALGORITHM] == 0) || 
-            (p->values[PATCH_PARAM_ALGORITHM] == 1) || 
-            (p->values[PATCH_PARAM_ALGORITHM] == 4))
-        {
-          masked_phase = (masked_phase + osc_phase_mod[2]) & 0x3FF;
-        }
-        else if (p->values[PATCH_PARAM_ALGORITHM] == 2)
-          masked_phase = (masked_phase + osc_phase_mod[0] + osc_phase_mod[2]) & 0x3FF;
-        else if (p->values[PATCH_PARAM_ALGORITHM] == 3)
-          masked_phase = (masked_phase + osc_phase_mod[1] + osc_phase_mod[2]) & 0x3FF;
-        else if (p->values[PATCH_PARAM_ALGORITHM] == 5)
+        else if (p->values[PATCH_PARAM_ALGORITHM] == PATCH_ALGORITHM_VAL_2C_1_TO_2)
           masked_phase = (masked_phase + osc_phase_mod[0]) & 0x3FF;
       }
 
@@ -802,29 +818,25 @@ short int voice_update_all()
       osc_phase_mod[m] = (osc_level[m] >> 3) & 0x3FF;
     }
 
+    /* cycle feedback */
+    v->feedin[1] = v->feedin[0];
+    v->feedin[0] = osc_level[0] >> 3;
+
     /* determine voice level */
     v->level = 0;
 
-    if ((p->values[PATCH_PARAM_ALGORITHM] == 0) || 
-        (p->values[PATCH_PARAM_ALGORITHM] == 1) || 
-        (p->values[PATCH_PARAM_ALGORITHM] == 2) || 
-        (p->values[PATCH_PARAM_ALGORITHM] == 3))
+    if ((p->values[PATCH_PARAM_ALGORITHM] == PATCH_ALGORITHM_VAL_1C_CHAIN) || 
+        (p->values[PATCH_PARAM_ALGORITHM] == PATCH_ALGORITHM_VAL_1C_THE_V))
     {
-      v->level += osc_level[3];
+      v->level += osc_level[2];
     }
-    else if (p->values[PATCH_PARAM_ALGORITHM] == 4)
+    else if ( (p->values[PATCH_PARAM_ALGORITHM] == PATCH_ALGORITHM_VAL_2C_1_TO_1) || 
+              (p->values[PATCH_PARAM_ALGORITHM] == PATCH_ALGORITHM_VAL_2C_1_TO_2))
     {
-      v->level += osc_level[2] + osc_level[3];
-    }
-    else if ( (p->values[PATCH_PARAM_ALGORITHM] == 5) || 
-              (p->values[PATCH_PARAM_ALGORITHM] == 6))
-    {
-      v->level += osc_level[1] + osc_level[2] + osc_level[3];
+      v->level += osc_level[1] + osc_level[2];
     }
     else
-    {
-      v->level += osc_level[0] + osc_level[1] + osc_level[2] + osc_level[3];
-    }
+      v->level += osc_level[0] + osc_level[1] + osc_level[2];
   }
 
   return 0;
@@ -898,25 +910,16 @@ short int voice_generate_tables()
   /* note that adding 32 to the 12-bit envelope is the  */
   /* same as adding 1 to a left shifted 7-bit envelope. */
 
-  /* amplitude table */
+  /* env level tables */
   S_voice_env_max_level_table[0] = VOICE_MAX_ATTENUATION_DB;
 
-  for (m = 1; m < 128; m++)
-    S_voice_env_max_level_table[m] = (127 - m) * (1 * 32);
+  for (m = 1; m < PATCH_NUM_ENV_LEVEL_VALS; m++)
+    S_voice_env_max_level_table[m] = (PATCH_NUM_ENV_LEVEL_VALS - 1 - m) * 16;
 
-  /* hold level table */
   S_voice_env_hold_level_table[0] = VOICE_MAX_ATTENUATION_DB;
 
-  for (m = 1; m < 16; m++)
-    S_voice_env_hold_level_table[m] = (15 - m) * (4 * 32);
-
-  /* boost max table */
-  for (m = 0; m < 8; m++)
-    S_voice_env_boost_max_table[m] = m * (1 * 32);
-
-  /* velocity max table */
-  for (m = 0; m < 8; m++)
-    S_voice_env_velocity_max_table[m] = m * (4 * 32);
+  for (m = 1; m < PATCH_NUM_ENV_LEVEL_VALS; m++)
+    S_voice_env_hold_level_table[m] = (PATCH_NUM_ENV_LEVEL_VALS - 1 - m) * 8;
 
   /* keyscaling tables */
   for (m = 0; m < TUNING_NUM_PLAYABLE_NOTES; m++)
@@ -931,48 +934,50 @@ short int voice_generate_tables()
       (256 * (m + TUNING_NOTE_A0 - TUNING_NOTE_A2)) / 12;
   }
 
-  /* rate table */
-  for (m = 0; m < 32; m++)
-  {
-    S_voice_env_time_table[m] = 12 * ((31 - m) / 2);
+  /* time table */
+  S_voice_env_time_table[0] = (12 * (VOICE_ENV_NUM_OCTAVES - 1)) + 11;
+  S_voice_env_time_table[1] = (12 * (VOICE_ENV_NUM_OCTAVES - 1)) + 10;
+  S_voice_env_time_table[2] = (12 * (VOICE_ENV_NUM_OCTAVES - 1)) +  8;
+  S_voice_env_time_table[3] = (12 * (VOICE_ENV_NUM_OCTAVES - 1)) +  7;
+  S_voice_env_time_table[4] = (12 * (VOICE_ENV_NUM_OCTAVES - 1)) +  5;
+  S_voice_env_time_table[5] = (12 * (VOICE_ENV_NUM_OCTAVES - 1)) +  4;
+  S_voice_env_time_table[6] = (12 * (VOICE_ENV_NUM_OCTAVES - 1)) +  2;
+  S_voice_env_time_table[7] = (12 * (VOICE_ENV_NUM_OCTAVES - 1)) +  0;
 
-    if ((31 - m) % 2 == 0)
-      S_voice_env_time_table[m] += 0;
-    else
-      S_voice_env_time_table[m] += 7;
-  }
+  for (m = 8; m < PATCH_NUM_ENV_TIME_VALS; m++)
+    S_voice_env_time_table[m] = S_voice_env_time_table[m - 8] - 12;
 
   /* phase increment tables  */
 
   /* for the decay stage, the fastest rate should have a fall time  */
-  /* of ~8 ms. thus with 16 octaves, the lowest rate is ~512 s.     */
-  /* so, the base frequency is (1 / 512) * 4095, where 4095 is the  */
+  /* of ~8 ms. thus with 13 octaves, the lowest rate is ~64 s.      */
+  /* so, the base frequency is (1 / 64) * 4095, where 4095 is the   */
   /* number of updates per fall time (with a 12 bit envelope).      */
-  base = VOICE_MAX_ATTENUATION_DB / 512.0f;
+  base = VOICE_MAX_ATTENUATION_DB / 64.0f;
 
   for (n = 0; n < VOICE_ENV_NUM_OCTAVES; n++)
   {
-    for (m = 0; m < VOICE_ENV_RATES_PER_OCTAVE; m++)
+    for (m = 0; m < 12; m++)
     {
       freq = base * pow(2, (12 * n + m) / 12.0f);
 
-      S_voice_env_decay_increment_table[ n * VOICE_ENV_RATES_PER_OCTAVE + m] = 
+      S_voice_env_decay_increment_table[12 * n + m] = 
         (int) ((freq * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
     }
   }
 
   /* for the attack stage, the fastest rate should have a rise time */
-  /* of ~4 ms. thus with 16 octaves, the lowest rate is ~256 s.     */
+  /* of ~4 ms. thus with 13 octaves, the lowest rate is ~32 s.      */
   /* the attack phase has 518 updates per rise time.                */
-  base = 518.0f / 256.0f;
+  base = 518.0f / 32.0f;
 
   for (n = 0; n < VOICE_ENV_NUM_OCTAVES; n++)
   {
-    for (m = 0; m < VOICE_ENV_RATES_PER_OCTAVE; m++)
+    for (m = 0; m < 12; m++)
     {
       freq = base * pow(2, (12 * n + m) / 12.0f);
 
-      S_voice_env_attack_increment_table[ n * VOICE_ENV_RATES_PER_OCTAVE + m] = 
+      S_voice_env_attack_increment_table[12 * n + m] = 
         (int) ((freq * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
     }
   }
@@ -1041,6 +1046,13 @@ short int voice_generate_tables()
     S_voice_lfo_phase_increment_table[m] = 
       (int) ((0.25f * TEMPO_COMPUTE_BEATS_PER_SECOND(m) * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
   }
+
+  /* sensitivity tables */
+  for (m = 0; m < PATCH_NUM_SENSITIVITY_VALS; m++)
+    S_voice_tremolo_max_table[m] = m * 4 * 32;
+
+  for (m = 0; m < PATCH_NUM_SENSITIVITY_VALS; m++)
+    S_voice_boost_max_table[m] = m * 1 * 32;
 
   return 0;
 }

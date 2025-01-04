@@ -705,6 +705,23 @@ short int controls_process_user_input_cart_screen()
     if (!(LAYOUT_SCROLLED_ELEMENT_IS_IN_REGION(wdg, rgn, G_current_scroll_amount)))
       continue;
 
+    /* skip multiple/divisor or octave/note depending on frequency mode */
+    if (((m == PATCH_PARAM_OSC_1_MULTIPLE) && (pt->values[PATCH_PARAM_OSC_1_FREQ_MODE] == PATCH_OSC_FREQ_MODE_VAL_FIXED)) || 
+        ((m == PATCH_PARAM_OSC_1_DIVISOR)  && (pt->values[PATCH_PARAM_OSC_1_FREQ_MODE] == PATCH_OSC_FREQ_MODE_VAL_FIXED)) || 
+        ((m == PATCH_PARAM_OSC_1_OCTAVE)   && (pt->values[PATCH_PARAM_OSC_1_FREQ_MODE] == PATCH_OSC_FREQ_MODE_VAL_RATIO)) || 
+        ((m == PATCH_PARAM_OSC_1_NOTE)     && (pt->values[PATCH_PARAM_OSC_1_FREQ_MODE] == PATCH_OSC_FREQ_MODE_VAL_RATIO)) || 
+        ((m == PATCH_PARAM_OSC_2_MULTIPLE) && (pt->values[PATCH_PARAM_OSC_2_FREQ_MODE] == PATCH_OSC_FREQ_MODE_VAL_FIXED)) || 
+        ((m == PATCH_PARAM_OSC_2_DIVISOR)  && (pt->values[PATCH_PARAM_OSC_2_FREQ_MODE] == PATCH_OSC_FREQ_MODE_VAL_FIXED)) || 
+        ((m == PATCH_PARAM_OSC_2_OCTAVE)   && (pt->values[PATCH_PARAM_OSC_2_FREQ_MODE] == PATCH_OSC_FREQ_MODE_VAL_RATIO)) || 
+        ((m == PATCH_PARAM_OSC_2_NOTE)     && (pt->values[PATCH_PARAM_OSC_2_FREQ_MODE] == PATCH_OSC_FREQ_MODE_VAL_RATIO)) || 
+        ((m == PATCH_PARAM_OSC_3_MULTIPLE) && (pt->values[PATCH_PARAM_OSC_3_FREQ_MODE] == PATCH_OSC_FREQ_MODE_VAL_FIXED)) || 
+        ((m == PATCH_PARAM_OSC_3_DIVISOR)  && (pt->values[PATCH_PARAM_OSC_3_FREQ_MODE] == PATCH_OSC_FREQ_MODE_VAL_FIXED)) || 
+        ((m == PATCH_PARAM_OSC_3_OCTAVE)   && (pt->values[PATCH_PARAM_OSC_3_FREQ_MODE] == PATCH_OSC_FREQ_MODE_VAL_RATIO)) || 
+        ((m == PATCH_PARAM_OSC_3_NOTE)     && (pt->values[PATCH_PARAM_OSC_3_FREQ_MODE] == PATCH_OSC_FREQ_MODE_VAL_RATIO)))
+    {
+      continue;
+    }
+
     /* reset parameter changed flag */
     changed = 0;
 

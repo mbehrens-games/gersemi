@@ -13,21 +13,80 @@ cart G_cart_bank[BANK_NUM_CARTS];
 
 /* patch parameter bounds array */
 unsigned char G_patch_param_bounds[PATCH_NUM_PARAMS] = 
-  {  7,   7,   1,                           /* feedback, algorithm, osc sync */
-     3,   1,  15,   7,   7,                 /* osc 1 */
-     3,   1,  15,   7,   7,                 /* osc 2 */
-     3,   1,  15,   7,   7,                 /* osc 3 */
-     3,   1,  15,   7,   7,                 /* osc 4 */
-    31,  31,  31,  15, 127,  15,   3,   3,  /* env 1 */
-    31,  31,  31,  15, 127,  15,   3,   3,  /* env 2 */
-    31,  31,  31,  15, 127,  15,   3,   3,  /* env 3 */
-    31,  31,  31,  15, 127,  15,   3,   3,  /* env 4 */
-     3,   1,  15,  47,                      /* lfo */
-     1,   7, 127,                           /* vibrato */
-     1,   3, 127,                           /* tremolo */
-     7,                                     /* velocity */
-     1,   7,                                /* boost */
-     3,   3                                 /* filter cutoffs */
+  { PATCH_NUM_FEEDBACK_VALS - 1, 
+    PATCH_NUM_ALGORITHM_VALS - 1, 
+    PATCH_NUM_SYNC_VALS - 1, 
+    PATCH_NUM_LEGACY_KEYSCALE_VALS - 1, 
+    /* oscillator 1 */
+    PATCH_NUM_OSC_WAVEFORM_VALS - 1, 
+    PATCH_NUM_OSC_FREQ_MODE_VALS - 1, 
+    PATCH_NUM_OSC_MULTIPLE_VALS - 1, 
+    PATCH_NUM_OSC_DIVISOR_VALS - 1, 
+    PATCH_NUM_OSC_OCTAVE_VALS - 1, 
+    PATCH_NUM_OSC_NOTE_VALS - 1, 
+    PATCH_NUM_OSC_DETUNE_VALS - 1, 
+    /* oscillator 2 */
+    PATCH_NUM_OSC_WAVEFORM_VALS - 1, 
+    PATCH_NUM_OSC_FREQ_MODE_VALS - 1, 
+    PATCH_NUM_OSC_MULTIPLE_VALS - 1, 
+    PATCH_NUM_OSC_DIVISOR_VALS - 1, 
+    PATCH_NUM_OSC_OCTAVE_VALS - 1, 
+    PATCH_NUM_OSC_NOTE_VALS - 1, 
+    PATCH_NUM_OSC_DETUNE_VALS - 1, 
+    /* oscillator 3 */
+    PATCH_NUM_OSC_WAVEFORM_VALS - 1, 
+    PATCH_NUM_OSC_FREQ_MODE_VALS - 1, 
+    PATCH_NUM_OSC_MULTIPLE_VALS - 1, 
+    PATCH_NUM_OSC_DIVISOR_VALS - 1, 
+    PATCH_NUM_OSC_OCTAVE_VALS - 1, 
+    PATCH_NUM_OSC_NOTE_VALS - 1, 
+    PATCH_NUM_OSC_DETUNE_VALS - 1, 
+    /* envelope 1 */
+    PATCH_NUM_ENV_TIME_VALS - 1, 
+    PATCH_NUM_ENV_TIME_VALS - 1, 
+    PATCH_NUM_ENV_TIME_VALS - 1, 
+    PATCH_NUM_ENV_TIME_VALS - 1, 
+    PATCH_NUM_ENV_LEVEL_VALS - 1, 
+    PATCH_NUM_ENV_LEVEL_VALS - 1, 
+    PATCH_NUM_KEYSCALING_VALS - 1, 
+    PATCH_NUM_KEYSCALING_VALS - 1, 
+    /* envelope 2 */
+    PATCH_NUM_ENV_TIME_VALS - 1, 
+    PATCH_NUM_ENV_TIME_VALS - 1, 
+    PATCH_NUM_ENV_TIME_VALS - 1, 
+    PATCH_NUM_ENV_TIME_VALS - 1, 
+    PATCH_NUM_ENV_LEVEL_VALS - 1, 
+    PATCH_NUM_ENV_LEVEL_VALS - 1, 
+    PATCH_NUM_KEYSCALING_VALS - 1, 
+    PATCH_NUM_KEYSCALING_VALS - 1, 
+    /* envelope 3 */
+    PATCH_NUM_ENV_TIME_VALS - 1, 
+    PATCH_NUM_ENV_TIME_VALS - 1, 
+    PATCH_NUM_ENV_TIME_VALS - 1, 
+    PATCH_NUM_ENV_TIME_VALS - 1, 
+    PATCH_NUM_ENV_LEVEL_VALS - 1, 
+    PATCH_NUM_ENV_LEVEL_VALS - 1, 
+    PATCH_NUM_KEYSCALING_VALS - 1, 
+    PATCH_NUM_KEYSCALING_VALS - 1, 
+    /* lfo */
+    PATCH_NUM_LFO_WAVEFORM_VALS - 1, 
+    PATCH_NUM_SYNC_VALS - 1, 
+    PATCH_NUM_LFO_SPEED_VALS - 1, 
+    PATCH_NUM_LFO_DELAY_VALS - 1, 
+    /* vibrato */
+    PATCH_NUM_POLARITY_VALS - 1, 
+    PATCH_NUM_SENSITIVITY_VALS - 1, 
+    PATCH_NUM_DEPTH_VALS - 1, 
+    /* tremolo */
+    PATCH_NUM_AM_MODE_VALS - 1, 
+    PATCH_NUM_SENSITIVITY_VALS - 1, 
+    PATCH_NUM_DEPTH_VALS - 1, 
+    /* boost */
+    PATCH_NUM_AM_MODE_VALS - 1, 
+    PATCH_NUM_SENSITIVITY_VALS - 1, 
+    /* filters */
+    PATCH_NUM_CUTOFF_VALS - 1, 
+    PATCH_NUM_CUTOFF_VALS - 1 
   };
 
 /*******************************************************************************
@@ -72,6 +131,14 @@ short int cart_reset_patch(int cart_index, int patch_index)
   /* reset patch data */
   for (m = 0; m < PATCH_NUM_PARAMS; m++)
     p->values[m] = 0;
+
+  /* set some parameters to non-zero default values */
+  p->values[PATCH_PARAM_OSC_SYNC] = PATCH_SYNC_VAL_ON;
+  p->values[PATCH_PARAM_OSC_1_DETUNE] = (PATCH_NUM_OSC_DETUNE_VALS - 1) / 2;
+  p->values[PATCH_PARAM_OSC_2_DETUNE] = (PATCH_NUM_OSC_DETUNE_VALS - 1) / 2;
+  p->values[PATCH_PARAM_OSC_3_DETUNE] = (PATCH_NUM_OSC_DETUNE_VALS - 1) / 2;
+  p->values[PATCH_PARAM_LFO_SYNC] = PATCH_SYNC_VAL_ON;
+  p->values[PATCH_PARAM_LOWPASS_CUTOFF] = PATCH_NUM_CUTOFF_VALS - 1;
 
   return 0;
 }

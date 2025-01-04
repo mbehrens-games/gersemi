@@ -283,46 +283,41 @@ static char S_common_edit_0_to_127_values[128][4] =
     "120", "121", "122", "123", "124", "125", "126", "127" 
   };
 
-static char S_patch_edit_sync_values[2][6] = 
+static char S_patch_edit_legacy_keyscale_values[PATCH_NUM_LEGACY_KEYSCALE_VALS][9] = 
+  { "Pitch", "Key" };
+
+static char S_patch_edit_algorithm_values[PATCH_NUM_ALGORITHM_VALS][9] = 
+  { "1>2>3", "(1+2)>3", "(1>2)+3", "1>(2+3)", "1+2+3" };
+
+static char S_patch_edit_sync_values[PATCH_NUM_SYNC_VALS][9] = 
   { "Off", "On" };
 
-static char S_patch_edit_osc_waveform_values[4][6] = 
-  {  "Sine", "Half", "Full", "Quar" };
+static char S_patch_edit_osc_waveform_values[PATCH_NUM_OSC_WAVEFORM_VALS][9] = 
+  {  "Sine", "Half", "Full", "Quarter" };
 
-static char S_patch_edit_osc_freq_mode_values[2][6] = 
+static char S_patch_edit_osc_freq_mode_values[PATCH_NUM_OSC_FREQ_MODE_VALS][9] = 
   { "Ratio", "Fixed" };
 
-static char S_patch_edit_osc_detune_values[8][6] = 
-  { "0", "-3", "-2", "-1", "0", "1", "2", "3" };
+static char S_patch_edit_osc_note_values[PATCH_NUM_OSC_NOTE_VALS][9] = 
+  { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
 
-static char S_patch_edit_lfo_waveform_values[4][6] = 
-  { "Tri", "Squa", "SawU", "SawD" };
+static char S_patch_edit_osc_detune_values[PATCH_NUM_OSC_DETUNE_VALS][4] = 
+  { "-3", "-2", "-1", "0", "1", "2", "3" };
 
-static char S_patch_edit_highpass_cutoff_values[4][6] = 
+static char S_patch_edit_lfo_waveform_values[PATCH_NUM_LFO_WAVEFORM_VALS][9] = 
+  { "Triangle", "Square", "Saw Up", "Saw Down" };
+
+static char S_patch_edit_polarity_values[PATCH_NUM_POLARITY_VALS][9] = 
+  { "Up/Down", "Up Only" };
+
+static char S_patch_edit_am_mode_values[PATCH_NUM_AM_MODE_VALS][9] = 
+  { "Carriers", "Mods" };
+
+static char S_patch_edit_highpass_cutoff_values[PATCH_NUM_CUTOFF_VALS][4] = 
   { "A0", "A1", "A2", "A3" };
 
-static char S_patch_edit_lowpass_cutoff_values[4][6] = 
+static char S_patch_edit_lowpass_cutoff_values[PATCH_NUM_CUTOFF_VALS][4] = 
   { "E7", "G7", "A7", "C8" };
-
-static char S_audition_bi_wheel_values[MIDI_CONT_BI_WHEEL_NUM_VALUES][4] = 
-  { "-64", "-63", "-62", "-61", "-60", "-59", "-58", "-57", 
-    "-56", "-55", "-54", "-53", "-52", "-51", "-50", "-49", 
-    "-48", "-47", "-46", "-45", "-44", "-43", "-42", "-41", 
-    "-40", "-39", "-38", "-37", "-36", "-35", "-34", "-33", 
-    "-32", "-31", "-30", "-29", "-28", "-27", "-26", "-25", 
-    "-24", "-23", "-22", "-21", "-20", "-19", "-18", "-17", 
-    "-16", "-15", "-14", "-13", "-12", "-11", "-10",  "-9", 
-     "-8",  "-7",  "-6",  "-5",  "-4",  "-3",  "-2",  "-1", 
-      "0", 
-      "1",   "2",   "3",   "4",   "5",   "6",   "7",   "8", 
-      "9",  "10",  "11",  "12",  "13",  "14",  "15",  "16", 
-     "17",  "18",  "19",  "20",  "21",  "22",  "23",  "24", 
-     "25",  "26",  "27",  "28",  "29",  "30",  "31",  "32", 
-     "33",  "34",  "35",  "36",  "37",  "38",  "39",  "40", 
-     "41",  "42",  "43",  "44",  "45",  "46",  "47",  "48", 
-     "49",  "50",  "51",  "52",  "53",  "54",  "55",  "56", 
-     "57",  "58",  "59",  "60",  "61",  "62",  "63",  "64" 
-  };
 
 static char S_audition_uni_wheel_values[MIDI_CONT_UNI_WHEEL_NUM_VALUES][4] = 
   {  "0",   "1",   "2",   "3",   "4",   "5",   "6",   "7",   "8", 
@@ -759,6 +754,23 @@ short int vb_all_load_cart_screen()
     if (!(LAYOUT_SCROLLED_ELEMENT_IS_IN_REGION(t, rgn, G_current_scroll_amount)))
       continue;
 
+    /* skip multiple/divisor or octave/note depending on frequency mode */
+    if (((m == PATCH_PARAM_OSC_1_MULTIPLE) && (pt->values[PATCH_PARAM_OSC_1_FREQ_MODE] == PATCH_OSC_FREQ_MODE_VAL_FIXED)) || 
+        ((m == PATCH_PARAM_OSC_1_DIVISOR)  && (pt->values[PATCH_PARAM_OSC_1_FREQ_MODE] == PATCH_OSC_FREQ_MODE_VAL_FIXED)) || 
+        ((m == PATCH_PARAM_OSC_1_OCTAVE)   && (pt->values[PATCH_PARAM_OSC_1_FREQ_MODE] == PATCH_OSC_FREQ_MODE_VAL_RATIO)) || 
+        ((m == PATCH_PARAM_OSC_1_NOTE)     && (pt->values[PATCH_PARAM_OSC_1_FREQ_MODE] == PATCH_OSC_FREQ_MODE_VAL_RATIO)) || 
+        ((m == PATCH_PARAM_OSC_2_MULTIPLE) && (pt->values[PATCH_PARAM_OSC_2_FREQ_MODE] == PATCH_OSC_FREQ_MODE_VAL_FIXED)) || 
+        ((m == PATCH_PARAM_OSC_2_DIVISOR)  && (pt->values[PATCH_PARAM_OSC_2_FREQ_MODE] == PATCH_OSC_FREQ_MODE_VAL_FIXED)) || 
+        ((m == PATCH_PARAM_OSC_2_OCTAVE)   && (pt->values[PATCH_PARAM_OSC_2_FREQ_MODE] == PATCH_OSC_FREQ_MODE_VAL_RATIO)) || 
+        ((m == PATCH_PARAM_OSC_2_NOTE)     && (pt->values[PATCH_PARAM_OSC_2_FREQ_MODE] == PATCH_OSC_FREQ_MODE_VAL_RATIO)) || 
+        ((m == PATCH_PARAM_OSC_3_MULTIPLE) && (pt->values[PATCH_PARAM_OSC_3_FREQ_MODE] == PATCH_OSC_FREQ_MODE_VAL_FIXED)) || 
+        ((m == PATCH_PARAM_OSC_3_DIVISOR)  && (pt->values[PATCH_PARAM_OSC_3_FREQ_MODE] == PATCH_OSC_FREQ_MODE_VAL_FIXED)) || 
+        ((m == PATCH_PARAM_OSC_3_OCTAVE)   && (pt->values[PATCH_PARAM_OSC_3_FREQ_MODE] == PATCH_OSC_FREQ_MODE_VAL_RATIO)) || 
+        ((m == PATCH_PARAM_OSC_3_NOTE)     && (pt->values[PATCH_PARAM_OSC_3_FREQ_MODE] == PATCH_OSC_FREQ_MODE_VAL_RATIO)))
+    {
+      continue;
+    }
+
     vb_all_load_text(t, VB_ALL_TEXT_ALIGN_CENTER, VB_ALL_PALETTE_2, G_current_scroll_amount);
   }
 
@@ -770,19 +782,36 @@ short int vb_all_load_cart_screen()
     if (!(LAYOUT_SCROLLED_ELEMENT_IS_IN_REGION(wdg, rgn, G_current_scroll_amount)))
       continue;
 
+    /* skip multiple/divisor or octave/note depending on frequency mode */
+    if (((m == PATCH_PARAM_OSC_1_MULTIPLE) && (pt->values[PATCH_PARAM_OSC_1_FREQ_MODE] == PATCH_OSC_FREQ_MODE_VAL_FIXED)) || 
+        ((m == PATCH_PARAM_OSC_1_DIVISOR)  && (pt->values[PATCH_PARAM_OSC_1_FREQ_MODE] == PATCH_OSC_FREQ_MODE_VAL_FIXED)) || 
+        ((m == PATCH_PARAM_OSC_1_OCTAVE)   && (pt->values[PATCH_PARAM_OSC_1_FREQ_MODE] == PATCH_OSC_FREQ_MODE_VAL_RATIO)) || 
+        ((m == PATCH_PARAM_OSC_1_NOTE)     && (pt->values[PATCH_PARAM_OSC_1_FREQ_MODE] == PATCH_OSC_FREQ_MODE_VAL_RATIO)) || 
+        ((m == PATCH_PARAM_OSC_2_MULTIPLE) && (pt->values[PATCH_PARAM_OSC_2_FREQ_MODE] == PATCH_OSC_FREQ_MODE_VAL_FIXED)) || 
+        ((m == PATCH_PARAM_OSC_2_DIVISOR)  && (pt->values[PATCH_PARAM_OSC_2_FREQ_MODE] == PATCH_OSC_FREQ_MODE_VAL_FIXED)) || 
+        ((m == PATCH_PARAM_OSC_2_OCTAVE)   && (pt->values[PATCH_PARAM_OSC_2_FREQ_MODE] == PATCH_OSC_FREQ_MODE_VAL_RATIO)) || 
+        ((m == PATCH_PARAM_OSC_2_NOTE)     && (pt->values[PATCH_PARAM_OSC_2_FREQ_MODE] == PATCH_OSC_FREQ_MODE_VAL_RATIO)) || 
+        ((m == PATCH_PARAM_OSC_3_MULTIPLE) && (pt->values[PATCH_PARAM_OSC_3_FREQ_MODE] == PATCH_OSC_FREQ_MODE_VAL_FIXED)) || 
+        ((m == PATCH_PARAM_OSC_3_DIVISOR)  && (pt->values[PATCH_PARAM_OSC_3_FREQ_MODE] == PATCH_OSC_FREQ_MODE_VAL_FIXED)) || 
+        ((m == PATCH_PARAM_OSC_3_OCTAVE)   && (pt->values[PATCH_PARAM_OSC_3_FREQ_MODE] == PATCH_OSC_FREQ_MODE_VAL_RATIO)) || 
+        ((m == PATCH_PARAM_OSC_3_NOTE)     && (pt->values[PATCH_PARAM_OSC_3_FREQ_MODE] == PATCH_OSC_FREQ_MODE_VAL_RATIO)))
+    {
+      continue;
+    }
+
     /* determine parameter value string */
     switch(m)
     {
       case PATCH_PARAM_FEEDBACK:
-      case PATCH_PARAM_ALGORITHM:
+      case PATCH_PARAM_OSC_1_OCTAVE:
+      case PATCH_PARAM_OSC_2_OCTAVE:
+      case PATCH_PARAM_OSC_3_OCTAVE:
       case PATCH_PARAM_ENV_1_MAX_LEVEL:
       case PATCH_PARAM_ENV_2_MAX_LEVEL:
       case PATCH_PARAM_ENV_3_MAX_LEVEL:
-      case PATCH_PARAM_ENV_4_MAX_LEVEL:
       case PATCH_PARAM_ENV_1_HOLD_LEVEL:
       case PATCH_PARAM_ENV_2_HOLD_LEVEL:
       case PATCH_PARAM_ENV_3_HOLD_LEVEL:
-      case PATCH_PARAM_ENV_4_HOLD_LEVEL:
       case PATCH_PARAM_LFO_DELAY:
       case PATCH_PARAM_VIBRATO_DEPTH:
       case PATCH_PARAM_TREMOLO_DEPTH:
@@ -793,49 +822,47 @@ short int vb_all_load_cart_screen()
       case PATCH_PARAM_OSC_1_MULTIPLE:
       case PATCH_PARAM_OSC_2_MULTIPLE:
       case PATCH_PARAM_OSC_3_MULTIPLE:
-      case PATCH_PARAM_OSC_4_MULTIPLE:
       case PATCH_PARAM_OSC_1_DIVISOR:
       case PATCH_PARAM_OSC_2_DIVISOR:
       case PATCH_PARAM_OSC_3_DIVISOR:
-      case PATCH_PARAM_OSC_4_DIVISOR:
       case PATCH_PARAM_ENV_1_ATTACK:
       case PATCH_PARAM_ENV_2_ATTACK:
       case PATCH_PARAM_ENV_3_ATTACK:
-      case PATCH_PARAM_ENV_4_ATTACK:
       case PATCH_PARAM_ENV_1_DECAY:
       case PATCH_PARAM_ENV_2_DECAY:
       case PATCH_PARAM_ENV_3_DECAY:
-      case PATCH_PARAM_ENV_4_DECAY:
       case PATCH_PARAM_ENV_1_SUSTAIN:
       case PATCH_PARAM_ENV_2_SUSTAIN:
       case PATCH_PARAM_ENV_3_SUSTAIN:
-      case PATCH_PARAM_ENV_4_SUSTAIN:
       case PATCH_PARAM_ENV_1_RELEASE:
       case PATCH_PARAM_ENV_2_RELEASE:
       case PATCH_PARAM_ENV_3_RELEASE:
-      case PATCH_PARAM_ENV_4_RELEASE:
       case PATCH_PARAM_ENV_1_RATE_KS:
       case PATCH_PARAM_ENV_2_RATE_KS:
       case PATCH_PARAM_ENV_3_RATE_KS:
-      case PATCH_PARAM_ENV_4_RATE_KS:
       case PATCH_PARAM_ENV_1_LEVEL_KS:
       case PATCH_PARAM_ENV_2_LEVEL_KS:
       case PATCH_PARAM_ENV_3_LEVEL_KS:
-      case PATCH_PARAM_ENV_4_LEVEL_KS:
       case PATCH_PARAM_LFO_SPEED:
       case PATCH_PARAM_VIBRATO_SENSITIVITY:
       case PATCH_PARAM_TREMOLO_SENSITIVITY:
       case PATCH_PARAM_BOOST_SENSITIVITY:
-      case PATCH_PARAM_VELOCITY_SENSITIVITY:
       {
         value_str = S_common_edit_1_to_128_values[pt->values[m]];
         break;
       }
+      case PATCH_PARAM_LEGACY_KEYSCALE:
+      {
+        value_str = S_patch_edit_legacy_keyscale_values[pt->values[m]];
+        break;
+      }
+      case PATCH_PARAM_ALGORITHM:
+      {
+        value_str = S_patch_edit_algorithm_values[pt->values[m]];
+        break;
+      }
       case PATCH_PARAM_OSC_SYNC:
       case PATCH_PARAM_LFO_SYNC:
-      case PATCH_PARAM_VIBRATO_POLARITY:
-      case PATCH_PARAM_TREMOLO_MODE:
-      case PATCH_PARAM_BOOST_MODE:
       {
         value_str = S_patch_edit_sync_values[pt->values[m]];
         break;
@@ -843,7 +870,6 @@ short int vb_all_load_cart_screen()
       case PATCH_PARAM_OSC_1_WAVEFORM:
       case PATCH_PARAM_OSC_2_WAVEFORM:
       case PATCH_PARAM_OSC_3_WAVEFORM:
-      case PATCH_PARAM_OSC_4_WAVEFORM:
       {
         value_str = S_patch_edit_osc_waveform_values[pt->values[m]];
         break;
@@ -851,15 +877,20 @@ short int vb_all_load_cart_screen()
       case PATCH_PARAM_OSC_1_FREQ_MODE:
       case PATCH_PARAM_OSC_2_FREQ_MODE:
       case PATCH_PARAM_OSC_3_FREQ_MODE:
-      case PATCH_PARAM_OSC_4_FREQ_MODE:
       {
         value_str = S_patch_edit_osc_freq_mode_values[pt->values[m]];
+        break;
+      }
+      case PATCH_PARAM_OSC_1_NOTE:
+      case PATCH_PARAM_OSC_2_NOTE:
+      case PATCH_PARAM_OSC_3_NOTE:
+      {
+        value_str = S_patch_edit_osc_note_values[pt->values[m]];
         break;
       }
       case PATCH_PARAM_OSC_1_DETUNE:
       case PATCH_PARAM_OSC_2_DETUNE:
       case PATCH_PARAM_OSC_3_DETUNE:
-      case PATCH_PARAM_OSC_4_DETUNE:
       {
         value_str = S_patch_edit_osc_detune_values[pt->values[m]];
         break;
@@ -867,6 +898,17 @@ short int vb_all_load_cart_screen()
       case PATCH_PARAM_LFO_WAVEFORM:
       {
         value_str = S_patch_edit_lfo_waveform_values[pt->values[m]];
+        break;
+      }
+      case PATCH_PARAM_VIBRATO_POLARITY:
+      {
+        value_str = S_patch_edit_polarity_values[pt->values[m]];
+        break;
+      }
+      case PATCH_PARAM_TREMOLO_MODE:
+      case PATCH_PARAM_BOOST_MODE:
+      {
+        value_str = S_patch_edit_am_mode_values[pt->values[m]];
         break;
       }
       case PATCH_PARAM_HIGHPASS_CUTOFF:

@@ -111,8 +111,8 @@ short int layout_generate_cart_screen()
   int m;
   int n;
 
-  short int columns_x[4];
-  short int next_y[4];
+  short int columns_x[3];
+  short int next_y[3];
 
   /* define screen regions */
   LAYOUT_CART_ADD_REGION(MAIN_AREA,       0,  16, 49, 22)
@@ -134,14 +134,12 @@ short int layout_generate_cart_screen()
 
   /* initialize coordinates */
   columns_x[0] = 1 * 8 + 0;
-  columns_x[1] = columns_x[0] + 12 * 8;
-  columns_x[2] = columns_x[1] + 12 * 8;
-  columns_x[3] = columns_x[2] + 12 * 8;
+  columns_x[1] = columns_x[0] + 16 * 8;
+  columns_x[2] = columns_x[1] + 16 * 8;
 
   next_y[0] = 7 * 8 + 4;
   next_y[1] = next_y[0];
   next_y[2] = next_y[0];
-  next_y[3] = next_y[0];
 
   /* cart headers & params */
   LAYOUT_CART_ADD_PARAM_TO_COLUMN(0, FEEDBACK,      "Fbk", SLIDER)
@@ -168,13 +166,6 @@ short int layout_generate_cart_screen()
   LAYOUT_CART_ADD_PARAM_TO_COLUMN(2, OSC_3_MULTIPLE,  "Mul", SLIDER)
   LAYOUT_CART_ADD_PARAM_TO_COLUMN(2, OSC_3_DIVISOR,   "Div", SLIDER)
   LAYOUT_CART_ADD_PARAM_TO_COLUMN(2, OSC_3_DETUNE,    "Det", SLIDER)
-
-  LAYOUT_CART_ADD_HEADER_TO_COLUMN(3, OSC_4, "Osc 4")
-  LAYOUT_CART_ADD_PARAM_TO_COLUMN(3, OSC_4_WAVEFORM,  "Wav", ARROWS)
-  LAYOUT_CART_ADD_PARAM_TO_COLUMN(3, OSC_4_FREQ_MODE, "Frq", RADIO)
-  LAYOUT_CART_ADD_PARAM_TO_COLUMN(3, OSC_4_MULTIPLE,  "Mul", SLIDER)
-  LAYOUT_CART_ADD_PARAM_TO_COLUMN(3, OSC_4_DIVISOR,   "Div", SLIDER)
-  LAYOUT_CART_ADD_PARAM_TO_COLUMN(3, OSC_4_DETUNE,    "Det", SLIDER)
 
   LAYOUT_CART_ADD_HEADER_TO_COLUMN(0, ENV_1, "Env 1")
   LAYOUT_CART_ADD_PARAM_TO_COLUMN(0, ENV_1_ATTACK,      "Att", SLIDER)
@@ -206,16 +197,6 @@ short int layout_generate_cart_screen()
   LAYOUT_CART_ADD_PARAM_TO_COLUMN(2, ENV_3_RATE_KS,     "RtS", SLIDER)
   LAYOUT_CART_ADD_PARAM_TO_COLUMN(2, ENV_3_LEVEL_KS,    "LvS", SLIDER)
 
-  LAYOUT_CART_ADD_HEADER_TO_COLUMN(3, ENV_4, "Env 4")
-  LAYOUT_CART_ADD_PARAM_TO_COLUMN(3, ENV_4_ATTACK,      "Att", SLIDER)
-  LAYOUT_CART_ADD_PARAM_TO_COLUMN(3, ENV_4_DECAY,       "Dec", SLIDER)
-  LAYOUT_CART_ADD_PARAM_TO_COLUMN(3, ENV_4_SUSTAIN,     "Sus", SLIDER)
-  LAYOUT_CART_ADD_PARAM_TO_COLUMN(3, ENV_4_RELEASE,     "Rel", SLIDER)
-  LAYOUT_CART_ADD_PARAM_TO_COLUMN(3, ENV_4_MAX_LEVEL,   "Lev", SLIDER)
-  LAYOUT_CART_ADD_PARAM_TO_COLUMN(3, ENV_4_HOLD_LEVEL,  "Hld", SLIDER)
-  LAYOUT_CART_ADD_PARAM_TO_COLUMN(3, ENV_4_RATE_KS,     "RtS", SLIDER)
-  LAYOUT_CART_ADD_PARAM_TO_COLUMN(3, ENV_4_LEVEL_KS,    "LvS", SLIDER)
-
   LAYOUT_CART_ADD_HEADER_TO_COLUMN(0, LFO, "LFO")
   LAYOUT_CART_ADD_PARAM_TO_COLUMN(0, LFO_WAVEFORM,    "Wav", ARROWS)
   LAYOUT_CART_ADD_PARAM_TO_COLUMN(0, LFO_SYNC,        "Syn", RADIO)
@@ -232,8 +213,8 @@ short int layout_generate_cart_screen()
   LAYOUT_CART_ADD_PARAM_TO_COLUMN(2, TREMOLO_SENSITIVITY, "Sns", SLIDER)
   LAYOUT_CART_ADD_PARAM_TO_COLUMN(2, TREMOLO_DEPTH,       "Dep", SLIDER)
 
-  LAYOUT_CART_ADD_HEADER_TO_COLUMN(0, VELOCITY, "Velocity")
-  LAYOUT_CART_ADD_PARAM_TO_COLUMN(0, VELOCITY_SENSITIVITY, "Sns", SLIDER)
+  LAYOUT_CART_ADD_HEADER_TO_COLUMN(0, LEGACY, "Legacy")
+  LAYOUT_CART_ADD_PARAM_TO_COLUMN(0, LEGACY_KEYSCALE, "KSc", RADIO)
 
   LAYOUT_CART_ADD_HEADER_TO_COLUMN(1, BOOST, "Boost")
   LAYOUT_CART_ADD_PARAM_TO_COLUMN(1, BOOST_MODE,        "Mde", RADIO)
@@ -242,6 +223,52 @@ short int layout_generate_cart_screen()
   LAYOUT_CART_ADD_HEADER_TO_COLUMN(2, FILTERS, "Filters")
   LAYOUT_CART_ADD_PARAM_TO_COLUMN(2, HIGHPASS_CUTOFF, "HPF", SLIDER)
   LAYOUT_CART_ADD_PARAM_TO_COLUMN(2, LOWPASS_CUTOFF,  "LPF", SLIDER)
+
+  /* osc octave & note have same position as multiple & divisor */
+  LAYOUT_CART_ADD_PARAM_TO_COLUMN(0, OSC_1_OCTAVE, "Oct", SLIDER)
+  LAYOUT_CART_ADD_PARAM_TO_COLUMN(0, OSC_1_NOTE, "Nte", SLIDER)
+
+  G_layout_cart_param_names[PATCH_PARAM_OSC_1_OCTAVE].y = 
+    G_layout_cart_param_names[PATCH_PARAM_OSC_1_MULTIPLE].y;
+
+  G_layout_cart_param_names[PATCH_PARAM_OSC_1_NOTE].y = 
+    G_layout_cart_param_names[PATCH_PARAM_OSC_1_DIVISOR].y;
+
+  G_layout_cart_param_widgets[PATCH_PARAM_OSC_1_OCTAVE].y = 
+    G_layout_cart_param_widgets[PATCH_PARAM_OSC_1_MULTIPLE].y;
+
+  G_layout_cart_param_widgets[PATCH_PARAM_OSC_1_NOTE].y = 
+    G_layout_cart_param_widgets[PATCH_PARAM_OSC_1_DIVISOR].y;
+
+  LAYOUT_CART_ADD_PARAM_TO_COLUMN(1, OSC_2_OCTAVE, "Oct", SLIDER)
+  LAYOUT_CART_ADD_PARAM_TO_COLUMN(1, OSC_2_NOTE, "Nte", SLIDER)
+
+  G_layout_cart_param_names[PATCH_PARAM_OSC_2_OCTAVE].y = 
+    G_layout_cart_param_names[PATCH_PARAM_OSC_2_MULTIPLE].y;
+
+  G_layout_cart_param_names[PATCH_PARAM_OSC_2_NOTE].y = 
+    G_layout_cart_param_names[PATCH_PARAM_OSC_2_DIVISOR].y;
+
+  G_layout_cart_param_widgets[PATCH_PARAM_OSC_2_OCTAVE].y = 
+    G_layout_cart_param_widgets[PATCH_PARAM_OSC_2_MULTIPLE].y;
+
+  G_layout_cart_param_widgets[PATCH_PARAM_OSC_2_NOTE].y = 
+    G_layout_cart_param_widgets[PATCH_PARAM_OSC_2_DIVISOR].y;
+
+  LAYOUT_CART_ADD_PARAM_TO_COLUMN(2, OSC_3_OCTAVE, "Oct", SLIDER)
+  LAYOUT_CART_ADD_PARAM_TO_COLUMN(2, OSC_3_NOTE, "Nte", SLIDER)
+
+  G_layout_cart_param_names[PATCH_PARAM_OSC_3_OCTAVE].y = 
+    G_layout_cart_param_names[PATCH_PARAM_OSC_3_MULTIPLE].y;
+
+  G_layout_cart_param_names[PATCH_PARAM_OSC_3_NOTE].y = 
+    G_layout_cart_param_names[PATCH_PARAM_OSC_3_DIVISOR].y;
+
+  G_layout_cart_param_widgets[PATCH_PARAM_OSC_3_OCTAVE].y = 
+    G_layout_cart_param_widgets[PATCH_PARAM_OSC_3_MULTIPLE].y;
+
+  G_layout_cart_param_widgets[PATCH_PARAM_OSC_3_NOTE].y = 
+    G_layout_cart_param_widgets[PATCH_PARAM_OSC_3_DIVISOR].y;
 
   return 0;
 }
