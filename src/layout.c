@@ -228,46 +228,46 @@ short int layout_generate_cart_screen()
   LAYOUT_CART_ADD_PARAM_TO_COLUMN(0, OSC_1_OCTAVE, "Oct", SLIDER)
   LAYOUT_CART_ADD_PARAM_TO_COLUMN(0, OSC_1_NOTE, "Nte", SLIDER)
 
-  G_layout_cart_param_names[PATCH_PARAM_OSC_1_OCTAVE].y = 
+  G_layout_cart_param_names[PATCH_PARAM_OSC_1_NOTE].y = 
     G_layout_cart_param_names[PATCH_PARAM_OSC_1_MULTIPLE].y;
 
-  G_layout_cart_param_names[PATCH_PARAM_OSC_1_NOTE].y = 
+  G_layout_cart_param_names[PATCH_PARAM_OSC_1_OCTAVE].y = 
     G_layout_cart_param_names[PATCH_PARAM_OSC_1_DIVISOR].y;
 
-  G_layout_cart_param_widgets[PATCH_PARAM_OSC_1_OCTAVE].y = 
+  G_layout_cart_param_widgets[PATCH_PARAM_OSC_1_NOTE].y = 
     G_layout_cart_param_widgets[PATCH_PARAM_OSC_1_MULTIPLE].y;
 
-  G_layout_cart_param_widgets[PATCH_PARAM_OSC_1_NOTE].y = 
+  G_layout_cart_param_widgets[PATCH_PARAM_OSC_1_OCTAVE].y = 
     G_layout_cart_param_widgets[PATCH_PARAM_OSC_1_DIVISOR].y;
 
   LAYOUT_CART_ADD_PARAM_TO_COLUMN(1, OSC_2_OCTAVE, "Oct", SLIDER)
   LAYOUT_CART_ADD_PARAM_TO_COLUMN(1, OSC_2_NOTE, "Nte", SLIDER)
 
-  G_layout_cart_param_names[PATCH_PARAM_OSC_2_OCTAVE].y = 
+  G_layout_cart_param_names[PATCH_PARAM_OSC_2_NOTE].y = 
     G_layout_cart_param_names[PATCH_PARAM_OSC_2_MULTIPLE].y;
 
-  G_layout_cart_param_names[PATCH_PARAM_OSC_2_NOTE].y = 
+  G_layout_cart_param_names[PATCH_PARAM_OSC_2_OCTAVE].y = 
     G_layout_cart_param_names[PATCH_PARAM_OSC_2_DIVISOR].y;
 
-  G_layout_cart_param_widgets[PATCH_PARAM_OSC_2_OCTAVE].y = 
+  G_layout_cart_param_widgets[PATCH_PARAM_OSC_2_NOTE].y = 
     G_layout_cart_param_widgets[PATCH_PARAM_OSC_2_MULTIPLE].y;
 
-  G_layout_cart_param_widgets[PATCH_PARAM_OSC_2_NOTE].y = 
+  G_layout_cart_param_widgets[PATCH_PARAM_OSC_2_OCTAVE].y = 
     G_layout_cart_param_widgets[PATCH_PARAM_OSC_2_DIVISOR].y;
 
   LAYOUT_CART_ADD_PARAM_TO_COLUMN(2, OSC_3_OCTAVE, "Oct", SLIDER)
   LAYOUT_CART_ADD_PARAM_TO_COLUMN(2, OSC_3_NOTE, "Nte", SLIDER)
 
-  G_layout_cart_param_names[PATCH_PARAM_OSC_3_OCTAVE].y = 
+  G_layout_cart_param_names[PATCH_PARAM_OSC_3_NOTE].y = 
     G_layout_cart_param_names[PATCH_PARAM_OSC_3_MULTIPLE].y;
 
-  G_layout_cart_param_names[PATCH_PARAM_OSC_3_NOTE].y = 
+  G_layout_cart_param_names[PATCH_PARAM_OSC_3_OCTAVE].y = 
     G_layout_cart_param_names[PATCH_PARAM_OSC_3_DIVISOR].y;
 
-  G_layout_cart_param_widgets[PATCH_PARAM_OSC_3_OCTAVE].y = 
+  G_layout_cart_param_widgets[PATCH_PARAM_OSC_3_NOTE].y = 
     G_layout_cart_param_widgets[PATCH_PARAM_OSC_3_MULTIPLE].y;
 
-  G_layout_cart_param_widgets[PATCH_PARAM_OSC_3_NOTE].y = 
+  G_layout_cart_param_widgets[PATCH_PARAM_OSC_3_OCTAVE].y = 
     G_layout_cart_param_widgets[PATCH_PARAM_OSC_3_DIVISOR].y;
 
   return 0;

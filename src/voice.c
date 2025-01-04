@@ -39,6 +39,7 @@ enum
 #define VOICE_WAVETABLE_SIZE_FULL     1024
 #define VOICE_WAVETABLE_SIZE_HALF     (VOICE_WAVETABLE_SIZE_FULL / 2)
 #define VOICE_WAVETABLE_SIZE_QUARTER  (VOICE_WAVETABLE_SIZE_FULL / 4)
+#define VOICE_WAVETABLE_SIZE_EIGHTH   (VOICE_WAVETABLE_SIZE_FULL / 8)
 
 /* envelopes */
 #define VOICE_ENV_NUM_OCTAVES 13
@@ -115,6 +116,7 @@ static short int S_voice_db_to_linear_table[VOICE_DB_TO_LINEAR_TABLE_SIZE];
 
 /* wavetables */
 static short int S_voice_wavetable_sine[VOICE_WAVETABLE_SIZE_HALF];
+static short int S_voice_wavetable_curvy[VOICE_WAVETABLE_SIZE_HALF];
 
 /* envelope phase increment tables */
 static unsigned int S_voice_env_attack_increment_table[VOICE_ENV_NUM_RATES];
@@ -306,6 +308,24 @@ short int voice_note_on(int voice_index, int note)
       shifted_note = note;
       shifted_note += S_voice_multiple_table[p->values[PATCH_PARAM_OSC_1_MULTIPLE + m * PATCH_PARAM_OSC_SHIFT]];
       shifted_note -= S_voice_multiple_table[p->values[PATCH_PARAM_OSC_1_DIVISOR + m * PATCH_PARAM_OSC_SHIFT]];
+    }
+
+    /* shift note down 1 octave for alternating period waveforms */
+    switch(p->values[PATCH_PARAM_OSC_1_WAVEFORM + m * PATCH_PARAM_OSC_SHIFT])
+    {
+      case PATCH_OSC_WAVEFORM_VAL_AP_SINE:
+      case PATCH_OSC_WAVEFORM_VAL_AP_CURVY:
+      case PATCH_OSC_WAVEFORM_VAL_AP_SWAP:
+      case PATCH_OSC_WAVEFORM_VAL_AP_FULL_SINE:
+      case PATCH_OSC_WAVEFORM_VAL_AP_FULL_CURVY:
+      case PATCH_OSC_WAVEFORM_VAL_DOUBLE_SINE:
+      case PATCH_OSC_WAVEFORM_VAL_DOUBLE_CURVY:
+      {
+        shifted_note -= 12;
+        break;
+      }
+      default:
+        break;
     }
 
     if (shifted_note < TUNING_NOTE_C0)
@@ -697,12 +717,19 @@ short int voice_update_all()
         else if (m == 2)
           env_level[m] += carrier_adjustment;
       }
-      else if ( (p->values[PATCH_PARAM_ALGORITHM] == PATCH_ALGORITHM_VAL_2C_1_TO_1) || 
-                (p->values[PATCH_PARAM_ALGORITHM] == PATCH_ALGORITHM_VAL_2C_1_TO_2))
+      else if ( (p->values[PATCH_PARAM_ALGORITHM] == PATCH_ALGORITHM_VAL_2C_1_MOD_3) || 
+                (p->values[PATCH_PARAM_ALGORITHM] == PATCH_ALGORITHM_VAL_2C_1_MOD_BOTH))
       {
         if (m == 0)
           env_level[m] += modulator_adjustment;
         else if ((m == 1) || (m == 2))
+          env_level[m] += carrier_adjustment;
+      }
+      else if (p->values[PATCH_PARAM_ALGORITHM] == PATCH_ALGORITHM_VAL_2C_2_MOD_3)
+      {
+        if (m == 1)
+          env_level[m] += modulator_adjustment;
+        else if ((m == 0) || (m == 2))
           env_level[m] += carrier_adjustment;
       }
       else if (p->values[PATCH_PARAM_ALGORITHM] == PATCH_ALGORITHM_VAL_3C_PIPES)
@@ -757,43 +784,92 @@ short int voice_update_all()
       }
       else if (m == 1)
       {
-        if ((p->values[PATCH_PARAM_ALGORITHM] == PATCH_ALGORITHM_VAL_1C_CHAIN)  || 
-            (p->values[PATCH_PARAM_ALGORITHM] == PATCH_ALGORITHM_VAL_2C_1_TO_1) || 
-            (p->values[PATCH_PARAM_ALGORITHM] == PATCH_ALGORITHM_VAL_2C_1_TO_2))
+        if ((p->values[PATCH_PARAM_ALGORITHM] == PATCH_ALGORITHM_VAL_1C_CHAIN) || 
+            (p->values[PATCH_PARAM_ALGORITHM] == PATCH_ALGORITHM_VAL_2C_1_MOD_BOTH))
         {
           masked_phase = (masked_phase + osc_phase_mod[0]) & 0x3FF;
         }
       }
       else if (m == 2)
       {
-        if (p->values[PATCH_PARAM_ALGORITHM] == PATCH_ALGORITHM_VAL_1C_CHAIN)
+        if ((p->values[PATCH_PARAM_ALGORITHM] == PATCH_ALGORITHM_VAL_1C_CHAIN) || 
+            (p->values[PATCH_PARAM_ALGORITHM] == PATCH_ALGORITHM_VAL_2C_2_MOD_3))
+        {
           masked_phase = (masked_phase + osc_phase_mod[1]) & 0x3FF;
+        }
+        else if ( (p->values[PATCH_PARAM_ALGORITHM] == PATCH_ALGORITHM_VAL_2C_1_MOD_3) || 
+                  (p->values[PATCH_PARAM_ALGORITHM] == PATCH_ALGORITHM_VAL_2C_1_MOD_BOTH))
+        {
+          masked_phase = (masked_phase + osc_phase_mod[0]) & 0x3FF;
+        }
         else if (p->values[PATCH_PARAM_ALGORITHM] == PATCH_ALGORITHM_VAL_1C_THE_V)
           masked_phase = (masked_phase + osc_phase_mod[0] + osc_phase_mod[1]) & 0x3FF;
-        else if (p->values[PATCH_PARAM_ALGORITHM] == PATCH_ALGORITHM_VAL_2C_1_TO_2)
-          masked_phase = (masked_phase + osc_phase_mod[0]) & 0x3FF;
       }
 
       /* determine waveform level (db) */
-      if (masked_phase < VOICE_WAVETABLE_SIZE_HALF)
-        final_index = S_voice_wavetable_sine[masked_phase];
-      else
-        final_index = S_voice_wavetable_sine[masked_phase - VOICE_WAVETABLE_SIZE_HALF];
-
-      /* half rectified */
-      if (p->values[PATCH_PARAM_OSC_1_WAVEFORM + m * PATCH_PARAM_OSC_SHIFT] == 1)
+      switch(p->values[PATCH_PARAM_OSC_1_WAVEFORM + m * PATCH_PARAM_OSC_SHIFT])
       {
-        if (masked_phase >= VOICE_WAVETABLE_SIZE_HALF)
-          final_index = VOICE_MAX_ATTENUATION_DB;
-      }
+        case PATCH_OSC_WAVEFORM_VAL_SINE:
+        case PATCH_OSC_WAVEFORM_VAL_HALF_SINE:
+        case PATCH_OSC_WAVEFORM_VAL_FULL_SINE:
+        case PATCH_OSC_WAVEFORM_VAL_QUARTER_SINE:
+        {
+          final_index = S_voice_wavetable_sine[masked_phase % VOICE_WAVETABLE_SIZE_HALF];
+          break;
+        }
+        case PATCH_OSC_WAVEFORM_VAL_CURVY:
+        case PATCH_OSC_WAVEFORM_VAL_HALF_CURVY:
+        case PATCH_OSC_WAVEFORM_VAL_FULL_CURVY:
+        case PATCH_OSC_WAVEFORM_VAL_QUARTER_CURVY:
+        {
+          final_index = S_voice_wavetable_curvy[masked_phase % VOICE_WAVETABLE_SIZE_HALF];
+          break;
+        }
+        case PATCH_OSC_WAVEFORM_VAL_SWAP:
+        {
+          if (masked_phase < VOICE_WAVETABLE_SIZE_QUARTER)
+            final_index = S_voice_wavetable_sine[masked_phase % VOICE_WAVETABLE_SIZE_HALF];
+          else if (masked_phase < 3 * VOICE_WAVETABLE_SIZE_QUARTER)
+            final_index = S_voice_wavetable_curvy[masked_phase % VOICE_WAVETABLE_SIZE_HALF];
+          else
+            final_index = S_voice_wavetable_sine[masked_phase % VOICE_WAVETABLE_SIZE_HALF];
 
-      /* quarter rectified */
-      if (p->values[PATCH_PARAM_OSC_1_WAVEFORM + m * PATCH_PARAM_OSC_SHIFT] == 3)
-      {
-        if ((masked_phase >= VOICE_WAVETABLE_SIZE_QUARTER) && (masked_phase < VOICE_WAVETABLE_SIZE_HALF))
+          break;
+        }
+        case PATCH_OSC_WAVEFORM_VAL_AP_SINE:
+        case PATCH_OSC_WAVEFORM_VAL_AP_FULL_SINE:
+        case PATCH_OSC_WAVEFORM_VAL_DOUBLE_SINE:
+        {
+          final_index = S_voice_wavetable_sine[(2 * masked_phase) % VOICE_WAVETABLE_SIZE_HALF];
+          break;
+        }
+        case PATCH_OSC_WAVEFORM_VAL_AP_CURVY:
+        case PATCH_OSC_WAVEFORM_VAL_AP_FULL_CURVY:
+        case PATCH_OSC_WAVEFORM_VAL_DOUBLE_CURVY:
+        {
+          final_index = S_voice_wavetable_curvy[(2 * masked_phase) % VOICE_WAVETABLE_SIZE_HALF];
+          break;
+        }
+        case PATCH_OSC_WAVEFORM_VAL_AP_SWAP:
+        {
+          if (masked_phase < VOICE_WAVETABLE_SIZE_EIGHTH)
+            final_index = S_voice_wavetable_sine[(2 * masked_phase) % VOICE_WAVETABLE_SIZE_HALF];
+          else if (masked_phase < 3 * VOICE_WAVETABLE_SIZE_EIGHTH)
+            final_index = S_voice_wavetable_curvy[(2 * masked_phase) % VOICE_WAVETABLE_SIZE_HALF];
+          else if (masked_phase < 5 * VOICE_WAVETABLE_SIZE_EIGHTH)
+            final_index = S_voice_wavetable_sine[(2 * masked_phase) % VOICE_WAVETABLE_SIZE_HALF];
+          else if (masked_phase < 7 * VOICE_WAVETABLE_SIZE_EIGHTH)
+            final_index = S_voice_wavetable_curvy[(2 * masked_phase) % VOICE_WAVETABLE_SIZE_HALF];
+          else
+            final_index = S_voice_wavetable_sine[(2 * masked_phase) % VOICE_WAVETABLE_SIZE_HALF];
+
+          break;
+        }
+        default:
+        {
           final_index = VOICE_MAX_ATTENUATION_DB;
-        else if (masked_phase >= 3 * VOICE_WAVETABLE_SIZE_QUARTER)
-          final_index = VOICE_MAX_ATTENUATION_DB;
+          break;
+        }
       }
 
       /* apply envelope */
@@ -807,11 +883,62 @@ short int voice_update_all()
       /* determine waveform level (linear) */
       osc_level[m] = S_voice_db_to_linear_table[final_index];
 
-      /* non-rectified */
-      if (p->values[PATCH_PARAM_OSC_1_WAVEFORM + m * PATCH_PARAM_OSC_SHIFT] == 0)
+      switch(p->values[PATCH_PARAM_OSC_1_WAVEFORM + m * PATCH_PARAM_OSC_SHIFT])
       {
-        if (masked_phase >= VOICE_WAVETABLE_SIZE_HALF)
-          osc_level[m] *= -1;
+        case PATCH_OSC_WAVEFORM_VAL_SINE:
+        case PATCH_OSC_WAVEFORM_VAL_CURVY:
+        case PATCH_OSC_WAVEFORM_VAL_SWAP:
+        case PATCH_OSC_WAVEFORM_VAL_DOUBLE_SINE:
+        case PATCH_OSC_WAVEFORM_VAL_DOUBLE_CURVY:
+        {
+          if (masked_phase < VOICE_WAVETABLE_SIZE_HALF)
+            osc_level[m] *= 1;
+          else
+            osc_level[m] *= -1;
+
+          break;
+        }
+        case PATCH_OSC_WAVEFORM_VAL_HALF_SINE:
+        case PATCH_OSC_WAVEFORM_VAL_HALF_CURVY:
+        case PATCH_OSC_WAVEFORM_VAL_AP_FULL_SINE:
+        case PATCH_OSC_WAVEFORM_VAL_AP_FULL_CURVY:
+        {
+          if (masked_phase < VOICE_WAVETABLE_SIZE_HALF)
+            osc_level[m] *= 1;
+          else
+            osc_level[m] *= 0;
+
+          break;
+        }
+        case PATCH_OSC_WAVEFORM_VAL_QUARTER_SINE:
+        case PATCH_OSC_WAVEFORM_VAL_QUARTER_CURVY:
+        {
+          if (masked_phase < VOICE_WAVETABLE_SIZE_QUARTER)
+            osc_level[m] *= 1;
+          else if (masked_phase < VOICE_WAVETABLE_SIZE_HALF)
+            osc_level[m] *= 0;
+          else if (masked_phase < 3 * VOICE_WAVETABLE_SIZE_QUARTER)
+            osc_level[m] *= 1;
+          else
+            osc_level[m] *= 0;
+
+          break;
+        }
+        case PATCH_OSC_WAVEFORM_VAL_AP_SINE:
+        case PATCH_OSC_WAVEFORM_VAL_AP_CURVY:
+        case PATCH_OSC_WAVEFORM_VAL_AP_SWAP:
+        {
+          if (masked_phase < VOICE_WAVETABLE_SIZE_QUARTER)
+            osc_level[m] *= 1;
+          else if (masked_phase < VOICE_WAVETABLE_SIZE_HALF)
+            osc_level[m] *= -1;
+          else
+            osc_level[m] *= 0;
+
+          break;
+        }
+        default:
+          break;
       }
 
       /* compute phase mod */
@@ -830,8 +957,9 @@ short int voice_update_all()
     {
       v->level += osc_level[2];
     }
-    else if ( (p->values[PATCH_PARAM_ALGORITHM] == PATCH_ALGORITHM_VAL_2C_1_TO_1) || 
-              (p->values[PATCH_PARAM_ALGORITHM] == PATCH_ALGORITHM_VAL_2C_1_TO_2))
+    else if ( (p->values[PATCH_PARAM_ALGORITHM] == PATCH_ALGORITHM_VAL_2C_1_MOD_3) || 
+              (p->values[PATCH_PARAM_ALGORITHM] == PATCH_ALGORITHM_VAL_2C_2_MOD_3) || 
+              (p->values[PATCH_PARAM_ALGORITHM] == PATCH_ALGORITHM_VAL_2C_1_MOD_BOTH))
     {
       v->level += osc_level[1] + osc_level[2];
     }
@@ -877,6 +1005,17 @@ short int voice_generate_tables()
     val = sin(TWO_PI * (m / ((float) VOICE_WAVETABLE_SIZE_FULL)));
     S_voice_wavetable_sine[m] = (short int) ((10 * (log(1 / val) / log(10)) / VOICE_DB_STEP_12_BIT) + 0.5f);
     S_voice_wavetable_sine[VOICE_WAVETABLE_SIZE_HALF - m] = S_voice_wavetable_sine[m];
+  }
+
+  /* wavetable (curvy) */
+  S_voice_wavetable_curvy[0] = VOICE_MAX_ATTENUATION_DB;
+  S_voice_wavetable_curvy[VOICE_WAVETABLE_SIZE_QUARTER] = VOICE_MAX_VOLUME_DB;
+
+  for (m = 1; m < VOICE_WAVETABLE_SIZE_QUARTER; m++)
+  {
+    val = 0.5f * (sin(TWO_PI * (m / ((float) VOICE_WAVETABLE_SIZE_FULL))) + 1.0f);
+    S_voice_wavetable_curvy[m] = (short int) ((10 * (log(1 / val) / log(10)) / VOICE_DB_STEP_12_BIT) + 0.5f);
+    S_voice_wavetable_curvy[VOICE_WAVETABLE_SIZE_HALF - m] = S_voice_wavetable_curvy[m];
   }
 
   /* wave phase increment table */

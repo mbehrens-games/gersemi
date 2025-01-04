@@ -287,13 +287,17 @@ static char S_patch_edit_legacy_keyscale_values[PATCH_NUM_LEGACY_KEYSCALE_VALS][
   { "Pitch", "Key" };
 
 static char S_patch_edit_algorithm_values[PATCH_NUM_ALGORITHM_VALS][9] = 
-  { "1>2>3", "(1+2)>3", "(1>2)+3", "1>(2+3)", "1+2+3" };
+  { "1>2>3", "(1+2)>3", "1+(2>3)", "2+(1>3)", "1>(2+3)", "1+2+3" };
 
 static char S_patch_edit_sync_values[PATCH_NUM_SYNC_VALS][9] = 
   { "Off", "On" };
 
 static char S_patch_edit_osc_waveform_values[PATCH_NUM_OSC_WAVEFORM_VALS][9] = 
-  {  "Sine", "Half", "Full", "Quarter" };
+  { "Sine", "Curvy", "Swap", 
+    "HalfSine", "HalfCurv", "FullSine", "FullCurv", "QuarSine", "QuarCurv", 
+    "AP Sine", "AP Curvy", "AP Swap", 
+    "AP Full", "AP F.C.", "DbleSine", "DbleCurv" 
+  };
 
 static char S_patch_edit_osc_freq_mode_values[PATCH_NUM_OSC_FREQ_MODE_VALS][9] = 
   { "Ratio", "Fixed" };
