@@ -306,11 +306,7 @@ short int voice_note_on(int voice_index, int note)
       case PATCH_OSC_WAVEFORM_VAL_AP_FULL_SINE:
       case PATCH_OSC_WAVEFORM_VAL_AP_SQUARE:
       case PATCH_OSC_WAVEFORM_VAL_AP_SAW:
-      case PATCH_OSC_WAVEFORM_VAL_DRIVE_SAW:
-      case PATCH_OSC_WAVEFORM_VAL_WRAP_SAW:
       case PATCH_OSC_WAVEFORM_VAL_AP_TRI:
-      case PATCH_OSC_WAVEFORM_VAL_DRIVE_TRI:
-      case PATCH_OSC_WAVEFORM_VAL_FOLD_TRI:
       {
         shifted_note -= 12;
         break;
@@ -835,7 +831,7 @@ short int voice_update_all()
           if (masked_phase < 256)
             final_index = VOICE_MAX_VOLUME_DB;
           else if (masked_phase < 3 * 256)
-            final_index = S_voice_wavetable_saw[(2 * masked_phase + 3 * 256) % 1024];
+            final_index = S_voice_wavetable_saw[(2 * (masked_phase + 3 * 256)) % 1024];
           else 
             final_index = VOICE_MAX_VOLUME_DB;
 
@@ -846,7 +842,7 @@ short int voice_update_all()
           if (masked_phase < 256)
             final_index = S_voice_wavetable_saw[(2 * masked_phase) % 1024];
           else if (masked_phase < 3 * 256)
-            final_index = S_voice_wavetable_saw[((2 * masked_phase) + 3 * 256) % 1024];
+            final_index = S_voice_wavetable_saw[(2 * (masked_phase + 3 * 256)) % 1024];
           else 
             final_index = S_voice_wavetable_saw[(2 * masked_phase) % 1024];;
 
@@ -1043,19 +1039,6 @@ short int voice_generate_tables()
     S_voice_wavetable_saw[1024 - m] = S_voice_wavetable_saw[m];
   }
 
-#if 0
-  /* wavetable (curvy) */
-  S_voice_wavetable_curvy[0] = VOICE_MAX_ATTENUATION_DB;
-  S_voice_wavetable_curvy[256] = VOICE_MAX_VOLUME_DB;
-
-  for (m = 1; m < 256; m++)
-  {
-    val = 0.5f * (-cos((TWO_PI * 2 * m) / 1024) + 1.0f);
-    S_voice_wavetable_curvy[m] = (short int) ((10 * (log(1 / val) / log(10)) / VOICE_DB_STEP_12_BIT) + 0.5f);
-    S_voice_wavetable_curvy[512 - m] = S_voice_wavetable_curvy[m];
-  }
-#endif
-
   /* wave phase increment table */
   for (m = 0; m < TUNING_NUM_INDICES; m++)
   {
@@ -1064,25 +1047,6 @@ short int voice_generate_tables()
     S_voice_wave_phase_increment_table[m] = 
       (unsigned int) ((val * CLOCK_1HZ_PHASE_INCREMENT) + 0.5f);
   }
-
-#if 0
-  /* print out db to linear table values */
-  for (m = 0; m < 4096; m += 4)
-  {
-    printf("DB to Linear Table Index %d: %d\n", m, S_voice_db_to_linear_table[m]);
-  }
-#endif
-
-#if 0
-  /* print out sine wavetable values */
-  for (m = 0; m < 256; m++)
-  {
-    val = sin(TWO_PI * (m / 1024.0f));
-    printf("Sine Wavetable Index %d: %f, %d (DB: %d)\n", 
-            m, val, S_voice_db_to_linear_table[S_voice_wavetable_sine[m]], 
-                    S_voice_wavetable_sine[m]);
-  }
-#endif
 
   /* note that adding 32 to the 12-bit envelope is the  */
   /* same as adding 1 to a left shifted 7-bit envelope. */
