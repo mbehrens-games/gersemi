@@ -302,11 +302,11 @@ short int voice_note_on(int voice_index, int note)
     /* shift note down 1 octave for alternating period waveforms */
     switch(p->values[PATCH_PARAM_OSC_1_WAVEFORM + m * PATCH_PARAM_OSC_SHIFT])
     {
-      case PATCH_OSC_WAVEFORM_VAL_AP_SINE:
-      case PATCH_OSC_WAVEFORM_VAL_AP_FULL_SINE:
-      case PATCH_OSC_WAVEFORM_VAL_AP_SQUARE:
-      case PATCH_OSC_WAVEFORM_VAL_AP_SAW:
-      case PATCH_OSC_WAVEFORM_VAL_AP_TRI:
+      case PATCH_OSC_WAVEFORM_VAL_ALT_SINE:
+      case PATCH_OSC_WAVEFORM_VAL_ALT_FULL_SINE:
+      case PATCH_OSC_WAVEFORM_VAL_ALT_SQUARE:
+      case PATCH_OSC_WAVEFORM_VAL_ALT_SAW:
+      case PATCH_OSC_WAVEFORM_VAL_ALT_TRI:
       {
         shifted_note -= 12;
         break;
@@ -804,14 +804,14 @@ short int voice_update_all()
           final_index = S_voice_wavetable_sine[masked_phase % 512];
           break;
         }
-        case PATCH_OSC_WAVEFORM_VAL_AP_SINE:
-        case PATCH_OSC_WAVEFORM_VAL_AP_FULL_SINE:
+        case PATCH_OSC_WAVEFORM_VAL_ALT_SINE:
+        case PATCH_OSC_WAVEFORM_VAL_ALT_FULL_SINE:
         {
           final_index = S_voice_wavetable_sine[(2 * masked_phase) % 512];
           break;
         }
         case PATCH_OSC_WAVEFORM_VAL_SQUARE:
-        case PATCH_OSC_WAVEFORM_VAL_AP_SQUARE:
+        case PATCH_OSC_WAVEFORM_VAL_ALT_SQUARE:
         {
           final_index = VOICE_MAX_VOLUME_DB;
           break;
@@ -821,31 +821,9 @@ short int voice_update_all()
           final_index = S_voice_wavetable_saw[masked_phase % 1024];
           break;
         }
-        case PATCH_OSC_WAVEFORM_VAL_AP_SAW:
+        case PATCH_OSC_WAVEFORM_VAL_ALT_SAW:
         {
           final_index = S_voice_wavetable_saw[(2 * masked_phase) % 1024];
-          break;
-        }
-        case PATCH_OSC_WAVEFORM_VAL_DRIVE_SAW:
-        {
-          if (masked_phase < 256)
-            final_index = VOICE_MAX_VOLUME_DB;
-          else if (masked_phase < 3 * 256)
-            final_index = S_voice_wavetable_saw[(2 * (masked_phase + 3 * 256)) % 1024];
-          else 
-            final_index = VOICE_MAX_VOLUME_DB;
-
-          break;
-        }
-        case PATCH_OSC_WAVEFORM_VAL_WRAP_SAW:
-        {
-          if (masked_phase < 256)
-            final_index = S_voice_wavetable_saw[(2 * masked_phase) % 1024];
-          else if (masked_phase < 3 * 256)
-            final_index = S_voice_wavetable_saw[(2 * (masked_phase + 3 * 256)) % 1024];
-          else 
-            final_index = S_voice_wavetable_saw[(2 * masked_phase) % 1024];;
-
           break;
         }
         case PATCH_OSC_WAVEFORM_VAL_TRI:
@@ -853,25 +831,9 @@ short int voice_update_all()
           final_index = S_voice_wavetable_tri[masked_phase % 512];
           break;
         }
-        case PATCH_OSC_WAVEFORM_VAL_AP_TRI:
-        case PATCH_OSC_WAVEFORM_VAL_FOLD_TRI:
+        case PATCH_OSC_WAVEFORM_VAL_ALT_TRI:
         {
           final_index = S_voice_wavetable_tri[(2 * masked_phase) % 512];
-          break;
-        }
-        case PATCH_OSC_WAVEFORM_VAL_DRIVE_TRI:
-        {
-          if (masked_phase < 128)
-            final_index = S_voice_wavetable_tri[(2 * masked_phase) % 512];
-          else if (masked_phase < 3 * 128)
-            final_index = VOICE_MAX_VOLUME_DB;
-          else if (masked_phase < 5 * 128)
-            final_index = S_voice_wavetable_tri[(2 * masked_phase) % 512];
-          else if (masked_phase < 7 * 128)
-            final_index = VOICE_MAX_VOLUME_DB;
-          else
-            final_index = S_voice_wavetable_tri[(2 * masked_phase) % 512];
-
           break;
         }
         default:
@@ -897,11 +859,7 @@ short int voice_update_all()
         case PATCH_OSC_WAVEFORM_VAL_SINE:
         case PATCH_OSC_WAVEFORM_VAL_SQUARE:
         case PATCH_OSC_WAVEFORM_VAL_SAW:
-        case PATCH_OSC_WAVEFORM_VAL_DRIVE_SAW:
-        case PATCH_OSC_WAVEFORM_VAL_WRAP_SAW:
         case PATCH_OSC_WAVEFORM_VAL_TRI:
-        case PATCH_OSC_WAVEFORM_VAL_DRIVE_TRI:
-        case PATCH_OSC_WAVEFORM_VAL_FOLD_TRI:
         {
           if (masked_phase < 512)
             osc_level[m] *= 1;
@@ -911,7 +869,7 @@ short int voice_update_all()
           break;
         }
         case PATCH_OSC_WAVEFORM_VAL_HALF_SINE:
-        case PATCH_OSC_WAVEFORM_VAL_AP_FULL_SINE:
+        case PATCH_OSC_WAVEFORM_VAL_ALT_FULL_SINE:
         {
           if (masked_phase < 512)
             osc_level[m] *= 1;
@@ -926,17 +884,17 @@ short int voice_update_all()
             osc_level[m] *= 1;
           else if (masked_phase < 512)
             osc_level[m] *= 0;
-          else if (masked_phase < 3 * 256)
+          else if (masked_phase < 768)
             osc_level[m] *= 1;
           else
             osc_level[m] *= 0;
 
           break;
         }
-        case PATCH_OSC_WAVEFORM_VAL_AP_SINE:
-        case PATCH_OSC_WAVEFORM_VAL_AP_SQUARE:
-        case PATCH_OSC_WAVEFORM_VAL_AP_TRI:
-        case PATCH_OSC_WAVEFORM_VAL_AP_SAW:
+        case PATCH_OSC_WAVEFORM_VAL_ALT_SINE:
+        case PATCH_OSC_WAVEFORM_VAL_ALT_SQUARE:
+        case PATCH_OSC_WAVEFORM_VAL_ALT_SAW:
+        case PATCH_OSC_WAVEFORM_VAL_ALT_TRI:
         {
           if (masked_phase < 256)
             osc_level[m] *= 1;

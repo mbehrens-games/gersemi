@@ -293,10 +293,10 @@ static char S_patch_edit_sync_values[PATCH_NUM_SYNC_VALS][9] =
   { "Off", "On" };
 
 static char S_patch_edit_osc_waveform_values[PATCH_NUM_OSC_WAVEFORM_VALS][9] = 
-  { "Sine",     "Half",     "Full",     "Quarter", 
-    "AP Sine",  "AP Full",  "Square",   "AP Squa", 
-    "Saw",      "AP Saw",   "Drve Saw", "Wrap Saw", 
-    "Triangle", "AP Tri",   "Drve Tri", "Fold Tri" 
+  { "Sine",     "Half",     "Full",     
+    "Quarter",  "Alt Sine", "Alt Full", 
+    "Square",   "Saw",      "Triangle", 
+    "Alt Squa", "Alt Saw",  "Alt Tri" 
   };
 
 static char S_patch_edit_osc_freq_mode_values[PATCH_NUM_OSC_FREQ_MODE_VALS][9] = 
