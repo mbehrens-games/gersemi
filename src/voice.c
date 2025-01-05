@@ -35,23 +35,11 @@ enum
 #define VOICE_MAX_VOLUME_LINEAR       32767
 #define VOICE_MAX_ATTENUATION_LINEAR  0
 
-/* oscillators */
-#define VOICE_WAVETABLE_SIZE_FULL     1024
-#define VOICE_WAVETABLE_SIZE_HALF     (VOICE_WAVETABLE_SIZE_FULL / 2)
-#define VOICE_WAVETABLE_SIZE_QUARTER  (VOICE_WAVETABLE_SIZE_FULL / 4)
-#define VOICE_WAVETABLE_SIZE_EIGHTH   (VOICE_WAVETABLE_SIZE_FULL / 8)
-
-/* envelopes */
 #define VOICE_ENV_NUM_OCTAVES 13
 
 #define VOICE_ENV_NUM_RATES (VOICE_ENV_NUM_OCTAVES * 12)
 
-/* lfo */
 #define VOICE_LFO_WAVE_AMPLITUDE 512
-
-#define VOICE_LFO_WAVE_PERIOD_FULL    256
-#define VOICE_LFO_WAVE_PERIOD_HALF    (VOICE_LFO_WAVE_PERIOD_FULL / 2)
-#define VOICE_LFO_WAVE_PERIOD_QUARTER (VOICE_LFO_WAVE_PERIOD_FULL / 4)
 
 /* multiple table */
 /* the values form the harmonic series! */
@@ -115,8 +103,9 @@ static unsigned int S_voice_wave_phase_increment_table[TUNING_NUM_INDICES];
 static short int S_voice_db_to_linear_table[VOICE_DB_TO_LINEAR_TABLE_SIZE];
 
 /* wavetables */
-static short int S_voice_wavetable_sine[VOICE_WAVETABLE_SIZE_HALF];
-static short int S_voice_wavetable_curvy[VOICE_WAVETABLE_SIZE_HALF];
+static short int S_voice_wavetable_sine[512];
+static short int S_voice_wavetable_tri[512];
+static short int S_voice_wavetable_saw[1024];
 
 /* envelope phase increment tables */
 static unsigned int S_voice_env_attack_increment_table[VOICE_ENV_NUM_RATES];
@@ -132,11 +121,11 @@ static short int S_voice_env_rate_keyscale_table[TUNING_NUM_PLAYABLE_NOTES];
 static short int S_voice_env_level_keyscale_table[TUNING_NUM_PLAYABLE_NOTES];
 
 /* lfo wavetables */
-static short int S_voice_lfo_bi_wavetable_tri[VOICE_LFO_WAVE_PERIOD_FULL];
-static short int S_voice_lfo_bi_wavetable_saw[VOICE_LFO_WAVE_PERIOD_FULL];
+static short int S_voice_lfo_bi_wavetable_tri[256];
+static short int S_voice_lfo_bi_wavetable_saw[256];
 
-static short int S_voice_lfo_uni_wavetable_tri[VOICE_LFO_WAVE_PERIOD_FULL];
-static short int S_voice_lfo_uni_wavetable_saw[VOICE_LFO_WAVE_PERIOD_FULL];
+static short int S_voice_lfo_uni_wavetable_tri[256];
+static short int S_voice_lfo_uni_wavetable_saw[256];
 
 /* delay table */
 static int S_voice_lfo_delay_period_table[TEMPO_NUM_VALUES];
@@ -314,12 +303,14 @@ short int voice_note_on(int voice_index, int note)
     switch(p->values[PATCH_PARAM_OSC_1_WAVEFORM + m * PATCH_PARAM_OSC_SHIFT])
     {
       case PATCH_OSC_WAVEFORM_VAL_AP_SINE:
-      case PATCH_OSC_WAVEFORM_VAL_AP_CURVY:
-      case PATCH_OSC_WAVEFORM_VAL_AP_SWAP:
       case PATCH_OSC_WAVEFORM_VAL_AP_FULL_SINE:
-      case PATCH_OSC_WAVEFORM_VAL_AP_FULL_CURVY:
-      case PATCH_OSC_WAVEFORM_VAL_DOUBLE_SINE:
-      case PATCH_OSC_WAVEFORM_VAL_DOUBLE_CURVY:
+      case PATCH_OSC_WAVEFORM_VAL_AP_SQUARE:
+      case PATCH_OSC_WAVEFORM_VAL_AP_SAW:
+      case PATCH_OSC_WAVEFORM_VAL_DRIVE_SAW:
+      case PATCH_OSC_WAVEFORM_VAL_WRAP_SAW:
+      case PATCH_OSC_WAVEFORM_VAL_AP_TRI:
+      case PATCH_OSC_WAVEFORM_VAL_DRIVE_TRI:
+      case PATCH_OSC_WAVEFORM_VAL_FOLD_TRI:
       {
         shifted_note -= 12;
         break;
@@ -526,7 +517,7 @@ short int voice_update_all()
     }
     else if (p->values[PATCH_PARAM_LFO_WAVEFORM] == PATCH_LFO_WAVEFORM_VAL_SQUARE)
     {
-      if (masked_phase < VOICE_LFO_WAVE_PERIOD_HALF)
+      if (masked_phase < 128)
       {
         lfo_bi_level = VOICE_LFO_WAVE_AMPLITUDE;
         lfo_uni_level = 0;
@@ -814,54 +805,76 @@ short int voice_update_all()
         case PATCH_OSC_WAVEFORM_VAL_FULL_SINE:
         case PATCH_OSC_WAVEFORM_VAL_QUARTER_SINE:
         {
-          final_index = S_voice_wavetable_sine[masked_phase % VOICE_WAVETABLE_SIZE_HALF];
-          break;
-        }
-        case PATCH_OSC_WAVEFORM_VAL_CURVY:
-        case PATCH_OSC_WAVEFORM_VAL_HALF_CURVY:
-        case PATCH_OSC_WAVEFORM_VAL_FULL_CURVY:
-        case PATCH_OSC_WAVEFORM_VAL_QUARTER_CURVY:
-        {
-          final_index = S_voice_wavetable_curvy[masked_phase % VOICE_WAVETABLE_SIZE_HALF];
-          break;
-        }
-        case PATCH_OSC_WAVEFORM_VAL_SWAP:
-        {
-          if (masked_phase < VOICE_WAVETABLE_SIZE_QUARTER)
-            final_index = S_voice_wavetable_sine[masked_phase % VOICE_WAVETABLE_SIZE_HALF];
-          else if (masked_phase < 3 * VOICE_WAVETABLE_SIZE_QUARTER)
-            final_index = S_voice_wavetable_curvy[masked_phase % VOICE_WAVETABLE_SIZE_HALF];
-          else
-            final_index = S_voice_wavetable_sine[masked_phase % VOICE_WAVETABLE_SIZE_HALF];
-
+          final_index = S_voice_wavetable_sine[masked_phase % 512];
           break;
         }
         case PATCH_OSC_WAVEFORM_VAL_AP_SINE:
         case PATCH_OSC_WAVEFORM_VAL_AP_FULL_SINE:
-        case PATCH_OSC_WAVEFORM_VAL_DOUBLE_SINE:
         {
-          final_index = S_voice_wavetable_sine[(2 * masked_phase) % VOICE_WAVETABLE_SIZE_HALF];
+          final_index = S_voice_wavetable_sine[(2 * masked_phase) % 512];
           break;
         }
-        case PATCH_OSC_WAVEFORM_VAL_AP_CURVY:
-        case PATCH_OSC_WAVEFORM_VAL_AP_FULL_CURVY:
-        case PATCH_OSC_WAVEFORM_VAL_DOUBLE_CURVY:
+        case PATCH_OSC_WAVEFORM_VAL_SQUARE:
+        case PATCH_OSC_WAVEFORM_VAL_AP_SQUARE:
         {
-          final_index = S_voice_wavetable_curvy[(2 * masked_phase) % VOICE_WAVETABLE_SIZE_HALF];
+          final_index = VOICE_MAX_VOLUME_DB;
           break;
         }
-        case PATCH_OSC_WAVEFORM_VAL_AP_SWAP:
+        case PATCH_OSC_WAVEFORM_VAL_SAW:
         {
-          if (masked_phase < VOICE_WAVETABLE_SIZE_EIGHTH)
-            final_index = S_voice_wavetable_sine[(2 * masked_phase) % VOICE_WAVETABLE_SIZE_HALF];
-          else if (masked_phase < 3 * VOICE_WAVETABLE_SIZE_EIGHTH)
-            final_index = S_voice_wavetable_curvy[(2 * masked_phase) % VOICE_WAVETABLE_SIZE_HALF];
-          else if (masked_phase < 5 * VOICE_WAVETABLE_SIZE_EIGHTH)
-            final_index = S_voice_wavetable_sine[(2 * masked_phase) % VOICE_WAVETABLE_SIZE_HALF];
-          else if (masked_phase < 7 * VOICE_WAVETABLE_SIZE_EIGHTH)
-            final_index = S_voice_wavetable_curvy[(2 * masked_phase) % VOICE_WAVETABLE_SIZE_HALF];
+          final_index = S_voice_wavetable_saw[masked_phase % 1024];
+          break;
+        }
+        case PATCH_OSC_WAVEFORM_VAL_AP_SAW:
+        {
+          final_index = S_voice_wavetable_saw[(2 * masked_phase) % 1024];
+          break;
+        }
+        case PATCH_OSC_WAVEFORM_VAL_DRIVE_SAW:
+        {
+          if (masked_phase < 256)
+            final_index = VOICE_MAX_VOLUME_DB;
+          else if (masked_phase < 3 * 256)
+            final_index = S_voice_wavetable_saw[(2 * masked_phase + 3 * 256) % 1024];
+          else 
+            final_index = VOICE_MAX_VOLUME_DB;
+
+          break;
+        }
+        case PATCH_OSC_WAVEFORM_VAL_WRAP_SAW:
+        {
+          if (masked_phase < 256)
+            final_index = S_voice_wavetable_saw[(2 * masked_phase) % 1024];
+          else if (masked_phase < 3 * 256)
+            final_index = S_voice_wavetable_saw[((2 * masked_phase) + 3 * 256) % 1024];
+          else 
+            final_index = S_voice_wavetable_saw[(2 * masked_phase) % 1024];;
+
+          break;
+        }
+        case PATCH_OSC_WAVEFORM_VAL_TRI:
+        {
+          final_index = S_voice_wavetable_tri[masked_phase % 512];
+          break;
+        }
+        case PATCH_OSC_WAVEFORM_VAL_AP_TRI:
+        case PATCH_OSC_WAVEFORM_VAL_FOLD_TRI:
+        {
+          final_index = S_voice_wavetable_tri[(2 * masked_phase) % 512];
+          break;
+        }
+        case PATCH_OSC_WAVEFORM_VAL_DRIVE_TRI:
+        {
+          if (masked_phase < 128)
+            final_index = S_voice_wavetable_tri[(2 * masked_phase) % 512];
+          else if (masked_phase < 3 * 128)
+            final_index = VOICE_MAX_VOLUME_DB;
+          else if (masked_phase < 5 * 128)
+            final_index = S_voice_wavetable_tri[(2 * masked_phase) % 512];
+          else if (masked_phase < 7 * 128)
+            final_index = VOICE_MAX_VOLUME_DB;
           else
-            final_index = S_voice_wavetable_sine[(2 * masked_phase) % VOICE_WAVETABLE_SIZE_HALF];
+            final_index = S_voice_wavetable_tri[(2 * masked_phase) % 512];
 
           break;
         }
@@ -886,12 +899,15 @@ short int voice_update_all()
       switch(p->values[PATCH_PARAM_OSC_1_WAVEFORM + m * PATCH_PARAM_OSC_SHIFT])
       {
         case PATCH_OSC_WAVEFORM_VAL_SINE:
-        case PATCH_OSC_WAVEFORM_VAL_CURVY:
-        case PATCH_OSC_WAVEFORM_VAL_SWAP:
-        case PATCH_OSC_WAVEFORM_VAL_DOUBLE_SINE:
-        case PATCH_OSC_WAVEFORM_VAL_DOUBLE_CURVY:
+        case PATCH_OSC_WAVEFORM_VAL_SQUARE:
+        case PATCH_OSC_WAVEFORM_VAL_SAW:
+        case PATCH_OSC_WAVEFORM_VAL_DRIVE_SAW:
+        case PATCH_OSC_WAVEFORM_VAL_WRAP_SAW:
+        case PATCH_OSC_WAVEFORM_VAL_TRI:
+        case PATCH_OSC_WAVEFORM_VAL_DRIVE_TRI:
+        case PATCH_OSC_WAVEFORM_VAL_FOLD_TRI:
         {
-          if (masked_phase < VOICE_WAVETABLE_SIZE_HALF)
+          if (masked_phase < 512)
             osc_level[m] *= 1;
           else
             osc_level[m] *= -1;
@@ -899,11 +915,9 @@ short int voice_update_all()
           break;
         }
         case PATCH_OSC_WAVEFORM_VAL_HALF_SINE:
-        case PATCH_OSC_WAVEFORM_VAL_HALF_CURVY:
         case PATCH_OSC_WAVEFORM_VAL_AP_FULL_SINE:
-        case PATCH_OSC_WAVEFORM_VAL_AP_FULL_CURVY:
         {
-          if (masked_phase < VOICE_WAVETABLE_SIZE_HALF)
+          if (masked_phase < 512)
             osc_level[m] *= 1;
           else
             osc_level[m] *= 0;
@@ -911,13 +925,12 @@ short int voice_update_all()
           break;
         }
         case PATCH_OSC_WAVEFORM_VAL_QUARTER_SINE:
-        case PATCH_OSC_WAVEFORM_VAL_QUARTER_CURVY:
         {
-          if (masked_phase < VOICE_WAVETABLE_SIZE_QUARTER)
+          if (masked_phase < 256)
             osc_level[m] *= 1;
-          else if (masked_phase < VOICE_WAVETABLE_SIZE_HALF)
+          else if (masked_phase < 512)
             osc_level[m] *= 0;
-          else if (masked_phase < 3 * VOICE_WAVETABLE_SIZE_QUARTER)
+          else if (masked_phase < 3 * 256)
             osc_level[m] *= 1;
           else
             osc_level[m] *= 0;
@@ -925,12 +938,13 @@ short int voice_update_all()
           break;
         }
         case PATCH_OSC_WAVEFORM_VAL_AP_SINE:
-        case PATCH_OSC_WAVEFORM_VAL_AP_CURVY:
-        case PATCH_OSC_WAVEFORM_VAL_AP_SWAP:
+        case PATCH_OSC_WAVEFORM_VAL_AP_SQUARE:
+        case PATCH_OSC_WAVEFORM_VAL_AP_TRI:
+        case PATCH_OSC_WAVEFORM_VAL_AP_SAW:
         {
-          if (masked_phase < VOICE_WAVETABLE_SIZE_QUARTER)
+          if (masked_phase < 256)
             osc_level[m] *= 1;
-          else if (masked_phase < VOICE_WAVETABLE_SIZE_HALF)
+          else if (masked_phase < 512)
             osc_level[m] *= -1;
           else
             osc_level[m] *= 0;
@@ -996,27 +1010,51 @@ short int voice_generate_tables()
       (short int) ((VOICE_MAX_VOLUME_LINEAR * exp(-log(10) * (VOICE_DB_STEP_12_BIT / 10) * m)) + 0.5f);
   }
 
-  /* wavetable (sine) */
+  /* sine wavetable (just has the 1st half period) */
   S_voice_wavetable_sine[0] = VOICE_MAX_ATTENUATION_DB;
-  S_voice_wavetable_sine[VOICE_WAVETABLE_SIZE_QUARTER] = VOICE_MAX_VOLUME_DB;
+  S_voice_wavetable_sine[256] = VOICE_MAX_VOLUME_DB;
 
-  for (m = 1; m < VOICE_WAVETABLE_SIZE_QUARTER; m++)
+  for (m = 1; m < 256; m++)
   {
-    val = sin(TWO_PI * (m / ((float) VOICE_WAVETABLE_SIZE_FULL)));
+    val = sin((TWO_PI * m) / 1024);
     S_voice_wavetable_sine[m] = (short int) ((10 * (log(1 / val) / log(10)) / VOICE_DB_STEP_12_BIT) + 0.5f);
-    S_voice_wavetable_sine[VOICE_WAVETABLE_SIZE_HALF - m] = S_voice_wavetable_sine[m];
+    S_voice_wavetable_sine[512 - m] = S_voice_wavetable_sine[m];
   }
 
+  /* triangle wavetable (just has the 1st half period) */
+  S_voice_wavetable_tri[0] = VOICE_MAX_ATTENUATION_DB;
+  S_voice_wavetable_tri[256] = VOICE_MAX_VOLUME_DB;
+
+  for (m = 1; m < 256; m++)
+  {
+    val = (float) m / 256;
+    S_voice_wavetable_tri[m] = (short int) ((10 * (log(1 / val) / log(10)) / VOICE_DB_STEP_12_BIT) + 0.5f);
+    S_voice_wavetable_tri[512 - m] = S_voice_wavetable_tri[m];
+  }
+
+  /* saw wavetable (has the whole period) */
+  S_voice_wavetable_saw[0] = VOICE_MAX_VOLUME_DB;
+  S_voice_wavetable_saw[512] = VOICE_MAX_ATTENUATION_DB;
+
+  for (m = 1; m < 512; m++)
+  {
+    val = (float) (512 - m) / 512;
+    S_voice_wavetable_saw[m] = (short int) ((10 * (log(1 / val) / log(10)) / VOICE_DB_STEP_12_BIT) + 0.5f);
+    S_voice_wavetable_saw[1024 - m] = S_voice_wavetable_saw[m];
+  }
+
+#if 0
   /* wavetable (curvy) */
   S_voice_wavetable_curvy[0] = VOICE_MAX_ATTENUATION_DB;
-  S_voice_wavetable_curvy[VOICE_WAVETABLE_SIZE_QUARTER] = VOICE_MAX_VOLUME_DB;
+  S_voice_wavetable_curvy[256] = VOICE_MAX_VOLUME_DB;
 
-  for (m = 1; m < VOICE_WAVETABLE_SIZE_QUARTER; m++)
+  for (m = 1; m < 256; m++)
   {
-    val = 0.5f * (sin(TWO_PI * (m / ((float) VOICE_WAVETABLE_SIZE_FULL))) + 1.0f);
+    val = 0.5f * (-cos((TWO_PI * 2 * m) / 1024) + 1.0f);
     S_voice_wavetable_curvy[m] = (short int) ((10 * (log(1 / val) / log(10)) / VOICE_DB_STEP_12_BIT) + 0.5f);
-    S_voice_wavetable_curvy[VOICE_WAVETABLE_SIZE_HALF - m] = S_voice_wavetable_curvy[m];
+    S_voice_wavetable_curvy[512 - m] = S_voice_wavetable_curvy[m];
   }
+#endif
 
   /* wave phase increment table */
   for (m = 0; m < TUNING_NUM_INDICES; m++)
@@ -1125,45 +1163,45 @@ short int voice_generate_tables()
 
   /* vibrato wavetable (triangle) */
   S_voice_lfo_bi_wavetable_tri[0] = 0;
-  S_voice_lfo_bi_wavetable_tri[VOICE_LFO_WAVE_PERIOD_QUARTER] = VOICE_LFO_WAVE_AMPLITUDE;
-  S_voice_lfo_bi_wavetable_tri[VOICE_LFO_WAVE_PERIOD_HALF] = 0;
-  S_voice_lfo_bi_wavetable_tri[3 * VOICE_LFO_WAVE_PERIOD_QUARTER] = -VOICE_LFO_WAVE_AMPLITUDE;
+  S_voice_lfo_bi_wavetable_tri[64] = VOICE_LFO_WAVE_AMPLITUDE;
+  S_voice_lfo_bi_wavetable_tri[128] = 0;
+  S_voice_lfo_bi_wavetable_tri[3 * 64] = -VOICE_LFO_WAVE_AMPLITUDE;
 
-  for (m = 1; m < VOICE_LFO_WAVE_PERIOD_QUARTER; m++)
+  for (m = 1; m < 64; m++)
   {
-    S_voice_lfo_bi_wavetable_tri[m] = (short int) (((VOICE_LFO_WAVE_AMPLITUDE * m) / ((float) VOICE_LFO_WAVE_PERIOD_QUARTER)) + 0.5f);
-    S_voice_lfo_bi_wavetable_tri[VOICE_LFO_WAVE_PERIOD_HALF - m] = S_voice_lfo_bi_wavetable_tri[m];
+    S_voice_lfo_bi_wavetable_tri[m] = (short int) (((VOICE_LFO_WAVE_AMPLITUDE * m) / ((float) 64)) + 0.5f);
+    S_voice_lfo_bi_wavetable_tri[128 - m] = S_voice_lfo_bi_wavetable_tri[m];
 
-    S_voice_lfo_bi_wavetable_tri[VOICE_LFO_WAVE_PERIOD_HALF + m] = -S_voice_lfo_bi_wavetable_tri[m];
-    S_voice_lfo_bi_wavetable_tri[VOICE_LFO_WAVE_PERIOD_FULL - m] = -S_voice_lfo_bi_wavetable_tri[m];
+    S_voice_lfo_bi_wavetable_tri[128 + m] = -S_voice_lfo_bi_wavetable_tri[m];
+    S_voice_lfo_bi_wavetable_tri[256 - m] = -S_voice_lfo_bi_wavetable_tri[m];
   }
 
   /* vibrato wavetable (sawtooth) */
   S_voice_lfo_bi_wavetable_saw[0] = 0;
-  S_voice_lfo_bi_wavetable_saw[VOICE_LFO_WAVE_PERIOD_HALF] = VOICE_LFO_WAVE_AMPLITUDE;
+  S_voice_lfo_bi_wavetable_saw[128] = VOICE_LFO_WAVE_AMPLITUDE;
 
-  for (m = 1; m < VOICE_LFO_WAVE_PERIOD_HALF; m++)
+  for (m = 1; m < 128; m++)
   {
-    S_voice_lfo_bi_wavetable_saw[m] = (short int) (((VOICE_LFO_WAVE_AMPLITUDE * m) / ((float) VOICE_LFO_WAVE_PERIOD_HALF)) + 0.5f);
-    S_voice_lfo_bi_wavetable_saw[VOICE_LFO_WAVE_PERIOD_FULL - m] = -S_voice_lfo_bi_wavetable_saw[m];
+    S_voice_lfo_bi_wavetable_saw[m] = (short int) (((VOICE_LFO_WAVE_AMPLITUDE * m) / ((float) 128)) + 0.5f);
+    S_voice_lfo_bi_wavetable_saw[256 - m] = -S_voice_lfo_bi_wavetable_saw[m];
   }
 
   /* tremolo wavetable (triangle) */
   S_voice_lfo_uni_wavetable_tri[0] = 0;
-  S_voice_lfo_uni_wavetable_tri[VOICE_LFO_WAVE_PERIOD_HALF] = VOICE_LFO_WAVE_AMPLITUDE;
+  S_voice_lfo_uni_wavetable_tri[128] = VOICE_LFO_WAVE_AMPLITUDE;
 
-  for (m = 1; m < VOICE_LFO_WAVE_PERIOD_HALF; m++)
+  for (m = 1; m < 128; m++)
   {
-    S_voice_lfo_uni_wavetable_tri[m] = (short int) (((VOICE_LFO_WAVE_AMPLITUDE * m) / ((float) VOICE_LFO_WAVE_PERIOD_HALF)) + 0.5f);
-    S_voice_lfo_uni_wavetable_tri[VOICE_LFO_WAVE_PERIOD_FULL - m] = S_voice_lfo_uni_wavetable_tri[m];
+    S_voice_lfo_uni_wavetable_tri[m] = (short int) (((VOICE_LFO_WAVE_AMPLITUDE * m) / ((float) 128)) + 0.5f);
+    S_voice_lfo_uni_wavetable_tri[256 - m] = S_voice_lfo_uni_wavetable_tri[m];
   }
 
   /* tremolo wavetable (sawtooth) */
   S_voice_lfo_uni_wavetable_saw[0] = 0;
 
-  for (m = 1; m < VOICE_LFO_WAVE_PERIOD_FULL; m++)
+  for (m = 1; m < 256; m++)
   {
-    S_voice_lfo_uni_wavetable_saw[m] = (short int) (((VOICE_LFO_WAVE_AMPLITUDE * m) / ((float) VOICE_LFO_WAVE_PERIOD_FULL)) + 0.5f);
+    S_voice_lfo_uni_wavetable_saw[m] = (short int) (((VOICE_LFO_WAVE_AMPLITUDE * m) / ((float) 256)) + 0.5f);
   }
 
   /* delay period table */
